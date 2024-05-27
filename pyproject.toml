@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "miniterface"
@@ -10,8 +10,9 @@ authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-tkinter_form@git+https://github.com/e3rd/tkinter_form = "*"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+tyro = "*"
+pyyaml = "*"
+envelope = "*"
+requests = "*"
+tkinter-tooltip = "*"
+"tkinter_form@git+https://github.com/e3rd/tkinter_form" = "*"
