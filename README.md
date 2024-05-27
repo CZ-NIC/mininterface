@@ -8,13 +8,14 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 * Call it as `program.py --help` to display full help.
 * Use any flag in CLI: `program.py --test`  causes `args.test` be set to `True`.
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
+* Running on a remote machine? Automatic regression to the text interface.
 
 
 ![hello world example](asset/hello-world.png "A minimal use case")
 
 Check out the code that displays such window, just the code you need. No lengthy blocks of code imposed by an external dependency.
 
-TODO
+TODO změna – A taky example na context. Že se nezavírá okno. TODO (neztratí se focus)
 ```python3
 from dataclasses import dataclass
 from mininterface import ArgumentParser
@@ -37,3 +38,5 @@ if __name__ == "__main__":
     args: MyNamespace = parser.parse_args()
     print(args.config.important_number)    # suggested by the IDE with the hint text "This number is very important"
 ```
+
+* `with` statement redirects stdout to the window

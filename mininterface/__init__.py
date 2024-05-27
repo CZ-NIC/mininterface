@@ -1,3 +1,3 @@
-from .mininterface import Mininterface
+from .mininterface import run
 
-__all__ = ["Mininterface"]
+__all__ = ["run"]
