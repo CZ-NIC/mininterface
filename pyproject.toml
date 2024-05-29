@@ -4,8 +4,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "miniterface"
-version = "0.0.1"
-description = "Prototype of a minimal interface"
+version = "0.1.0"
+description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 
 [tool.poetry.dependencies]

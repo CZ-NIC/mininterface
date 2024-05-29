@@ -1,3 +1,4 @@
+import contextlib
 import sys
 from time import sleep
 from tkinter import LEFT, END, Button, Frame, Label, TclError, Tk, Text
@@ -7,13 +8,16 @@ from tktooltip import ToolTip
 
 from tkinter_form import Form
 
-from .HeadlessInterface import Cancelled, HeadlessInterface, OutT
+from .auxiliary import dataclass_to_dict, dict_to_dataclass
+
+from .Mininterface import Cancelled, Mininterface, ConfigInstance
 
 
 class RedirectText:
-    def __init__(self, widget: Text, window: Tk) -> None:
+    def __init__(self, widget: Text, pending_buffer: list, window: Tk) -> None:
         self.widget = widget
         self.max_lines = 1000
+        self.pending_buffer = pending_buffer
         self.window = window
 
     def write(self, text):
@@ -22,6 +26,7 @@ class RedirectText:
         self.widget.see(END)  # scroll to the end
         self.trim()
         self.window.update_idletasks()
+        self.pending_buffer.append(text)
 
     def flush(self):
         pass  # required by sys.stdout
@@ -32,34 +37,35 @@ class RedirectText:
             self.widget.delete(1.0, f"{lines - self.max_lines}.0")
 
 
-class GuiInterface(HeadlessInterface):
+class GuiInterface(Mininterface):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.window = TkWindow(self)
         self._always_shown = False
-        self._text_widget = self.window.text_widget
         self._original_stdout = sys.stdout
 
-    def __enter__(self) -> "HeadlessInterface":
+    def __enter__(self) -> "Mininterface":
         """ When used in the with statement, the GUI window does not vanish between dialogues. """
         self._always_shown = True
-        sys.stdout = RedirectText(self._text_widget, self.window)
+        sys.stdout = RedirectText(self.window.text_widget, self.window.pending_buffer, self.window)
         return self
 
     def __exit__(self, *_):
         self._always_shown = False
         sys.stdout = self._original_stdout
+        if self.window.pending_buffer:  # display text sent to the window but not displayed
+            print("".join(self.window.pending_buffer), end="")
 
     def alert(self, text: str) -> None:
         return self.window.buttons(text, [("Ok", None)])
 
-    def ask_args(self) -> OutT:
+    def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
-        params_ = self._dataclass_to_dict(self.args, self._load_descriptions())
+        params_ = dataclass_to_dict(self.args, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        data = self.window.run_dialog(self.parser.prog, params_)
-        self._dict_to_dataclass(self.args, data)
+        data = self.window.run_dialog(self.title, params_)
+        dict_to_dataclass(self.args, data)
         return self.args
 
     def is_yes(self, text):
@@ -85,6 +91,8 @@ class TkWindow(Tk):
 
         self.text_widget = Text(self, wrap='word', height=20, width=80)
         self.text_widget.pack_forget()
+        self.pending_buffer = []
+        """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
     def run_dialog(self, title, form: dict) -> dict:
         """ Let the user edit the form_dict values in a GUI window.
@@ -102,7 +110,7 @@ class TkWindow(Tk):
 
         # Set the enter and exit options
         self.form.button.config(command=self._ok)
-        ToolTip(self.form.button, msg="Ctrl+Enter")  # TODO is not destroyed in _clear
+        ToolTip(self.form.button, msg="Ctrl+Enter")  # NOTE is not destroyed in _clear
         self._bind_event('<Control-Return>', self._ok)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
@@ -131,6 +139,7 @@ class TkWindow(Tk):
     def mainloop(self, callback: Callable = None):
         self.frame.pack(pady=5)
         self.deiconify()  # show if hidden
+        self.pending_buffer.clear()
         super().mainloop()
         if not self.interface._always_shown:
             self.withdraw()  # hide

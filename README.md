@@ -1,4 +1,51 @@
-**semi-functional prototype**
+# Mininterface – access to GUI, TUI, CLI and config files
+
+Write the program core, do not bother with the input/output.
+
+![hello world example](asset/hello-world.png "A minimal use case")
+
+Check out the code that displays such window, just the code you need. No lengthy blocks of code imposed by an external dependency.
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+
+@dataclass
+class Config:
+    """Set of options."""
+    test: bool = False
+    """My testing flag"""
+    important_number: int = 4
+    """This number is very important"""
+
+if __name__ == "__main__":
+    args: Config = run(Config, prog="My application").get_args()
+    print(args.important_number)    # suggested by the IDE with the hint text "This number is very important"
+```
+
+Or bound the interface to a `with` statement that redirects stdout directly to the window.
+
+```python
+with run(Config) as m:
+    print(f"Your important number is {m}")
+    boolean = m.is_yes("Is that alright?")
+```
+
+TODO img
+
+Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml`. Instantly loaded.
+
+```yaml
+important_number: 555
+```
+
+TODO img
+
+- [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
+- [Background](#background)
+- [Docs](#docs)
+
+# Background
 
 Wrapper between the [tyro](https://github.com/brentyi/tyro) `argparse` replacement and [tkinter_form](https://github.com/JohanEstebanCuervo/tkinter_form/) that converts dicts into a GUI.
 
@@ -10,33 +57,6 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
 
+# Docs
 
-![hello world example](asset/hello-world.png "A minimal use case")
-
-Check out the code that displays such window, just the code you need. No lengthy blocks of code imposed by an external dependency.
-
-TODO změna – A taky example na context. Že se nezavírá okno. TODO (neztratí se focus)
-```python3
-from dataclasses import dataclass
-from mininterface import ArgumentParser
-
-@dataclass
-class Config:
-    """Set of options."""
-    test: bool = False
-    """My testing flag"""
-    important_number: int = 4
-    """This number is very important"""
-
-class MyNamespace:  # an auxiliar class that helps your IDE suggestions
-    config: Config
-
-parser = ArgumentParser(prog="My application")
-parser.add_arguments(Config, dest="config")
-
-if __name__ == "__main__":
-    args: MyNamespace = parser.parse_args()
-    print(args.config.important_number)    # suggested by the IDE with the hint text "This number is very important"
-```
-
-* `with` statement redirects stdout to the window
+TODO nested configuration

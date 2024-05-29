@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mininterface.mininterface import Mininterface
+from mininterface import run
 
 @dataclass
 class Config:
@@ -10,5 +10,5 @@ class Config:
     """This number is very important"""
 
 if __name__ == "__main__":
-    args: Config = Mininterface(Config, prog="My application").get_args()
+    args: Config = run(Config, prog="My application").get_args()
     print(args.important_number)    # suggested by the IDE with the hint text "This number is very important"

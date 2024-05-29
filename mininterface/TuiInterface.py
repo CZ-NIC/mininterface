@@ -1,7 +1,7 @@
-from .HeadlessInterface import Cancelled, HeadlessInterface
+from .Mininterface import Cancelled, Mininterface
 
 
-class TuiInterface(HeadlessInterface):
+class TuiInterface(Mininterface):
 
     def ask(self, text: str=None):
         try:
@@ -41,7 +41,7 @@ class ReplInterface(TuiInterface):
     """ Same as the base TuiInterface, except it starts the REPL. """
 
     def __getattribute__(self, name):
-        """ Run _HeadlessInterface method if exists and starts a REPL. """
+        """ Run _Mininterface method if exists and starts a REPL. """
         attr = getattr(super(), name, None)
         if callable(attr):
             def wrapper(*args, **kwargs):
