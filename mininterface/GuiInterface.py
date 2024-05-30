@@ -1,40 +1,13 @@
-import contextlib
 import sys
-from time import sleep
-from tkinter import LEFT, END, Button, Frame, Label, TclError, Tk, Text
+from tkinter import LEFT, Button, Frame, Label, Text, Tk
 from typing import Any, Callable
 
 from tktooltip import ToolTip
 
 from tkinter_form import Form
 
-from .auxiliary import dataclass_to_dict, dict_to_dataclass
-
-from .Mininterface import Cancelled, Mininterface, ConfigInstance
-
-
-class RedirectText:
-    def __init__(self, widget: Text, pending_buffer: list, window: Tk) -> None:
-        self.widget = widget
-        self.max_lines = 1000
-        self.pending_buffer = pending_buffer
-        self.window = window
-
-    def write(self, text):
-        self.widget.pack(expand=True, fill='both')
-        self.widget.insert(END, text)
-        self.widget.see(END)  # scroll to the end
-        self.trim()
-        self.window.update_idletasks()
-        self.pending_buffer.append(text)
-
-    def flush(self):
-        pass  # required by sys.stdout
-
-    def trim(self):
-        lines = int(self.widget.index('end-1c').split('.')[0])
-        if lines > self.max_lines:
-            self.widget.delete(1.0, f"{lines - self.max_lines}.0")
+from .auxiliary import FormDict, RedirectText, dataclass_to_dict, dict_to_dataclass, recursive_set_focus
+from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
 class GuiInterface(Mininterface):
@@ -57,16 +30,23 @@ class GuiInterface(Mininterface):
             print("".join(self.window.pending_buffer), end="")
 
     def alert(self, text: str) -> None:
+        """ Display the OK dialog with text. """
         return self.window.buttons(text, [("Ok", None)])
+
+    def ask(self, text: str) -> str:
+        return self.window.run_dialog({text: ""})[text]
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
         params_ = dataclass_to_dict(self.args, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        data = self.window.run_dialog(self.title, params_)
+        data = self.window.run_dialog(params_)
         dict_to_dataclass(self.args, data)
         return self.args
+
+    def ask_number(self, text: str) -> int:
+        return self.window.run_dialog({text: 0})[text]
 
     def is_yes(self, text):
         return self.window.yes_no(text, False)
@@ -84,6 +64,7 @@ class TkWindow(Tk):
         self._result = None
         self._event_bindings = {}
         self.interface = interface
+        self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
 
         self.frame = Frame(self)
@@ -94,13 +75,11 @@ class TkWindow(Tk):
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
-    def run_dialog(self, title, form: dict) -> dict:
+    def run_dialog(self, form: FormDict) -> dict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
 
-        # Init the GUI
-        self.title(title)
         self.form = Form(self.frame,
                          name_form="",
                          form_dict=form,
@@ -110,12 +89,14 @@ class TkWindow(Tk):
 
         # Set the enter and exit options
         self.form.button.config(command=self._ok)
-        ToolTip(self.form.button, msg="Ctrl+Enter")  # NOTE is not destroyed in _clear
-        self._bind_event('<Control-Return>', self._ok)
+        # allow Enter for single field, otherwise Ctrl+Enter
+        tip, keysym = ("Ctrl+Enter", '<Control-Return>') if len(form) > 1 else ("Enter", "<Return>")
+        ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
+        self._bind_event(keysym, self._ok)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
-        self.form.winfo_children()[0].winfo_children()[0].focus_set()
+        recursive_set_focus(self.form)
         return self.mainloop(lambda: self.form.get())
 
     def yes_no(self, text: str, focus_no=True):

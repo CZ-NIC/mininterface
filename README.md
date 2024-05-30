@@ -44,6 +44,21 @@ TODO img
 - [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
 - [Background](#background)
 - [Docs](#docs)
+  * [`mininterface`](#mininterface)
+    + [`run(config=None, interface=GuiInterface, **kwargs)`](#run-config-none-interface-guiinterface-kwargs)
+  * [Interfaces](#interfaces)
+    + [`__init__(self, title: str = '')`](#init--self-title-str)
+    + [`alert(self, text: str)`](#alert-self-text-str)
+    + [`ask(self, text: str) -> str`](#ask-self-text-str-str)
+    + [`ask_args(self) -> ~ConfigInstance`](#ask-args-self-configinstance)
+    + [`ask_number(self, text: str) -> int`](#ask-number-self-text-str-int)
+    + [`get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`](#get-args-self-ask-on-empty-cli-true-configinstance)
+    + [`is_no(self, text: str) -> bool`](#is-no-self-text-str-bool)
+    + [`is_yes(self, text: str) -> bool`](#is-yes-self-text-str-bool)
+    + [`parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`](#parse-args-self-config-callable-configinstance-config-file-pathlibpath-none-none-kwargs-configinstance)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 # Background
 
@@ -60,3 +75,65 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 # Docs
 
 TODO nested configuration
+
+
+## `mininterface`
+
+### `run(config=None, interface=GuiInterface, **kwargs)`
+Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically. We prefer the graphical one, regressed to a text interface on a machine without display.
+Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly with the default from a config file if such exists. It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
+
+* `config:ConfigClass`: Class with the configuration.
+* `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
+* `**kwargs`: The same as for [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html).
+* Returns: `interface` Interface used.
+
+You cay context manage the function by a `with` statement. The stdout will be redirected to the interface (GUI window).
+
+See the [initial examples](#mininterface-gui-tui-cli-and-config).
+
+## Interfaces
+
+Several interfaces exist:
+
+* `Mininterface` – The base interface. Does not require any user input and hence is suitable for headless testing.
+* `GuiInteface` – A tkinter window.
+* `TuiInteface` – An interactive terminal.
+* `ReplInteface` – A debug terminal. Invokes a breakpoint after every dialog.
+
+You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_args` if needed.
+
+```python
+with TuiInterface("My program") as m:
+    number = m.ask_number("Returns number")
+```
+
+### `__init__(self, title: str = '')`
+Initialize.
+### `alert(self, text: str)`
+Prompt the user confirm the text.
+### `ask(self, text: str) -> str`
+Prompt the user to input a text.
+### `ask_args(self) -> ~ConfigInstance`
+Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_args.)
+### `ask_number(self, text: str) -> int`
+Prompt the user to input a number. Empty input = 0.
+### `get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`
+Returns whole configuration (previously fetched from CLI and config file by parse_args).
+If program was launched with no arguments (empty CLI), invokes self.ask_args() to edit the fields.
+### `is_no(self, text: str) -> bool`
+Display confirm box, focusing no.
+### `is_yes(self, text: str) -> bool`
+Display confirm box, focusing yes.
+
+```python
+m = run(prog="My program")
+print(m.ask_yes("Is it true?"))  # True/False
+```
+
+### `parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`
+Parse CLI arguments, possibly merged from a config file.
+* `config`: Class with the configuration.
+* `config_file`: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.
+* `**kwargs` The same as for argparse.ArgumentParser.
+* Returns: `ConfigInstance` Configuration namespace.

@@ -1,35 +1,34 @@
 import os
 import re
-import sys
 from argparse import Action, ArgumentParser
-from dataclasses import MISSING
-from pathlib import Path
-from tkinter import TclError
-from types import SimpleNamespace
-from typing import Callable, Generator, List, Optional, Type, TypeVar
+from tkinter import END, Checkbutton, Entry, Text, Tk, Widget
+from tkinter.ttk import Combobox
+from typing import Any, Callable, TypeVar, Union
 from unittest.mock import patch
 
-import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-from tyro.extras import get_parser
 from tkinter_form import Value
 
 ConfigInstance = TypeVar("ConfigInstance")
 ConfigClass = Callable[..., ConfigInstance]
+FormDict = dict[str, Union[Value, Any, 'FormDict']]
+""" Nested form that can have descriptions (through Value) instead of plain values. """
 
-def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> dict:
-        """ Convert the dataclass produced by tyro into dict of dicts. """
-        main = ""
-        params = {main: {}} if not _path else {}
-        for param, val in vars(args).items():
-            if hasattr(val, "__dict__"):
-                params[param] = dataclass_to_dict(val, descr, _path=f"{_path}{param}.")
-            elif not _path:
-                params[main][param] = Value(val, descr.get(param))
-            else:
-                params[param] = Value(val, descr.get(f"{_path}{param}"))
-        return params
+
+def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
+    """ Convert the dataclass produced by tyro into dict of dicts. """
+    main = ""
+    params = {main: {}} if not _path else {}
+    for param, val in vars(args).items():
+        if hasattr(val, "__dict__"):
+            params[param] = dataclass_to_dict(val, descr, _path=f"{_path}{param}.")
+        elif not _path:
+            params[main][param] = Value(val, descr.get(param))
+        else:
+            params[param] = Value(val, descr.get(f"{_path}{param}"))
+    return params
+
 
 def dict_to_dataclass(args: ConfigInstance, data: dict):
     """ Convert the dict of dicts from the GUI back into the object holding the configuration. """
@@ -39,6 +38,7 @@ def dict_to_dataclass(args: ConfigInstance, data: dict):
                 setattr(getattr(args, group), key, val)
             else:
                 setattr(args, key, val)
+
 
 def get_terminal_size():
     try:
@@ -51,6 +51,7 @@ def get_terminal_size():
     except (OSError, ValueError):
         return 0, 0
 
+
 def get_args_allow_missing(config: ConfigClass, kwargs: dict, parser: ArgumentParser):
     """ Fetch missing required options in GUI. """
     # On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
@@ -58,6 +59,7 @@ def get_args_allow_missing(config: ConfigClass, kwargs: dict, parser: ArgumentPa
     # NOTE But we should rather invoke a GUI with the missing options only.
     original_error = TyroArgumentParser.error
     eavesdrop = ""
+
     def custom_error(self, message: str):
         nonlocal eavesdrop
         if not message.startswith("the following arguments are required:"):
@@ -81,11 +83,45 @@ def get_args_allow_missing(config: ConfigClass, kwargs: dict, parser: ArgumentPa
                         case "STR":
                             setattr(kwargs["default"], argument.dest, "")
                         case _:
-                            pass # missing handler not implemented, we make tyro fail in CLI
+                            pass  # missing handler not implemented, we make tyro fail in CLI
             return cli(config, **kwargs)  # second attempt
         raise
 
+
 def get_descriptions(parser: ArgumentParser) -> dict:
-        """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
-        return {action.dest.replace("-", "_"): re.sub(r"\(default.*\)", "", action.help)
-                for action in parser._actions}
+    """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
+    return {action.dest.replace("-", "_"): re.sub(r"\(default.*\)", "", action.help)
+            for action in parser._actions}
+
+
+class RedirectText:
+    """ Helps to redirect text from stdout to a text widget. """
+
+    def __init__(self, widget: Text, pending_buffer: list, window: Tk) -> None:
+        self.widget = widget
+        self.max_lines = 1000
+        self.pending_buffer = pending_buffer
+        self.window = window
+
+    def write(self, text):
+        self.widget.pack(expand=True, fill='both')
+        self.widget.insert(END, text)
+        self.widget.see(END)  # scroll to the end
+        self.trim()
+        self.window.update_idletasks()
+        self.pending_buffer.append(text)
+
+    def flush(self):
+        pass  # required by sys.stdout
+
+    def trim(self):
+        lines = int(self.widget.index('end-1c').split('.')[0])
+        if lines > self.max_lines:
+            self.widget.delete(1.0, f"{lines - self.max_lines}.0")
+
+def recursive_set_focus(widget: Widget):
+    for child in widget.winfo_children():
+        if isinstance(child, (Entry, Checkbutton, Combobox)):
+            child.focus_set()
+            return
+        recursive_set_focus(child)

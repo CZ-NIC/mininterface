@@ -1,17 +1,24 @@
+from .auxiliary import ConfigInstance
 from .Mininterface import Cancelled, Mininterface
 
 
 class TuiInterface(Mininterface):
 
-    def ask(self, text: str=None):
+    def alert(self, text: str):
+        """ Display text and let the user hit any key. """
+        input(text + " Hit any key.")
+
+    def ask(self, text: str = None):
         try:
-            txt = input(text + " ") if text else input()
+            txt = input(text + ": ") if text else input()
         except EOFError:
             txt = "x"
         if txt == "x":
             raise Cancelled(".. cancelled")
         return txt
 
+    def ask_args(self) -> ConfigInstance:
+        raise NotImplementedError
 
     def ask_number(self, text):
         """
@@ -26,15 +33,11 @@ class TuiInterface(Mininterface):
             except ValueError:
                 print("This is not a number")
 
-    def yes_no(self, text: str):
-        return self.ask(text=text + " [y]/n: ").lower() in ("y", "yes", "")
+    def is_yes(self, text: str):
+        return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
 
     def is_no(self, text):
-        return self.ask(text=text + " y/[n]: ").lower() in ("n", "no", "")
-
-    def hit_any_key(self, text: str):
-        """ Display text and let the user hit any key. Skip when headless. """
-        input(text + " Hit any key.")
+        return self.ask(text=text + " y/[n]").lower() in ("n", "no", "")
 
 
 class ReplInterface(TuiInterface):

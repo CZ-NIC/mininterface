@@ -1,30 +1,15 @@
-from argparse import ArgumentParser
-import csv
 import logging
-import re
-import string
-from pathlib import Path
-import sys
-from types import SimpleNamespace
-from typing import Callable, List, Optional, TypeVar
-from sys import exit
-from dataclasses import MISSING
-import yaml
-
-from dialog import Dialog, DialogError, ExecutableNotFound
-
-from .auxiliary import ConfigClass, ConfigInstance, get_args_allow_missing, get_descriptions, get_terminal_size
-import re
 import sys
 from argparse import ArgumentParser
-from tkinter import TclError
-from typing import TypeVar
+from dataclasses import MISSING
+from pathlib import Path
+from types import SimpleNamespace
 
-from tyro import cli
+import yaml
 from tyro.extras import get_parser
 
-
-
+from .auxiliary import (ConfigClass, ConfigInstance, get_args_allow_missing,
+                        get_descriptions)
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +24,9 @@ class Mininterface:
     """
 
     def __init__(self, title: str = ""):
-        # , parser: ArgumentParser= None, args: ConfigInstance= None
-        # self.parser = parser or ArgumentParser()
-        # self.args = args or SimpleNamespace()
-        # self.parser = ArgumentParser()
         self.title = title or "Mininterface"
         self.args : ConfigInstance = SimpleNamespace()
-        """ Parsed arguments, fetched from cli by parse.args :meth:~Mininterface.parse_args """
+        """ Parsed arguments, fetched from cli by parse.args """
         self.descriptions = {}
         """ Field descriptions """
 
@@ -58,26 +39,28 @@ class Mininterface:
         pass
 
     def alert(self, text: str) -> None:
+        """ Prompt the user confirm the text.  """
         print("Alert text", text)
         return
 
     def ask(self, text: str) -> str:
+        """ Prompt the user to input a text.  """
         print("Asking", text)
         raise Cancelled(".. cancelled")
 
     def ask_args(self) -> ConfigInstance:
+        """ Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_args.) """
         print("Asking the args", self.args)
         return self.args
 
     def ask_number(self, text: str) -> int:
-        """
-        Let user write number. Empty input = 0.
-        """
+        """ Prompt the user to input a number. Empty input = 0. """
         print("Asking number", text)
         return 0
 
     def get_args(self, ask_on_empty_cli=True) -> ConfigInstance:
-        """ Returns parsed .args. If program launched with no arguments, empty CLI, self.ask_args() are called """
+        """ Returns whole configuration (previously fetched from CLI and config file by parse_args).
+            If program was launched with no arguments (empty CLI), invokes self.ask_args() to edit the fields. """
         # Empty CLI → GUI edit
         if ask_on_empty_cli and len(sys.argv) <= 1:
             return self.ask_args()
@@ -86,7 +69,7 @@ class Mininterface:
     def parse_args(self, config: ConfigClass,
                    config_file: Path | None = None,
                    **kwargs) -> ConfigInstance:
-        """ Parse CLI arguments, possibly merged from those in a config file.
+        """ Parse CLI arguments, possibly merged from a config file.
 
         :param config: Class with the configuration.
         :param config_file: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.
@@ -112,16 +95,11 @@ class Mininterface:
         return self.args
 
     def is_yes(self, text: str) -> bool:
-        """ Display confirm box, focusing yes"""
+        """ Display confirm box, focusing yes. """
         print("Asking yes:", text)
         return True
 
     def is_no(self, text: str) -> bool:
-        """ Display confirm box, focusing no"""
+        """ Display confirm box, focusing no. """
         print("Asking no:", text)
         return False
-
-    def hit_any_key(self, text: str) -> None:
-        """ Display text and let the user hit any key. Skip when headless. """
-        print(text + " Hit any key.")
-        return
