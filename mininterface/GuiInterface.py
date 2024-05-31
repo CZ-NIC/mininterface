@@ -45,6 +45,16 @@ class GuiInterface(Mininterface):
         dict_to_dataclass(self.args, data)
         return self.args
 
+    def ask_form(self, args: FormDict, title: str = "") -> dict:
+        """ Prompt the user to fill up whole form.
+            :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
+                The dict can be nested, it can contain a subgroup.
+                The default value might be `mininterface.Value` that allows you to add descriptions.
+                A checkbox example: {"my label": Value(True, "my description")}
+            :param title: Optional form title.
+        """
+        return self.window.run_dialog(args, title=title)
+
     def ask_number(self, text: str) -> int:
         return self.window.run_dialog({text: 0})[text]
 
@@ -75,10 +85,13 @@ class TkWindow(Tk):
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
-    def run_dialog(self, form: FormDict) -> dict:
+    def run_dialog(self, form: FormDict, title: str = "") -> dict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
+        if title:
+            label = Label(self.frame, text=title)
+            label.pack(pady=10)
 
         self.form = Form(self.frame,
                          name_form="",

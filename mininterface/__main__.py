@@ -22,8 +22,7 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing no. """
 
-
-if __name__ == "__main__":
+def main():
     # It does make sense to invoke GuiInterface only. Other interface would use STDOUT, hence make this impractical when fetching variable to i.e. a bash script.
     result = []
     with run(CliInteface, GuiInterface, prog="Mininterface", description=__doc__) as m:
@@ -35,3 +34,5 @@ if __name__ == "__main__":
     # to ask two numbers or determine a dialog order etc.
     [print(val) for val in result]
 
+if __name__ == "__main__":
+    main()

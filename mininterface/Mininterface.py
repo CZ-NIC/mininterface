@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import yaml
 from tyro.extras import get_parser
 
-from .auxiliary import (ConfigClass, ConfigInstance, get_args_allow_missing,
+from .auxiliary import (ConfigClass, ConfigInstance, FormDict, get_args_allow_missing,
                         get_descriptions)
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ class Cancelled(SystemExit):
     # We inherit from SystemExit so that the program exits without a traceback on GUI Escape.
     pass
 
+
 class Mininterface:
     """ The base interface.
         Does not require any user input and hence is suitable for headless testing.
@@ -25,7 +26,7 @@ class Mininterface:
 
     def __init__(self, title: str = ""):
         self.title = title or "Mininterface"
-        self.args : ConfigInstance = SimpleNamespace()
+        self.args: ConfigInstance = SimpleNamespace()
         """ Parsed arguments, fetched from cli by parse.args """
         self.descriptions = {}
         """ Field descriptions """
@@ -39,7 +40,7 @@ class Mininterface:
         pass
 
     def alert(self, text: str) -> None:
-        """ Prompt the user confirm the text.  """
+        """ Prompt the user to confirm the text.  """
         print("Alert text", text)
         return
 
@@ -52,6 +53,16 @@ class Mininterface:
         """ Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_args.) """
         print("Asking the args", self.args)
         return self.args
+
+    def ask_form(self, args: FormDict, title: str = "") -> dict:
+        """ Prompt the user to fill up whole form.
+            :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
+                The dict can be nested, it can contain a subgroup.
+                The default value might be `mininterface.Value` that allows you to add descriptions.
+                A checkbox example: `{"my label": Value(True, "my description")}`
+        """
+        print(f"Asking the form {title}", args)
+        return args  # NOTE – this should return dict, not FormDict (get rid of auxiliary.Value values)
 
     def ask_number(self, text: str) -> int:
         """ Prompt the user to input a number. Empty input = 0. """

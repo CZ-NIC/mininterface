@@ -1,8 +1,8 @@
 import os
 import re
 from argparse import Action, ArgumentParser
-from tkinter import END, Checkbutton, Entry, Text, Tk, Widget
-from tkinter.ttk import Combobox
+from tkinter import END, Entry, Text, Tk, Widget
+from tkinter.ttk import Combobox, Checkbutton
 from typing import Any, Callable, TypeVar, Union
 from unittest.mock import patch
 
@@ -123,5 +123,6 @@ def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():
         if isinstance(child, (Entry, Checkbutton, Combobox)):
             child.focus_set()
-            return
-        recursive_set_focus(child)
+            return True
+        if recursive_set_focus(child):
+            return True

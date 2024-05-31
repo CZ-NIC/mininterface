@@ -7,6 +7,7 @@ from unittest.mock import patch
 from mininterface.GuiInterface import GuiInterface
 from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
 from mininterface.TuiInterface import ReplInterface, TuiInterface
+from mininterface.auxiliary import Value
 
 # TODO auto-handle verbosity https://brentyi.github.io/tyro/examples/04_additional/12_counters/ ?
 # TODO example on missing required options.
@@ -22,10 +23,14 @@ def run(config: ConfigClass | None = None,
     with the default from a config file if such exists.
     It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
-    :param config: Class with the configuration.
+    :param config: Dataclass with the configuration.
     :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
     :param **kwargs The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
     :return: Interface used.
+
+    Undocumented: The `config` may be function as well. We invoke its paramters.
+    However, Mininterface.args stores the output of the function instead of the Argparse namespace
+    and methods like `Mininterface.ask_args()` will work unpredictibly..
     """
     # Build the interface
     prog = kwargs.get("prog") or sys.argv[0]
@@ -42,4 +47,4 @@ def run(config: ConfigClass | None = None,
     return interface
 
 
-__all__ = ["run"]
+__all__ = ["run", "Value"]

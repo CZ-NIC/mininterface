@@ -1,4 +1,4 @@
-from .auxiliary import ConfigInstance
+from .auxiliary import ConfigInstance, FormDict
 from .Mininterface import Cancelled, Mininterface
 
 
@@ -18,6 +18,9 @@ class TuiInterface(Mininterface):
         return txt
 
     def ask_args(self) -> ConfigInstance:
+        raise NotImplementedError
+
+    def ask_form(self, args: FormDict) -> dict:
         raise NotImplementedError
 
     def ask_number(self, text):
