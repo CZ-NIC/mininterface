@@ -1,4 +1,5 @@
 # Mininterface – access to GUI, TUI, CLI and config files
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Write the program core, do not bother with the input/output.
 
@@ -99,9 +100,9 @@ See the [initial examples](#mininterface-gui-tui-cli-and-config).
 Several interfaces exist:
 
 * `Mininterface` – The base interface. Does not require any user input and hence is suitable for headless testing.
-* `GuiInteface` – A tkinter window.
-* `TuiInteface` – An interactive terminal.
-* `ReplInteface` – A debug terminal. Invokes a breakpoint after every dialog.
+* `GuiInterface` – A tkinter window.
+* `TuiInterface` – An interactive terminal.
+* `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
 You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_args` if needed.
 

@@ -1,14 +1,22 @@
 import os
 import re
 from argparse import Action, ArgumentParser
-from tkinter import END, Entry, Text, Tk, Widget
-from tkinter.ttk import Combobox, Checkbutton
 from typing import Any, Callable, TypeVar, Union
 from unittest.mock import patch
+try:
+    # NOTE this shuold be clean up and tested on a machine without tkinter installable
+    from tkinter import END, Entry, Text, Tk, Widget
+    from tkinter.ttk import Combobox, Checkbutton
+except ImportError:
+    tkinter = None
+    END, Entry, Text, Tk, Widget = (None,)*5
 
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-from tkinter_form import Value
+try:
+    from tkinter_form import Value
+except ImportError:
+    Value = None
 
 ConfigInstance = TypeVar("ConfigInstance")
 ConfigClass = Callable[..., ConfigInstance]

@@ -17,8 +17,8 @@ class TuiInterface(Mininterface):
             raise Cancelled(".. cancelled")
         return txt
 
-    def ask_args(self) -> ConfigInstance:
-        raise NotImplementedError
+    # def ask_args(self) -> ConfigInstance: TODO
+        # raise NotImplementedError
 
     def ask_form(self, args: FormDict) -> dict:
         raise NotImplementedError
@@ -46,7 +46,7 @@ class TuiInterface(Mininterface):
 class ReplInterface(TuiInterface):
     """ Same as the base TuiInterface, except it starts the REPL. """
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         """ Run _Mininterface method if exists and starts a REPL. """
         attr = getattr(super(), name, None)
         if callable(attr):

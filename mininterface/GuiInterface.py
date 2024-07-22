@@ -1,18 +1,26 @@
 import sys
-from tkinter import LEFT, Button, Frame, Label, Text, Tk
 from typing import Any, Callable
 
-from tktooltip import ToolTip
+try:
+    from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk
+    from tktooltip import ToolTip
+    from tkinter_form import Form
+except ImportError:
+    from mininterface.common import InterfaceNotAvailable
+    raise InterfaceNotAvailable
 
-from tkinter_form import Form
 
+from .common import InterfaceNotAvailable
 from .auxiliary import FormDict, RedirectText, dataclass_to_dict, dict_to_dataclass, recursive_set_focus
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
 class GuiInterface(Mininterface):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        try:
+            super().__init__(*args, **kwargs)
+        except TclError:
+            raise InterfaceNotAvailable
         self.window = TkWindow(self)
         self._always_shown = False
         self._original_stdout = sys.stdout

@@ -22,10 +22,12 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing no. """
 
+# TODO does not work in REPL interface: mininterface --alert "ahoj"
 def main():
     # It does make sense to invoke GuiInterface only. Other interface would use STDOUT, hence make this impractical when fetching variable to i.e. a bash script.
+    # TODO It DOES make sense. Change in README. It s a good fallback.
     result = []
-    with run(CliInteface, GuiInterface, prog="Mininterface", description=__doc__) as m:
+    with run(CliInteface, prog="Mininterface", description=__doc__) as m:
         for method, label in vars(m.args).items():
             if label:
                 result.append(getattr(m, method)(label))

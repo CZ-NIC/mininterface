@@ -1,10 +1,16 @@
 import sys
 from pathlib import Path
-from tkinter import TclError
-from typing import Type
+from typing import TYPE_CHECKING, Type
 from unittest.mock import patch
 
-from mininterface.GuiInterface import GuiInterface
+try:
+    from mininterface.GuiInterface import GuiInterface
+except ImportError:
+    if TYPE_CHECKING:
+        pass
+    else:
+        GuiInterface = None
+
 from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
 from mininterface.TuiInterface import ReplInterface, TuiInterface
 from mininterface.auxiliary import Value
@@ -14,7 +20,7 @@ from mininterface.auxiliary import Value
 
 
 def run(config: ConfigClass | None = None,
-        interface: Type[Mininterface] = GuiInterface,
+        interface: Type[Mininterface] = GuiInterface or ReplInterface,  # NOTE we shuold use TuiInterface as a fallback
         **kwargs) -> Mininterface:
     """
     Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically.
@@ -34,10 +40,10 @@ def run(config: ConfigClass | None = None,
     """
     # Build the interface
     prog = kwargs.get("prog") or sys.argv[0]
-    try:
-        interface: GuiInterface | Mininterface = interface(prog)
-    except TclError:  # Fallback to a different interface
-        interface = ReplInterface(prog)
+    # try:
+    interface: GuiInterface | Mininterface = interface(prog)
+    # except InterfaceNotAvailable:  # Fallback to a different interface
+    #     interface = TuiInterface(prog)
 
     # Load configuration from CLI and a config file
     if config:
