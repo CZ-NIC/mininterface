@@ -1,5 +1,5 @@
 from pprint import pprint
-from .auxiliary import ConfigInstance, FormDict, dataclass_to_dict, dict_to_dataclass
+from .auxiliary import ConfigInstance, FormDict, config_to_dict, config_from_dict
 from .Mininterface import Cancelled, Mininterface
 
 

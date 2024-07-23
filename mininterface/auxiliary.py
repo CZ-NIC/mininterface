@@ -41,9 +41,10 @@ FormDict = dict[str, Union[Value, Any, 'FormDict']]
 """ Nested form that can have descriptions (through Value) instead of plain values. """
 
 
-def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
+def config_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = ""
+    # print(args)# TODO
     params = {main: {}} if not _path else {}
     for param, val in vars(args).items():
         annotation = None
@@ -64,11 +65,12 @@ def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
                 logger.warn(f"Annotation {wanted_type} of `{param}` not supported by Mininterface."
                             "None converted to False.")
         if hasattr(val, "__dict__"):  # nested config hierarchy
-            params[param] = dataclass_to_dict(val, descr, _path=f"{_path}{param}.")
+            params[param] = config_to_dict(val, descr, _path=f"{_path}{param}.")
         elif not _path:  # scalar value in root
             params[main][param] = Value(val, descr.get(param), annotation)
         else:  # scalar value in nested
             params[param] = Value(val, descr.get(f"{_path}{param}"), annotation)
+    # print(params) # TODO
     return params
 
 
@@ -76,34 +78,53 @@ def normalize_types(origin: FormDict, data: dict) -> dict:
     """ Run validators of all Value objects. If fails, outputs info.
         Return corrected data. (Ex: Some values might be nulled from "".)
     """
-    for (group, params), params2 in zip(data.items(), origin.values()):
-        for (key, val), pattern in zip(params.items(), params2.values()):
-            if isinstance(pattern, Value) and pattern.annotation:
-                if val == "" and type(None) in get_args(pattern.annotation):
-                    # The user is not able to set the value to None, they left it empty.
-                    # Cast back to None as None is one of the allowed types.
-                    # Ex: `severity: int | None = None`
-                    data[group][key] = val = None
-                elif pattern.annotation == Optional[int]:
-                    try:
-                        data[group][key] = val = int(val)
-                    except ValueError:
-                        pass
+    def check(ordict, orkey, orval, dataPos: dict, dataKey, val):
+        if isinstance(orval, Value) and orval.annotation:
+            if val == "" and type(None) in get_args(orval.annotation):
+                # The user is not able to set the value to None, they left it empty.
+                # Cast back to None as None is one of the allowed types.
+                # Ex: `severity: int | None = None`
+                dataPos[dataKey] = val = None
+            elif orval.annotation == Optional[int]:
+                try:
+                    dataPos[dataKey] = val = int(val)
+                except ValueError:
+                    pass
 
-                if not isinstance(val, pattern.annotation):
-                    pattern.set_error_text(f"Type must be `{pattern.annotation}`!")
-                    return False
+            if not isinstance(val, orval.annotation):
+                orval.set_error_text(f"Type must be `{orval.annotation}`!")
+                raise RuntimeError  # revision needed
+
+        # keep values if revision needed
+        # We merge new data to the origin. If form is re-submitted, the values will stay there.
+        if isinstance(orval, Value):
+            orval.val = val
+        else:
+            ordict[orkey] = val
+
+    try:
+        for (key1, val1), (orkey1, orval1) in zip(data.items(), origin.items()):
+            if isinstance(val1, dict):  # nested config hierarchy
+                # NOTE: This allows only single nested dict.
+                for (key2, val2), (orkey2, orval2) in zip(val1.items(), orval1.items()):
+                    check(orval1, orkey2, orval2, data[key1], key2, val2)
+            else:
+                check(origin, orkey1, orval1, data, key1, val1)
+    except RuntimeError:
+        return False
+
     return data
 
 
-def dict_to_dataclass(args: ConfigInstance, data: dict):
-    """ Convert the dict of dicts from the GUI back into the object holding the configuration. """
+def config_from_dict(args: ConfigInstance, data: dict):
+    """ Fetch back data.
+        Merge the dict of dicts from the GUI back into the object holding the configuration. """
     for group, params in data.items():
         for key, val in params.items():
             if group:
-                setattr(getattr(args, group), key, val)
+                setattr(getattr(args, group), key, val.val if isinstance(val, Value) else val)
             else:
-                setattr(args, key, val)
+                setattr(args, key, val.val if isinstance(val, Value) else val)
 
 
 def get_terminal_size():

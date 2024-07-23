@@ -11,7 +11,7 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .auxiliary import FormDict, RedirectText, dataclass_to_dict, dict_to_dataclass, recursive_set_focus, normalize_types
+from .auxiliary import FormDict, RedirectText, config_to_dict, config_from_dict, recursive_set_focus, normalize_types
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
@@ -46,11 +46,11 @@ class GuiInterface(Mininterface):
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
-        params_ = dataclass_to_dict(self.args, self.descriptions)
+        params_ = config_to_dict(self.args, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
         data = self.window.run_dialog(params_)
-        dict_to_dataclass(self.args, data)
+        config_from_dict(self.args, data)
         return self.args
 
     def ask_form(self, args: FormDict, title: str = "") -> dict:

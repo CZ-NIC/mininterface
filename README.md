@@ -1,5 +1,6 @@
 # Mininterface – access to GUI, TUI, CLI and config files
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg)](https://github.com/CZ-NIC/mininterface/actions)
 
 Write the program core, do not bother with the input/output.
 
