@@ -4,11 +4,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.1.0"
+version = "0.1.1"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
-homepage = "https://github.com/e3rd/mininterface"
+homepage = "https://github.com/CZ-NIC/mininterface"
 readme = "README.md"
 
 [tool.poetry.dependencies]

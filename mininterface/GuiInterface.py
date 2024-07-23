@@ -11,7 +11,7 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .auxiliary import FormDict, RedirectText, dataclass_to_dict, dict_to_dataclass, recursive_set_focus
+from .auxiliary import FormDict, RedirectText, dataclass_to_dict, dict_to_dataclass, recursive_set_focus, normalize_types
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
@@ -93,7 +93,7 @@ class TkWindow(Tk):
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
-    def run_dialog(self, form: FormDict, title: str = "") -> dict:
+    def run_dialog(self, formDict: FormDict, title: str = "") -> dict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
@@ -102,23 +102,28 @@ class TkWindow(Tk):
             label.pack(pady=10)
 
         self.form = Form(self.frame,
-                        name_form="",
-                        form_dict=form,
-                        name_config="Ok",
-                        )
+                         name_form="",
+                         form_dict=formDict,
+                         name_config="Ok",
+                         )
         self.form.pack()
 
         # Set the enter and exit options
         self.form.button.config(command=self._ok)
         # allow Enter for single field, otherwise Ctrl+Enter
-        tip, keysym = ("Ctrl+Enter", '<Control-Return>') if len(form) > 1 else ("Enter", "<Return>")
+        tip, keysym = ("Ctrl+Enter", '<Control-Return>') if len(formDict) > 1 else ("Enter", "<Return>")
         ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
         self._bind_event(keysym, self._ok)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
         recursive_set_focus(self.form)
-        return self.mainloop(lambda: self.form.get())
+        return self.mainloop(lambda: self.validate(formDict, title))
+
+    def validate(self, formDict: FormDict, title: str):
+        if data := normalize_types(formDict, self.form.get()):
+            return data
+        return self.run_dialog(formDict, title)
 
     def yes_no(self, text: str, focus_no=True):
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)

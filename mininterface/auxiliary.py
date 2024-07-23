@@ -1,22 +1,39 @@
+import logging
 import os
 import re
 from argparse import Action, ArgumentParser
-from typing import Any, Callable, TypeVar, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Literal, Optional, TypeVar, Union, get_args, get_type_hints
 from unittest.mock import patch
+
 try:
-    # NOTE this shuold be clean up and tested on a machine without tkinter installable
+    # NOTE this should be clean up and tested on a machine without tkinter installable
     from tkinter import END, Entry, Text, Tk, Widget
-    from tkinter.ttk import Combobox, Checkbutton
+    from tkinter.ttk import Checkbutton, Combobox
 except ImportError:
     tkinter = None
     END, Entry, Text, Tk, Widget = (None,)*5
 
+from tkinter_form import Value
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-try:
-    from tkinter_form import Value
-except ImportError:
-    Value = None
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Value(Value):
+    """ Override val/description class with additional stuff. """
+
+    annotation: Any | None = None
+    """ Used for validation. To convert an empty '' to None. """
+
+    def __post_init__(self):
+        self._original_desc = self.description
+
+    def set_error_text(self, s):
+        self.description = f"{s} {self._original_desc}"
+
 
 ConfigInstance = TypeVar("ConfigInstance")
 ConfigClass = Callable[..., ConfigInstance]
@@ -29,18 +46,54 @@ def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
     main = ""
     params = {main: {}} if not _path else {}
     for param, val in vars(args).items():
+        annotation = None
         if val is None:
-            # TODO tkinter_form does not handle None yet.
-            # This would fail: `severity: int | None = None`
-            # We need it to be able to write a number and if empty, return None.
-            val = False
+            wanted_type = get_type_hints(args.__class__).get(param)
+            if wanted_type in (Optional[int], Optional[str]):
+                # Since tkinter_form does not handle None yet, we have help it.
+                # We need it to be able to write a number and if empty, return None.
+                # This would fail: `severity: int | None = None`
+                # Here, we convert None to str(""), in normalize_types we convert it back.
+                annotation = wanted_type
+                val = ""
+            else:
+                # An unknown type annotation encountered-
+                # Since tkinter_form does not handle None yet, this will display as checkbox.
+                # Which is not probably wanted.
+                val = False
+                logger.warn(f"Annotation {wanted_type} of `{param}` not supported by Mininterface."
+                            "None converted to False.")
         if hasattr(val, "__dict__"):  # nested config hierarchy
             params[param] = dataclass_to_dict(val, descr, _path=f"{_path}{param}.")
         elif not _path:  # scalar value in root
-            params[main][param] = Value(val, descr.get(param))
+            params[main][param] = Value(val, descr.get(param), annotation)
         else:  # scalar value in nested
-            params[param] = Value(val, descr.get(f"{_path}{param}"))
+            params[param] = Value(val, descr.get(f"{_path}{param}"), annotation)
     return params
+
+
+def normalize_types(origin: FormDict, data: dict) -> dict:
+    """ Run validators of all Value objects. If fails, outputs info.
+        Return corrected data. (Ex: Some values might be nulled from "".)
+    """
+    for (group, params), params2 in zip(data.items(), origin.values()):
+        for (key, val), pattern in zip(params.items(), params2.values()):
+            if isinstance(pattern, Value) and pattern.annotation:
+                if val == "" and type(None) in get_args(pattern.annotation):
+                    # The user is not able to set the value to None, they left it empty.
+                    # Cast back to None as None is one of the allowed types.
+                    # Ex: `severity: int | None = None`
+                    data[group][key] = val = None
+                elif pattern.annotation == Optional[int]:
+                    try:
+                        data[group][key] = val = int(val)
+                    except ValueError:
+                        pass
+
+                if not isinstance(val, pattern.annotation):
+                    pattern.set_error_text(f"Type must be `{pattern.annotation}`!")
+                    return False
+    return data
 
 
 def dict_to_dataclass(args: ConfigInstance, data: dict):
@@ -131,6 +184,7 @@ class RedirectText:
         lines = int(self.widget.index('end-1c').split('.')[0])
         if lines > self.max_lines:
             self.widget.delete(1.0, f"{lines - self.max_lines}.0")
+
 
 def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():

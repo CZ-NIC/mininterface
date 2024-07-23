@@ -44,6 +44,7 @@ TODO img
 
 - [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
 - [Background](#background)
+- [Installation](#installation)
 - [Docs](#docs)
   * [`mininterface`](#mininterface)
     + [`run(config=None, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
@@ -75,6 +76,14 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
 
+# Installation
+
+Install with a single command from [PyPi](https://pypi.org/project/mininterface/).
+
+```python3
+pip install mininterface
+```
+
 # Docs
 
 You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).
@@ -84,8 +93,8 @@ Just put another dataclass inside the config file:
 ```python3
 @dataclass
 class FurtherConfig:
-    host: str = "example.org"
     token: str
+    host: str = "example.org"
 
 @dataclass
 class Config:

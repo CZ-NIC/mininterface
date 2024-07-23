@@ -24,19 +24,22 @@ class TuiInterface(Mininterface):
         #   params_ = dataclass_to_dict(self.args, self.descriptions)
         #   data = FormDict → dict self.window.run_dialog(params_)
         #   dict_to_dataclass(self.args, params_)
-        print("Access `v` (as var) and change values. Then (c)ontinue.")
-        pprint(self.args)
-        v = self.args
-        try:
-            import ipdb; ipdb.set_trace()
-        except ImportError:
-            import pdb; pdb.set_trace()
-        print("*Continuing*")
-        print(self.args)
-        return self.args
+        return self.ask_form(self.args)
 
     def ask_form(self, args: FormDict) -> dict:
-        raise NotImplementedError
+        # NOTE: This is minimal implementation that should rather go the ReplInterface.
+        print("Access `v` (as var) and change values. Then (c)ontinue.")
+        pprint(args)
+        v = args
+        try:
+            import ipdb
+            ipdb.set_trace()
+        except ImportError:
+            import pdb
+            pdb.set_trace()
+        print("*Continuing*")
+        print(args)
+        return args
 
     def ask_number(self, text):
         """
