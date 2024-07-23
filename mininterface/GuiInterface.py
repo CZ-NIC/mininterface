@@ -102,10 +102,10 @@ class TkWindow(Tk):
             label.pack(pady=10)
 
         self.form = Form(self.frame,
-                         name_form="",
-                         form_dict=form,
-                         name_config="Ok",
-                         )
+                        name_form="",
+                        form_dict=form,
+                        name_config="Ok",
+                        )
         self.form.pack()
 
         # Set the enter and exit options

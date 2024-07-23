@@ -1,4 +1,5 @@
-from .auxiliary import ConfigInstance, FormDict
+from pprint import pprint
+from .auxiliary import ConfigInstance, FormDict, dataclass_to_dict, dict_to_dataclass
 from .Mininterface import Cancelled, Mininterface
 
 
@@ -17,8 +18,22 @@ class TuiInterface(Mininterface):
             raise Cancelled(".. cancelled")
         return txt
 
-    # def ask_args(self) -> ConfigInstance: TODO
-        # raise NotImplementedError
+    def ask_args(self) -> ConfigInstance:
+        # NOTE: This is minimal implementation that should rather go the ReplInterface.
+        # I might build some menu of changing dict through:
+        #   params_ = dataclass_to_dict(self.args, self.descriptions)
+        #   data = FormDict → dict self.window.run_dialog(params_)
+        #   dict_to_dataclass(self.args, params_)
+        print("Access `v` (as var) and change values. Then (c)ontinue.")
+        pprint(self.args)
+        v = self.args
+        try:
+            import ipdb; ipdb.set_trace()
+        except ImportError:
+            import pdb; pdb.set_trace()
+        print("*Continuing*")
+        print(self.args)
+        return self.args
 
     def ask_form(self, args: FormDict) -> dict:
         raise NotImplementedError

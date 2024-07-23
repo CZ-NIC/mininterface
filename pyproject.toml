@@ -18,7 +18,7 @@ pyyaml = "*"
 envelope = "*"
 requests = "*"
 tkinter-tooltip = "*"
-"tkinter_form@git+https://github.com/e3rd/tkinter_form" = "*"
+tkinter_form = "*"
 
 [tool.poetry.scripts]
 mininterface = "mininterface.__main__:main"

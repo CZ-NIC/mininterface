@@ -29,11 +29,16 @@ def dataclass_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
     main = ""
     params = {main: {}} if not _path else {}
     for param, val in vars(args).items():
-        if hasattr(val, "__dict__"):
+        if val is None:
+            # TODO tkinter_form does not handle None yet.
+            # This would fail: `severity: int | None = None`
+            # We need it to be able to write a number and if empty, return None.
+            val = False
+        if hasattr(val, "__dict__"):  # nested config hierarchy
             params[param] = dataclass_to_dict(val, descr, _path=f"{_path}{param}.")
-        elif not _path:
+        elif not _path:  # scalar value in root
             params[main][param] = Value(val, descr.get(param))
-        else:
+        else:  # scalar value in nested
             params[param] = Value(val, descr.get(f"{_path}{param}"))
     return params
 

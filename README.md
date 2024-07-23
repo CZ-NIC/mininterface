@@ -48,7 +48,7 @@ TODO img
   * [`mininterface`](#mininterface)
     + [`run(config=None, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
   * [Interfaces](#interfaces)
-    + [`__init__(self, title: str = '')`](#__init__self-title-str--)
+    + [`Mininterface(title: str = '')`](#Mininterface-title-str--)
     + [`alert(self, text: str)`](#alert-self-text-str)
     + [`ask(self, text: str) -> str`](#ask-self-text-str-str)
     + [`ask_args(self) -> ~ConfigInstance`](#ask-args-self-configinstance)
@@ -77,8 +77,36 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 
 # Docs
 
-TODO nested configuration
+You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).
 
+Just put another dataclass inside the config file:
+
+```python3
+@dataclass
+class FurtherConfig:
+    host: str = "example.org"
+    token: str
+
+@dataclass
+class Config:
+    further: FurtherConfig
+
+...
+print(config.further.host)  # example.org
+```
+
+A subset might be defaulted in YAML:
+
+```yaml
+further:
+  host: example.com
+```
+
+Or by CLI:
+
+```
+$./program.py --further.host example.net
+```
 
 ## `mininterface`
 
@@ -111,7 +139,7 @@ with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
-### `__init__(self, title: str = '')`
+### `Mininterface(title: str = '')`
 Initialize.
 ### `alert(self, text: str)`
 Prompt the user to confirm the text.
