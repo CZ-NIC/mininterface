@@ -161,8 +161,8 @@ Allow the user to edit whole configuration. (Previously fetched from CLI and con
 Prompt the user to fill up whole form.
 * `args`: Dict of `{labels: default value}`. The form widget infers from the default value type.
   The dict can be nested, it can contain a subgroup.
-  The default value might be `mininterface.Value` that allows you to add descriptions.
-  A checkbox example: `{"my label": Value(True, "my description")}`
+  The default value might be `mininterface.FormField` that allows you to add descriptions.
+  A checkbox example: `{"my label": FormField(True, "my description")}`
 * `title`: Optional form title.
 ### `ask_number(self, text: str) -> int`
 Prompt the user to input a number. Empty input = 0.

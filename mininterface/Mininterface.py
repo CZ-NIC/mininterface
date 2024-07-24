@@ -54,15 +54,15 @@ class Mininterface:
         print("Asking the args", self.args)
         return self.args
 
-    def ask_form(self, args: FormDict, title: str = "") -> dict:
+    def ask_form(self, data: FormDict, title: str = "") -> dict:
         """ Prompt the user to fill up whole form.
             :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.Value` that allows you to add descriptions.
-                A checkbox example: `{"my label": Value(True, "my description")}`
+                The default value might be `mininterface.FormField` that allows you to add descriptions.
+                A checkbox example: `{"my label": FormField(True, "my description")}`
         """
-        print(f"Asking the form {title}", args)
-        return args  # NOTE – this should return dict, not FormDict (get rid of auxiliary.Value values)
+        print(f"Asking the form {title}", data)
+        return data  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
 
     def ask_number(self, text: str) -> int:
         """ Prompt the user to input a number. Empty input = 0. """

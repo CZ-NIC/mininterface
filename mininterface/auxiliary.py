@@ -3,30 +3,52 @@ import os
 import re
 from argparse import Action, ArgumentParser
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional, TypeVar, Union, get_args, get_type_hints
+from typing import Any, Callable, Iterable, Literal, Optional, TypeVar, Union, get_args, get_type_hints
 from unittest.mock import patch
 
 try:
     # NOTE this should be clean up and tested on a machine without tkinter installable
     from tkinter import END, Entry, Text, Tk, Widget
     from tkinter.ttk import Checkbutton, Combobox
+    from tkinter_form import Value
 except ImportError:
     tkinter = None
     END, Entry, Text, Tk, Widget = (None,)*5
 
-from tkinter_form import Value
+    @dataclass
+    class Value:
+        """ This class helps to enrich the field with a description. """
+        val: Any
+        description: str
+
+
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
 
 logger = logging.getLogger(__name__)
 
+TD = TypeVar("TD")
+""" dict """
+TK = TypeVar("TK")
+""" dict key """
+
 
 @dataclass
-class Value(Value):
-    """ Override val/description class with additional stuff. """
+class FormField(Value):
+    """ Bridge between the input values and a UI widget.
+        Helps to creates a widget from the input value (includes description etc.),
+        then transforms the value back (str to int conversion etc). """
 
     annotation: Any | None = None
     """ Used for validation. To convert an empty '' to None. """
+    name: str | None = None  # NOTE: Only TextualInterface uses this by now.
+
+    src: tuple[TD, TK] | None = None
+    """ The original dict to be updated when UI ends. """
+    src2: tuple[TD, TK] | None = None
+    """ The original object to be updated when UI ends.
+    NOTE should be merged to `src`
+    """
 
     def __post_init__(self):
         self._original_desc = self.description
@@ -34,17 +56,94 @@ class Value(Value):
     def set_error_text(self, s):
         self.description = f"{s} {self._original_desc}"
 
+    # TODO add testing
+    def update(self, ui_value):
+        """ UI value → FormField value → original value. (With type conversion and checks.)
+
+            The value has been updated in a UI.
+            Update accordingly the value in the original linked dict
+            the mininterface was invoked with.
+
+            Validates the type and do the transformation.
+            (Ex: Some values might be nulled from "".)
+        """
+        fixed_value = ui_value
+        if self.annotation:
+            if ui_value == "" and type(None) in get_args(self.annotation):
+                # The user is not able to set the value to None, they left it empty.
+                # Cast back to None as None is one of the allowed types.
+                # Ex: `severity: int | None = None`
+                fixed_value = None
+            elif self.annotation == Optional[int]:
+                try:
+                    fixed_value = int(ui_value)
+                except ValueError:
+                    pass
+
+            if not isinstance(fixed_value, self.annotation):
+                self.set_error_text(f"Type must be `{self.annotation}`!")
+                return False  # revision needed
+
+        # keep values if revision needed
+        # We merge new data to the origin. If form is re-submitted, the values will stay there.
+        self.val = ui_value
+
+        # Store to the source user data
+        if self.src:
+            d, k = self.src
+            d[k] = fixed_value
+        else:
+            d, k = self.src2
+            setattr(d, k, fixed_value)
+        return True
+
+        # Fixing types:
+        # This code would support tuple[int, int]:
+        #
+        #     self.types = get_args(self.annotation) \
+        #     if isinstance(self.annotation, UnionType) else (self.annotation, )
+        # "All possible types in a tuple. Ex 'int | str' -> (int, str)"
+        #
+        #
+        # def convert(self):
+        #     """ Convert the self.value to the given self.type.
+        #         The value might be in str due to CLI or TUI whereas the programs wants bool.
+        #     """
+        #     # if self.value == "True":
+        #     #     return True
+        #     # if self.value == "False":
+        #     #     return False
+        #     if type(self.val) is str and str not in self.types:
+        #         try:
+        #             return literal_eval(self.val)  # ex: int, tuple[int, int]
+        #         except:
+        #             raise ValueError(f"{self.name}: Cannot convert value {self.val}")
+        #     return self.val
+
+
+
 
 ConfigInstance = TypeVar("ConfigInstance")
 ConfigClass = Callable[..., ConfigInstance]
-FormDict = dict[str, Union[Value, Any, 'FormDict']]
-""" Nested form that can have descriptions (through Value) instead of plain values. """
+FormDict = dict[str, Union[FormField, 'FormDict']]
+""" Nested form that can have descriptions (through FormField) instead of plain values. """
 
 
-def config_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
+def dict_to_formdict(data: dict, factory=FormField) -> FormDict:
+    fd = {}
+    for key, val in data.items():
+        if isinstance(val, dict):  # nested config hierarchy
+            fd[key] = dict_to_formdict(val, factory=factory)
+        else:  # scalar value
+            # NOTE name=param is not set (yet?) in `config_to_formdict`, neither `src`
+            fd[key] = factory(val, "", name=key, src=(data, key))
+    return fd
+
+
+# NOTE: Not used, remove
+def config_to_formdict(args: ConfigInstance, descr: dict, _path="", factory=FormField) -> FormDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = ""
-    # print(args)# TODO
     params = {main: {}} if not _path else {}
     for param, val in vars(args).items():
         annotation = None
@@ -65,39 +164,39 @@ def config_to_dict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
                 logger.warn(f"Annotation {wanted_type} of `{param}` not supported by Mininterface."
                             "None converted to False.")
         if hasattr(val, "__dict__"):  # nested config hierarchy
-            params[param] = config_to_dict(val, descr, _path=f"{_path}{param}.")
+            params[param] = config_to_formdict(val, descr, _path=f"{_path}{param}.", factory=factory)
         elif not _path:  # scalar value in root
-            params[main][param] = Value(val, descr.get(param), annotation)
+            params[main][param] = factory(val, descr.get(param), annotation, param, src2=(args, param))
         else:  # scalar value in nested
-            params[param] = Value(val, descr.get(f"{_path}{param}"), annotation)
-    # print(params) # TODO
+            params[param] = factory(val, descr.get(f"{_path}{param}"), annotation, param, src2=(args, param))
     return params
 
-
-def normalize_types(origin: FormDict, data: dict) -> dict:
-    """ Run validators of all Value objects. If fails, outputs info.
+# NOTE: Not used, remove
+def fix_types(origin: FormDict, data: dict) -> dict:
+    """ Run validators of all FormField objects. If fails, outputs info.
         Return corrected data. (Ex: Some values might be nulled from "".)
     """
     def check(ordict, orkey, orval, dataPos: dict, dataKey, val):
-        if isinstance(orval, Value) and orval.annotation:
+        if isinstance(orval, FormField) and orval.annotation:
+            fixed_val = val
             if val == "" and type(None) in get_args(orval.annotation):
                 # The user is not able to set the value to None, they left it empty.
                 # Cast back to None as None is one of the allowed types.
                 # Ex: `severity: int | None = None`
-                dataPos[dataKey] = val = None
+                dataPos[dataKey] = fixed_val = None
             elif orval.annotation == Optional[int]:
                 try:
-                    dataPos[dataKey] = val = int(val)
+                    dataPos[dataKey] = fixed_val = int(val)
                 except ValueError:
                     pass
 
-            if not isinstance(val, orval.annotation):
+            if not isinstance(fixed_val, orval.annotation):
                 orval.set_error_text(f"Type must be `{orval.annotation}`!")
                 raise RuntimeError  # revision needed
 
         # keep values if revision needed
         # We merge new data to the origin. If form is re-submitted, the values will stay there.
-        if isinstance(orval, Value):
+        if isinstance(orval, FormField):
             orval.val = val
         else:
             ordict[orkey] = val
@@ -122,9 +221,9 @@ def config_from_dict(args: ConfigInstance, data: dict):
     for group, params in data.items():
         for key, val in params.items():
             if group:
-                setattr(getattr(args, group), key, val.val if isinstance(val, Value) else val)
+                setattr(getattr(args, group), key, val.val if isinstance(val, FormField) else val)
             else:
-                setattr(args, key, val.val if isinstance(val, Value) else val)
+                setattr(args, key, val.val if isinstance(val, FormField) else val)
 
 
 def get_terminal_size():
@@ -214,3 +313,15 @@ def recursive_set_focus(widget: Widget):
             return True
         if recursive_set_focus(child):
             return True
+
+
+T = TypeVar("T")
+
+
+def flatten(d: dict[str, T | dict]) -> Iterable[T]:
+    """ Recursively traverse whole dict """
+    for v in d.values():
+        if isinstance(v, dict):
+            yield from flatten(v)
+        else:
+            yield v

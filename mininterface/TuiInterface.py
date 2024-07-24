@@ -1,5 +1,5 @@
 from pprint import pprint
-from .auxiliary import ConfigInstance, FormDict, config_to_dict, config_from_dict
+from .auxiliary import ConfigInstance, FormDict, config_to_formdict, config_from_dict
 from .Mininterface import Cancelled, Mininterface
 
 
@@ -26,11 +26,11 @@ class TuiInterface(Mininterface):
         #   dict_to_dataclass(self.args, params_)
         return self.ask_form(self.args)
 
-    def ask_form(self, args: FormDict) -> dict:
+    def ask_form(self, form: FormDict) -> dict:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         print("Access `v` (as var) and change values. Then (c)ontinue.")
-        pprint(args)
-        v = args
+        pprint(form)
+        v = form
         try:
             import ipdb
             ipdb.set_trace()
@@ -38,8 +38,8 @@ class TuiInterface(Mininterface):
             import pdb
             pdb.set_trace()
         print("*Continuing*")
-        print(args)
-        return args
+        print(form)
+        return form
 
     def ask_number(self, text):
         """

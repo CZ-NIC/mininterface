@@ -33,9 +33,13 @@ class NestedMissingConfig:
 @dataclass
 class FurtherConfig3:
     severity: int | None = None
+    """ Put there a number or left empty """
 
 @dataclass
 class OptionalFlagConfig:
     further: FurtherConfig3
     msg: str | None = None
+    """ An example message """
+
     msg2: str | None = "Default text"
+    """ Another example message """

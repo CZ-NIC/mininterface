@@ -13,7 +13,8 @@ except ImportError:
 
 from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
 from mininterface.TuiInterface import ReplInterface, TuiInterface
-from mininterface.auxiliary import Value
+from mininterface.TextualInterface import TextualInterface
+from mininterface.auxiliary import FormField
 
 # TODO auto-handle verbosity https://brentyi.github.io/tyro/examples/04_additional/12_counters/ ?
 # TODO example on missing required options.
@@ -53,4 +54,4 @@ def run(config: ConfigClass | None = None,
     return interface
 
 
-__all__ = ["run", "Value"]
+__all__ = ["run", "FormField"]

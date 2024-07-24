@@ -11,17 +11,17 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .auxiliary import FormDict, RedirectText, config_to_dict, config_from_dict, recursive_set_focus, normalize_types
+from .auxiliary import FormDict, RedirectText, config_to_formdict, config_from_dict, flatten, recursive_set_focus, fix_types
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
 class GuiInterface(Mininterface):
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         try:
-            super().__init__(*args, **kwargs)
+            self.window = TkWindow(self)
         except TclError:
             raise InterfaceNotAvailable
-        self.window = TkWindow(self)
         self._always_shown = False
         self._original_stdout = sys.stdout
 
@@ -39,29 +39,29 @@ class GuiInterface(Mininterface):
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
-        return self.window.buttons(text, [("Ok", None)])
+        self.window.buttons(text, [("Ok", None)])
 
     def ask(self, text: str) -> str:
         return self.window.run_dialog({text: ""})[text]
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
-        params_ = config_to_dict(self.args, self.descriptions)
+        params_ = config_to_formdict(self.args, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        data = self.window.run_dialog(params_)
-        config_from_dict(self.args, data)
+        self.window.run_dialog(params_)
+        # NOTE remove config_from_dict(self.args, data)
         return self.args
 
-    def ask_form(self, args: FormDict, title: str = "") -> dict:
+    def ask_form(self, form: FormDict, title: str = "") -> dict:
         """ Prompt the user to fill up whole form.
             :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.Value` that allows you to add descriptions.
-                A checkbox example: {"my label": Value(True, "my description")}
+                The default value might be `mininterface.FormField` that allows you to add descriptions.
+                A checkbox example: {"my label": FormField(True, "my description")}
             :param title: Optional form title.
         """
-        return self.window.run_dialog(args, title=title)
+        return self.window.run_dialog(form, title=title)
 
     def ask_number(self, text: str) -> int:
         return self.window.run_dialog({text: 0})[text]
@@ -121,9 +121,13 @@ class TkWindow(Tk):
         return self.mainloop(lambda: self.validate(formDict, title))
 
     def validate(self, formDict: FormDict, title: str):
-        if data := normalize_types(formDict, self.form.get()):
-            return data
-        return self.run_dialog(formDict, title)
+        if not all(ff.update(ui_value) for ff, ui_value in zip(flatten(formDict), flatten(self.form.get()))):
+            return self.run_dialog(formDict, title)
+
+        # NOTE remove:
+        # if data := fix_types(formDict, self.form.get()):
+        #     return data
+        # return self.run_dialog(formDict, title)
 
     def yes_no(self, text: str, focus_no=True):
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)
