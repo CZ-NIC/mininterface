@@ -4,9 +4,10 @@
 
 Write the program core, do not bother with the input/output.
 
-![hello world example](asset/hello-world.png "A minimal use case")
+![Hello world example: GUI window](asset/hello-world.png "A minimal use case – GUI")
+![Hello world example: TUI fallback](asset/hello-tui.webp "A minimal use case – TUI fallback")
 
-Check out the code that displays such window, just the code you need. No lengthy blocks of code imposed by an external dependency.
+Check out the code that displays such window or its textual fallback.
 
 ```python
 from dataclasses import dataclass
@@ -25,7 +26,22 @@ if __name__ == "__main__":
     print(args.important_number)    # suggested by the IDE with the hint text "This number is very important"
 ```
 
-Or bound the interface to a `with` statement that redirects stdout directly to the window.
+It's all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
+
+```bash
+$ ./hello.py
+usage: My application [-h] [--test | --no-test] [--important-number INT]
+
+Set of options.
+
+╭─ options ──────────────────────────────────────────────────────────╮
+│ -h, --help              show this help message and exit            │
+│ --test, --no-test       My testing flag (default: False)           │
+│ --important-number INT  This number is very important (default: 4) │
+╰────────────────────────────────────────────────────────────────────╯
+```
+
+You get several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
 
 ```python
 with run(Config) as m:
@@ -33,15 +49,14 @@ with run(Config) as m:
     boolean = m.is_yes("Is that alright?")
 ```
 
-TODO img
+![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")
+![The same in terminal'](asset/hello-with-statement-tui.webp "With statement in TUI fallback")
 
-Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml`. Instantly loaded.
+Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. Instantly loaded.
 
 ```yaml
 important_number: 555
 ```
-
-TODO img
 
 - [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
 - [Background](#background)
@@ -50,20 +65,17 @@ TODO img
   * [`mininterface`](#mininterface)
     + [`run(config=None, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
   * [Interfaces](#interfaces)
-    + [`Mininterface(title: str = '')`](#Mininterface-title-str--)
-    + [`alert(self, text: str)`](#alert-self-text-str)
-    + [`ask(self, text: str) -> str`](#ask-self-text-str-str)
-    + [`ask_args(self) -> ~ConfigInstance`](#ask-args-self-configinstance)
-    + [`ask_form(self, args: FormDict, title="") -> int`](#ask-form-self-args-FormDict-title)
-    + [`ask_number(self, text: str) -> int`](#ask-number-self-text-str-int)
-    + [`get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`](#get-args-self-ask-on-empty-cli-true-configinstance)
-    + [`is_no(self, text: str) -> bool`](#is-no-self-text-str-bool)
-    + [`is_yes(self, text: str) -> bool`](#is-yes-self-text-str-bool)
-    + [`parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`](#parse-args-self-config-callable-configinstance-config-file-pathlibpath-none-none-kwargs-configinstance)
+    + [`Mininterface(title: str = '')`](#mininterfacetitle-str--)
+    + [`alert(self, text: str)`](#alertself-text-str)
+    + [`ask(self, text: str) -> str`](#askself-text-str---str)
+    + [`ask_args(self) -> ~ConfigInstance`](#ask_argsself---configinstance)
+    + [`ask_form(self, args: FormDict, title="") -> int`](#ask_formself-args-formdict-title---dict)
+    + [`ask_number(self, text: str) -> int`](#ask_numberself-text-str---int)
+    + [`get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`](#get_argsself-ask_on_empty_clitrue---configinstance)
+    + [`is_no(self, text: str) -> bool`](#is_noself-text-str---bool)
+    + [`is_yes(self, text: str) -> bool`](#is_yesself-text-str---bool)
+    + [`parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`](#parse_argsself-config-callable-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
   * [Standalone](#standalone)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 # Background
 

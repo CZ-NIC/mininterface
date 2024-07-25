@@ -20,6 +20,8 @@ from .FormDict import (ConfigInstance, FormDict, config_to_formdict,
 from .FormField import FormField
 from .Mininterface import Cancelled
 
+# TODO with statement hello world example image is wrong – Textual still does not redirect the output as GuiInterface does
+
 @dataclass
 class DummyWrapper:
     """ Value wrapped, since I do not know how to get it from textual app.
