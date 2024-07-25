@@ -1,40 +1,24 @@
 from ast import literal_eval
-from dataclasses import _MISSING_TYPE, dataclass, field
-from types import UnionType
+from dataclasses import dataclass
 from typing import Any
-from dataclasses import fields
-from textual import events
-from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll, Container
-from textual.widgets import Checkbox, Header, Footer, Input, Label, Welcome, Button, Static
-from textual.binding import Binding
 
-from mininterface import TuiInterface
-from .common import InterfaceNotAvailable
+try:
+    from textual import events
+    from textual.app import App, ComposeResult
+    from textual.binding import Binding
+    from textual.containers import VerticalScroll
+    from textual.widgets import Button, Checkbox, Footer, Header, Input, Label
+except ImportError:
+    from mininterface.common import InterfaceNotAvailable
+    raise InterfaceNotAvailable
 
-from .Mininterface import Cancelled, Mininterface
-from .auxiliary import ConfigInstance, FormDict, FormField, config_from_dict, config_to_formdict, dict_to_formdict, flatten
+from .TextInterface import TextInterface
 
-from textual.widgets import Checkbox, Input
-
-# TODO
-# 1. TuiInterface -> TextInterface.
-# 1. TextualInterface inherits from TextInterface.
-# 2. TextualInterface is the default for TuiInterface
-# Add to docs
-
-@dataclass
-class FormFieldTextual(FormField):
-    """ Bridge between the values given in CLI, TUI and real needed values (str to int conversion etc). """
-
-    def get_widget(self):
-        if self.annotation is bool or not self.annotation and self.val in [True, False]:
-            o = Checkbox(self.name, self.val)
-        else:
-            o = Input(str(self.val), placeholder=self.name or "")
-        o._link = self  # The Textual widgets need to get back to this value
-        return o
-
+from .auxiliary import flatten
+from .FormDict import (ConfigInstance, FormDict, config_to_formdict,
+                       dict_to_formdict)
+from .FormField import FormField
+from .Mininterface import Cancelled
 
 @dataclass
 class DummyWrapper:
@@ -43,7 +27,7 @@ class DummyWrapper:
     val: Any
 
 
-class TextualInterface(TuiInterface):
+class TextualInterface(TextInterface):
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -54,15 +38,14 @@ class TextualInterface(TuiInterface):
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
-        params_ = config_to_formdict(self.args, self.descriptions, factory=FormFieldTextual)
+        params_ = config_to_formdict(self.args, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
         TextualApp.run_dialog(TextualApp(), params_)
         return self.args
 
     def ask_form(self, form: FormDict, title: str = "") -> dict:
-        TextualApp.run_dialog(TextualApp(), dict_to_formdict(form, factory=FormFieldTextual), title)
-        return form
+        return TextualApp.run_dialog(TextualApp(), dict_to_formdict(form), title)
 
     # NOTE we should implement better, now the user does not know it needs an int
     # def ask_number(self, text):
@@ -94,28 +77,34 @@ class TextualApp(App[bool | None]):
         self.widgets = None
         self.focused_i: int = 0
 
-    def setup(self, title, widgets, focused_i):
+    @staticmethod
+    def get_widget(ff:FormField) -> Checkbox | Input:
+        """ Wrap FormField to a textual widget. """
 
-        self.focused_i = focused_i
-        return self
+        if ff.annotation is bool or not ff.annotation and ff.val in [True, False]:
+            o = Checkbox(ff.name, ff.val)
+        else:
+            o = Input(str(ff.val), placeholder=ff.name or "")
+        o._link = ff  # The Textual widgets need to get back to this value
+        return o
 
     # Why class method? I do not know how to re-create the dialog if needed.
     @classmethod
-    def run_dialog(cls, window, formDict: FormDict, title: str = "") -> None:  # TODO changed from dict, change everywhere
+    def run_dialog(cls, window: "TextualApp", formDict: FormDict, title: str = "") -> FormDict:
         if title:
             window.title = title
 
         # NOTE Sections (~ nested dicts) are not implemented, they flatten
-        fd: dict[str, FormFieldTextual] = formDict
-        widgets: list[Checkbox | Input] = [f.get_widget() for f in flatten(fd)]
+        widgets: list[Checkbox | Input] = [cls.get_widget(f) for f in flatten(formDict)]
         window.widgets = widgets
 
         if not window.run():
             raise Cancelled
 
         # validate and store the UI value → FormField value → original value
-        if not all(field._link.update(field.value) for field in widgets):
+        if not FormField.submit_values((field._link, field.value) for field in widgets):
             return cls.run_dialog(TextualApp(), formDict, title)
+        return formDict
 
     def compose(self) -> ComposeResult:
         if self.title:
@@ -123,7 +112,6 @@ class TextualApp(App[bool | None]):
         yield Footer()
         with VerticalScroll():
             for fieldt in self.widgets:
-                fieldt: FormFieldTextual
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
                 yield fieldt

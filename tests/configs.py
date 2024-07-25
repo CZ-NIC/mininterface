@@ -31,13 +31,19 @@ class NestedMissingConfig:
 
 
 @dataclass
+class FurtherConfig4:
+    flag: bool = False
+@dataclass
 class FurtherConfig3:
-    severity: int | None = None
-    """ Put there a number or left empty """
+    deep: FurtherConfig4
+    numb: int = 0
 
 @dataclass
 class OptionalFlagConfig:
     further: FurtherConfig3
+    severity: int | None = None
+    """ This number is optional """
+
     msg: str | None = None
     """ An example message """
 

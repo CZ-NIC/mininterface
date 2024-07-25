@@ -3,25 +3,34 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Type
 from unittest.mock import patch
 
+
+from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
+from mininterface.TextInterface import ReplInterface, TextInterface
+from mininterface.FormField import FormField
+
+# Import optional interfaces
 try:
     from mininterface.GuiInterface import GuiInterface
 except ImportError:
     if TYPE_CHECKING:
-        pass
+        pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
     else:
         GuiInterface = None
+try:
+    from mininterface.TextualInterface import TextualInterface
+except ImportError:
+    TextualInterface = None
 
-from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
-from mininterface.TuiInterface import ReplInterface, TuiInterface
-from mininterface.TextualInterface import TextualInterface
-from mininterface.auxiliary import FormField
 
 # TODO auto-handle verbosity https://brentyi.github.io/tyro/examples/04_additional/12_counters/ ?
 # TODO example on missing required options.
 
+class TuiInterface(TextualInterface or TextInterface):
+    pass
+
 
 def run(config: ConfigClass | None = None,
-        interface: Type[Mininterface] = GuiInterface or ReplInterface,  # NOTE we shuold use TuiInterface as a fallback
+        interface: Type[Mininterface] = GuiInterface or TuiInterface,
         **kwargs) -> Mininterface:
     """
     Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically.

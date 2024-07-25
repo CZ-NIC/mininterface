@@ -1,6 +1,9 @@
 import sys
 from typing import Any, Callable
 
+from .auxiliary import flatten
+
+
 try:
     from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk
     from tktooltip import ToolTip
@@ -11,7 +14,9 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .auxiliary import FormDict, RedirectText, config_to_formdict, config_from_dict, flatten, recursive_set_focus, fix_types
+from .FormDict import FormDict, config_to_formdict
+from .auxiliary import RedirectText, recursive_set_focus
+from .FormField import FormField
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
@@ -20,7 +25,7 @@ class GuiInterface(Mininterface):
         super().__init__(*args, **kwargs)
         try:
             self.window = TkWindow(self)
-        except TclError:
+        except TclError:  # I am not sure whether there might be reasons the Tkinter is not available even when installed
             raise InterfaceNotAvailable
         self._always_shown = False
         self._original_stdout = sys.stdout
@@ -46,11 +51,10 @@ class GuiInterface(Mininterface):
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
-        params_ = config_to_formdict(self.args, self.descriptions)
+        formDict = config_to_formdict(self.args, self.descriptions)
 
-        # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        self.window.run_dialog(params_)
-        # NOTE remove config_from_dict(self.args, data)
+        # formDict automatically fetches the edited values back to the ConfigInstance
+        self.window.run_dialog(formDict)
         return self.args
 
     def ask_form(self, form: FormDict, title: str = "") -> dict:
@@ -93,7 +97,7 @@ class TkWindow(Tk):
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
-    def run_dialog(self, formDict: FormDict, title: str = "") -> dict:
+    def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
@@ -108,10 +112,9 @@ class TkWindow(Tk):
                          )
         self.form.pack()
 
-        # Set the enter and exit options
+        # Set the submit and exit options
         self.form.button.config(command=self._ok)
-        # allow Enter for single field, otherwise Ctrl+Enter
-        tip, keysym = ("Ctrl+Enter", '<Control-Return>') if len(formDict) > 1 else ("Enter", "<Return>")
+        tip, keysym = ("Enter", "<Return>")
         ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
         self._bind_event(keysym, self._ok)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
@@ -120,14 +123,10 @@ class TkWindow(Tk):
         recursive_set_focus(self.form)
         return self.mainloop(lambda: self.validate(formDict, title))
 
-    def validate(self, formDict: FormDict, title: str):
-        if not all(ff.update(ui_value) for ff, ui_value in zip(flatten(formDict), flatten(self.form.get()))):
-            return self.run_dialog(formDict, title)
-
-        # NOTE remove:
-        # if data := fix_types(formDict, self.form.get()):
-        #     return data
-        # return self.run_dialog(formDict, title)
+    def validate(self, formDict: FormDict, title: str) -> FormDict:
+        if not FormField.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
+             return self.run_dialog(formDict, title)
+        return formDict
 
     def yes_no(self, text: str, focus_no=True):
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)

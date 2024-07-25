@@ -2,10 +2,12 @@ import sys
 from unittest import TestCase, main
 from unittest.mock import patch
 
-from mininterface import Mininterface, TuiInterface, FormField, run
+from mininterface import Mininterface, TextInterface, run
+from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
-from mininterface.auxiliary import config_from_dict, config_to_formdict, fix_types
+from mininterface.FormDict import config_to_formdict, formdict_repr
 from configs import OptionalFlagConfig, SimpleConfig, NestedDefaultedConfig, NestedMissingConfig
+from mininterface.auxiliary import flatten
 
 SYS_ARGV = None  # To be redirected
 
@@ -62,7 +64,7 @@ class TestAbstract(TestCase):
         m0 = run(NestedDefaultedConfig, interface=Mininterface, prog="My application")
         self.assertEqual(0, m0.ask_number("Test input"))
 
-        m1: TuiInterface = run(NestedDefaultedConfig, interface=TuiInterface, prog="My application")
+        m1: TextInterface = run(NestedDefaultedConfig, interface=TextInterface, prog="My application")
         with patch('builtins.input', return_value=5):
             self.assertEqual(5, m1.ask_number("Number"))
         with patch('builtins.input', side_effect=["invalid", 1]):
@@ -95,61 +97,67 @@ class TestAbstract(TestCase):
                        'severity': FormField('', 'integer or none ', annotation=int | None),
                        'msg': FormField('', 'string or none', annotation=str | None)}}
         data = {'': {'test': False, 'numb': 4, 'severity': 'fd', 'msg': ''}}
-        self.assertFalse(fix_types(origin, data))
+
+        self.assertFalse(FormField.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': ''}}
-        self.assertTrue(fix_types(origin, data))
+        self.assertTrue(FormField.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '', 'msg': ''}}
-        self.assertTrue(fix_types(origin, data))
+        self.assertTrue(FormField.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': 'Text'}}
-        self.assertTrue(fix_types(origin, data))
+        self.assertTrue(FormField.submit(origin, data))
 
         # check value is kept if revision needed
         self.assertEqual(False, origin[""]["test"].val)
         data = {'': {'test': True, 'numb': 100, 'severity': '1', 'msg': 1}}
-        self.assertFalse(fix_types(origin, data))
+        self.assertFalse(FormField.submit(origin, data))
         self.assertEqual(True, origin[""]["test"].val)
         self.assertEqual(100, origin[""]["numb"].val)
 
         # Check flat FormDict
         origin = {'test': FormField(False, 'Testing flag ', annotation=None),
                   'severity': FormField('', 'integer or none ', annotation=int | None),
-                  'nested': {'test2': 4}}
+                  'nested': {'test2': FormField(4, '')}}
+                #   'nested': {'test2': 4}} TODO, allow combined FormDict
         data = {'test': True, 'severity': "", 'nested': {'test2': 8}}
-        self.assertTrue(fix_types(origin, data))
+        self.assertTrue(FormField.submit(origin, data))
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
-        self.assertFalse(fix_types(origin, data))
+        self.assertFalse(FormField.submit(origin, data))
 
     def test_config_instance_dict_conversion(self):
-        m: TuiInterface = run(OptionalFlagConfig, interface=TuiInterface, prog="My application")
+        m: TextInterface = run(OptionalFlagConfig, interface=TextInterface, prog="My application")
         args1: OptionalFlagConfig = m.args
 
-        self.assertIsNone(args1.further.severity)
+        self.assertIsNone(args1.severity)
 
-        dict1 = config_to_formdict(args1, m.descriptions)
-        print(dict1)
-        return # TODO example was changes, add descriptions
-        self.assertEqual({'': {'msg': FormField('', '', str | None),
-                               'msg2': FormField('Default text', '', None)},
-                          'further': {'severity': FormField('', '', int | None)}}, dict1)
-        self.assertIsNone(args1.further.severity)
+        fd = config_to_formdict(args1, m.descriptions)
+        ui = formdict_repr(fd)
+        self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
+                          'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
+        self.assertIsNone(args1.severity)
 
         # do the same as if the tkinter_form was just submitted without any changes
-        dict1 = fix_types(dict1, {'': {'msg': "",
-                                             'msg2': 'Default text'},
-                                        'further': {'severity': ''}})
+        FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        self.assertIsNone(args1.severity)
 
-        config_from_dict(args1, dict1)
-        self.assertIsNone(args1.further.severity)
-        dict1[""]["msg2"] = "Another"
-        dict1["further"]["severity"] = 5
+        # changes in the UI should not directly affect the original
+        ui[""]["msg2"] = "Another"
+        ui[""]["severity"] = 5
+        ui["further"]["deep"]["flag"] = True
         self.assertEqual("Default text", args1.msg2)
 
-        config_from_dict(args1, dict1)
+        # on UI submit, the original is affected
+        FormField.submit_values(zip(flatten(fd), flatten(ui)))
         self.assertEqual("Another", args1.msg2)
-        self.assertEqual(5, args1.further.severity)
+        self.assertEqual(5, args1.severity)
+        self.assertTrue(args1.further.deep.flag)
+
+        # Another UI changes, makes None from an int
+        ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
+        FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        self.assertIsNone(args1.severity)
 
     def test_ask_form(self):
-        m = TuiInterface()
+        m = TextInterface()
         dict1 = {"my label": FormField(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.ask_form(dict1)

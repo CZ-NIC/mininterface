@@ -1,9 +1,11 @@
 from pprint import pprint
-from .auxiliary import ConfigInstance, FormDict, config_to_formdict, config_from_dict
+
+from .FormDict import ConfigInstance, FormDict
 from .Mininterface import Cancelled, Mininterface
 
 
-class TuiInterface(Mininterface):
+class TextInterface(Mininterface):
+    """ Plain text fallback interface. No dependencies. """
 
     def alert(self, text: str):
         """ Display text and let the user hit any key. """
@@ -61,7 +63,7 @@ class TuiInterface(Mininterface):
         return self.ask(text=text + " y/[n]").lower() in ("n", "no", "")
 
 
-class ReplInterface(TuiInterface):
+class ReplInterface(TextInterface):
     """ Same as the base TuiInterface, except it starts the REPL. """
 
     def __getattr__(self, name):

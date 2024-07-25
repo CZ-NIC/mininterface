@@ -140,6 +140,8 @@ Several interfaces exist:
 * `Mininterface` – The base interface. Does not require any user input and hence is suitable for headless testing.
 * `GuiInterface` – A tkinter window.
 * `TuiInterface` – An interactive terminal.
+  * `TextualInterface` – If [textual](https://github.com/Textualize/textual) installed, rich interface is used.
+  * `TextInterface` – Plain text only interface with no dependency as a fallback.
 * `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
 You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_args` if needed.

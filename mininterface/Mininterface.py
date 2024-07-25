@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import yaml
 from tyro.extras import get_parser
 
-from .auxiliary import (ConfigClass, ConfigInstance, FormDict, get_args_allow_missing,
-                        get_descriptions)
+from .FormDict import ConfigClass, ConfigInstance, FormDict, get_args_allow_missing
+from .auxiliary import get_descriptions
 
 logger = logging.getLogger(__name__)
 

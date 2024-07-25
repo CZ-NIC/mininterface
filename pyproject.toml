@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.4.2"
+version = "0.4.3"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
@@ -19,7 +19,7 @@ envelope = "*"
 requests = "*"
 textual = "*"
 tkinter-tooltip = "*"
-tkinter_form = "*"
+tkinter_form = "0.1.5.2"
 
 [tool.poetry.scripts]
 mininterface = "mininterface.__main__:main"
