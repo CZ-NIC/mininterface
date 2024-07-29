@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from dataclasses import MISSING
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Generic, Type
 
 import yaml
 from tyro.extras import get_parser
@@ -19,7 +20,7 @@ class Cancelled(SystemExit):
     pass
 
 
-class Mininterface:
+class Mininterface(Generic[ConfigInstance]):
     """ The base interface.
         Does not require any user input and hence is suitable for headless testing.
     """
@@ -54,7 +55,12 @@ class Mininterface:
         print("Asking the args", self.args)
         return self.args
 
-    def ask_form(self, data: FormDict, title: str = "") -> dict:
+    def ask_number(self, text: str) -> int:
+        """ Prompt the user to input a number. Empty input = 0. """
+        print("Asking number", text)
+        return 0
+
+    def form(self, data: FormDict, title: str = "") -> dict:
         """ Prompt the user to fill up whole form.
             :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
@@ -64,11 +70,6 @@ class Mininterface:
         print(f"Asking the form {title}", data)
         return data  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
 
-    def ask_number(self, text: str) -> int:
-        """ Prompt the user to input a number. Empty input = 0. """
-        print("Asking number", text)
-        return 0
-
     def get_args(self, ask_on_empty_cli=True) -> ConfigInstance:
         """ Returns whole configuration (previously fetched from CLI and config file by parse_args).
             If program was launched with no arguments (empty CLI), invokes self.ask_args() to edit the fields. """
@@ -77,13 +78,14 @@ class Mininterface:
             return self.ask_args()
         return self.args
 
-    def parse_args(self, config: ConfigClass,
+    def parse_args(self, config: Type[ConfigInstance],
                    config_file: Path | None = None,
                    **kwargs) -> ConfigInstance:
         """ Parse CLI arguments, possibly merged from a config file.
 
         :param config: Class with the configuration.
-        :param config_file: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.
+        :param config_file: File to load YAML to be merged with the configuration.
+            You do not have to re-define all the settings in the config file, you can choose a few.
         :param **kwargs The same as for argparse.ArgumentParser.
         :return: Configuration namespace.
         """

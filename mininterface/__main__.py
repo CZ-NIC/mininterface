@@ -1,11 +1,6 @@
 from dataclasses import dataclass
-from typing import List
-
-from .GuiInterface import GuiInterface
-
 from . import run
 
-from tyro.conf import UseCounterAction, UseAppendAction
 __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
 
 

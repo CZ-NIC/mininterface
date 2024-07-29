@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Type
 from unittest.mock import patch
 
 
-from mininterface.Mininterface import ConfigClass, ConfigInstance, Mininterface
+from mininterface.Mininterface import ConfigInstance, Mininterface
 from mininterface.TextInterface import ReplInterface, TextInterface
 from mininterface.FormField import FormField
 
@@ -29,10 +29,11 @@ class TuiInterface(TextualInterface or TextInterface):
     pass
 
 
-def run(config: ConfigClass | None = None,
+def run(config: Type[ConfigInstance] | None = None,
         interface: Type[Mininterface] = GuiInterface or TuiInterface,
-        **kwargs) -> Mininterface:
+        **kwargs) -> Mininterface[ConfigInstance]:
     """
+    Main access.
     Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically.
     We prefer the graphical one, regressed to a text interface on a machine without display.
     Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
@@ -50,15 +51,22 @@ def run(config: ConfigClass | None = None,
     """
     # Build the interface
     prog = kwargs.get("prog") or sys.argv[0]
-    # try:
     interface: GuiInterface | Mininterface = interface(prog)
-    # except InterfaceNotAvailable:  # Fallback to a different interface
-    #     interface = TuiInterface(prog)
 
     # Load configuration from CLI and a config file
     if config:
         cf = Path(sys.argv[0]).with_suffix(".yaml")
         interface.parse_args(config, cf if cf.exists() and not kwargs.get("default") else None, **kwargs)
+
+    # NOTE draft – move the functionality inside Mininterface?
+    # What will be the most used params?
+    # run(config: Type[ConfigInstance],
+    #     prog="merge to kwargs later",
+    #     config_file:Path|str="",
+    #     interface: Type[Mininterface] = GuiInterface or TuiInterface,
+    #     **kwargs)
+    # title = prog or sys.argv
+    # Mininterface(title, configClass, configFile, **kwargs)
 
     return interface
 

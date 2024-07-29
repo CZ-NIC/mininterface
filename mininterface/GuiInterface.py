@@ -57,7 +57,7 @@ class GuiInterface(Mininterface):
         self.window.run_dialog(formDict)
         return self.args
 
-    def ask_form(self, form: FormDict, title: str = "") -> dict:
+    def form(self, form: FormDict, title: str = "") -> dict:
         """ Prompt the user to fill up whole form.
             :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.

@@ -160,7 +160,7 @@ class TestAbstract(TestCase):
         m = TextInterface()
         dict1 = {"my label": FormField(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
-            m.ask_form(dict1)
+            m.form(dict1)
         self.assertEqual({"my label": FormField(True, "my description"), "nested": {"inner": "another"}}, dict1)
 
 

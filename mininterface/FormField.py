@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 try:
     from tkinter_form import Value
 except ImportError:
+    # TODO put into GuiInterface create_ui(ff: FormField)
     @dataclass
     class Value:
         """ This class helps to enrich the field with a description. """

@@ -26,9 +26,9 @@ class TextInterface(Mininterface):
         #   params_ = dataclass_to_dict(self.args, self.descriptions)
         #   data = FormDict → dict self.window.run_dialog(params_)
         #   dict_to_dataclass(self.args, params_)
-        return self.ask_form(self.args)
+        return self.form(self.args)
 
-    def ask_form(self, form: FormDict) -> dict:
+    def form(self, form: FormDict) -> dict:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         print("Access `v` (as var) and change values. Then (c)ontinue.")
         pprint(form)

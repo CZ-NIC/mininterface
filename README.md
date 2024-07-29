@@ -7,7 +7,7 @@ Write the program core, do not bother with the input/output.
 ![Hello world example: GUI window](asset/hello-world.png "A minimal use case – GUI")
 ![Hello world example: TUI fallback](asset/hello-tui.webp "A minimal use case – TUI fallback")
 
-Check out the code that displays such window or its textual fallback.
+Check out the code, which is surprisingly short, that displays such a window or its textual fallback.
 
 ```python
 from dataclasses import dataclass
@@ -16,17 +16,16 @@ from mininterface import run
 @dataclass
 class Config:
     """Set of options."""
-    test: bool = False
-    """My testing flag"""
-    important_number: int = 4
-    """This number is very important"""
+    test: bool = False  # My testing flag
+    important_number: int = 4  # This number is very important
 
 if __name__ == "__main__":
-    args: Config = run(Config, prog="My application").get_args()
-    print(args.important_number)    # suggested by the IDE with the hint text "This number is very important"
+    args = run(Config, prog="My application").get_args()
+    print(args.important_number)  # suggested by the IDE with the hint text "This number is very important"
 ```
 
-It's all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
+## You got CLI
+It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
 
 ```bash
 $ ./hello.py
@@ -41,7 +40,15 @@ Set of options.
 ╰────────────────────────────────────────────────────────────────────╯
 ```
 
-You get several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
+## You got config file management
+Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. They are seamlessly taken as defaults.
+
+```yaml
+important_number: 555
+```
+
+## You got dialogues
+Check out several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
 
 ```python
 with run(Config) as m:
@@ -52,12 +59,7 @@ with run(Config) as m:
 ![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")
 ![The same in terminal'](asset/hello-with-statement-tui.webp "With statement in TUI fallback")
 
-Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. Instantly loaded.
-
-```yaml
-important_number: 555
-```
-
+# Contents
 - [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
 - [Background](#background)
 - [Installation](#installation)
@@ -66,15 +68,15 @@ important_number: 555
     + [`run(config=None, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
   * [Interfaces](#interfaces)
     + [`Mininterface(title: str = '')`](#mininterfacetitle-str--)
-    + [`alert(self, text: str)`](#alertself-text-str)
-    + [`ask(self, text: str) -> str`](#askself-text-str---str)
-    + [`ask_args(self) -> ~ConfigInstance`](#ask_argsself---configinstance)
-    + [`ask_form(self, args: FormDict, title="") -> int`](#ask_formself-args-formdict-title---dict)
-    + [`ask_number(self, text: str) -> int`](#ask_numberself-text-str---int)
-    + [`get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`](#get_argsself-ask_on_empty_clitrue---configinstance)
-    + [`is_no(self, text: str) -> bool`](#is_noself-text-str---bool)
-    + [`is_yes(self, text: str) -> bool`](#is_yesself-text-str---bool)
-    + [`parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`](#parse_argsself-config-callable-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
+    + [`alert(text: str)`](#alerttext-str)
+    + [`ask(text: str) -> str`](#asktext-str---str)
+    + [`ask_args() -> ConfigInstance`](#ask_args--configinstance)
+    + [`ask_number(text: str) -> int`](#ask_numbertext-str---int)
+    + [`form(args: FormDict, title="") -> int`](#formargs-formdict-title---dict)
+    + [`get_args(ask_on_empty_cli=True) -> ~ConfigInstance`](#get_argsask_on_empty_clitrue---configinstance)
+    + [`is_no(text: str) -> bool`](#is_notext-str---bool)
+    + [`is_yes(text: str) -> bool`](#is_yestext-str---bool)
+    + [`parse_args(config: Type[ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ConfigInstance`](#parse_argsconfig-type-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
   * [Standalone](#standalone)
 
 # Background
@@ -136,7 +138,7 @@ $./program.py --further.host example.net
 Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically. We prefer the graphical one, regressed to a text interface on a machine without display.
 Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly with the default from a config file if such exists. It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
-* `config:ConfigClass`: Dataclass with the configuration.
+* `config:Type[ConfigInstance]`: Dataclass with the configuration.
 * `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
 * `**kwargs`: The same as for [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html).
 * Returns: `interface` Interface used.
@@ -165,27 +167,27 @@ with TuiInterface("My program") as m:
 
 ### `Mininterface(title: str = '')`
 Initialize.
-### `alert(self, text: str)`
+### `alert(text: str)`
 Prompt the user to confirm the text.
-### `ask(self, text: str) -> str`
+### `ask(text: str) -> str`
 Prompt the user to input a text.
-### `ask_args(self) -> ~ConfigInstance`
+### `ask_args() -> ConfigInstance`
 Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_args.)
-### `ask_form(self, args: FormDict, title="") -> dict`
+### `form(args: FormDict, title="") -> dict`
 Prompt the user to fill up whole form.
 * `args`: Dict of `{labels: default value}`. The form widget infers from the default value type.
   The dict can be nested, it can contain a subgroup.
   The default value might be `mininterface.FormField` that allows you to add descriptions.
   A checkbox example: `{"my label": FormField(True, "my description")}`
 * `title`: Optional form title.
-### `ask_number(self, text: str) -> int`
+### `ask_number(text: str) -> int`
 Prompt the user to input a number. Empty input = 0.
-### `get_args(self, ask_on_empty_cli=True) -> ~ConfigInstance`
+### `get_args(ask_on_empty_cli=True) -> ConfigInstance`
 Returns whole configuration (previously fetched from CLI and config file by parse_args).
 If program was launched with no arguments (empty CLI), invokes self.ask_args() to edit the fields.
-### `is_no(self, text: str) -> bool`
+### `is_no(text: str) -> bool`
 Display confirm box, focusing no.
-### `is_yes(self, text: str) -> bool`
+### `is_yes(text: str) -> bool`
 Display confirm box, focusing yes.
 
 ```python
@@ -193,7 +195,7 @@ m = run(prog="My program")
 print(m.ask_yes("Is it true?"))  # True/False
 ```
 
-### `parse_args(self, config: Callable[..., ~ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`
+### `parse_args(config: Type[ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`
 Parse CLI arguments, possibly merged from a config file.
 * `config`: Dataclass with the configuration.
 * `config_file`: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.

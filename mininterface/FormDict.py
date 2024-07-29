@@ -3,7 +3,7 @@
 """
 import logging
 from argparse import Action, ArgumentParser
-from typing import Callable, Optional, TypeVar, Union, get_type_hints
+from typing import Callable, Optional, Type, TypeVar, Union, get_type_hints
 from unittest.mock import patch
 
 from tyro import cli
@@ -14,7 +14,7 @@ from .FormField import FormField
 logger = logging.getLogger(__name__)
 
 ConfigInstance = TypeVar("ConfigInstance")
-ConfigClass = Callable[..., ConfigInstance]
+ConfigClass = Type[ConfigInstance]
 FormDict = dict[str, Union[FormField, 'FormDict']]
 """ Nested form that can have descriptions (through FormField) instead of plain values. """
 
@@ -71,7 +71,7 @@ def config_to_formdict(args: ConfigInstance, descr: dict, _path="") -> FormDict:
     return params
 
 
-def get_args_allow_missing(config: ConfigClass, kwargs: dict, parser: ArgumentParser):
+def get_args_allow_missing(config: Type[ConfigInstance], kwargs: dict, parser: ArgumentParser) -> ConfigInstance:
     """ Fetch missing required options in GUI. """
     # On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
     # the error message function. Then, we reconstruct the missing options.
@@ -85,9 +85,22 @@ def get_args_allow_missing(config: ConfigClass, kwargs: dict, parser: ArgumentPa
             return original_error(self, message)
         eavesdrop = message
         raise SystemExit(2)  # will be catched
+
+    # Set args to determine whether to use sys.argv.
+    # Why settings args? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
+    # as sys.argv is non-related there.
+    try:
+        # Note wherease `"get_ipython" in globals()` returns True in Jupyter, it is still False
+        # in a script a Jupyter cell runs. Hence we must put here this lengthty statement.
+        global get_ipython
+        get_ipython()
+    except:
+        args = None
+    else:
+        args = []
     try:
         with patch.object(TyroArgumentParser, 'error', custom_error):
-            return cli(config, **kwargs)
+            return cli(config, args=args, **kwargs)
     except BaseException as e:
         if hasattr(e, "code") and e.code == 2 and eavesdrop:  # Some arguments are missing. Determine which.
             for arg in eavesdrop.partition(":")[2].strip().split(", "):

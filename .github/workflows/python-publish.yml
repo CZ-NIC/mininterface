@@ -2,8 +2,8 @@ name: Upload Python Package
 on:
   push:
     tags:
-      - '[0-9].[0-9].[0-9]'
-      - '[0-9].[0-9].[0-9]-rc.[0-9]'
+      - '[0-9]+\.[0-9]+\.[0-9]+'
+      - '[0-9]+\.[0-9]+\.[0-9]+-?rc\.?[0-9]+'
 
 jobs:
   pypi:
@@ -13,7 +13,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: python3 -m pip install --upgrade build && python3 -m build
+      - name: Replace media paths in README.md
+        run: sed -E 's#(\]\((asset/[a-zA-Z0-9._-]+))#](https://github.com/CZ-NIC/mininterface/blob/main/\2?raw=True#g' README.md | less > README.md.tmp && mv README.md.tmp README.md
+      - name: Build the package
+        run: python3 -m pip install --upgrade build && python3 -m build
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@v1.8.10
         with:

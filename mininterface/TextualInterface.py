@@ -36,7 +36,7 @@ class TextualInterface(TextInterface):
         TextualButtonApp().buttons(text, [("Ok", None)]).run()
 
     def ask(self, text: str = None):
-        return self.ask_form({text: ""})[text]
+        return self.form({text: ""})[text]
 
     def ask_args(self) -> ConfigInstance:
         """ Display a window form with all parameters. """
@@ -46,7 +46,7 @@ class TextualInterface(TextInterface):
         TextualApp.run_dialog(TextualApp(), params_)
         return self.args
 
-    def ask_form(self, form: FormDict, title: str = "") -> dict:
+    def form(self, form: FormDict, title: str = "") -> dict:
         return TextualApp.run_dialog(TextualApp(), dict_to_formdict(form), title)
 
     # NOTE we should implement better, now the user does not know it needs an int
