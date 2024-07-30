@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING, Type
 from unittest.mock import patch
 
 
-from mininterface.Mininterface import ConfigInstance, Mininterface
-from mininterface.TextInterface import ReplInterface, TextInterface
-from mininterface.FormField import FormField
+from .Mininterface import ConfigInstance, Mininterface
+from .TextInterface import ReplInterface, TextInterface
+from .FormField import FormField
+from .common import InterfaceNotAvailable
 
 # Import optional interfaces
 try:
@@ -34,24 +35,33 @@ def run(config: Type[ConfigInstance] | None = None,
         **kwargs) -> Mininterface[ConfigInstance]:
     """
     Main access.
-    Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically.
-    We prefer the graphical one, regressed to a text interface on a machine without display.
+    Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
+    with the preference of the graphical one, regressed to a text interface for machines without display.
     Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
     with the default from a config file if such exists.
-    It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
+    It searches the config file in the current working directory,
+    with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
     :param config: Dataclass with the configuration.
-    :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
+    :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the Tui.
     :param **kwargs The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
     :return: Interface used.
 
-    Undocumented: The `config` may be function as well. We invoke its paramters.
-    However, Mininterface.args stores the output of the function instead of the Argparse namespace
-    and methods like `Mininterface.ask_args()` will work unpredictibly..
+    Undocumented: The `config` may be function as well. We invoke its parameters.
+    However, as Mininterface.args stores the output of the function instead of the Argparse namespace,
+    methods like `Mininterface.ask_args()` will work unpredictibly.
+    Also, the config file seems to be fetched only for positional (missing) parameters,
+    and ignored for keyword (filled) parameters.
+    It seems to be this is the tyro's deal and hence it might start working any time.
+    If not, we might help it this way:
+        `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
     """
     # Build the interface
     prog = kwargs.get("prog") or sys.argv[0]
-    interface: GuiInterface | Mininterface = interface(prog)
+    try:
+        interface = interface(prog)
+    except InterfaceNotAvailable:  # Fallback to a different interface
+        interface = TuiInterface(prog)
 
     # Load configuration from CLI and a config file
     if config:

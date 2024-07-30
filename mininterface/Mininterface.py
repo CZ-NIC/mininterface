@@ -3,7 +3,7 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import MISSING
 from pathlib import Path
-from types import SimpleNamespace
+from types import FunctionType, SimpleNamespace
 from typing import Generic, Type
 
 import yaml
@@ -104,7 +104,9 @@ class Mininterface(Generic[ConfigInstance]):
         # Load configuration from CLI
         parser: ArgumentParser = get_parser(config, **kwargs)
         self.descriptions = get_descriptions(parser)
-        self.args = get_args_allow_missing(config, kwargs, parser)
+        # Why `or self.args`? If Config is not a dataclass but a function, it has no attributes.
+        # Still, we want to prevent error raised in `ask_args()` if self.args would have been set to None.
+        self.args = get_args_allow_missing(config, kwargs, parser) or self.args
         return self.args
 
     def is_yes(self, text: str) -> bool:

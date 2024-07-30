@@ -12,15 +12,16 @@ except ImportError:
     from mininterface.common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
-from .TextInterface import TextInterface
-
 from .auxiliary import flatten
 from .FormDict import (ConfigInstance, FormDict, config_to_formdict,
                        dict_to_formdict)
 from .FormField import FormField
 from .Mininterface import Cancelled
+from .Redirectable import Redirectable
+from .TextInterface import TextInterface
 
-# TODO with statement hello world example image is wrong – Textual still does not redirect the output as GuiInterface does
+# TODO with statement hello world example image is wrong (Textual already redirects the output as GuiInterface does)
+
 
 @dataclass
 class DummyWrapper:
@@ -29,11 +30,11 @@ class DummyWrapper:
     val: Any
 
 
-class TextualInterface(TextInterface):
+class TextualInterface(Redirectable, TextInterface):
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
-        TextualButtonApp().buttons(text, [("Ok", None)]).run()
+        TextualButtonApp(self).buttons(text, [("Ok", None)]).run()
 
     def ask(self, text: str = None):
         return self.form({text: ""})[text]
@@ -53,10 +54,10 @@ class TextualInterface(TextInterface):
     # def ask_number(self, text):
 
     def is_yes(self, text):
-        return TextualButtonApp().yes_no(text, False).val
+        return TextualButtonApp(self).yes_no(text, False).val
 
     def is_no(self, text):
-        return TextualButtonApp().yes_no(text, True).val
+        return TextualButtonApp(self).yes_no(text, True).val
 
 
 class TextualApp(App[bool | None]):
@@ -73,14 +74,15 @@ class TextualApp(App[bool | None]):
         ("escape", "exit", "Cancel"),
     ]
 
-    def __init__(self):
+    def __init__(self, interface: TextualInterface):
         super().__init__()
         self.title = ""
         self.widgets = None
         self.focused_i: int = 0
+        self.interface = interface
 
     @staticmethod
-    def get_widget(ff:FormField) -> Checkbox | Input:
+    def get_widget(ff: FormField) -> Checkbox | Input:
         """ Wrap FormField to a textual widget. """
 
         if ff.annotation is bool or not ff.annotation and ff.val in [True, False]:
@@ -112,6 +114,8 @@ class TextualApp(App[bool | None]):
         if self.title:
             yield Header()
         yield Footer()
+        if text := self.interface._redirected.join():
+            yield Label(text, id="buffered_text")
         with VerticalScroll():
             for fieldt in self.widgets:
                 if isinstance(fieldt, Input):
@@ -158,6 +162,14 @@ class TextualButtonApp(App):
         grid-gutter: 2;
         padding: 2;
     }
+    #buffered_text {
+        width: 100%;
+        height: 100%;
+        column-span: 2;
+        # content-align: center bottom;
+        text-style: bold;
+    }
+
     #question {
         width: 100%;
         height: 100%;
@@ -175,13 +187,14 @@ class TextualButtonApp(App):
         ("escape", "exit", "Cancel"),
     ]
 
-    def __init__(self):
+    def __init__(self, interface: TextualInterface):
         super().__init__()
         self.title = ""
         self.text: str = ""
         self._buttons = None
         self.focused_i: int = 0
         self.values = {}
+        self.interface = interface
 
     def yes_no(self, text: str, focus_no=True) -> DummyWrapper:
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no))
@@ -198,6 +211,8 @@ class TextualButtonApp(App):
 
     def compose(self) -> ComposeResult:
         yield Footer()
+        if text := self.interface._redirected.join():
+            yield Label(text, id="buffered_text")
         yield Label(self.text, id="question")
 
         self.values.clear()

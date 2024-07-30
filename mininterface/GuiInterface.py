@@ -1,46 +1,34 @@
 import sys
 from typing import Any, Callable
 
-from .auxiliary import flatten
-
-
 try:
     from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk
     from tktooltip import ToolTip
     from tkinter_form import Form
 except ImportError:
-    from mininterface.common import InterfaceNotAvailable
+    from .common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
 
 from .common import InterfaceNotAvailable
 from .FormDict import FormDict, config_to_formdict
-from .auxiliary import RedirectText, recursive_set_focus
+from .auxiliary import recursive_set_focus, flatten
+from .Redirectable import RedirectTextTkinter, Redirectable
 from .FormField import FormField
 from .Mininterface import Cancelled, ConfigInstance, Mininterface
 
 
-class GuiInterface(Mininterface):
+class GuiInterface(Redirectable, Mininterface):
+    """ When used in the with statement, the GUI window does not vanish between dialogues. """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
             self.window = TkWindow(self)
-        except TclError:  # I am not sure whether there might be reasons the Tkinter is not available even when installed
+        except TclError:
+            # even when installed the libraries are installed, display might not be available, hence tkinter fails
             raise InterfaceNotAvailable
-        self._always_shown = False
-        self._original_stdout = sys.stdout
-
-    def __enter__(self) -> "Mininterface":
-        """ When used in the with statement, the GUI window does not vanish between dialogues. """
-        self._always_shown = True
-        sys.stdout = RedirectText(self.window.text_widget, self.window.pending_buffer, self.window)
-        return self
-
-    def __exit__(self, *_):
-        self._always_shown = False
-        sys.stdout = self._original_stdout
-        if self.window.pending_buffer:  # display text sent to the window but not displayed
-            print("".join(self.window.pending_buffer), end="")
+        self._redirected = RedirectTextTkinter(self.window.text_widget, self.window)
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -125,7 +113,7 @@ class TkWindow(Tk):
 
     def validate(self, formDict: FormDict, title: str) -> FormDict:
         if not FormField.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
-             return self.run_dialog(formDict, title)
+            return self.run_dialog(formDict, title)
         return formDict
 
     def yes_no(self, text: str, focus_no=True):
