@@ -4,18 +4,18 @@ from typing import Any, Callable
 try:
     from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk
     from tktooltip import ToolTip
-    from tkinter_form import Form
+    from tkinter_form import Form, Value
 except ImportError:
     from .common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
 
 from .common import InterfaceNotAvailable
-from .FormDict import FormDict, config_to_formdict
+from .FormDict import FormDict, config_to_formdict, dict_to_formdict, formdict_to_widgetdict
 from .auxiliary import recursive_set_focus, flatten
 from .Redirectable import RedirectTextTkinter, Redirectable
 from .FormField import FormField
-from .Mininterface import Cancelled, ConfigInstance, Mininterface
+from .Mininterface import BackendAdaptor, Cancelled, EnvClass, Mininterface
 
 
 class GuiInterface(Redirectable, Mininterface):
@@ -35,28 +35,29 @@ class GuiInterface(Redirectable, Mininterface):
         self.window.buttons(text, [("Ok", None)])
 
     def ask(self, text: str) -> str:
-        return self.window.run_dialog({text: ""})[text]
+        return self.form({text: ""})[text]
 
-    def ask_args(self) -> ConfigInstance:
+    def ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        formDict = config_to_formdict(self.args, self.descriptions)
+        formDict = config_to_formdict(self.env, self.descriptions)
 
-        # formDict automatically fetches the edited values back to the ConfigInstance
+        # formDict automatically fetches the edited values back to the EnvInstance
         self.window.run_dialog(formDict)
-        return self.args
+        return self.env
 
     def form(self, form: FormDict, title: str = "") -> dict:
         """ Prompt the user to fill up whole form.
-            :param args: Dict of `{labels: default value}`. The form widget infers from the default value type.
+            :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The default value might be `mininterface.FormField` that allows you to add descriptions.
                 A checkbox example: {"my label": FormField(True, "my description")}
             :param title: Optional form title.
         """
-        return self.window.run_dialog(form, title=title)
+        self.window.run_dialog(dict_to_formdict(form), title=title)
+        return form
 
     def ask_number(self, text: str) -> int:
-        return self.window.run_dialog({text: 0})[text]
+        return self.form({text: 0})[text]
 
     def is_yes(self, text):
         return self.window.yes_no(text, False)
@@ -65,7 +66,7 @@ class GuiInterface(Redirectable, Mininterface):
         return self.window.yes_no(text, True)
 
 
-class TkWindow(Tk):
+class TkWindow(Tk, BackendAdaptor):
     """ An editing window. """
 
     def __init__(self, interface: GuiInterface):
@@ -85,6 +86,11 @@ class TkWindow(Tk):
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
 
+    @staticmethod
+    def widgetize(ff: FormField) -> Value:
+        """ Wrap FormField to a textual widget. """
+        return Value(ff.val, ff.description)
+
     def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
@@ -92,12 +98,11 @@ class TkWindow(Tk):
         if title:
             label = Label(self.frame, text=title)
             label.pack(pady=10)
-
         self.form = Form(self.frame,
-                         name_form="",
-                         form_dict=formDict,
-                         name_config="Ok",
-                         )
+                        name_form="",
+                        form_dict=formdict_to_widgetdict(formDict, self.widgetize),
+                        name_config="Ok",
+                        )
         self.form.pack()
 
         # Set the submit and exit options

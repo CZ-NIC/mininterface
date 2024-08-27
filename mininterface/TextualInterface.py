@@ -13,10 +13,10 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from .auxiliary import flatten
-from .FormDict import (ConfigInstance, FormDict, config_to_formdict,
-                       dict_to_formdict)
+from .FormDict import (EnvClass, FormDict, config_to_formdict,
+                       dict_to_formdict, formdict_to_widgetdict)
 from .FormField import FormField
-from .Mininterface import Cancelled
+from .Mininterface import BackendAdaptor, Cancelled
 from .Redirectable import Redirectable
 from .TextInterface import TextInterface
 
@@ -39,19 +39,23 @@ class TextualInterface(Redirectable, TextInterface):
     def ask(self, text: str = None):
         return self.form({text: ""})[text]
 
-    def ask_args(self) -> ConfigInstance:
+    def ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        params_ = config_to_formdict(self.args, self.descriptions)
+        params_ = config_to_formdict(self.env, self.descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        TextualApp.run_dialog(TextualApp(), params_)
-        return self.args
+        TextualApp.run_dialog(TextualApp(self), params_)
+        return self.env
 
+    # NOTE: This works bad with lists. GuiInterface considers list as combobox,
+    # TextualInterface as str. We should decide what should happen. Is there a tyro default for list?
     def form(self, form: FormDict, title: str = "") -> dict:
-        return TextualApp.run_dialog(TextualApp(), dict_to_formdict(form), title)
+        TextualApp.run_dialog(TextualApp(self), dict_to_formdict(form), title)
+        return form
 
     # NOTE we should implement better, now the user does not know it needs an int
-    # def ask_number(self, text):
+    def ask_number(self, text):
+        return self.form({text: FormField("", "", int, text)})[text].processed_value
 
     def is_yes(self, text):
         return TextualButtonApp(self).yes_no(text, False).val
@@ -60,6 +64,7 @@ class TextualInterface(Redirectable, TextInterface):
         return TextualButtonApp(self).yes_no(text, True).val
 
 
+# NOTE: For a metaclass conflict I was not able to inherit from BackendAdaptor
 class TextualApp(App[bool | None]):
 
     BINDINGS = [
@@ -82,11 +87,11 @@ class TextualApp(App[bool | None]):
         self.interface = interface
 
     @staticmethod
-    def get_widget(ff: FormField) -> Checkbox | Input:
+    def widgetize(ff: FormField) -> Checkbox | Input:
         """ Wrap FormField to a textual widget. """
 
-        if ff.annotation is bool or not ff.annotation and ff.val in [True, False]:
-            o = Checkbox(ff.name, ff.val)
+        if ff.annotation is bool or not ff.annotation and (ff.val is True or ff.val is False):
+            o = Checkbox(ff.name or "", ff.val)
         else:
             o = Input(str(ff.val), placeholder=ff.name or "")
         o._link = ff  # The Textual widgets need to get back to this value
@@ -99,7 +104,8 @@ class TextualApp(App[bool | None]):
             window.title = title
 
         # NOTE Sections (~ nested dicts) are not implemented, they flatten
-        widgets: list[Checkbox | Input] = [cls.get_widget(f) for f in flatten(formDict)]
+        # Maybe just 'flatten' might be removed.
+        widgets: list[Checkbox | Input] = [f for f in flatten(formdict_to_widgetdict(formDict, cls.widgetize))]
         window.widgets = widgets
 
         if not window.run():
@@ -107,7 +113,7 @@ class TextualApp(App[bool | None]):
 
         # validate and store the UI value → FormField value → original value
         if not FormField.submit_values((field._link, field.value) for field in widgets):
-            return cls.run_dialog(TextualApp(), formDict, title)
+            return cls.run_dialog(TextualApp(window.interface), formDict, title)
         return formDict
 
     def compose(self) -> ComposeResult:

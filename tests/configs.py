@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class SimpleConfig:
+class SimpleEnv:
     """Set of options."""
     test: bool = False
     """My testing flag"""
@@ -10,37 +10,37 @@ class SimpleConfig:
 
 
 @dataclass
-class FurtherConfig1:
+class FurtherEnv1:
     token: str = "filled"
     host: str = "example.org"
 
 
 @dataclass
-class NestedDefaultedConfig:
-    further: FurtherConfig1
+class NestedDefaultedEnv:
+    further: FurtherEnv1
 
 
 @dataclass
-class FurtherConfig2:
+class FurtherEnv2:
     token: str
     host: str = "example.org"
 
 @dataclass
-class NestedMissingConfig:
-    further: FurtherConfig2
+class NestedMissingEnv:
+    further: FurtherEnv2
 
 
 @dataclass
-class FurtherConfig4:
+class FurtherEnv4:
     flag: bool = False
 @dataclass
-class FurtherConfig3:
-    deep: FurtherConfig4
+class FurtherEnv3:
+    deep: FurtherEnv4
     numb: int = 0
 
 @dataclass
-class OptionalFlagConfig:
-    further: FurtherConfig3
+class OptionalFlagEnv:
+    further: FurtherEnv3
     severity: int | None = None
     """ This number is optional """
 

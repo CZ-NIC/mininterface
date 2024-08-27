@@ -13,9 +13,9 @@ class CliInteface:
     ask_number: str = ""
     """ Prompt the user to input a number. Empty input = 0. """
     is_yes: str = ""
-    """ Display confirm box, focusing yes. """
+    """ Display confirm box, focusing 'yes'. """
     is_no: str = ""
-    """ Display confirm box, focusing no. """
+    """ Display confirm box, focusing 'no'. """
 
 # TODO does not work in REPL interface: mininterface --alert hello
 def main():
@@ -23,7 +23,7 @@ def main():
     # TODO It DOES make sense. Change in README. It s a good fallback.
     result = []
     with run(CliInteface, prog="Mininterface", description=__doc__) as m:
-        for method, label in vars(m.args).items():
+        for method, label in vars(m.env).items():
             if label:
                 result.append(getattr(m, method)(label))
     # Displays each result on a new line. Currently, this is an undocumented feature.

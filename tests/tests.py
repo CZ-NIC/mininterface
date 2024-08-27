@@ -6,7 +6,7 @@ from mininterface import Mininterface, TextInterface, run
 from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
 from mininterface.FormDict import config_to_formdict, formdict_repr
-from configs import OptionalFlagConfig, SimpleConfig, NestedDefaultedConfig, NestedMissingConfig
+from configs import OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
 from mininterface.auxiliary import flatten
 
 SYS_ARGV = None  # To be redirected
@@ -27,9 +27,9 @@ class TestAbstract(TestCase):
         sys.argv = ["running-tests", *args]
 
     def test_basic(self):
-        def go(*_args) -> SimpleConfig:
+        def go(*_args) -> SimpleEnv:
             self.sys(*_args)
-            return run(SimpleConfig, interface=Mininterface, prog="My application").get_args()
+            return run(SimpleEnv, interface=Mininterface, prog="My application").get_env()
 
         self.assertEqual(4, go().important_number)
         self.assertEqual(False, go().test)
@@ -38,12 +38,12 @@ class TestAbstract(TestCase):
         self.assertEqual(7, go("--important_number=7").important_number)
 
         self.sys("--important_number='8'")
-        self.assertRaises(SystemExit, lambda: run(SimpleConfig, interface=Mininterface, prog="My application"))
+        self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
 
     def test_cli_complex(self):
-        def go(*_args) -> NestedDefaultedConfig:
+        def go(*_args) -> NestedDefaultedEnv:
             self.sys(*_args)
-            return run(NestedDefaultedConfig, interface=Mininterface, prog="My application").get_args()
+            return run(NestedDefaultedEnv, interface=Mininterface, prog="My application").get_env()
 
         self.assertEqual("example.org", go().further.host)
         self.assertEqual("example.com", go("--further.host=example.com").further.host)
@@ -51,20 +51,20 @@ class TestAbstract(TestCase):
         self.assertEqual("example.org", go("--further.host", 'example.org').further.host)
         self.assertEqual("example org", go("--further.host", 'example org').further.host)
 
-        def go2(*_args) -> NestedMissingConfig:
+        def go2(*_args) -> NestedMissingEnv:
             self.sys(*_args)
-            return run(NestedMissingConfig, interface=Mininterface, prog="My application").get_args()
+            return run(NestedMissingEnv, interface=Mininterface, prog="My application").get_env()
         self.assertEqual("example.org", go2("--further.token=1").further.host)
         self.assertEqual("example.com", go2("--further.token=1", "--further.host=example.com").further.host)
         self.assertEqual("'example.net'", go2("--further.token=1", "--further.host='example.net'").further.host)
         self.sys("--further.host='example.net'")
-        self.assertRaises(SystemExit, lambda: run(SimpleConfig, interface=Mininterface, prog="My application"))
+        self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
 
     def test_ask(self):
-        m0 = run(NestedDefaultedConfig, interface=Mininterface, prog="My application")
+        m0 = run(NestedDefaultedEnv, interface=Mininterface, prog="My application")
         self.assertEqual(0, m0.ask_number("Test input"))
 
-        m1: TextInterface = run(NestedDefaultedConfig, interface=TextInterface, prog="My application")
+        m1: TextInterface = run(NestedDefaultedEnv, interface=TextInterface, prog="My application")
         with patch('builtins.input', return_value=5):
             self.assertEqual(5, m1.ask_number("Number"))
         with patch('builtins.input', side_effect=["invalid", 1]):
@@ -108,7 +108,7 @@ class TestAbstract(TestCase):
 
         # check value is kept if revision needed
         self.assertEqual(False, origin[""]["test"].val)
-        data = {'': {'test': True, 'numb': 100, 'severity': '1', 'msg': 1}}
+        data = {'': {'test': True, 'numb': 100, 'severity': '1', 'msg': 1}}  # ui put a wrong 'msg' type
         self.assertFalse(FormField.submit(origin, data))
         self.assertEqual(True, origin[""]["test"].val)
         self.assertEqual(100, origin[""]["numb"].val)
@@ -124,37 +124,37 @@ class TestAbstract(TestCase):
         self.assertFalse(FormField.submit(origin, data))
 
     def test_config_instance_dict_conversion(self):
-        m: TextInterface = run(OptionalFlagConfig, interface=TextInterface, prog="My application")
-        args1: OptionalFlagConfig = m.args
+        m: TextInterface = run(OptionalFlagEnv, interface=TextInterface, prog="My application")
+        env1: OptionalFlagEnv = m.env
 
-        self.assertIsNone(args1.severity)
+        self.assertIsNone(env1.severity)
 
-        fd = config_to_formdict(args1, m.descriptions)
+        fd = config_to_formdict(env1, m.descriptions)
         ui = formdict_repr(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
-        self.assertIsNone(args1.severity)
+        self.assertIsNone(env1.severity)
 
         # do the same as if the tkinter_form was just submitted without any changes
         FormField.submit_values(zip(flatten(fd), flatten(ui)))
-        self.assertIsNone(args1.severity)
+        self.assertIsNone(env1.severity)
 
         # changes in the UI should not directly affect the original
         ui[""]["msg2"] = "Another"
         ui[""]["severity"] = 5
         ui["further"]["deep"]["flag"] = True
-        self.assertEqual("Default text", args1.msg2)
+        self.assertEqual("Default text", env1.msg2)
 
         # on UI submit, the original is affected
         FormField.submit_values(zip(flatten(fd), flatten(ui)))
-        self.assertEqual("Another", args1.msg2)
-        self.assertEqual(5, args1.severity)
-        self.assertTrue(args1.further.deep.flag)
+        self.assertEqual("Another", env1.msg2)
+        self.assertEqual(5, env1.severity)
+        self.assertTrue(env1.further.deep.flag)
 
         # Another UI changes, makes None from an int
         ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
         FormField.submit_values(zip(flatten(fd), flatten(ui)))
-        self.assertIsNone(args1.severity)
+        self.assertIsNone(env1.severity)
 
     def test_ask_form(self):
         m = TextInterface()

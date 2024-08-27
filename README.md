@@ -14,14 +14,14 @@ from dataclasses import dataclass
 from mininterface import run
 
 @dataclass
-class Config:
+class Env:
     """Set of options."""
     test: bool = False  # My testing flag
     important_number: int = 4  # This number is very important
 
 if __name__ == "__main__":
-    args = run(Config, prog="My application").get_args()
-    print(args.important_number)  # suggested by the IDE with the hint text "This number is very important"
+    env = run(Env, prog="My application").get_env()
+    print(env.important_number)  # suggested by the IDE with the hint text "This number is very important"
 ```
 
 ## You got CLI
@@ -51,7 +51,7 @@ important_number: 555
 Check out several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
 
 ```python
-with run(Config) as m:
+with run(Env) as m:
     print(f"Your important number is {m}")
     boolean = m.is_yes("Is that alright?")
 ```
@@ -70,24 +70,24 @@ with run(Config) as m:
     + [`Mininterface(title: str = '')`](#mininterfacetitle-str--)
     + [`alert(text: str)`](#alerttext-str)
     + [`ask(text: str) -> str`](#asktext-str---str)
-    + [`ask_args() -> ConfigInstance`](#ask_args--configinstance)
+    + [`ask_env() -> EnvInstance`](#ask_env--configinstance)
     + [`ask_number(text: str) -> int`](#ask_numbertext-str---int)
-    + [`form(args: FormDict, title="") -> int`](#formargs-formdict-title---dict)
-    + [`get_args(ask_on_empty_cli=True) -> ~ConfigInstance`](#get_argsask_on_empty_clitrue---configinstance)
+    + [`form(env: FormDict, title="") -> int`](#formenv-formdict-title---dict)
+    + [`get_env(ask_on_empty_cli=True) -> ~EnvInstance`](#get_envask_on_empty_clitrue---configinstance)
     + [`is_no(text: str) -> bool`](#is_notext-str---bool)
     + [`is_yes(text: str) -> bool`](#is_yestext-str---bool)
-    + [`parse_args(config: Type[ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ConfigInstance`](#parse_argsconfig-type-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
+    + [`parse_env(config: Type[EnvInstance], config_file: pathlib.Path | None = None, **kwargs) -> EnvInstance`](#parse_envconfig-type-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
   * [Standalone](#standalone)
 
 # Background
 
 Wrapper between the [tyro](https://github.com/brentyi/tyro) `argparse` replacement and [tkinter_form](https://github.com/JohanEstebanCuervo/tkinter_form/) that converts dicts into a GUI.
 
-Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. `mininterface` is here to help.
+Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. `Mininterface` is here to help.
 
 The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of [tyro](https://github.com/brentyi/tyro) does not require any overhead (as its `argparse` alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:
 * Call it as `program.py --help` to display full help.
-* Use any flag in CLI: `program.py --test`  causes `args.test` be set to `True`.
+* Use any flag in CLI: `program.py --test`  causes `env.test` be set to `True`.
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
 
@@ -138,9 +138,9 @@ $./program.py --further.host example.net
 Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically. We prefer the graphical one, regressed to a text interface on a machine without display.
 Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly with the default from a config file if such exists. It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
-* `config:Type[ConfigInstance]`: Dataclass with the configuration.
+* `config:Type[EnvInstance]`: Dataclass with the configuration.
 * `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
-* `**kwargs`: The same as for [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html).
+* `**kwargs`: The same as for [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser).
 * Returns: `interface` Interface used.
 
 You cay context manage the function by a `with` statement. The stdout will be redirected to the interface (GUI window).
@@ -158,7 +158,7 @@ Several interfaces exist:
   * `TextInterface` – Plain text only interface with no dependency as a fallback.
 * `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
-You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_args` if needed.
+You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_env` if needed.
 
 ```python
 with TuiInterface("My program") as m:
@@ -171,20 +171,20 @@ Initialize.
 Prompt the user to confirm the text.
 ### `ask(text: str) -> str`
 Prompt the user to input a text.
-### `ask_args() -> ConfigInstance`
-Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_args.)
-### `form(args: FormDict, title="") -> dict`
+### `ask_env() -> EnvInstance`
+Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_env.)
+### `ask_number(text: str) -> int`
+Prompt the user to input a number. Empty input = 0.
+### `form(env: FormDict, title="") -> dict`
 Prompt the user to fill up whole form.
-* `args`: Dict of `{labels: default value}`. The form widget infers from the default value type.
+* `env`: Dict of `{labels: default value}`. The form widget infers from the default value type.
   The dict can be nested, it can contain a subgroup.
   The default value might be `mininterface.FormField` that allows you to add descriptions.
   A checkbox example: `{"my label": FormField(True, "my description")}`
 * `title`: Optional form title.
-### `ask_number(text: str) -> int`
-Prompt the user to input a number. Empty input = 0.
-### `get_args(ask_on_empty_cli=True) -> ConfigInstance`
-Returns whole configuration (previously fetched from CLI and config file by parse_args).
-If program was launched with no arguments (empty CLI), invokes self.ask_args() to edit the fields.
+### `get_env(ask_on_empty_cli=True) -> EnvInstance`
+Returns whole configuration (previously fetched from CLI and config file by parse_env).
+If program was launched with no arguments (empty CLI), invokes self.ask_env() to edit the fields.
 ### `is_no(text: str) -> bool`
 Display confirm box, focusing no.
 ### `is_yes(text: str) -> bool`
@@ -195,12 +195,12 @@ m = run(prog="My program")
 print(m.ask_yes("Is it true?"))  # True/False
 ```
 
-### `parse_args(config: Type[ConfigInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~ConfigInstance`
+### `parse_env(config: Type[EnvInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~EnvInstance`
 Parse CLI arguments, possibly merged from a config file.
 * `config`: Dataclass with the configuration.
 * `config_file`: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.
 * `**kwargs` The same as for argparse.ArgumentParser.
-* Returns: `ConfigInstance` Configuration namespace.
+* Returns: `EnvInstance` Configuration namespace.
 
 ## Standalone
 

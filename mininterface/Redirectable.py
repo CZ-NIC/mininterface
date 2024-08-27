@@ -52,7 +52,7 @@ class Redirectable:
     # NOTE When used in the with statement, the TUI window should not vanish between dialogues.
     # The same way the GUI does not vanish.
     # NOTE: Current implementation will show only after a dialog submit, not continuously.
-    # # with run(Config) as m:
+    # # with run(Env) as m:
     #     print("First")
     #     sleep(1)
     #     print("Second")

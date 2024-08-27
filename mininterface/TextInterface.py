@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from .FormDict import ConfigInstance, FormDict
+from .FormDict import EnvClass, FormDict
 from .Mininterface import Cancelled, Mininterface
 
 
@@ -20,13 +20,13 @@ class TextInterface(Mininterface):
             raise Cancelled(".. cancelled")
         return txt
 
-    def ask_args(self) -> ConfigInstance:
+    def ask_env(self) -> EnvClass:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         # I might build some menu of changing dict through:
-        #   params_ = dataclass_to_dict(self.args, self.descriptions)
+        #   params_ = dataclass_to_dict(self.env, self.descriptions)
         #   data = FormDict → dict self.window.run_dialog(params_)
-        #   dict_to_dataclass(self.args, params_)
-        return self.form(self.args)
+        #   dict_to_dataclass(self.env, params_)
+        return self.form(self.env)
 
     def form(self, form: FormDict) -> dict:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
