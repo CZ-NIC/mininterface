@@ -20,9 +20,6 @@ from .Mininterface import BackendAdaptor, Cancelled
 from .Redirectable import Redirectable
 from .TextInterface import TextInterface
 
-# TODO with statement hello world example image is wrong (Textual already redirects the output as GuiInterface does)
-
-
 @dataclass
 class DummyWrapper:
     """ Value wrapped, since I do not know how to get it from textual app.

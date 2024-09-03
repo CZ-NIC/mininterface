@@ -52,12 +52,12 @@ Check out several useful methods to handle user dialogues. Here we bound the int
 
 ```python
 with run(Env) as m:
-    print(f"Your important number is {m}")
+    print(f"Your important number is {m.env.important_number}")
     boolean = m.is_yes("Is that alright?")
 ```
 
 ![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")
-![The same in terminal'](asset/hello-with-statement-tui.webp "With statement in TUI fallback")
+![The same in terminal'](asset/hello-with-statement-tui.avif "With statement in TUI fallback")
 
 # Contents
 - [Mininterface – GUI, TUI, CLI and config](#mininterface-gui-tui-cli-and-config)
@@ -95,7 +95,7 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 
 Install with a single command from [PyPi](https://pypi.org/project/mininterface/).
 
-```python3
+```bash
 pip install mininterface
 ```
 

@@ -128,9 +128,11 @@ class TkWindow(Tk, BackendAdaptor):
         label = Label(self.frame, text=text)
         label.pack(pady=10)
 
-        for text, value in buttons:
+        for i, (text, value) in enumerate(buttons):
             button = Button(self.frame, text=text, command=lambda v=value: self._ok(v))
-            button.bind("<Return>", lambda _: button.invoke())
+            if i == focused-1:
+                b = button
+                button.bind("<Return>", lambda _: b.invoke())
             button.pack(side=LEFT, padx=10)
         self.frame.winfo_children()[focused].focus_set()
         return self.mainloop()
