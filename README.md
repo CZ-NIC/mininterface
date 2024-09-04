@@ -71,16 +71,15 @@ with run(Env) as m:
 - [Installation](#installation)
 - [Docs](#docs)
   * [`mininterface`](#mininterface)
-    + [`run(config=None, ask_on_empty_cli=True, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
+    + [`run`](#run)
   * [Interfaces](#interfaces)
-    + [`Mininterface(title: str = '')`](#mininterfacetitle-str--)
-    + [`alert(text: str)`](#alerttext-str)
-    + [`ask(text: str) -> str`](#asktext-str---str)
-    + [`ask_env() -> EnvInstance`](#ask_env--configinstance)
-    + [`ask_number(text: str) -> int`](#ask_numbertext-str---int)
-    + [`form(env: FormDict, title="") -> int`](#formenv-formdict-title---dict)
-    + [`is_no(text: str) -> bool`](#is_notext-str---bool)
-    + [`is_yes(text: str) -> bool`](#is_yestext-str---bool)
+    + [`Mininterface`](#mininterface)
+    + [`alert`](#alert)
+    + [`ask`](#ask)
+    + [`ask_number`](#ask_number)
+    + [`form`](#form)
+    + [`is_no`](#is_no)
+    + [`is_yes`](#is_yes)
   * [Standalone](#standalone)
 
 # Background
@@ -138,16 +137,32 @@ $./program.py --further.host example.net
 
 ## `mininterface`
 
-### `run(config=None, interface=GuiInterface, **kwargs)`
-Wrap your configuration dataclass into `run` to access the interface. Normally, an interface is chosen automatically. We prefer the graphical one, regressed to a text interface on a machine without display.
-Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly with the default from a config file if such exists. It searches the config file in the current working directory, with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
+### `run`
+*(env_class=None, ask_on_empty_cli=False, title="", config_file=True, interface=GuiInterface or TuiInterface, \*\*kwargs)*
 
-* `config:Type[EnvInstance]`: Dataclass with the configuration.
-* `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the REPL.
-* `**kwargs`: The same as for [`argparse.ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser).
-* Returns: `interface` Interface used.
+The main access, start here.
+Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
+with the preference of the graphical one, regressed to a text interface for machines without display.
+Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
+with the default from a config file if such exists.
+It searches the config file in the current working directory,
+with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
-You cay context manage the function by a `with` statement. The stdout will be redirected to the interface (GUI window).
+* `env_class`: Dataclass with the configuration. Their values will be modified with the CLI arguments.
+* `ask_on_empty`: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+* `title`: The main title. If not set, taken from `prog` or program name.
+* `config_file`: File to load YAML to be merged with the configuration.
+  You do not have to re-define all the settings in the config file, you can choose a few.
+  If set to True (default)form(, we try to find one in the current working dir,
+  whose name stem is the same as the program's.
+  Ex: `program.py` will search for `program.yaml`.
+  If False, no config file is used.
+* `add_verbosity`: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+* `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
+* `**kwargs` The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
+* Returns: `Mininterface` An interface, ready to be used.
+
+You cay context manager the function by a `with` statement. The stdout will be redirected to the interface (ex. a GUI window).
 
 See the [initial examples](#mininterface-gui-tui-cli-and-config).
 
@@ -162,34 +177,35 @@ Several interfaces exist:
   * `TextInterface` – Plain text only interface with no dependency as a fallback.
 * `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
-You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). TODO advantage?
+Normally, you get an interface through [mininterface.run](#run) but if you do not wish to parse CLI and config file, you can invoke one directly.
 
 ```python
 with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
-### `Mininterface(title: str = '')`
-Initialize.
-### `alert(text: str)`
-Prompt the user to confirm the text.
-### `ask(text: str) -> str`
-Prompt the user to input a text.
-### `ask_env() -> EnvInstance`
-Allow the user to edit whole configuration. (Previously fetched from CLI and config file.)
-### `ask_number(text: str) -> int`
-Prompt the user to input a number. Empty input = 0.
-### `form(env: FormDict, title="") -> dict`
-Prompt the user to fill up whole form.
-* `env`: Dict of `{labels: default value}`. The form widget infers from the default value type.
+### `Mininterface`
+*(title: str = '')* The base interface.
+You get one through `mininterface.run` which fills CLI arguments and config file to `mininterface.env`
+or you can create it directly (without benefiting from the CLI parsing).
+### `alert`
+*(text: str)* Prompt the user to confirm the text.
+### `ask`
+*(text: str) -> str* Prompt the user to input a text.
+### `ask_number`
+*(text: str) -> int* Prompt the user to input a number. Empty input = 0.
+### `form`
+*(env: FormDict, title="") -> dict* Prompt the user to fill up whole form.
+* `form:` Dict of `{labels: default value}`. The form widget infers from the default value type.
   The dict can be nested, it can contain a subgroup.
   The default value might be `mininterface.FormField` that allows you to add descriptions.
+  If None, the `self.env` is being used as a form, allowing the user to edit whole configuration. (Previously fetched from CLI and config file.)
   A checkbox example: `{"my label": FormField(True, "my description")}`
 * `title`: Optional form title.
-### `is_no(text: str) -> bool`
-Display confirm box, focusing no.
-### `is_yes(text: str) -> bool`
-Display confirm box, focusing yes.
+### `is_no`
+*(text: str) -> bool* Display confirm box, focusing no.
+### `is_yes`
+*(text: str) -> bool* Display confirm box, focusing yes.
 
 ```python
 m = run(prog="My program")

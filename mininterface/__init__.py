@@ -29,7 +29,6 @@ except ImportError:
     TextualInterface = None
 
 
-# TODO auto-handle verbosity https://brentyi.github.io/tyro/examples/04_additional/12_counters/ ?
 # TODO example on missing required options.
 
 class TuiInterface(TextualInterface or TextInterface):
@@ -38,6 +37,7 @@ class TuiInterface(TextualInterface or TextInterface):
 
 def _parse_env(env_class: Type[EnvClass],
                 config_file: Path | None = None,
+                add_verbosity = True,
                 **kwargs) -> tuple[EnvClass|None, dict]:
     """ Parse CLI arguments, possibly merged from a config file.
 
@@ -62,17 +62,18 @@ def _parse_env(env_class: Type[EnvClass],
     # Load configuration from CLI
     parser: ArgumentParser = get_parser(env_class, **kwargs)
     descriptions = get_descriptions(parser)
-    env = get_env_allow_missing(env_class, kwargs, parser)
+    env = get_env_allow_missing(env_class, kwargs, parser, add_verbosity)
     return env, descriptions
 
 def run(env_class: Type[EnvClass] | None = None,
-        ask_on_empty_cli: bool=False, # TODO
+        ask_on_empty_cli: bool=False,
         title: str = "",
         config_file: Path | str | bool = True,
+        add_verbosity: bool = True,
         interface: Type[Mininterface] = GuiInterface or TuiInterface,
         **kwargs) -> Mininterface[EnvClass]:
     """
-    Main access.
+    The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
     with the preference of the graphical one, regressed to a text interface for machines without display.
     Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
@@ -81,7 +82,7 @@ def run(env_class: Type[EnvClass] | None = None,
     with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
     :param env_class: Dataclass with the configuration. Their values will be modified with the CLI arguments.
-    :param ask_on_empty: If program was launched with no arguments (empty CLI), invokes self.ask_env() to edit the fields.
+    :param ask_on_empty: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
     :param title: The main title. If not set, taken from `prog` or program name.
     :param config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
@@ -89,14 +90,18 @@ def run(env_class: Type[EnvClass] | None = None,
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
+    :param add_verbosity: Adds the verbose flag that automatically sets
+            the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
     :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
     :param **kwargs The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
     :return: An interface, ready to be used.
-    # TODO check docs and to readme
+
+    You cay context manager the function by a `with` statement.
+    The stdout will be redirected to the interface (ex. a GUI window).
 
     Undocumented: The `env_class` may be a function as well. We invoke its parameters.
     However, as Mininterface.env stores the output of the function instead of the Argparse namespace,
-    methods like `Mininterface.ask_env()` will work unpredictibly.
+    methods like `Mininterface.form(None)` (to ask for editing the env values) will work unpredictibly.
     Also, the config file seems to be fetched only for positional (missing) parameters,
     and ignored for keyword (filled) parameters.
     It seems to be this is the tyro's deal and hence it might start working any time.
@@ -116,8 +121,9 @@ def run(env_class: Type[EnvClass] | None = None,
         config_file = Path(config_file)
 
     # Load configuration from CLI and a config file
+    env, descriptions = None, {}
     if env_class:
-        env, descriptions = _parse_env(env_class, config_file, **kwargs)
+        env, descriptions = _parse_env(env_class, config_file, add_verbosity, **kwargs)
 
     # Build the interface
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
@@ -128,7 +134,7 @@ def run(env_class: Type[EnvClass] | None = None,
 
     # Empty CLI → GUI edit
     if ask_on_empty_cli and len(sys.argv) <= 1:
-        interface.ask_env()
+        interface.form()
 
     return interface
 

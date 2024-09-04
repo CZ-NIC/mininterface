@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from .FormDict import EnvClass, FormDict
+from .FormDict import EnvClass, FormDict, FormDictOrEnv
 from .Mininterface import Cancelled, Mininterface
 
 
@@ -20,16 +20,15 @@ class TextInterface(Mininterface):
             raise Cancelled(".. cancelled")
         return txt
 
-    def ask_env(self) -> EnvClass:
+    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
+        # NOTE: Concerning Dataclass form.
         # I might build some menu of changing dict through:
         #   params_ = dataclass_to_dict(self.env, self.descriptions)
         #   data = FormDict → dict self.window.run_dialog(params_)
         #   dict_to_dataclass(self.env, params_)
-        return self.form(self.env)
-
-    def form(self, form: FormDict) -> dict:
-        # NOTE: This is minimal implementation that should rather go the ReplInterface.
+        if form is None:
+            form = self.env
         print("Access `v` (as var) and change values. Then (c)ontinue.")
         pprint(form)
         v = form

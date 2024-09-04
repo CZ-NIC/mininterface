@@ -1,5 +1,9 @@
 import sys
-from typing import Self, Type
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from typing import Self, Type
+else:
+    from typing import Type
 
 try:
     from tkinter import END, Text, Tk
@@ -65,7 +69,7 @@ class Redirectable:
         self._redirected: Type[RedirectText] = RedirectText()
         self._original_stdout = sys.stdout
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> "Self":
         self._always_shown = True
         sys.stdout = self._redirected
         return self

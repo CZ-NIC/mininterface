@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from . import run
 
 __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
@@ -17,12 +18,13 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing 'no'. """
 
-# TODO does not work in REPL interface: mininterface --alert hello
+
 def main():
-    # It does make sense to invoke GuiInterface only. Other interface would use STDOUT, hence make this impractical when fetching variable to i.e. a bash script.
-    # TODO It DOES make sense. Change in README. It s a good fallback.
     result = []
+    # We tested both GuiInterface and TextualInterface are able to pass a variable to i.e. a bash script.
+    # TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
     with run(CliInteface, prog="Mininterface", description=__doc__) as m:
+        print("ENV", m.env)
         for method, label in vars(m.env).items():
             if label:
                 result.append(getattr(m, method)(label))
@@ -30,6 +32,7 @@ def main():
     # As we use the script for a single value only and it is not currently possible
     # to ask two numbers or determine a dialog order etc.
     [print(val) for val in result]
+
 
 if __name__ == "__main__":
     main()

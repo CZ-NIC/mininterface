@@ -13,7 +13,7 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from .auxiliary import flatten
-from .FormDict import (EnvClass, FormDict, config_to_formdict,
+from .FormDict import (EnvClass, FormDict, FormDictOrEnv, dataclass_to_formdict,
                        dict_to_formdict, formdict_to_widgetdict)
 from .FormField import FormField
 from .Mininterface import BackendAdaptor, Cancelled
@@ -36,9 +36,9 @@ class TextualInterface(Redirectable, TextInterface):
     def ask(self, text: str = None):
         return self.form({text: ""})[text]
 
-    def ask_env(self) -> EnvClass:
+    def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        params_ = config_to_formdict(self.env, self._descriptions)
+        params_ = dataclass_to_formdict(self.env, self._descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
         TextualApp.run_dialog(TextualApp(self), params_)
@@ -46,7 +46,9 @@ class TextualInterface(Redirectable, TextInterface):
 
     # NOTE: This works bad with lists. GuiInterface considers list as combobox,
     # TextualInterface as str. We should decide what should happen. Is there a tyro default for list?
-    def form(self, form: FormDict, title: str = "") -> dict:
+    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
+        if form is None:
+            return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         TextualApp.run_dialog(TextualApp(self), dict_to_formdict(form), title)
         return form
 

@@ -11,7 +11,7 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .FormDict import FormDict, config_to_formdict, dict_to_formdict, formdict_to_widgetdict
+from .FormDict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
 from .auxiliary import recursive_set_focus, flatten
 from .Redirectable import RedirectTextTkinter, Redirectable
 from .FormField import FormField
@@ -37,16 +37,15 @@ class GuiInterface(Redirectable, Mininterface):
     def ask(self, text: str) -> str:
         return self.form({text: ""})[text]
 
-    def ask_env(self) -> EnvClass:
+    def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        formDict = config_to_formdict(self.env, self._descriptions)
+        formDict = dataclass_to_formdict(self.env, self._descriptions)
 
         # formDict automatically fetches the edited values back to the EnvInstance
         self.window.run_dialog(formDict)
         return self.env
 
-    # def form(self, form: FormDict, title: str = "") -> dict:
-    def form(self, form: FormDict, title: str = "") -> EnvClass:
+    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up whole form.
             :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
@@ -54,6 +53,8 @@ class GuiInterface(Redirectable, Mininterface):
                 A checkbox example: {"my label": FormField(True, "my description")}
             :param title: Optional form title.
         """
+        if form is None:
+            return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         self.window.run_dialog(dict_to_formdict(form), title=title)
         return form
 

@@ -1,6 +1,7 @@
 """ FormDict tools.
     FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
+from contextlib import ExitStack
 import logging
 from argparse import Action, ArgumentParser
 from typing import Any, Callable, Optional, Type, TypeVar, Union, get_type_hints
@@ -16,6 +17,12 @@ logger = logging.getLogger(__name__)
 EnvClass = TypeVar("EnvClass")
 FormDict = dict[str, Union[FormField, 'FormDict']]
 """ Nested form that can have descriptions (through FormField) instead of plain values. """
+
+# NOTE: In the future, allow `bound=FormDict | EnvClass`, a dataclass (or its instance)
+# to be edited too
+# is_dataclass(v) -> dataclass or its instance
+# isinstance(v, type) -> class, not an instance
+FormDictOrEnv = TypeVar('FormT', bound=FormDict)  # | EnvClass)
 
 
 def formdict_repr(d: FormDict) -> dict:
@@ -48,7 +55,7 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable):
         return d
 
 
-def config_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
+def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = ""
     params = {main: {}} if not _path else {}
@@ -71,7 +78,7 @@ def config_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
                 logger.warn(f"Annotation {wanted_type} of `{param}` not supported by Mininterface."
                             "None converted to False.")
         if hasattr(val, "__dict__"):  # nested config hierarchy
-            params[param] = config_to_formdict(val, descr, _path=f"{_path}{param}.")
+            params[param] = dataclass_to_formdict(val, descr, _path=f"{_path}{param}.")
         elif not _path:  # scalar value in root
             params[main][param] = FormField(val, descr.get(param), annotation, param, src_obj=(env, param))
         else:  # scalar value in nested
@@ -79,20 +86,39 @@ def config_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
     return params
 
 
-def get_env_allow_missing(config: Type[EnvClass], kwargs: dict, parser: ArgumentParser) -> EnvClass:
+def get_env_allow_missing(config: Type[EnvClass], kwargs: dict, parser: ArgumentParser, add_verbosity: bool) -> EnvClass:
     """ Fetch missing required options in GUI. """
     # On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
     # the error message function. Then, we reconstruct the missing options.
     # NOTE But we should rather invoke a GUI with the missing options only.
-    original_error = TyroArgumentParser.error
     eavesdrop = ""
 
-    def custom_error(self, message: str):
+    def custom_error(self: TyroArgumentParser, message: str):
         nonlocal eavesdrop
         if not message.startswith("the following arguments are required:"):
-            return original_error(self, message)
+            return super(TyroArgumentParser, self).error(message)
         eavesdrop = message
         raise SystemExit(2)  # will be catched
+
+    def custom_init(self: TyroArgumentParser, *args, **kwargs):
+        super(TyroArgumentParser, self).__init__(*args, **kwargs)
+        default_prefix = '-' if '-' in self.prefix_chars else self.prefix_chars[0]
+        self.add_argument(default_prefix+'v', default_prefix*2+'verbose', action='count', default=0,
+                          help="Verbosity level. Can be used twice to increase.")
+
+    def custom_parse_known_args(self: TyroArgumentParser, args=None, namespace=None):
+        namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
+        # NOTE We may check that the Env does not have its own `verbose``
+        if hasattr(namespace, "verbose"):
+            if namespace.verbose > 0:
+                log_level = {
+                    1: logging.INFO,
+                    2: logging.DEBUG,
+                    3: logging.NOTSET
+                }.get(namespace.verbose, logging.NOTSET)
+                logging.basicConfig(level=log_level, format='%(levelname)s - %(message)s')
+            delattr(namespace, "verbose")
+        return namespace, args
 
     # Set env to determine whether to use sys.argv.
     # Why settings env? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
@@ -107,7 +133,15 @@ def get_env_allow_missing(config: Type[EnvClass], kwargs: dict, parser: Argument
     else:
         env = []
     try:
-        with patch.object(TyroArgumentParser, 'error', custom_error):
+        # Mock parser
+        patches = [patch.object(TyroArgumentParser, 'error', custom_error)]
+        if add_verbosity:  # Mock parser to add verbosity
+            patches.extend((
+                patch.object(TyroArgumentParser, '__init__', custom_init),
+                patch.object(TyroArgumentParser, 'parse_known_args', custom_parse_known_args)
+            ))
+        with ExitStack() as stack:
+            [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
             return cli(config, args=env, **kwargs)
     except BaseException as e:
         if hasattr(e, "code") and e.code == 2 and eavesdrop:  # Some arguments are missing. Determine which.

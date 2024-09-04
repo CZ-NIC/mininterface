@@ -1,11 +1,16 @@
+from io import StringIO
+import logging
+import os
+from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest import TestCase, main
 from unittest.mock import patch
 
 from mininterface import Mininterface, TextInterface, run
 from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
-from mininterface.FormDict import config_to_formdict, formdict_repr
+from mininterface.FormDict import dataclass_to_formdict, formdict_repr
 from configs import OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
 from mininterface.auxiliary import flatten
 
@@ -26,6 +31,8 @@ class TestAbstract(TestCase):
     def sys(cls, *args):
         sys.argv = ["running-tests", *args]
 
+
+class TestBasic(TestAbstract):
     def test_basic(self):
         def go(*_args) -> SimpleEnv:
             self.sys(*_args)
@@ -39,6 +46,26 @@ class TestAbstract(TestCase):
 
         self.sys("--important_number='8'")
         self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
+
+    def test_run_ask_empty(self):
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(SimpleEnv, True, interface=Mininterface)
+            self.assertEqual("Asking the form  None", stdout.getvalue().strip())
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(SimpleEnv, interface=Mininterface)
+            self.assertEqual("", stdout.getvalue().strip())
+
+    def test_run_config_file(self):
+        os.chdir("tests")
+        sys.argv = ["SimpleEnv.py"]
+        self.assertEqual(10, run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number)
+        self.assertEqual(4, run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number)
+        self.assertEqual(20, run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number)
+        self.assertEqual(20, run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"),
+                         interface=Mininterface).env.important_number)
+        self.assertEqual(4, run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number)
+        with self.assertRaises(FileNotFoundError):
+            run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
 
     def test_cli_complex(self):
         def go(*_args) -> NestedDefaultedEnv:
@@ -117,19 +144,19 @@ class TestAbstract(TestCase):
         origin = {'test': FormField(False, 'Testing flag ', annotation=None),
                   'severity': FormField('', 'integer or none ', annotation=int | None),
                   'nested': {'test2': FormField(4, '')}}
-                #   'nested': {'test2': 4}} TODO, allow combined FormDict
+        #   'nested': {'test2': 4}} TODO, allow combined FormDict
         data = {'test': True, 'severity': "", 'nested': {'test2': 8}}
         self.assertTrue(FormField.submit(origin, data))
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
         self.assertFalse(FormField.submit(origin, data))
 
-    def test_config_instance_dict_conversion(self):
+    def test_env_instance_dict_conversion(self):
         m: TextInterface = run(OptionalFlagEnv, interface=TextInterface, prog="My application")
         env1: OptionalFlagEnv = m.env
 
         self.assertIsNone(env1.severity)
 
-        fd = config_to_formdict(env1, m._descriptions)
+        fd = dataclass_to_formdict(env1, m._descriptions)
         ui = formdict_repr(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
@@ -162,6 +189,58 @@ class TestAbstract(TestCase):
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
         self.assertEqual({"my label": FormField(True, "my description"), "nested": {"inner": "another"}}, dict1)
+
+        # Empty form invokes editing self.env, which is empty
+        with patch('builtins.input', side_effect=["c"]):
+            self.assertEqual(SimpleNamespace(), m.form())
+
+        # Empty form invokes editing self.env, which contains a dataclass
+        m2 = run(SimpleEnv, interface=TextInterface, prog="My application")
+        self.assertFalse(m2.env.test)
+        with patch('builtins.input', side_effect=["v.test = True", "c"]):
+            self.assertEqual(m2.env, m2.form())
+            self.assertTrue(m2.env.test)
+
+
+class TestLog(TestAbstract):
+    @staticmethod
+    def log():
+        run(SimpleEnv, interface=Mininterface)
+        logger = logging.getLogger(__name__)
+        logger.debug("debug level")
+        logger.info("info level")
+        logger.warning("warning level")
+        logger.error("error level")
+
+    @patch('logging.basicConfig')
+    def test_run_verbosity0(self, mock_basicConfig):
+        self.sys("-v")
+        with self.assertRaises(SystemExit):
+            run(SimpleEnv, add_verbosity=False, interface=Mininterface)
+        mock_basicConfig.assert_not_called()
+
+    @patch('logging.basicConfig')
+    def test_run_verbosity1(self, mock_basicConfig):
+        self.log()
+        mock_basicConfig.assert_not_called()
+
+    @patch('logging.basicConfig')
+    def test_run_verbosity2(self, mock_basicConfig):
+        self.sys("-v")
+        self.log()
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
+
+    @patch('logging.basicConfig')
+    def test_run_verbosity2b(self, mock_basicConfig):
+        self.sys("--verbose")
+        self.log()
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
+
+    @patch('logging.basicConfig')
+    def test_run_verbosity3(self, mock_basicConfig):
+        self.sys("-vv")
+        self.log()
+        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 
 if __name__ == '__main__':
