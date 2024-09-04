@@ -16,12 +16,18 @@ from mininterface import run
 @dataclass
 class Env:
     """Set of options."""
-    test: bool = False  # My testing flag
-    important_number: int = 4  # This number is very important
+
+    test: bool = False
+    """ My testing flag """
+
+    important_number: int = 4
+    """ This number is very important """
 
 if __name__ == "__main__":
-    env = run(Env, prog="My application").get_env()
-    print(env.important_number)  # suggested by the IDE with the hint text "This number is very important"
+    env = run(Env, prog="My application").env
+    # Attributes are suggested by the IDE
+    # along with the hint text 'This number is very important'.
+    print(env.important_number)
 ```
 
 ## You got CLI
@@ -65,7 +71,7 @@ with run(Env) as m:
 - [Installation](#installation)
 - [Docs](#docs)
   * [`mininterface`](#mininterface)
-    + [`run(config=None, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
+    + [`run(config=None, ask_on_empty_cli=True, interface=GuiInterface, **kwargs)`](#runconfignone-interfaceguiinterface-kwargs)
   * [Interfaces](#interfaces)
     + [`Mininterface(title: str = '')`](#mininterfacetitle-str--)
     + [`alert(text: str)`](#alerttext-str)
@@ -73,10 +79,8 @@ with run(Env) as m:
     + [`ask_env() -> EnvInstance`](#ask_env--configinstance)
     + [`ask_number(text: str) -> int`](#ask_numbertext-str---int)
     + [`form(env: FormDict, title="") -> int`](#formenv-formdict-title---dict)
-    + [`get_env(ask_on_empty_cli=True) -> ~EnvInstance`](#get_envask_on_empty_clitrue---configinstance)
     + [`is_no(text: str) -> bool`](#is_notext-str---bool)
     + [`is_yes(text: str) -> bool`](#is_yestext-str---bool)
-    + [`parse_env(config: Type[EnvInstance], config_file: pathlib.Path | None = None, **kwargs) -> EnvInstance`](#parse_envconfig-type-configinstance-config_file-pathlibpath--none--none-kwargs---configinstance)
   * [Standalone](#standalone)
 
 # Background
@@ -158,7 +162,7 @@ Several interfaces exist:
   * `TextInterface` – Plain text only interface with no dependency as a fallback.
 * `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
-You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). Then, you can connect a configuration object to the CLI and config file with `parse_env` if needed.
+You can invoke one directly instead of using [mininterface.run](#run-config-none-interface-guiinterface-kwargs). TODO advantage?
 
 ```python
 with TuiInterface("My program") as m:
@@ -172,7 +176,7 @@ Prompt the user to confirm the text.
 ### `ask(text: str) -> str`
 Prompt the user to input a text.
 ### `ask_env() -> EnvInstance`
-Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_env.)
+Allow the user to edit whole configuration. (Previously fetched from CLI and config file.)
 ### `ask_number(text: str) -> int`
 Prompt the user to input a number. Empty input = 0.
 ### `form(env: FormDict, title="") -> dict`
@@ -182,9 +186,6 @@ Prompt the user to fill up whole form.
   The default value might be `mininterface.FormField` that allows you to add descriptions.
   A checkbox example: `{"my label": FormField(True, "my description")}`
 * `title`: Optional form title.
-### `get_env(ask_on_empty_cli=True) -> EnvInstance`
-Returns whole configuration (previously fetched from CLI and config file by parse_env).
-If program was launched with no arguments (empty CLI), invokes self.ask_env() to edit the fields.
 ### `is_no(text: str) -> bool`
 Display confirm box, focusing no.
 ### `is_yes(text: str) -> bool`
@@ -194,13 +195,6 @@ Display confirm box, focusing yes.
 m = run(prog="My program")
 print(m.ask_yes("Is it true?"))  # True/False
 ```
-
-### `parse_env(config: Type[EnvInstance], config_file: pathlib.Path | None = None, **kwargs) -> ~EnvInstance`
-Parse CLI arguments, possibly merged from a config file.
-* `config`: Dataclass with the configuration.
-* `config_file`: File to load YAML to be merged with the configuration. You do not have to re-define all the settings, you can choose a few.
-* `**kwargs` The same as for argparse.ArgumentParser.
-* Returns: `EnvInstance` Configuration namespace.
 
 ## Standalone
 

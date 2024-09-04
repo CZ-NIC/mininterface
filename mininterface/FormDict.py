@@ -13,7 +13,7 @@ from .FormField import FormField
 
 logger = logging.getLogger(__name__)
 
-EnvClass = TypeVar("EnvInstance")
+EnvClass = TypeVar("EnvClass")
 FormDict = dict[str, Union[FormField, 'FormDict']]
 """ Nested form that can have descriptions (through FormField) instead of plain values. """
 

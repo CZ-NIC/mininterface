@@ -1,18 +1,18 @@
 import logging
 import sys
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from dataclasses import MISSING
 from pathlib import Path
-from types import FunctionType, SimpleNamespace
-from typing import Generic, Type
+from types import SimpleNamespace
+from typing import Generic, Self, Type
 
 import yaml
 from tyro.extras import get_parser
 
-
-from .FormField import FormField
-from .FormDict import EnvClass, FormDict, get_env_allow_missing
 from .auxiliary import get_descriptions
+from .FormDict import EnvClass, FormDict, get_env_allow_missing
+from .FormField import FormField
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +28,23 @@ class Mininterface(Generic[EnvClass]):
     """
 
     def __init__(self, title: str = "",
-                 env_class: Type[EnvClass] | None = None,
-                 config_file: Path | str = "",
+                 _env: EnvClass | None = None,
+                 _descriptions: dict | None = None,
+                # TODO DOCS here and to readme
                  **kwargs):
         self.title = title or "Mininterface"
-        self.env: EnvClass = SimpleNamespace()
-        """ Parsed arguments, fetched from cli by self.parse_env """
-        self.descriptions = {}
+        # Why `or SimpleNamespace()`?
+        # We want to prevent error raised in `self.ask_env()` if self.env would have been set to None.
+        # It would be None if the user created this mininterface (without setting env)
+        # or if __init__.run is used but Env is not a dataclass but a function (which means it has no attributes).
+        self.env: EnvClass = _env or SimpleNamespace()
+        """ Parsed arguments, fetched from cli
+            Contains whole configuration (previously fetched from CLI and config file).
+        """
+        self._descriptions = _descriptions or {}
         """ Field descriptions """
 
-        # Load configuration from CLI and a config file
-        if env_class:
-            self._parse_env(env_class, config_file, **kwargs)
-
-    def __enter__(self) -> "Mininterface":
+    def __enter__(self) -> Self:
         """ When used in the with statement, the GUI window does not vanish between dialogs
             and it redirects the stdout to a text area. """
         return self
@@ -59,8 +62,10 @@ class Mininterface(Generic[EnvClass]):
         print("Asking", text)
         raise Cancelled(".. cancelled")
 
+    # TODO → remove in favour of self.form(None)?
+    # Cons: Return type dict|EnvClass. Maybe we could return None too.
     def ask_env(self) -> EnvClass:
-        """ Allow the user to edit whole configuration. (Previously fetched from CLI and config file by parse_env.) """
+        """ Allow the user to edit whole configuration. (Previously fetched from CLI and config file.) """
         print("Asking the env", self.env)
         return self.env
 
@@ -69,54 +74,16 @@ class Mininterface(Generic[EnvClass]):
         print("Asking number", text)
         return 0
 
-    def form(self, form: FormDict, title: str = "") -> dict:
+    def form(self, form: FormDict, title: str = "") -> dict: # EnvClass: # TODO
         """ Prompt the user to fill up whole form.
             :param data: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The default value might be `mininterface.FormField` that allows you to add descriptions.
                 A checkbox example: `{"my label": FormField(True, "my description")}`
+            :param title: Optional form title
         """
         print(f"Asking the form {title}", form)
         return form  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
-
-    def get_env(self, ask_on_empty_cli=True) -> EnvClass:
-        """ Returns whole configuration (previously fetched from CLI and config file by parse_env).
-            If program was launched with no arguments (empty CLI), invokes self.ask_env() to edit the fields. """
-        # Empty CLI → GUI edit
-        if ask_on_empty_cli and len(sys.argv) <= 1:
-            return self.ask_env()
-        return self.env
-
-    def _parse_env(self, env_class: Type[EnvClass],
-                   config_file: Path | None = None,
-                   **kwargs) -> EnvClass:
-        """ Parse CLI arguments, possibly merged from a config file.
-
-        :param env_class: Class with the configuration.
-        :param config_file: File to load YAML to be merged with the configuration.
-            You do not have to re-define all the settings in the config file, you can choose a few.
-        :param **kwargs The same as for argparse.ArgumentParser.
-        :return: Configuration namespace.
-        """
-        # Load config file
-        if config_file:
-            disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
-            # Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
-            for key in (key for key, val in disk.items() if isinstance(val, dict)):
-                disk[key] = env_class.__annotations__[key](**disk[key])
-            # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
-            # Otherwise, tyro will spawn warnings about missing fields.
-            static = {key: getattr(env_class, key, MISSING)
-                      for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
-            kwargs["default"] = SimpleNamespace(**(disk | static))
-
-        # Load configuration from CLI
-        parser: ArgumentParser = get_parser(env_class, **kwargs)
-        self.descriptions = get_descriptions(parser)
-        # Why `or self.env`? If Env is not a dataclass but a function, it has no attributes.
-        # Still, we want to prevent error raised in `ask_env()` if self.env would have been set to None.
-        self.env = get_env_allow_missing(env_class, kwargs, parser) or self.env
-        return self.env
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes. """
@@ -129,7 +96,6 @@ class Mininterface(Generic[EnvClass]):
         return False
 
 
-from abc import ABC, abstractmethod
 class BackendAdaptor(ABC):
 
     @staticmethod

@@ -29,7 +29,7 @@ class TestAbstract(TestCase):
     def test_basic(self):
         def go(*_args) -> SimpleEnv:
             self.sys(*_args)
-            return run(SimpleEnv, interface=Mininterface, prog="My application").get_env()
+            return run(SimpleEnv, interface=Mininterface, prog="My application").env
 
         self.assertEqual(4, go().important_number)
         self.assertEqual(False, go().test)
@@ -43,7 +43,7 @@ class TestAbstract(TestCase):
     def test_cli_complex(self):
         def go(*_args) -> NestedDefaultedEnv:
             self.sys(*_args)
-            return run(NestedDefaultedEnv, interface=Mininterface, prog="My application").get_env()
+            return run(NestedDefaultedEnv, interface=Mininterface, prog="My application").env
 
         self.assertEqual("example.org", go().further.host)
         self.assertEqual("example.com", go("--further.host=example.com").further.host)
@@ -53,7 +53,7 @@ class TestAbstract(TestCase):
 
         def go2(*_args) -> NestedMissingEnv:
             self.sys(*_args)
-            return run(NestedMissingEnv, interface=Mininterface, prog="My application").get_env()
+            return run(NestedMissingEnv, interface=Mininterface, prog="My application").env
         self.assertEqual("example.org", go2("--further.token=1").further.host)
         self.assertEqual("example.com", go2("--further.token=1", "--further.host=example.com").further.host)
         self.assertEqual("'example.net'", go2("--further.token=1", "--further.host='example.net'").further.host)
@@ -129,7 +129,7 @@ class TestAbstract(TestCase):
 
         self.assertIsNone(env1.severity)
 
-        fd = config_to_formdict(env1, m.descriptions)
+        fd = config_to_formdict(env1, m._descriptions)
         ui = formdict_repr(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
