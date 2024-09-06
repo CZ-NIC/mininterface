@@ -34,7 +34,7 @@ def get_terminal_size():
 
 def get_descriptions(parser: ArgumentParser) -> dict:
     """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
-    return {action.dest.replace("-", "_"): re.sub(r"\(default.*\)", "", action.help)
+    return {action.dest.replace("-", "_"): re.sub(r"\(default.*\)", "", action.help or "")
             for action in parser._actions}
 
 def recursive_set_focus(widget: Widget):

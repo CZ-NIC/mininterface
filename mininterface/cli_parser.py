@@ -21,6 +21,15 @@ from .FormDict import EnvClass
 from .FormField import FormField
 from .validators import not_empty
 
+# Pydantic is not a project dependency, that is just an optional integration
+try:  # Pydantic is not a dependency but integration
+    from pydantic import BaseModel
+    pydantic = True
+except:
+    pydantic = False
+    BaseModel = False
+
+
 WrongFields = dict[str, FormField]
 
 eavesdrop = ""
@@ -108,25 +117,26 @@ def run_tyro_parser(env_class: Type[EnvClass],
                     # (with a graceful message from tyro)
                     pass
                 else:
-                    # NOTE: For a missing int, we put '' to the UI.
-                    # The UI is then not able to use the number filtering capabilities.
-                    # However, we insist on having '' value as it clearly states to the user
-                    # that the value is missing.
-                    type_ = env_class.__annotations__[argument.dest]
+                    # NOTE: We put '' to the UI to clearly state that the value is missing.
+                    # However, the UI then is not able to use the number filtering capabilities.
+                    ff = wf[argument.dest] = FormField("",
+                                                       argument.help.replace("(required)", ""),
+                                                       validation=not_empty,
+                                                       _src_class=env_class,
+                                                       _src_key=argument.dest
+                                                       )
+                    # Why `type_()`? We need to put a default value so that the parsing will not fail.
+                    # A None would be enough because Mininterface will ask for the missing values
+                    # promply, however, Pydantic model would fail.
+                    setattr(kwargs["default"], argument.dest, ff.annotation())
 
-
-                    wf[argument.dest] = FormField("",
-                                                  argument.help.replace("(required)", ""),
-                                                  type_,
-                                                  validation=not_empty
-                                                  )
-                    setattr(kwargs["default"], argument.dest, None)
-
-            # second attempt to parse CLI
+            # Second attempt to parse CLI
             # Why catching warnings? All the meaningful warnings
             # have been produces during the first attempt.
             # Now, when we defaulted all the missing fields with None,
             # tyro produces 'UserWarning: The field (...) but the default value has type <class 'str'>.'
+            # (This is not true anymore; to support pydantic we put a default value of the type,
+            # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 return cli(env_class, **kwargs), wf
@@ -156,10 +166,18 @@ def _parse_cli(env_class: Type[EnvClass],
             # Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
             for key in (key for key, val in disk.items() if isinstance(val, dict)):
                 disk[key] = env_class.__annotations__[key](**disk[key])
-        # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
-        # Otherwise, tyro will spawn warnings about missing fields.
-        static = {key: getattr(env_class, key, MISSING)
-                  for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
+
+        # Fill default fields
+        if pydantic and issubclass(env_class, BaseModel):
+            # Unfortunately, pydantic needs to fill the default with the actual values,
+            # the default value takes the precedence over the hard coded one, even if missing.
+            static = {key: env_class.model_fields.get(key).default
+                      for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
+        else:
+            # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
+            # Otherwise, tyro will spawn warnings about missing fields.
+            static = {key: getattr(env_class, key, MISSING)
+                      for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI

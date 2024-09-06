@@ -109,7 +109,7 @@ pip install mininterface
 
 # Docs
 
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) for the configuration. Wrap it to the [run](#run) method that returns an interface `m`. Access the configuration via `m.env` or use it to prompt the user `m.ask_yes("Is that alright?")`.
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) or a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) to store the configuration. Wrap it to the [run](#run) method that returns an interface `m`. Access the configuration via `m.env` or use it to prompt the user `m.ask_yes("Is that alright?")`.
 
 ## Basic usage
 

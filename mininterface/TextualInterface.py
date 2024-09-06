@@ -54,7 +54,6 @@ class TextualInterface(Redirectable, TextInterface):
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):
-        # TODO suggestion fail
         return self.form({text: FormField("", "", int, text)})[text].val
 
     def is_yes(self, text: str):

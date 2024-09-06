@@ -12,6 +12,7 @@ from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
 from mininterface.FormDict import dataclass_to_formdict, formdict_repr
 from configs import FurtherEnv2, OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
+from pydantic_configs import MyModel, MyModelNested, MyModelNestedRestraint
 from mininterface.auxiliary import flatten
 from mininterface import validators
 
@@ -236,7 +237,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': FormField(val='', description='', annotation=<class 'str'>, name=None, validation=not_empty, _src_dict=None, _src_obj=None)}"""
+        form = """Asking the form {'token': FormField(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty)}"""
         # Ask for missing, no interference with ask_on_empty_cli
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, interface=Mininterface)
@@ -316,6 +317,40 @@ class TestLog(TestAbstract):
         self.sys("-vv")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
+
+
+class TestPydanticIntegration(TestAbstract):
+    def test_basic(self):
+        m = run(MyModel, interface=Mininterface)
+        self.assertEqual("hello", m.env.name)
+
+    def test_nested(self):
+        m = run(MyModelNested, interface=Mininterface)
+        self.assertEqual(-100, m.env.number)
+
+        self.sys("--number", "-200")
+        m = run(MyModelNested, interface=Mininterface)
+        self.assertEqual(-200, m.env.number)
+        self.assertEqual(4, m.env.inner.number)
+
+    def test_config(self):
+        m = run(MyModelNested, config_file="tests/pydantic.yaml", interface=Mininterface)
+        self.assertEqual(100, m.env.number)
+        self.assertEqual(0, m.env.inner.number)
+        self.assertEqual("hello", m.env.inner.text)
+
+    def test_nested_restraint(self):
+        m = run(MyModelNestedRestraint, interface=Mininterface)
+        self.assertEqual("hello", m.env.inner.name)
+
+        f = dataclass_to_formdict(m.env, m._descriptions)["inner"]["name"]
+        self.assertTrue(f.update("short"))
+        self.assertFalse(f.update("long words"))
+
+    # NOTE
+    # def test_run_ask_for_missing(self):
+    #   Might be a mess. Seems that missing fields are working better
+    #   when nested than directly.
 
 
 if __name__ == '__main__':

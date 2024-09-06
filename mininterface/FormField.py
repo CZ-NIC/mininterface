@@ -1,12 +1,22 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args, get_type_hints
 
 from .auxiliary import flatten
 
 if TYPE_CHECKING:
     from .FormDict import FormDict
+
+# Pydantic is not a project dependency, that is just an optional integration
+try:  # Pydantic is not a dependency but integration
+    from pydantic import ValidationError as PydanticValidationError
+    from pydantic import create_model
+    pydantic = True
+except:
+    pydantic = False
+    PydanticValidationError = None
+    create_model = None
 
 FFValue = TypeVar("FFValue")
 TD = TypeVar("TD")
@@ -19,6 +29,8 @@ ErrorMessage = TypeVar("ErrorMessage")
 """ Callback validation error message"""
 ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
+PydanticFieldInfo = TypeVar("PydanticFieldInfo")
+
 
 @dataclass
 class FormField:
@@ -55,7 +67,7 @@ class FormField:
     """
 
     validation: Callable[["FormField"], ValidationResult | tuple[ValidationResult,
-                                                                FieldValue]] | None = None
+                                                                 FieldValue]] | None = None
     """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
         If the validation fails, user is prompted to edit the value.
         Return True if validation succeeded or False or an error message when it failed.
@@ -82,13 +94,24 @@ class FormField:
     I am not sure whether to store the transformed value in the ui_value or fixed_value.
     """
 
-    _src_dict: tuple[TD, TK] | None = None
-    """ The original dict to be updated when UI ends.
-    """
-    _src_obj: tuple[TD, TK] | None = None
+    # _pydantic_model: type = None
+    # """ NOTE Experimental
+
+    # Annotation of pydantic model is what?
+
+    # """
+
+    _src_dict: TD | None = None
+    """ The original dict to be updated when UI ends."""
+
+    _src_obj: TD | None = None
     """ The original object to be updated when UI ends.
-    NOTE might be merged to `src`
+        If not set earlier, fetches name, annotation, _pydantic_field from this class.
     """
+    _src_key: str | None = None
+    """ Key in the src object / src dict """
+    _src_class: type | None = None
+    """ If not set earlier, fetch name, annotation and _pydantic_field from this class. """
 
     #
     # Following attributes are not meant to be set externally.
@@ -111,8 +134,20 @@ class FormField:
     # """ Distinguish _ui_val default None from the user UI input None """
     # _ui_val = None
     # """ Auxiliary variable. UI state → validation fails on a field, we need to restore """
+    _pydantic_field: PydanticFieldInfo = None
 
     def __post_init__(self):
+        # Fetch information from the parent object
+        if self._src_obj and not self._src_class:
+            self._src_class = self._src_obj
+        if self._src_class:
+            if not self.annotation:  # when we have _src_class, we must have _src_key too
+                self.annotation = get_type_hints(self._src_class).get(self._src_key)
+            if pydantic:  # Pydantic integration
+                self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
+        if not self.name and self._src_key:
+            self.name = self._src_key
+
         if not self.annotation:
             self.annotation = type(self.val)
         self._original_desc = self.description
@@ -123,11 +158,16 @@ class FormField:
         field_strings = []
         for field in fields(self):
             field_value = getattr(self, field.name)
+            # clean-up protected members
+            if field.name.startswith("_"):
+                continue
+
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
             if field.name == 'validation' and (func_name := getattr(field_value, "__name__", "")):
                 v = f"{field.name}={func_name}"
             else:
                 v = f"{field.name}={field_value!r}"
+
             field_strings.append(v)
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
@@ -149,6 +189,43 @@ class FormField:
             return repr(self.annotation)
         else:
             return self.annotation.__name__
+
+    def _validate(self, out_value) -> FieldValue:
+        """ Runs
+            * self.validation callback
+            * pydantic validation
+            * annotation type validation
+
+            If succeeded, return the (possibly transformed) value.
+            If failed, raises ValueError.
+        """
+        if self.validation:
+            last = self.val
+            self.val = out_value
+            res = self.validation(self)
+            if isinstance(res, tuple):
+                passed, out_value = res
+                self.val = out_value
+            else:
+                passed = res
+                self.val = last
+            if passed is not True:  # we did not pass, there might be an error message in passed
+                self.set_error_text(passed or f"Validation fail")
+                raise ValueError
+
+        # pydantic_check
+        if self._pydantic_field:
+            try:
+                create_model('ValidationModel', check=(self.annotation, self._pydantic_field))(check=out_value)
+            except PydanticValidationError as e:
+                self.set_error_text(e.errors()[0]["msg"])
+                raise ValueError
+
+        # Type check
+        if self.annotation and not isinstance(out_value, self.annotation):
+            self.set_error_text(f"Type must be {self._repr_annotation()}!")
+            raise ValueError
+        return out_value
 
     def update(self, ui_value) -> bool:
         """ UI value → FormField value → original value. (With type conversion and checks.)
@@ -190,8 +267,20 @@ class FormField:
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
 
-            if not isinstance(out_value, self.annotation):
-                if isinstance(out_value, str):
+            try:
+                seems_bad = not isinstance(out_value, self.annotation) and isinstance(out_value, str)
+            except TypeError:
+                # Why checking TypeError? Due to Pydantic.
+                # class Inner(BaseModel):
+                #     id: int
+                # class Model(BaseModel):
+                #     items1: List[Item] = []
+                #          'TypeError: Subscripted generics cannot be used with class and instance checks'
+                #     items2: list[Item] = []
+                #           'TypeError: cannot be a parameterized generic'
+                pass
+            else:
+                if seems_bad:
                     try:
                         # Textual ask_number -> user writes '123', this has to be converted to int 123
                         # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
@@ -200,40 +289,17 @@ class FormField:
                         # Automatic conversion failed
                         pass
 
-        # User validation check
-        if self.validation:
-            last = self.val
-            self.val = out_value
-            res = self.validation(self)
-            if isinstance(res, tuple):
-                passed, out_value = res
-                self.val = ui_value = out_value
-            else:
-                passed = res
-                self.val = last
-            if passed is not True:  # we did not pass, there might be an error message in passed
-                self.set_error_text(passed or f"Validation fail")
-                # self.val = last
-                return False
-
-        # Type check
-        if self.annotation and not isinstance(out_value, self.annotation):
-            self.set_error_text(f"Type must be {self._repr_annotation()}!")
-            # self.val = last
-            return False  # revision needed
-
-        # keep values if revision needed
-        # We merge new data to the origin. If form is re-submitted, the values will stay there.
-        self.val = out_value  # checks succeeded, confirm the value
-
+        # User and type validation check
+        try:
+            self.val = self._validate(out_value)   # checks succeeded, confirm the value
+        except ValueError:
+            return False
 
         # Store to the source user data
         if self._src_dict:
-            d, k = self._src_dict
-            d[k] = out_value
+            self._src_dict[self._src_key] = out_value
         elif self._src_obj:
-            d, k = self._src_obj
-            setattr(d, k, out_value)
+            setattr(self._src_obj, self._src_key, out_value)
         else:
             # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass
