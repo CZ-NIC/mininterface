@@ -93,7 +93,6 @@ class TkWindow(Tk, BackendAdaptor):
     @staticmethod
     def widgetize(ff: FormField) -> Value:
         """ Wrap FormField to a textual widget. """
-        # NOTE remove: v = ff._get_ui_val((float, int, str, bool))
         v = ff.val
         if ff.annotation is bool and not isinstance(v, bool):
             # tkinter_form unfortunately needs the bool type to display correct widget,

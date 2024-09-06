@@ -20,9 +20,6 @@ ErrorMessage = TypeVar("ErrorMessage")
 ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 
-# TODO rename to Field?
-
-
 @dataclass
 class FormField:
     """ Enrich a value with a description, validation etc.
@@ -53,9 +50,8 @@ class FormField:
     name: str | None = None
     """ Name displayed in the UI.
         NOTE: Only TextualInterface uses this by now.
-        GuiInterface reads the name from the dict.
-        In the future, Textual should be able to do the same
-        and both, Gui and Textual should use FormField.name as override.
+        GuiInterface reads the name from the dict only.
+        Thus, it is not easy to change the dict key as the user expects the original one in the dict.
     """
 
     validation: Callable[["FormField"], ValidationResult | tuple[ValidationResult,
@@ -147,25 +143,6 @@ class FormField:
         self.description = self._original_desc
         self.name = self._original_name
         self.error_text = None
-
-    # NOTE remove
-    # def _get_ui_val(self, allowed_types: tuple | None = None):
-    #     """ Internal function used from within a UI only, not from the program.
-
-    #     It returns the val, however the field was already displayed in the UI, it preferably
-    #     returns the value as presented in the UI (self._ui_val). NOTE bad description
-
-    #     :param allowed_types If the value is not their instance, convert to str.
-    #         Because UIs are not able to process all types.
-    #     """
-    #     # NOTE remove
-    #     # if self._has_ui_val and self._ui_val is not None:
-    #     #     v = self._ui_val
-    #     # else:
-    #     v = self.val
-    #     if allowed_types and not isinstance(v, allowed_types):
-    #         v = str(v)
-    #     return v
 
     def _repr_annotation(self):
         if isinstance(self.annotation, UnionType):

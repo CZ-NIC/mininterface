@@ -118,7 +118,6 @@ def run_tyro_parser(env_class: Type[EnvClass],
                     wf[argument.dest] = FormField("",
                                                   argument.help.replace("(required)", ""),
                                                   type_,
-                                                #   validation=FormField.validators.not_empty
                                                   validation=not_empty
                                                   )
                     setattr(kwargs["default"], argument.dest, None)

@@ -138,6 +138,8 @@ $ program.py  # omitting --required-number
 
     # Build the interface
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
+    if "prog" not in kwargs:
+        kwargs["prog"] = title
     try:
         interface = interface(title, env, descriptions)
     except InterfaceNotAvailable:  # Fallback to a different interface

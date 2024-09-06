@@ -45,7 +45,7 @@ class TextualInterface(Redirectable, TextInterface):
         return self.env
 
     # NOTE: This works bad with lists. GuiInterface considers list as combobox (which is now suppressed by str conversion),
-    # TextualInterface as str. We should decide what should happen. Is there a tyro default for list?
+    # TextualInterface as str. We should decide what should happen.
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
@@ -89,8 +89,6 @@ class TextualApp(App[bool | None]):
     @staticmethod
     def widgetize(ff: FormField) -> Checkbox | Input:
         """ Wrap FormField to a textual widget. """
-
-        # NOTE remove, ff._get_ui_val() was used here
         v = ff.val
         if ff.annotation is bool or not ff.annotation and (v is True or v is False):
             o = Checkbox(ff.name or "", v)
@@ -107,7 +105,7 @@ class TextualApp(App[bool | None]):
         if title:
             window.title = title
 
-        # NOTE Sections (~ nested dicts) are not implemented, they flatten
+        # NOTE Sections (~ nested dicts) are not implemented, they flatten.
         # Maybe just 'flatten' might be removed.
         widgets: list[Checkbox | Input] = [f for f in flatten(formdict_to_widgetdict(formDict, cls.widgetize))]
         window.widgets = widgets

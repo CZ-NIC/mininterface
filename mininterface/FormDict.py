@@ -41,10 +41,12 @@ def dict_to_formdict(data: dict) -> FormDict:
     return fd
 
 
-def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable):
+def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key=None):
     if isinstance(d, dict):
-        return {k: formdict_to_widgetdict(v, widgetize_callback) for k, v in d.items()}
+        return {k: formdict_to_widgetdict(v, widgetize_callback, k) for k, v in d.items()}
     elif isinstance(d, FormField):
+        if not d.name:  # restore the name from the user provided dict
+            d.name = _key
         return widgetize_callback(d)
     else:
         return d
