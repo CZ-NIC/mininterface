@@ -1,12 +1,13 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args, get_type_hints
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Self, TypeVar, get_args, get_type_hints
 
 from .auxiliary import flatten
 
 if TYPE_CHECKING:
     from .FormDict import FormDict
+    from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 # Pydantic is not a project dependency, that is just an optional integration
 try:  # Pydantic is not a dependency but integration
@@ -17,6 +18,11 @@ except:
     pydantic = False
     PydanticValidationError = None
     create_model = None
+try:   # Attrs is not a dependency but integration
+    import attr
+except:
+    attr = None
+
 
 FFValue = TypeVar("FFValue")
 TD = TypeVar("TD")
@@ -30,6 +36,7 @@ ErrorMessage = TypeVar("ErrorMessage")
 ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo")
+AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 
 
 @dataclass
@@ -43,7 +50,7 @@ class FormField:
         (Ex: Merge the dict of dicts from the GUI back into the .env object holding the configuration.)
         """
 
-    val: FieldValue
+    val: FieldValue = None
     """ The value wrapped by FormField.
 
     ```python
@@ -87,19 +94,23 @@ class FormField:
         # User cannot leave the field empty.
         ```
 
+        You may use the validation in a type annotation.
+        ```python
+        from mininterface import FormField, Validation
+        @dataclass
+        class Env:
+            my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
+
+            # which is an alias for:
+            # my_text: Annotated[str, FormField(validation=not_empty)] = "will not be emtpy"
+        ```
+
     NOTE Undocumented feature, we can return tuple, while the [ValidationResult, FieldValue] to set the self.val.
 
     NOTE I am not sure where to validate. If I have a complex object in the form,
     would not annotation check spoil it before validation can transoform the value?
     I am not sure whether to store the transformed value in the ui_value or fixed_value.
     """
-
-    # _pydantic_model: type = None
-    # """ NOTE Experimental
-
-    # Annotation of pydantic model is what?
-
-    # """
 
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
@@ -135,6 +146,7 @@ class FormField:
     # _ui_val = None
     # """ Auxiliary variable. UI state → validation fails on a field, we need to restore """
     _pydantic_field: PydanticFieldInfo = None
+    _attrs_field: AttrsFieldInfo = None
 
     def __post_init__(self):
         # Fetch information from the parent object
@@ -143,8 +155,18 @@ class FormField:
         if self._src_class:
             if not self.annotation:  # when we have _src_class, we must have _src_key too
                 self.annotation = get_type_hints(self._src_class).get(self._src_key)
+                field_type = self._src_class.__annotations__.get(self._src_key)
+                if field_type and hasattr(field_type, '__metadata__'):
+                    for metadata in field_type.__metadata__:
+                        if isinstance(metadata, FormField):
+                            self._fetch_from(metadata)  # NOTE might fetch from a pydantic model too
             if pydantic:  # Pydantic integration
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
+            if attr:  # Attrs integration
+                try:
+                    self._attrs_field: dict | None = attr.fields_dict(self._src_class.__class__).get(self._src_key)
+                except attr.exceptions.NotAnAttrsClassError:
+                    pass
         if not self.name and self._src_key:
             self.name = self._src_key
 
@@ -170,6 +192,19 @@ class FormField:
 
             field_strings.append(v)
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
+
+    def _fetch_from(self, ff: "Self"):
+        """ Fetches public attributes from another instance. """
+        if self.val is None:
+            self.val = ff.val
+        if self.description is None:
+            self.description = ff.description
+        if self.annotation is None:
+            self.annotation = ff.annotation
+        if self.name is None:
+            self.name = ff.name
+        if self.validation is None:
+            self.validation = ff.validation
 
     def set_error_text(self, s):
         self._original_desc = o = self.description
@@ -220,6 +255,16 @@ class FormField:
             except PydanticValidationError as e:
                 self.set_error_text(e.errors()[0]["msg"])
                 raise ValueError
+        # attrs check
+        if self._attrs_field:
+            try:
+                attr.make_class(
+                    'ValidationModel',
+                    {"check": attr.ib(validator=self._attrs_field.validator)}
+                )(check=out_value)
+            except ValueError as e:
+                self.set_error_text(str(e))
+                raise
 
         # Type check
         if self.annotation and not isinstance(out_value, self.annotation):

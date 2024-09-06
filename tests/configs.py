@@ -1,4 +1,10 @@
 from dataclasses import dataclass
+from typing import Annotated
+
+from mininterface import FormField
+from mininterface.aliases import Validation
+from mininterface.validators import not_empty
+
 
 @dataclass
 class SimpleEnv:
@@ -25,6 +31,7 @@ class FurtherEnv2:
     token: str
     host: str = "example.org"
 
+
 @dataclass
 class NestedMissingEnv:
     further: FurtherEnv2
@@ -33,10 +40,13 @@ class NestedMissingEnv:
 @dataclass
 class FurtherEnv4:
     flag: bool = False
+
+
 @dataclass
 class FurtherEnv3:
     deep: FurtherEnv4
     numb: int = 0
+
 
 @dataclass
 class OptionalFlagEnv:
@@ -49,3 +59,13 @@ class OptionalFlagEnv:
 
     msg2: str | None = "Default text"
     """ Another example message """
+
+
+@dataclass
+class ConstrinedEnv:
+    """Set of options."""
+
+    test: Annotated[str, FormField(validation=not_empty)] = "hello"
+    """My testing flag"""
+
+    test2: Annotated[str, Validation(not_empty)] = "hello"

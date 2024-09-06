@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class MyModel(BaseModel):
+class PydModel(BaseModel):
     """Set of options."""
 
     test: bool = False
@@ -10,14 +10,14 @@ class MyModel(BaseModel):
     """ Restrained name """
 
 
-class Inner(BaseModel):
+class PydInner(BaseModel):
     number: int = 4
     text: str = "hello"
 
 
-class MyModelNested(BaseModel):
+class PydNested(BaseModel):
     number: int = -100
-    inner: Inner = Inner()
+    inner: PydInner = PydInner()
 
-class MyModelNestedRestraint(BaseModel):
-    inner: MyModel = MyModel()
+class PydNestedRestraint(BaseModel):
+    inner: PydModel = PydModel()

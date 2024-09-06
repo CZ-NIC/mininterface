@@ -1,20 +1,22 @@
-from io import StringIO
 import logging
 import os
-from pathlib import Path
 import sys
+from io import StringIO
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, main
 from unittest.mock import patch
 
-from mininterface import Mininterface, TextInterface, run
+from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
+from configs import (ConstrinedEnv, FurtherEnv2, NestedDefaultedEnv,
+                     NestedMissingEnv, OptionalFlagEnv, SimpleEnv)
+from pydantic_configs import PydModel, PydNested, PydNestedRestraint
+
+from mininterface import Mininterface, TextInterface, run, validators
+from mininterface.auxiliary import flatten
+from mininterface.FormDict import dataclass_to_formdict, formdict_repr
 from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
-from mininterface.FormDict import dataclass_to_formdict, formdict_repr
-from configs import FurtherEnv2, OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
-from pydantic_configs import MyModel, MyModelNested, MyModelNestedRestraint
-from mininterface.auxiliary import flatten
-from mininterface import validators
 
 SYS_ARGV = None  # To be redirected
 
@@ -321,37 +323,81 @@ class TestLog(TestAbstract):
 
 class TestPydanticIntegration(TestAbstract):
     def test_basic(self):
-        m = run(MyModel, interface=Mininterface)
+        m = run(PydModel, interface=Mininterface)
         self.assertEqual("hello", m.env.name)
 
     def test_nested(self):
-        m = run(MyModelNested, interface=Mininterface)
+        m = run(PydNested, interface=Mininterface)
         self.assertEqual(-100, m.env.number)
 
         self.sys("--number", "-200")
-        m = run(MyModelNested, interface=Mininterface)
+        m = run(PydNested, interface=Mininterface)
         self.assertEqual(-200, m.env.number)
         self.assertEqual(4, m.env.inner.number)
 
     def test_config(self):
-        m = run(MyModelNested, config_file="tests/pydantic.yaml", interface=Mininterface)
+        m = run(PydNested, config_file="tests/pydantic.yaml", interface=Mininterface)
         self.assertEqual(100, m.env.number)
         self.assertEqual(0, m.env.inner.number)
         self.assertEqual("hello", m.env.inner.text)
 
     def test_nested_restraint(self):
-        m = run(MyModelNestedRestraint, interface=Mininterface)
+        m = run(PydNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
         f = dataclass_to_formdict(m.env, m._descriptions)["inner"]["name"]
         self.assertTrue(f.update("short"))
+        self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
+        self.assertEqual("String should have at most 5 characters Restrained name ", f.description)
+        self.assertTrue(f.update(""))
+        self.assertEqual("Restrained name ", f.description)
 
     # NOTE
     # def test_run_ask_for_missing(self):
     #   Might be a mess. Seems that missing fields are working better
     #   when nested than directly.
 
+class TestAttrsIntegration(TestAbstract):
+    def test_basic(self):
+        m = run(AttrsModel, interface=Mininterface)
+        self.assertEqual("hello", m.env.name)
+
+    def test_nested(self):
+        m = run(AttrsNested, interface=Mininterface)
+        self.assertEqual(-100, m.env.number)
+
+        self.sys("--number", "-200")
+        m = run(AttrsNested, interface=Mininterface)
+        self.assertEqual(-200, m.env.number)
+        self.assertEqual(4, m.env.inner.number)
+
+    def test_config(self):
+        m = run(AttrsNested, config_file="tests/pydantic.yaml", interface=Mininterface)
+        self.assertEqual(100, m.env.number)
+        self.assertEqual(0, m.env.inner.number)
+        self.assertEqual("hello", m.env.inner.text)
+
+    def test_nested_restraint(self):
+        m = run(AttrsNestedRestraint, interface=Mininterface)
+        self.assertEqual("hello", m.env.inner.name)
+
+        f = dataclass_to_formdict(m.env, m._descriptions)["inner"]["name"]
+        self.assertTrue(f.update("short"))
+        self.assertEqual("Restrained name ", f.description)
+        self.assertFalse(f.update("long words"))
+        self.assertEqual("Length of 'check' must be <= 5: 10 Restrained name ", f.description)
+        self.assertTrue(f.update(""))
+        self.assertEqual("Restrained name ", f.description)
+
+class TestAnnotated(TestAbstract):
+    def test_annotated(self):
+        m = run(ConstrinedEnv)
+        d = dataclass_to_formdict(m.env, m._descriptions)
+        self.assertFalse(d[""]["test"].update(""))
+        self.assertFalse(d[""]["test2"].update(""))
+        self.assertTrue(d[""]["test"].update(" "))
+        self.assertTrue(d[""]["test2"].update(" "))
 
 if __name__ == '__main__':
     main()

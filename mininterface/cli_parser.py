@@ -28,6 +28,10 @@ try:  # Pydantic is not a dependency but integration
 except:
     pydantic = False
     BaseModel = False
+try:   # Attrs is not a dependency but integration
+    import attr
+except:
+    attr = None
 
 
 WrongFields = dict[str, FormField]
@@ -173,6 +177,11 @@ def _parse_cli(env_class: Type[EnvClass],
             # the default value takes the precedence over the hard coded one, even if missing.
             static = {key: env_class.model_fields.get(key).default
                       for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
+        elif attr and attr.has(env_class):
+            # Unfortunately, attrs needs to fill the default with the actual values,
+            # the default value takes the precedence over the hard coded one, even if missing.
+            static = {key: field.default
+                      for key,field in attr.fields_dict(env_class).items() if not key.startswith("__") and not key in disk}
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.

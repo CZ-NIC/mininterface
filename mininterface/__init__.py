@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Type
 
+from .aliases import Validation
 from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable
 from .FormDict import EnvClass
@@ -57,10 +58,10 @@ m = run(Env, ask_on_empty=True)
 ```
 
 ```bash
-$ program.py --number 3
-# No dialog appear
-$ program.py  # no flag omitting
+$ program.py  #  omitting all parameters
 # Dialog for `number` and `text` appears
+$ program.py --number 3
+# No dialog appears
 ```
     :param title: The main title. If not set, taken from `prog` or program name.
     :param config_file: File to load YAML to be merged with the configuration.
@@ -157,5 +158,6 @@ $ program.py  # omitting --required-number
 
 
 __all__ = ["run", "FormField", "validators", "InterfaceNotAvailable",
+           "Validation",
            "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
            ]

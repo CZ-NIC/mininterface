@@ -76,6 +76,7 @@ with run(Env) as m:
   * [`mininterface`](#mininterface)
     + [`run`](#run)
     + [`FormField`](#formfield)
+    + [`Validation` alias](#validation-alias)
     + [`validators`](#validators)
   * [Interfaces](#interfaces)
     + [`Mininterface`](#mininterface)
@@ -109,7 +110,7 @@ pip install mininterface
 
 # Docs
 
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass) or a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) to store the configuration. Wrap it to the [run](#run) method that returns an interface `m`. Access the configuration via `m.env` or use it to prompt the user `m.ask_yes("Is that alright?")`.
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run](#run) method that returns an interface `m`. Access the configuration via `m.env` or use it to prompt the user `m.ask_yes("Is that alright?")`.
 
 ## Basic usage
 
@@ -201,6 +202,40 @@ Or by CLI:
 
 ```
 $./program.py --further.host example.net
+```
+
+### Validation
+
+To do any advanced things, use the powerful [`FormField`](#formfield) object. For a validation only, use [`Validation alias`](#validation-alias).
+
+```python3
+from typing import Annotated
+from mininterface.validators import not_empty
+from mininterface import Validation
+
+@dataclass
+class Env:
+    test: Annotated[str, Validation(not_empty)] = "hello"
+```
+
+Under the hood, this is just a `FormField`.
+
+```python3
+@dataclass
+class Env:
+    test: Annotated[str, FormField(validation=not_empty)] = "hello"
+```
+
+Why we used it in an Annotated statement? To preserve the date type.
+
+```python3
+@dataclass
+class Env:
+    my_string: FormField = FormField("hello", validation=not_empty)
+
+m = run(Env)
+print(type(m.env.my_string))  # FormField
+print(m.env.my_string.val)  # hello
 ```
 
 ## `mininterface`
@@ -305,6 +340,18 @@ m.form({"number", FormField("", validation=not_empty)})
 # User cannot leave the field empty.
 ```
 
+You may use the validation in a type annotation.
+
+```python
+from mininterface import FormField, Validation
+@dataclass
+class Env:
+    my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
+
+    # which is an alias for:
+    # my_text: Annotated[str, FormField(validation=not_empty)] = "will not be emtpy"
+```
+
 * `original_val`: The original value, preceding UI change. Handy while validating.
 
 ```python
@@ -314,18 +361,56 @@ def check(ff.val):
 m.form({"number", FormField(8, validation=check)})
 ```
 
-## `validators`
+### `Validation` alias
+*(check: Callable)* Alias to `FormField(validation=...)`
 
-Functions suitable for FormField validation.
+```python
+from mininterface import FormField, Validation
+@dataclass
+class Env:
+    my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
 
-### `not_empty`
+    # which is an alias for:
+    # my_text: Annotated[str, FormField(validation=not_empty)] = "will not be emtpy"
+```
+
+### `validators`
+
+Functions suitable for FormField validation. When the user submits a value whose validation fails,
+they are prompted to edit the value.
+
+```python
+m = run()
+my_dict = m.form({"my_text", FormField("", validation=validators.not_empty)})
+my_dict["my_text"]  # You can be sure the value is not empty here.
+```
+
+Note that alternatively to this module, you may validate with Pydantic or an attrs model.
+
+```python
+from pydantic import BaseModel, Field
+
+class MyModel(BaseModel):
+    restrained: str = Field(default="hello", max_length=5)
+```
+
+```python
+import attr
+from attr.validators import max_len
+
+@attr.s
+class AttrsModel:
+    restrained: str = attr.ib(default="hello", validator=max_len(5))
+```
+
+#### `not_empty`
 
 Assures that FormField the user has written a value and did not let the field empty.
 
 ```python
 from mininterface import FormField, validators
 
-m.form({"number", FormField("", validation=validators.not_empty)})
+m.form({"my_text", FormField("", validation=validators.not_empty)})
 # User cannot leave the string field empty.
 ```
 

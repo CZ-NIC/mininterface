@@ -25,4 +25,5 @@ tkinter_form = "0.1.5.2"
 mininterface = "mininterface.__main__:main"
 
 [tool.poetry.dev-dependencies]
+attrs = "*"
 pydantic = "*"
