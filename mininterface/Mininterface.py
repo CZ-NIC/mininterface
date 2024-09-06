@@ -77,8 +77,9 @@ class Mininterface(Generic[EnvClass]):
                 A checkbox example: `{"my label": FormField(True, "my description")}`
             :param title: Optional form title
         """
-        print(f"Asking the form {title}", form)
-        return self.env if form is None else form  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
+        f = self.env if form is None else form
+        print(f"Asking the form {title}".strip(), f)
+        return f  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes. """

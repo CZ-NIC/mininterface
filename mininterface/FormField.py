@@ -1,5 +1,7 @@
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterable, Optional, TypeVar, get_args
+from ast import literal_eval
+from dataclasses import dataclass, fields
+from types import UnionType
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args
 
 from .auxiliary import flatten
 
@@ -11,115 +13,252 @@ TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
 """ dict key """
+FieldValue = TypeVar("FieldValue")
+""" value """
+ErrorMessage = TypeVar("ErrorMessage")
+""" Callback validation error message"""
+ValidationResult = bool | ErrorMessage
+""" Callback validation result is either boolean or an error message. """
+
+# TODO rename to Field?
 
 
 @dataclass
 class FormField:
-    """ This class helps to enrich the field with a description.
-        Bridge between the input values and a UI widget.
-        Helps to creates a widget from the input value (includes description etc.),
+    """ Enrich a value with a description, validation etc.
+        When you provide a value to an interface, you may instead use this object.
+
+        Bridge between the input values and a UI widget. The widget is created with the help of this object,
         then transforms the value back (str to int conversion etc).
 
-        (Ex: Merge the dict of dicts from the GUI back into the object holding the configuration.)
+        (Ex: Merge the dict of dicts from the GUI back into the .env object holding the configuration.)
         """
 
-    val: Any
-    """ The value being enriched by this object. """
-    description: str
-    """ The description. """
+    val: FieldValue
+    """ The value wrapped by FormField.
 
-    annotation: Any | None = None
+    ```python
+    ff = FormField(True, "", bool)
+    m.form({"My boolean": ff})
+    print(ff.val)  # True/False
+    ```
+    """
+    description: str = ""
+    """ The description displayed in the UI. """
+
+    annotation: type | None = None
     """ Used for validation. To convert an empty '' to None.
         If not set, will be determined automatically from the `val` type.
     """
     name: str | None = None
-    """ NOTE: Only TextualInterface uses this by now.
+    """ Name displayed in the UI.
+        NOTE: Only TextualInterface uses this by now.
         GuiInterface reads the name from the dict.
         In the future, Textual should be able to do the same
         and both, Gui and Textual should use FormField.name as override.
     """
 
-    src_dict: tuple[TD, TK] | None = None
-    """ The original dict to be updated when UI ends.
-        The processed value is in the self.processed_value too.
-    """
-    src_obj: tuple[TD, TK] | None = None
-    """ The original object to be updated when UI ends.
-        The processed value is in the self.processed_value too.
-    NOTE should be merged to `src`
+    validation: Callable[["FormField"], ValidationResult | tuple[ValidationResult,
+                                                                FieldValue]] | None = None
+    """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
+        If the validation fails, user is prompted to edit the value.
+        Return True if validation succeeded or False or an error message when it failed.
+
+        ```python
+        def check(ff: FormField):
+            if ff.val < 10:
+                return "The value must be at least 10"
+        m.form({"number", FormField(12, validation=check)})
+        ```
+
+        Either use a custom callback function or mininterface.validators.
+
+        ```python
+        from mininterface.validators import not_empty
+        m.form({"number", FormField("", validation=not_empty)})
+        # User cannot leave the field empty.
+        ```
+
+    NOTE Undocumented feature, we can return tuple, while the [ValidationResult, FieldValue] to set the self.val.
+
+    NOTE I am not sure where to validate. If I have a complex object in the form,
+    would not annotation check spoil it before validation can transoform the value?
+    I am not sure whether to store the transformed value in the ui_value or fixed_value.
     """
 
-    processed_value = None
-    """ The value set while processed through the UI. """
+    _src_dict: tuple[TD, TK] | None = None
+    """ The original dict to be updated when UI ends.
+    """
+    _src_obj: tuple[TD, TK] | None = None
+    """ The original object to be updated when UI ends.
+    NOTE might be merged to `src`
+    """
+
+    #
+    # Following attributes are not meant to be set externally.
+    #
+    original_val = None
+    """ The original value, preceding UI change.  Handy while validating.
+
+    ```python
+    def check(ff.val):
+        if ff.val != ff.original_val:
+            return "You have to change the value."
+    m.form({"number", FormField(8, validation=check)})
+    ```
+    """
+
+    error_text = None
+    """ Error text if type check or validation fail and the UI has to be revised """
+
+    # _has_ui_val = None
+    # """ Distinguish _ui_val default None from the user UI input None """
+    # _ui_val = None
+    # """ Auxiliary variable. UI state → validation fails on a field, we need to restore """
 
     def __post_init__(self):
         if not self.annotation:
             self.annotation = type(self.val)
         self._original_desc = self.description
+        self._original_name = self.name
+        self.original_val = self.val
+
+    def __repr__(self):
+        field_strings = []
+        for field in fields(self):
+            field_value = getattr(self, field.name)
+            # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
+            if field.name == 'validation' and (func_name := getattr(field_value, "__name__", "")):
+                v = f"{field.name}={func_name}"
+            else:
+                v = f"{field.name}={field_value!r}"
+            field_strings.append(v)
+        return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
     def set_error_text(self, s):
-        self.description = f"{s} {self._original_desc}"
+        self._original_desc = o = self.description
+        self._original_name = n = self.name
+
+        self.description = f"{s} {o}"
+        self.name = f"* {n}"
+        self.error_text = s
 
     def remove_error_text(self):
         self.description = self._original_desc
+        self.name = self._original_name
+        self.error_text = None
 
-    def update(self, ui_value):
+    # NOTE remove
+    # def _get_ui_val(self, allowed_types: tuple | None = None):
+    #     """ Internal function used from within a UI only, not from the program.
+
+    #     It returns the val, however the field was already displayed in the UI, it preferably
+    #     returns the value as presented in the UI (self._ui_val). NOTE bad description
+
+    #     :param allowed_types If the value is not their instance, convert to str.
+    #         Because UIs are not able to process all types.
+    #     """
+    #     # NOTE remove
+    #     # if self._has_ui_val and self._ui_val is not None:
+    #     #     v = self._ui_val
+    #     # else:
+    #     v = self.val
+    #     if allowed_types and not isinstance(v, allowed_types):
+    #         v = str(v)
+    #     return v
+
+    def _repr_annotation(self):
+        if isinstance(self.annotation, UnionType):
+            return repr(self.annotation)
+        else:
+            return self.annotation.__name__
+
+    def update(self, ui_value) -> bool:
         """ UI value → FormField value → original value. (With type conversion and checks.)
 
             The value has been updated in a UI.
-            Update accordingly the value in the original linked dict
+            Update accordingly the value in the original linked dict/object
             the mininterface was invoked with.
 
             Validates the type and do the transformation.
             (Ex: Some values might be nulled from "".)
+
+            Return bool, whether the value is alright or whether the revision is needed.
         """
-        fixed_value = ui_value
         self.remove_error_text()
+        out_value = ui_value  # The proposed value, with fixed type.
+        # NOTE might be removed
+        # self._ui_val = ui_value
+        # self._has_ui_val = True
+
+        # Type conversion
+        # Even though GuiInterface does some type conversion (str → int) independently,
+        # other interfaces does not guarantee that. Hence, we need to do the type conversion too.
         if self.annotation:
             if ui_value == "" and type(None) in get_args(self.annotation):
                 # The user is not able to set the value to None, they left it empty.
                 # Cast back to None as None is one of the allowed types.
                 # Ex: `severity: int | None = None`
-                fixed_value = None
+                out_value = None
             elif self.annotation == Optional[int]:
                 try:
-                    fixed_value = int(ui_value)
+                    out_value = int(ui_value)
                 except ValueError:
                     pass
+            elif self.annotation in (list, tuple, set):
+                # basic support for iterables, however, it will not work for custom subclasses of these built-ins
+                try:
+                    out_value = literal_eval(ui_value)
+                except SyntaxError:
+                    self.set_error_text(f"Not a valid {self._repr_annotation()}")
+                    return False
 
-            if not isinstance(fixed_value, self.annotation):
-                if isinstance(fixed_value, str):
+            if not isinstance(out_value, self.annotation):
+                if isinstance(out_value, str):
                     try:
                         # Textual ask_number -> user writes '123', this has to be converted to int 123
                         # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
-                        fixed_value = self.annotation(ui_value)
+                        out_value = self.annotation(ui_value)
                     except (TypeError, ValueError):
                         # Automatic conversion failed
                         pass
 
-            if not isinstance(fixed_value, self.annotation):
-                self.set_error_text(f"Type must be `{self.annotation}`!")
-                return False  # revision needed
+        # User validation check
+        if self.validation:
+            last = self.val
+            self.val = out_value
+            res = self.validation(self)
+            if isinstance(res, tuple):
+                passed, out_value = res
+                self.val = ui_value = out_value
+            else:
+                passed = res
+                self.val = last
+            if passed is not True:  # we did not pass, there might be an error message in passed
+                self.set_error_text(passed or f"Validation fail")
+                # self.val = last
+                return False
+
+        # Type check
+        if self.annotation and not isinstance(out_value, self.annotation):
+            self.set_error_text(f"Type must be {self._repr_annotation()}!")
+            # self.val = last
+            return False  # revision needed
 
         # keep values if revision needed
         # We merge new data to the origin. If form is re-submitted, the values will stay there.
-        # NOTE: We might store `self.val = fixed_value`.
-        # This would help when the user defines FormField themselves
-        # because there is no other way to access fixed_value from outside (we try self.processed_value).
-        # However `self.val = fixed_value`` looks awful when TextualInterface have a list of strings
-        # and the form is recreated, strings split to letters, @see TextualInterface.form comment.
-        self.val = ui_value
-        self.processed_value = fixed_value
+        self.val = out_value  # checks succeeded, confirm the value
+
 
         # Store to the source user data
-        if self.src_dict:
-            d, k = self.src_dict
-            d[k] = fixed_value
-        elif self.src_obj:
-            d, k = self.src_obj
-            setattr(d, k, fixed_value)
+        if self._src_dict:
+            d, k = self._src_dict
+            d[k] = out_value
+        elif self._src_obj:
+            d, k = self._src_obj
+            setattr(d, k, out_value)
         else:
-            # This might be user-created object. The user reads directly from this. There is no need to update anything.
+            # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass
         return True
         # Fixing types:

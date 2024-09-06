@@ -86,12 +86,22 @@ class TkWindow(Tk, BackendAdaptor):
         self.text_widget = Text(self, wrap='word', height=20, width=80)
         self.text_widget.pack_forget()
         self.pending_buffer = []
-        """ Text that has been written to the text widget but might not be yet seen by user. Because no mainloop was invoked. """
+        """ Text that has been written to the text widget but might not be yet seen by user.
+            Because no mainloop was invoked.
+        """
 
     @staticmethod
     def widgetize(ff: FormField) -> Value:
         """ Wrap FormField to a textual widget. """
-        return Value(ff.val, ff.description)
+        # NOTE remove: v = ff._get_ui_val((float, int, str, bool))
+        v = ff.val
+        if ff.annotation is bool and not isinstance(v, bool):
+            # tkinter_form unfortunately needs the bool type to display correct widget,
+            # otherwise we end up with a text Entry.
+            v = bool(v)
+        elif not isinstance(v, (float, int, str, bool)):
+            v = str(v)
+        return Value(v, ff.description)
 
     def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
         """ Let the user edit the form_dict values in a GUI window.
@@ -101,10 +111,10 @@ class TkWindow(Tk, BackendAdaptor):
             label = Label(self.frame, text=title)
             label.pack(pady=10)
         self.form = Form(self.frame,
-                        name_form="",
-                        form_dict=formdict_to_widgetdict(formDict, self.widgetize),
-                        name_config="Ok",
-                        )
+                         name_form="",
+                         form_dict=formdict_to_widgetdict(formDict, self.widgetize),
+                         name_config="Ok",
+                         )
         self.form.pack()
 
         # Set the submit and exit options

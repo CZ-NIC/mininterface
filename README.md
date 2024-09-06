@@ -72,6 +72,8 @@ with run(Env) as m:
 - [Docs](#docs)
   * [`mininterface`](#mininterface)
     + [`run`](#run)
+    + [`FormField`](#formfield)
+    + [`validators`](#validators)
   * [Interfaces](#interfaces)
     + [`Mininterface`](#mininterface)
     + [`alert`](#alert)
@@ -149,7 +151,22 @@ It searches the config file in the current working directory,
 with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
 * `env_class`: Dataclass with the configuration. Their values will be modified with the CLI arguments.
-* `ask_on_empty`: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+* `ask_on_empty_cli`: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+(Withdrawn when `ask_for_missing` happens.)
+```python
+@dataclass
+class Env:
+  number: int = 3
+  text: str = ""
+m = run(Env, ask_on_empty_cli=True)
+```
+
+```bash
+$ program.py --number 3
+# No dialog appear
+$ program.py  # no flag omitting
+# Dialog for `number` and `text` appears
+```
 * `title`: The main title. If not set, taken from `prog` or program name.
 * `config_file`: File to load YAML to be merged with the configuration.
   You do not have to re-define all the settings in the config file, you can choose a few.
@@ -158,13 +175,99 @@ with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.
   Ex: `program.py` will search for `program.yaml`.
   If False, no config file is used.
 * `add_verbosity`: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+
+```python
+import logging
+logger = logging.getLogger(__name__)
+
+m = run(Env, add_verbosity=True)
+logger.info("Info shown") # needs `-v` or `--verbose`
+logger.debug("Debug not shown")  # needs `-vv`
+# $ program.py --verbose
+# Info shown
+```
+
+```bash
+$ program.py --verbose
+Info shown
+```
+* `ask_for_missing`: If some required fields are missing at startup, we ask for them in a UI instead of program exit.
+
+```python
+@dataclass
+class Env:
+  required_number: int
+m = run(Env, ask_for_missing=True)
+```
+
+```bash
+$ program.py  # omitting --required-number
+# Dialog for `required_number` appears
+```
+
 * `interface`: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
 * `**kwargs` The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
 * Returns: `Mininterface` An interface, ready to be used.
 
 You cay context manager the function by a `with` statement. The stdout will be redirected to the interface (ex. a GUI window).
 
-See the [initial examples](#mininterface-gui-tui-cli-and-config).
+See the [initial examples](#mininterface-access-to-gui-tui-cli-and-config-files).
+
+### `FormField`
+Enrich a value with a description, validation etc. When you provide a value to an interface, you may instead use this object.
+* `val`: The value being enriched by this object.
+* `description`: *str* The description displayed in the UI.
+* `annotation`: *type* Used for validation. To convert an empty '' to None. If not set, will be determined automatically from the `val` type.
+* `name`: *str* Name displayed in the UI. (NOTE: Only TextualInterface uses this by now.)
+* `validation`: *Callable[[FormField], ValidationResult]*
+    When the user submits the form, the values are validated (and possibly transformed) with a callback function.
+        If the validation fails, user is prompted to edit the value.
+        Return True if validation succeeded or False or an error message when it failed.
+
+```python
+def check(ff: FormField):
+    if ff.val < 10:
+        return "The value must be at least 10"
+m.form({"number", FormField(12, validation=check)})
+```
+
+Either use a custom callback function or mininterface.validators.
+
+```python
+from mininterface.validators import not_empty
+m.form({"number", FormField("", validation=not_empty)})
+# User cannot leave the field empty.
+```
+
+* `original_val`: The original value, preceding UI change. Handy while validating.
+
+```python
+def check(ff.val):
+    if ff.val != ff.original_val:
+        return "You have to change the value."
+m.form({"number", FormField(8, validation=check)})
+```
+
+## `validators`
+
+Functions suitable for FormField validation.
+
+### `not_empty`
+
+Assures that FormField the user has written a value and did not let the field empty.
+
+```python
+from mininterface import FormField, validators
+
+m.form({"number", FormField("", validation=validators.not_empty)})
+# User cannot leave the string field empty.
+```
+
+Note that for Path, an empty string is converted to an empty Path('.'),
+hence '.' too is considered as an empty input and the user
+is not able to set '.' as a value.
+This does not seem to me as a bad behaviour as in CLI you clearly see the CWD,
+whereas in a UI the CWD is not evident.
 
 ## Interfaces
 

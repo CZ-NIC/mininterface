@@ -1,19 +1,14 @@
 import sys
-from argparse import ArgumentParser
-from dataclasses import MISSING
 from pathlib import Path
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Type
 
-import yaml
-from tyro.extras import get_parser
-
-from .auxiliary import get_descriptions
+from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable
-from .FormDict import EnvClass, get_env_allow_missing
+from .FormDict import EnvClass
 from .FormField import FormField
 from .Mininterface import EnvClass, Mininterface
 from .TextInterface import ReplInterface, TextInterface
+from . import validators
 
 # Import optional interfaces
 try:
@@ -29,47 +24,16 @@ except ImportError:
     TextualInterface = None
 
 
-# TODO example on missing required options.
-
 class TuiInterface(TextualInterface or TextInterface):
     pass
 
 
-def _parse_env(env_class: Type[EnvClass],
-                config_file: Path | None = None,
-                add_verbosity = True,
-                **kwargs) -> tuple[EnvClass|None, dict]:
-    """ Parse CLI arguments, possibly merged from a config file.
-
-    :param env_class: Class with the configuration.
-    :param config_file: File to load YAML to be merged with the configuration.
-        You do not have to re-define all the settings in the config file, you can choose a few.
-    :param **kwargs The same as for argparse.ArgumentParser.
-    :return: Configuration namespace.
-    """
-    # Load config file
-    if config_file:
-        disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
-        # Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
-        for key in (key for key, val in disk.items() if isinstance(val, dict)):
-            disk[key] = env_class.__annotations__[key](**disk[key])
-        # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
-        # Otherwise, tyro will spawn warnings about missing fields.
-        static = {key: getattr(env_class, key, MISSING)
-                    for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
-        kwargs["default"] = SimpleNamespace(**(disk | static))
-
-    # Load configuration from CLI
-    parser: ArgumentParser = get_parser(env_class, **kwargs)
-    descriptions = get_descriptions(parser)
-    env = get_env_allow_missing(env_class, kwargs, parser, add_verbosity)
-    return env, descriptions
-
 def run(env_class: Type[EnvClass] | None = None,
-        ask_on_empty_cli: bool=False,
+        ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
         add_verbosity: bool = True,
+        ask_for_missing: bool = True,
         interface: Type[Mininterface] = GuiInterface or TuiInterface,
         **kwargs) -> Mininterface[EnvClass]:
     """
@@ -82,7 +46,22 @@ def run(env_class: Type[EnvClass] | None = None,
     with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
     :param env_class: Dataclass with the configuration. Their values will be modified with the CLI arguments.
-    :param ask_on_empty: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+    :param ask_on_empty_cli: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+(Withdrawn when `ask_for_missing` happens.)
+```python
+@dataclass
+class Env:
+  number: int = 3
+  text: str = ""
+m = run(Env, ask_on_empty=True)
+```
+
+```bash
+$ program.py --number 3
+# No dialog appear
+$ program.py  # no flag omitting
+# Dialog for `number` and `text` appears
+```
     :param title: The main title. If not set, taken from `prog` or program name.
     :param config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
@@ -90,8 +69,37 @@ def run(env_class: Type[EnvClass] | None = None,
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
-    :param add_verbosity: Adds the verbose flag that automatically sets
-            the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+    :param add_verbosity: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+
+```python
+import logging
+logger = logging.getLogger(__name__)
+
+m = run(Env, add_verbosity=True)
+logger.info("Info shown") # needs `-v` or `--verbose`
+logger.debug("Debug not shown")  # needs `-vv`
+# $ program.py --verbose
+# Info shown
+```
+
+```bash
+$ program.py --verbose
+Info shown
+```
+
+   :param ask_for_missing: If some required fields are missing at startup, we ask for them in a UI instead of program exit.
+
+```python
+@dataclass
+class Env:
+  required_number: int
+m = run(Env, ask_for_missing=True)
+```
+
+```bash
+$ program.py  # omitting --required-number
+# Dialog for `required_number` appears
+```
     :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
     :param **kwargs The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
     :return: An interface, ready to be used.
@@ -107,11 +115,14 @@ def run(env_class: Type[EnvClass] | None = None,
     It seems to be this is the tyro's deal and hence it might start working any time.
     If not, we might help it this way:
         `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
+
+    Undocumented: `default` keyword argument for tyro may serve for default values instead of a config file.
     """
 
     # Prepare the config file
     if config_file is True and not kwargs.get("default") and env_class:
-        # NOTE: Why do we check kwargs.get("default") here?
+        # Undocumented feature. User put a namespace into kwargs["default"]
+        # that already serves for defaults. We do not fetch defaults yet from a config file.
         cf = Path(sys.argv[0]).with_suffix(".yaml")
         if cf.exists():
             config_file = cf
@@ -121,9 +132,9 @@ def run(env_class: Type[EnvClass] | None = None,
         config_file = Path(config_file)
 
     # Load configuration from CLI and a config file
-    env, descriptions = None, {}
+    env, descriptions, wrong_fields = None, {}, {}
     if env_class:
-        env, descriptions = _parse_env(env_class, config_file, add_verbosity, **kwargs)
+        env, descriptions, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, **kwargs)
 
     # Build the interface
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
@@ -133,12 +144,16 @@ def run(env_class: Type[EnvClass] | None = None,
         interface = TuiInterface(title, env, descriptions)
 
     # Empty CLI → GUI edit
-    if ask_on_empty_cli and len(sys.argv) <= 1:
+    if ask_for_missing and wrong_fields:
+        # Some fields must be set.
+        interface.form(wrong_fields)
+        {setattr(interface.env, k, v.val) for k, v in wrong_fields.items()}
+    elif ask_on_empty_cli and len(sys.argv) <= 1:
         interface.form()
 
     return interface
 
 
-__all__ = ["run", "FormField", "InterfaceNotAvailable",
+__all__ = ["run", "FormField", "validators", "InterfaceNotAvailable",
            "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
            ]

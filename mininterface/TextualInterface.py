@@ -44,7 +44,7 @@ class TextualInterface(Redirectable, TextInterface):
         TextualApp.run_dialog(TextualApp(self), params_)
         return self.env
 
-    # NOTE: This works bad with lists. GuiInterface considers list as combobox,
+    # NOTE: This works bad with lists. GuiInterface considers list as combobox (which is now suppressed by str conversion),
     # TextualInterface as str. We should decide what should happen. Is there a tyro default for list?
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         if form is None:
@@ -53,13 +53,14 @@ class TextualInterface(Redirectable, TextInterface):
         return form
 
     # NOTE we should implement better, now the user does not know it needs an int
-    def ask_number(self, text):
-        return self.form({text: FormField("", "", int, text)})[text].processed_value
+    def ask_number(self, text: str):
+        # TODO suggestion fail
+        return self.form({text: FormField("", "", int, text)})[text].val
 
-    def is_yes(self, text):
+    def is_yes(self, text: str):
         return TextualButtonApp(self).yes_no(text, False).val
 
-    def is_no(self, text):
+    def is_no(self, text: str):
         return TextualButtonApp(self).yes_no(text, True).val
 
 
@@ -89,10 +90,14 @@ class TextualApp(App[bool | None]):
     def widgetize(ff: FormField) -> Checkbox | Input:
         """ Wrap FormField to a textual widget. """
 
-        if ff.annotation is bool or not ff.annotation and (ff.val is True or ff.val is False):
-            o = Checkbox(ff.name or "", ff.val)
+        # NOTE remove, ff._get_ui_val() was used here
+        v = ff.val
+        if ff.annotation is bool or not ff.annotation and (v is True or v is False):
+            o = Checkbox(ff.name or "", v)
         else:
-            o = Input(str(ff.val), placeholder=ff.name or "")
+            if not isinstance(v, (float, int, str, bool)):
+                v = str(v)
+            o = Input(str(v), placeholder=ff.name or "")
         o._link = ff  # The Textual widgets need to get back to this value
         return o
 

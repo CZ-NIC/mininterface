@@ -11,8 +11,9 @@ from mininterface import Mininterface, TextInterface, run
 from mininterface.FormField import FormField
 from mininterface.Mininterface import Cancelled
 from mininterface.FormDict import dataclass_to_formdict, formdict_repr
-from configs import OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
+from configs import FurtherEnv2, OptionalFlagEnv, SimpleEnv, NestedDefaultedEnv, NestedMissingEnv
 from mininterface.auxiliary import flatten
+from mininterface import validators
 
 SYS_ARGV = None  # To be redirected
 
@@ -32,7 +33,7 @@ class TestAbstract(TestCase):
         sys.argv = ["running-tests", *args]
 
 
-class TestBasic(TestAbstract):
+class TestCli(TestAbstract):
     def test_basic(self):
         def go(*_args) -> SimpleEnv:
             self.sys(*_args)
@@ -46,26 +47,6 @@ class TestBasic(TestAbstract):
 
         self.sys("--important_number='8'")
         self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
-
-    def test_run_ask_empty(self):
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
-            run(SimpleEnv, True, interface=Mininterface)
-            self.assertEqual("Asking the form  None", stdout.getvalue().strip())
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
-            run(SimpleEnv, interface=Mininterface)
-            self.assertEqual("", stdout.getvalue().strip())
-
-    def test_run_config_file(self):
-        os.chdir("tests")
-        sys.argv = ["SimpleEnv.py"]
-        self.assertEqual(10, run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number)
-        self.assertEqual(4, run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number)
-        self.assertEqual(20, run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number)
-        self.assertEqual(20, run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"),
-                         interface=Mininterface).env.important_number)
-        self.assertEqual(4, run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number)
-        with self.assertRaises(FileNotFoundError):
-            run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
 
     def test_cli_complex(self):
         def go(*_args) -> NestedDefaultedEnv:
@@ -87,6 +68,8 @@ class TestBasic(TestAbstract):
         self.sys("--further.host='example.net'")
         self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
 
+
+class TestInteface(TestAbstract):
     def test_ask(self):
         m0 = run(NestedDefaultedEnv, interface=Mininterface, prog="My application")
         self.assertEqual(0, m0.ask_number("Test input"))
@@ -114,6 +97,26 @@ class TestBasic(TestAbstract):
 
             self.assertEqual("hello", m1.ask(""))
 
+    def test_ask_form(self):
+        m = TextInterface()
+        dict1 = {"my label": FormField(True, "my description"), "nested": {"inner": "text"}}
+        with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
+            m.form(dict1)
+        self.assertEqual({"my label": FormField(True, "my description"), "nested": {"inner": "another"}}, dict1)
+
+        # Empty form invokes editing self.env, which is empty
+        with patch('builtins.input', side_effect=["c"]):
+            self.assertEqual(SimpleNamespace(), m.form())
+
+        # Empty form invokes editing self.env, which contains a dataclass
+        m2 = run(SimpleEnv, interface=TextInterface, prog="My application")
+        self.assertFalse(m2.env.test)
+        with patch('builtins.input', side_effect=["v.test = True", "c"]):
+            self.assertEqual(m2.env, m2.form())
+            self.assertTrue(m2.env.test)
+
+
+class TestConversion(TestAbstract):
     def test_normalize_types(self):
         """ Conversion str("") to None and back.
         When using GUI interface, we input an empty string and that should mean None
@@ -150,6 +153,45 @@ class TestBasic(TestAbstract):
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
         self.assertFalse(FormField.submit(origin, data))
 
+    def test_non_scalar(self):
+        ff = FormField(Path("/tmp"), '')
+        origin = {'': {'path': ff}}
+        data = {'': {'path': "/usr"}}  # the input '/usr' is a str
+        self.assertTrue(FormField.submit(origin, data))
+        self.assertEqual(Path("/usr"), ff.val)  # the output is still a Path
+
+    def test_validation(self):
+        def validate(ff: FormField):
+            val = ff.val
+            if 10 < val < 20:
+                return "Number must be between 0 ... 10 or 20 ... 100", 20
+            if val < 0:
+                return False, 30
+            if val > 100:
+                return "Too high"
+            return True
+
+        ff = FormField(100, 'Testing flag', validation=validate)
+        origin = {'': {'number': ff}}
+        # validation passes
+        self.assertTrue(FormField.submit(origin, {'': {'number': 100}}))
+        self.assertIsNone(ff.error_text)
+        # validation fail, value set by validion
+        self.assertFalse(FormField.submit(origin, {'': {'number': 15}}))
+        self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", ff.error_text)
+        self.assertEqual(20, ff.val)  # value set by validation
+        # validation passes again, error text restored
+        self.assertTrue(FormField.submit(origin, {'': {'number': 5}}))
+        self.assertIsNone(ff.error_text)
+        # validation fails, default error text
+        self.assertFalse(FormField.submit(origin, {'': {'number': -5}}))
+        self.assertEqual("Validation fail", ff.error_text)  # default error text
+        self.assertEqual(30, ff.val)
+        # validation fails, value not set by validation
+        self.assertFalse(FormField.submit(origin, {'': {'number': 101}}))
+        self.assertEqual("Too high", ff.error_text)
+        self.assertEqual(30, ff.val)
+
     def test_env_instance_dict_conversion(self):
         m: TextInterface = run(OptionalFlagEnv, interface=TextInterface, prog="My application")
         env1: OptionalFlagEnv = m.env
@@ -183,23 +225,56 @@ class TestBasic(TestAbstract):
         FormField.submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
-    def test_ask_form(self):
-        m = TextInterface()
-        dict1 = {"my label": FormField(True, "my description"), "nested": {"inner": "text"}}
-        with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
-            m.form(dict1)
-        self.assertEqual({"my label": FormField(True, "my description"), "nested": {"inner": "another"}}, dict1)
 
-        # Empty form invokes editing self.env, which is empty
-        with patch('builtins.input', side_effect=["c"]):
-            self.assertEqual(SimpleNamespace(), m.form())
+class TestRun(TestAbstract):
+    def test_run_ask_empty(self):
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(SimpleEnv, True, interface=Mininterface)
+            self.assertEqual("Asking the form SimpleEnv(test=False, important_number=4)", stdout.getvalue().strip())
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(SimpleEnv, interface=Mininterface)
+            self.assertEqual("", stdout.getvalue().strip())
 
-        # Empty form invokes editing self.env, which contains a dataclass
-        m2 = run(SimpleEnv, interface=TextInterface, prog="My application")
-        self.assertFalse(m2.env.test)
-        with patch('builtins.input', side_effect=["v.test = True", "c"]):
-            self.assertEqual(m2.env, m2.form())
-            self.assertTrue(m2.env.test)
+    def test_run_ask_for_missing(self):
+        form = """Asking the form {'token': FormField(val='', description='', annotation=<class 'str'>, name=None, validation=not_empty, _src_dict=None, _src_obj=None)}"""
+        # Ask for missing, no interference with ask_on_empty_cli
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(FurtherEnv2, True, interface=Mininterface)
+            self.assertEqual(form, stdout.getvalue().strip())
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(FurtherEnv2, False, interface=Mininterface)
+            self.assertEqual(form, stdout.getvalue().strip())
+        # Ask for missing does not happen, CLI fails
+        with self.assertRaises(SystemExit):
+            run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
+
+        # No missing field
+        self.sys("--token", "1")
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(FurtherEnv2, True, ask_for_missing=True, interface=Mininterface)
+            self.assertEqual("", stdout.getvalue().strip())
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
+            self.assertEqual("", stdout.getvalue().strip())
+
+    def test_run_config_file(self):
+        os.chdir("tests")
+        sys.argv = ["SimpleEnv.py"]
+        self.assertEqual(10, run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number)
+        self.assertEqual(4, run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number)
+        self.assertEqual(20, run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number)
+        self.assertEqual(20, run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"),
+                         interface=Mininterface).env.important_number)
+        self.assertEqual(4, run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number)
+        with self.assertRaises(FileNotFoundError):
+            run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
+
+
+class TestValidators(TestAbstract):
+    def test_not_empty(self):
+        f = FormField("", validation=validators.not_empty)
+        self.assertFalse(f.update(""))
+        self.assertTrue(f.update("1"))
 
 
 class TestLog(TestAbstract):

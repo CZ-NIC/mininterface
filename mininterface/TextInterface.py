@@ -27,6 +27,7 @@ class TextInterface(Mininterface):
         #   params_ = dataclass_to_dict(self.env, self.descriptions)
         #   data = FormDict → dict self.window.run_dialog(params_)
         #   dict_to_dataclass(self.env, params_)
+        # NOTE: Validators, nor type checks are not performed.
         if form is None:
             form = self.env
         print("Access `v` (as var) and change values. Then (c)ontinue.")
