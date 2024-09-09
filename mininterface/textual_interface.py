@@ -1,4 +1,3 @@
-from ast import literal_eval
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,12 +12,15 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from .auxiliary import flatten
-from .form_dict import (EnvClass, FormDict, FormDictOrEnv, dataclass_to_formdict,
-                       dict_to_formdict, formdict_to_widgetdict)
-from .tag import Tag
-from .mininterface import BackendAdaptor, Cancelled
+from .facet import BackendAdaptor
+from .form_dict import (EnvClass, FormDict, FormDictOrEnv,
+                        dataclass_to_formdict, dict_to_formdict,
+                        formdict_to_widgetdict)
+from .mininterface import Cancelled
 from .redirectable import Redirectable
-from .TextInterface import TextInterface
+from .tag import Tag
+from .text_interface import TextInterface
+
 
 @dataclass
 class DummyWrapper:

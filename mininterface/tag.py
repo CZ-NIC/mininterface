@@ -109,7 +109,8 @@ class Tag:
     """
 
     choices: list[str] = None
-    # TODO
+    # TODO docs missing
+    # TODO impementation in TextualInterface missing
 
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""

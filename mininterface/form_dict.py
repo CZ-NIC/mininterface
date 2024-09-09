@@ -17,6 +17,7 @@ FormDict = dict[str, Union[Tag, 'FormDict']]
 # to be edited too
 # is_dataclass(v) -> dataclass or its instance
 # isinstance(v, type) -> class, not an instance
+# Then, we might get rid of ._descriptions because we will read from the model itself
 FormDictOrEnv = TypeVar('FormT', bound=FormDict)  # | EnvClass)
 
 

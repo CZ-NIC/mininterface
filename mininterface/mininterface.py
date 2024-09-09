@@ -1,5 +1,4 @@
 import logging
-from abc import ABC, abstractmethod
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -8,8 +7,7 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 else:
     from typing import Generic
 
-from .form_dict import EnvClass, FormDict, FormDictOrEnv
-from .tag import Tag
+from .form_dict import EnvClass, FormDictOrEnv
 
 logger = logging.getLogger(__name__)
 
@@ -92,15 +90,3 @@ class Mininterface(Generic[EnvClass]):
         return False
 
 
-class BackendAdaptor(ABC):
-
-    @staticmethod
-    @abstractmethod
-    def widgetize(tag: Tag):
-        """ Wrap Tag to a textual widget. """
-        pass
-
-    @abstractmethod
-    def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
-        """ Let the user edit the dict values. """
-        pass

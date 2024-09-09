@@ -12,7 +12,8 @@ from configs import (ConstrinedEnv, FurtherEnv2, NestedDefaultedEnv,
                      NestedMissingEnv, OptionalFlagEnv, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
-from mininterface import Mininterface, TextInterface, run, validators
+from mininterface import Mininterface, TextInterface, run
+from mininterface.validators import not_empty, limit
 from mininterface.auxiliary import flatten
 from mininterface.form_dict import dataclass_to_formdict, formdict_repr
 from mininterface.tag import Tag
@@ -275,9 +276,37 @@ class TestRun(TestAbstract):
 
 class TestValidators(TestAbstract):
     def test_not_empty(self):
-        f = Tag("", validation=validators.not_empty)
+        f = Tag("", validation=not_empty)
         self.assertFalse(f.update(""))
         self.assertTrue(f.update("1"))
+
+    def test_bare_limit(self):
+        def f(val):
+            return Tag(val)
+        self.assertTrue(all(limit(1, 10)(f(v)) is True for v in (1, 2, 9, 10)))
+        self.assertTrue(any(limit(1, 10)(f(v)) is not True for v in (-1, 0, 11)))
+        self.assertTrue(all(limit(5)(f(v)) is True for v in (0, 2, 5)))
+        self.assertTrue(any(limit(5)(f(v)) is not True for v in (-1, 6)))
+        self.assertTrue(all(limit(1, 10, gt=2)(f(v)) is True for v in (9, 10)))
+        self.assertTrue(all(limit(1, 10, gt=2)(f(v)) is not True for v in (1, 2, 11)))
+        self.assertTrue(all(limit(1, 10, lt=3)(f(v)) is True for v in (1, 2)))
+        self.assertTrue(all(limit(1, 10, lt=2)(f(v)) is not True for v in (3, 11)))
+
+        # valid for checking str length
+        self.assertTrue(all(limit(1, 10)(f("a"*v)) is True for v in (1, 2, 9, 10)))
+        self.assertTrue(any(limit(1, 10)(f(v)) is not True for v in (-1, 0, 11)))
+
+    def test_limited_field(self):
+        t1 = Tag(1, validation=limit(1, 10))
+        self.assertTrue(t1.update(2))
+        self.assertEqual(2, t1.val)
+        self.assertFalse(t1.update(11))
+        self.assertEqual(2, t1.val)
+        t2 = Tag(1, validation=limit(1, 10, transform=True))
+        self.assertTrue(t2.update(2))
+        self.assertEqual(2, t2.val)
+        self.assertFalse(t2.update(11))
+        self.assertEqual(10, t2.val)
 
 
 class TestLog(TestAbstract):
@@ -358,6 +387,7 @@ class TestPydanticIntegration(TestAbstract):
     #   Might be a mess. Seems that missing fields are working better
     #   when nested than directly.
 
+
 class TestAttrsIntegration(TestAbstract):
     def test_basic(self):
         m = run(AttrsModel, interface=Mininterface)
@@ -390,6 +420,7 @@ class TestAttrsIntegration(TestAbstract):
         self.assertTrue(f.update(""))
         self.assertEqual("Restrained name ", f.description)
 
+
 class TestAnnotated(TestAbstract):
     def test_annotated(self):
         m = run(ConstrinedEnv)
@@ -398,6 +429,7 @@ class TestAnnotated(TestAbstract):
         self.assertFalse(d[""]["test2"].update(""))
         self.assertTrue(d[""]["test"].update(" "))
         self.assertTrue(d[""]["test2"].update(" "))
+
 
 if __name__ == '__main__':
     main()

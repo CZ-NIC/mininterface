@@ -1,9 +1,28 @@
-# TODO
+from abc import ABC, abstractmethod
+
+from .form_dict import FormDict
+from .tag import Tag
+
+
 class Facet:
     """ A frontend side of the interface. While a dialog is open,
         this allows to set frontend properties like the heading. """
+    # Every UI adopts this object through BackendAdaptor methods.
+    # TODO
 
     def set_heading(self, text):
-        # label = self.form.winfo_children()[1].winfo_children()[1]
-        # label.config(text=text)
+        pass
+
+
+class BackendAdaptor(ABC):
+
+    @staticmethod
+    @abstractmethod
+    def widgetize(tag: Tag):
+        """ Wrap Tag to a textual widget. """
+        pass
+
+    @abstractmethod
+    def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
+        """ Let the user edit the dict values. """
         pass
