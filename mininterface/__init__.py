@@ -5,22 +5,22 @@ from typing import TYPE_CHECKING, Type
 from .aliases import Validation
 from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable
-from .FormDict import EnvClass
+from .form_dict import EnvClass
 from .tag import Tag
-from .Mininterface import EnvClass, Mininterface
-from .TextInterface import ReplInterface, TextInterface
+from .mininterface import EnvClass, Mininterface
+from .text_interface import ReplInterface, TextInterface
 from . import validators
 
 # Import optional interfaces
 try:
-    from mininterface.GuiInterface import GuiInterface
+    from mininterface.gui_interface import GuiInterface
 except ImportError:
     if TYPE_CHECKING:
         pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
     else:
         GuiInterface = None
 try:
-    from mininterface.TextualInterface import TextualInterface
+    from mininterface.textual_interface import TextualInterface
 except ImportError:
     TextualInterface = None
 

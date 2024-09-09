@@ -69,7 +69,7 @@ class AnyVariable(Variable):
         return self.val
 
 
-def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, value: Tag) -> Widget:
+def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, value: "Tag") -> Widget:
     if widget.winfo_manager() == 'grid':
         grid_info = widget.grid_info()
         widget.grid_forget()

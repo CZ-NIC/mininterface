@@ -13,11 +13,11 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from .auxiliary import flatten
-from .FormDict import (EnvClass, FormDict, FormDictOrEnv, dataclass_to_formdict,
+from .form_dict import (EnvClass, FormDict, FormDictOrEnv, dataclass_to_formdict,
                        dict_to_formdict, formdict_to_widgetdict)
 from .tag import Tag
-from .Mininterface import BackendAdaptor, Cancelled
-from .Redirectable import Redirectable
+from .mininterface import BackendAdaptor, Cancelled
+from .redirectable import Redirectable
 from .TextInterface import TextInterface
 
 @dataclass

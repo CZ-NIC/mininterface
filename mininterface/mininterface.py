@@ -8,7 +8,7 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 else:
     from typing import Generic
 
-from .FormDict import EnvClass, FormDict, FormDictOrEnv
+from .form_dict import EnvClass, FormDict, FormDictOrEnv
 from .tag import Tag
 
 logger = logging.getLogger(__name__)

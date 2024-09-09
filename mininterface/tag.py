@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_arg
 from .auxiliary import flatten
 
 if TYPE_CHECKING:
-    from .FormDict import FormDict
+    from .form_dict import FormDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 # Pydantic is not a project dependency, that is just an optional integration

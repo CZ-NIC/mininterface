@@ -17,7 +17,7 @@ from tyro._argparse_formatter import TyroArgumentParser
 from tyro.extras import get_parser
 
 from .auxiliary import get_descriptions
-from .FormDict import EnvClass
+from .form_dict import EnvClass
 from .tag import Tag
 from .validators import not_empty
 

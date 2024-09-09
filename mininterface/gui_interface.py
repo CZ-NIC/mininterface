@@ -13,11 +13,11 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .FormDict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
+from .form_dict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
 from .auxiliary import replace_widget_with, widgets_to_dict, recursive_set_focus, flatten
-from .Redirectable import RedirectTextTkinter, Redirectable
+from .redirectable import RedirectTextTkinter, Redirectable
 from .tag import Tag
-from .Mininterface import BackendAdaptor, Cancelled, EnvClass, Mininterface
+from .mininterface import BackendAdaptor, Cancelled, EnvClass, Mininterface
 
 
 class GuiInterface(Redirectable, Mininterface):

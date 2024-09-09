@@ -14,9 +14,9 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import Mininterface, TextInterface, run, validators
 from mininterface.auxiliary import flatten
-from mininterface.FormDict import dataclass_to_formdict, formdict_repr
+from mininterface.form_dict import dataclass_to_formdict, formdict_repr
 from mininterface.tag import Tag
-from mininterface.Mininterface import Cancelled
+from mininterface.mininterface import Cancelled
 
 SYS_ARGV = None  # To be redirected
 
