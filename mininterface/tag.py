@@ -29,10 +29,10 @@ TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
 """ dict key """
-FieldValue = TypeVar("FieldValue")
-""" value """
+TagValue = TypeVar("TagValue")
+""" Any value. """
 ErrorMessage = TypeVar("ErrorMessage")
-""" Callback validation error message"""
+""" A string, callback validation error message. """
 ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo")
@@ -46,69 +46,76 @@ class Tag:
 
         Bridge between the input values and a UI widget. The widget is created with the help of this object,
         then transforms the value back (str to int conversion etc).
-
-        (Ex: Merge the dict of dicts from the GUI back into the .env object holding the configuration.)
         """
 
-    val: FieldValue = None
-    """ The value wrapped by FormField.
+    val: TagValue = None
+    """ The value wrapped by Tag.
 
     ```python
-    tag = FormField(True, "", bool)
+    from mininterface import run, Tag
+
+    tag = Tag(True, "This is my boolean", bool)
+    m = run()
     m.form({"My boolean": tag})
     print(tag.val)  # True/False
+    print()
     ```
+
+    ![Image title](asset/tag_val.avif)
+
+    The encapsulated value is `True`, `tag.description` is 'This is my boolean',
+    `tag.annotation` is `bool` and 'My boolean' is used as `tag.name`.
     """
     description: str = ""
     """ The description displayed in the UI. """
 
     annotation: type | None = None
-    """ Used for validation. To convert an empty '' to None.
-        If not set, will be determined automatically from the `val` type.
+    """ Used for validation (ex. to convert an empty string to None).
+        If not set, will be determined automatically from the [val][mininterface.Tag.val] type.
     """
     name: str | None = None
     """ Name displayed in the UI. """
 
     validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
-                                                                 FieldValue]] | None = None
+                                                                 TagValue]] | None = None
     """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
         If the validation fails, user is prompted to edit the value.
         Return True if validation succeeded or False or an error message when it failed.
 
-        ```python
-        def check(tag: FormField):
-            if tag.val < 10:
-                return "The value must be at least 10"
-        m.form({"number", FormField(12, validation=check)})
-        ```
+    [ValidationResult][mininterface.tag.ValidationResult] is a bool or the error message (that implicitly means it has failed).
 
-        Either use a custom callback function or mininterface.validators.
 
-        ```python
-        from mininterface.validators import not_empty
-        m.form({"number", FormField("", validation=not_empty)})
-        # User cannot leave the field empty.
-        ```
+    ```python
+    def check(tag: Tag):
+        if tag.val < 10:
+            return "The value must be at least 10"
+    m.form({"number", Tag(12, validation=check)})
+    ```
 
-        You may use the validation in a type annotation.
-        ```python
-        from mininterface import FormField, Validation
-        @dataclass
-        class Env:
-            my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
+    Either use a custom callback function or mininterface.validators.
 
-            # which is an alias for:
-            # my_text: Annotated[str, FormField(validation=not_empty)] = "will not be emtpy"
-        ```
+    ```python
+    from mininterface.validators import not_empty
+    m.form({"number", Tag("", validation=not_empty)})
+    # User cannot leave the field empty.
+    ```
 
-    NOTE Undocumented feature, we can return tuple, while the [ValidationResult, FieldValue] to set the self.val.
+    You may use the validation in a type annotation.
+    ```python
+    from mininterface import Tag, Validation
+    @dataclass
+    class Env:
+        my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
 
-    NOTE I am not sure where to validate. If I have a complex object in the form,
-    would not annotation check spoil it before validation can transoform the value?
-    I am not sure whether to store the transformed value in the ui_value or fixed_value.
+        # which is an alias for:
+        # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
+    ```
+
+    NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
     """
 
-    choices: list[str] = None
+    choices: list[str] | None = None
+    """ TODO """
     # TODO docs missing
     # TODO impementation in TextualInterface missing
 
@@ -128,23 +135,19 @@ class Tag:
     # Following attributes are not meant to be set externally.
     #
     original_val = None
-    """ The original value, preceding UI change.  Handy while validating.
+    """ Read only. The original value, preceding UI change. Handy while validating.
 
     ```python
     def check(tag.val):
         if tag.val != tag.original_val:
             return "You have to change the value."
-    m.form({"number", FormField(8, validation=check)})
+    m.form({"number", Tag(8, validation=check)})
     ```
     """
 
     error_text = None
-    """ Error text if type check or validation fail and the UI has to be revised """
+    """ Read only. Error text if type check or validation fail and the UI has to be revised """
 
-    # _has_ui_val = None
-    # """ Distinguish _ui_val default None from the user UI input None """
-    # _ui_val = None
-    # """ Auxiliary variable. UI state → validation fails on a field, we need to restore """
     _pydantic_field: PydanticFieldInfo = None
     _attrs_field: AttrsFieldInfo = None
 
@@ -214,7 +217,11 @@ class Tag:
         self._original_name = n = self.name
 
         self.description = f"{s} {o}"
-        self.name = f"* {n}"
+        if self.name:
+            # Why checking self.name?
+            # If not set, we would end up with '* None'
+            # `m.form({"my_text": Tag("", validation=validators.not_empty)})`
+            self.name = f"* {n}"
         self.error_text = s
 
     def remove_error_text(self):
@@ -228,7 +235,7 @@ class Tag:
         else:
             return self.annotation.__name__
 
-    def _validate(self, out_value) -> FieldValue:
+    def _validate(self, out_value) -> TagValue:
         """ Runs
             * self.validation callback
             * pydantic validation
@@ -275,17 +282,20 @@ class Tag:
             raise ValueError
         return out_value
 
-    def update(self, ui_value) -> bool:
-        """ UI value → FormField value → original value. (With type conversion and checks.)
+    def update(self, ui_value:TagValue) -> bool:
+        """ UI value → Tag value → original value. (With type conversion and checks.)
 
-            The value has been updated in a UI.
-            Update accordingly the value in the original linked dict/object
-            the mininterface was invoked with.
+        Args:
+            ui_value:
+                The value as it has been updated in a UI.
+                Update accordingly the value in the original linked dict/object
+                the mininterface was invoked with.
 
-            Validates the type and do the transformation.
-            (Ex: Some values might be nulled from "".)
+                Validates the type and do the transformation.
+                (Ex: Some values might be nulled from "".)
 
-            Return bool, whether the value is alright or whether the revision is needed.
+        Returns:
+            bool, whether the value is alright or whether the revision is needed.
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
@@ -376,18 +386,18 @@ class Tag:
         #     return self.val
 
     @staticmethod
-    def submit_values(updater: Iterable[tuple["Tag", FFValue]]) -> bool:
+    def _submit_values(updater: Iterable[tuple["Tag", FFValue]]) -> bool:
         """ Returns whether the form is alright or whether we should revise it.
-        Input is tuple of the FormFields and their new values from the UI.
+        Input is tuple of the Tags and their new values from the UI.
         """
-        # Why list? We need all the FormField values be updates from the UI.
-        # If the revision is needed, the UI fetches the values from the FormField.
+        # Why list? We need all the Tag values be updates from the UI.
+        # If the revision is needed, the UI fetches the values from the Tag.
         # We need the keep the values so that the user does not have to re-write them.
         return all(list(tag.update(ui_value) for tag, ui_value in updater))
 
     @staticmethod
-    def submit(fd: "FormDict", ui: dict):
+    def _submit(fd: "FormDict", ui: dict):
         """ Returns whether the form is alright or whether we should revise it.
         Input is the FormDict and the UI dict in the very same form.
         """
-        return Tag.submit_values(zip(flatten(fd), flatten(ui)))
+        return Tag._submit_values(zip(flatten(fd), flatten(ui)))

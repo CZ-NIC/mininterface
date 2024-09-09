@@ -115,7 +115,7 @@ class TextualApp(App[bool | None]):
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        if not Tag.submit_values((field._link, field.value) for field in widgets):
+        if not Tag._submit_values((field._link, field.value) for field in widgets):
             return cls.run_dialog(TextualApp(window.interface), formDict, title)
         return formDict
 

@@ -132,18 +132,18 @@ class TestConversion(TestAbstract):
                        'msg': Tag('', 'string or none', annotation=str | None)}}
         data = {'': {'test': False, 'numb': 4, 'severity': 'fd', 'msg': ''}}
 
-        self.assertFalse(Tag.submit(origin, data))
+        self.assertFalse(Tag._submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': ''}}
-        self.assertTrue(Tag.submit(origin, data))
+        self.assertTrue(Tag._submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '', 'msg': ''}}
-        self.assertTrue(Tag.submit(origin, data))
+        self.assertTrue(Tag._submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': 'Text'}}
-        self.assertTrue(Tag.submit(origin, data))
+        self.assertTrue(Tag._submit(origin, data))
 
         # check value is kept if revision needed
         self.assertEqual(False, origin[""]["test"].val)
         data = {'': {'test': True, 'numb': 100, 'severity': '1', 'msg': 1}}  # ui put a wrong 'msg' type
-        self.assertFalse(Tag.submit(origin, data))
+        self.assertFalse(Tag._submit(origin, data))
         self.assertEqual(True, origin[""]["test"].val)
         self.assertEqual(100, origin[""]["numb"].val)
 
@@ -153,15 +153,15 @@ class TestConversion(TestAbstract):
                   'nested': {'test2': Tag(4, '')}}
         #   'nested': {'test2': 4}} TODO, allow combined FormDict
         data = {'test': True, 'severity': "", 'nested': {'test2': 8}}
-        self.assertTrue(Tag.submit(origin, data))
+        self.assertTrue(Tag._submit(origin, data))
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
-        self.assertFalse(Tag.submit(origin, data))
+        self.assertFalse(Tag._submit(origin, data))
 
     def test_non_scalar(self):
         tag = Tag(Path("/tmp"), '')
         origin = {'': {'path': tag}}
         data = {'': {'path': "/usr"}}  # the input '/usr' is a str
-        self.assertTrue(Tag.submit(origin, data))
+        self.assertTrue(Tag._submit(origin, data))
         self.assertEqual(Path("/usr"), tag.val)  # the output is still a Path
 
     def test_validation(self):
@@ -178,21 +178,21 @@ class TestConversion(TestAbstract):
         tag = Tag(100, 'Testing flag', validation=validate)
         origin = {'': {'number': tag}}
         # validation passes
-        self.assertTrue(Tag.submit(origin, {'': {'number': 100}}))
+        self.assertTrue(Tag._submit(origin, {'': {'number': 100}}))
         self.assertIsNone(tag.error_text)
         # validation fail, value set by validion
-        self.assertFalse(Tag.submit(origin, {'': {'number': 15}}))
+        self.assertFalse(Tag._submit(origin, {'': {'number': 15}}))
         self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", tag.error_text)
         self.assertEqual(20, tag.val)  # value set by validation
         # validation passes again, error text restored
-        self.assertTrue(Tag.submit(origin, {'': {'number': 5}}))
+        self.assertTrue(Tag._submit(origin, {'': {'number': 5}}))
         self.assertIsNone(tag.error_text)
         # validation fails, default error text
-        self.assertFalse(Tag.submit(origin, {'': {'number': -5}}))
+        self.assertFalse(Tag._submit(origin, {'': {'number': -5}}))
         self.assertEqual("Validation fail", tag.error_text)  # default error text
         self.assertEqual(30, tag.val)
         # validation fails, value not set by validation
-        self.assertFalse(Tag.submit(origin, {'': {'number': 101}}))
+        self.assertFalse(Tag._submit(origin, {'': {'number': 101}}))
         self.assertEqual("Too high", tag.error_text)
         self.assertEqual(30, tag.val)
 
@@ -209,7 +209,7 @@ class TestConversion(TestAbstract):
         self.assertIsNone(env1.severity)
 
         # do the same as if the tkinter_form was just submitted without any changes
-        Tag.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
         # changes in the UI should not directly affect the original
@@ -219,14 +219,14 @@ class TestConversion(TestAbstract):
         self.assertEqual("Default text", env1.msg2)
 
         # on UI submit, the original is affected
-        Tag.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertEqual("Another", env1.msg2)
         self.assertEqual(5, env1.severity)
         self.assertTrue(env1.further.deep.flag)
 
         # Another UI changes, makes None from an int
         ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
-        Tag.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
 

@@ -1,0 +1,42 @@
+site_name: "Mininterface"
+repo_name: CZ-NIC/mininterface
+repo_url: https://github.com/CZ-NIC/mininterface
+docs_dir: docs
+
+theme:
+  name: "material"
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            docstring_section_style: table
+            show_source: false
+            members_order: source
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true # highlight code during build time, not in javascript
+      linenums: false # enable line numbering
+      linenums_style: pymdownx-inline # how lines are numbered
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.keys # keyboard keys
+  - tables
+  - footnotes
+
+nav:
+  - Introduction: "index.md"
+  - Overview: "Overview.md"
+  - Run: "run.md"
+  - Mininterface: "Mininterface.md"
+  - Tag: "Tag.md"
+  - Validation: "Validation.md"
+  - Standalone: "Standalone.md"

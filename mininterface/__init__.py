@@ -37,8 +37,7 @@ def run(env_class: Type[EnvClass] | None = None,
         ask_for_missing: bool = True,
         interface: Type[Mininterface] = GuiInterface or TuiInterface,
         **kwargs) -> Mininterface[EnvClass]:
-    """
-    The main access, start here.
+    """ The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
     with the preference of the graphical one, regressed to a text interface for machines without display.
     Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
@@ -46,69 +45,76 @@ def run(env_class: Type[EnvClass] | None = None,
     It searches the config file in the current working directory,
     with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
-    :param env_class: Dataclass with the configuration. Their values will be modified with the CLI arguments.
-    :param ask_on_empty_cli: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
-(Withdrawn when `ask_for_missing` happens.)
-```python
-@dataclass
-class Env:
-  number: int = 3
-  text: str = ""
-m = run(Env, ask_on_empty=True)
-```
+    Args:
+        env_class: Dataclass with the configuration. Their values will be modified with the CLI arguments.
+        ask_on_empty_cli: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
+            (Withdrawn when `ask_for_missing` happens.)
+            ```python
+            @dataclass
+            class Env:
+            number: int = 3
+            text: str = ""
+            m = run(Env, ask_on_empty=True)
+            ```
 
-```bash
-$ program.py  #  omitting all parameters
-# Dialog for `number` and `text` appears
-$ program.py --number 3
-# No dialog appears
-```
-    :param title: The main title. If not set, taken from `prog` or program name.
-    :param config_file: File to load YAML to be merged with the configuration.
+            ```bash
+            $ program.py  #  omitting all parameters
+            # Dialog for `number` and `text` appears
+            $ program.py --number 3
+            # No dialog appears
+            ```
+        title: The main title. If not set, taken from `prog` or program name.
+        config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
             If set to True (default), we try to find one in the current working dir,
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
-    :param add_verbosity: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+        add_verbosity: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
 
-```python
-import logging
-logger = logging.getLogger(__name__)
+            ```python
+            import logging
+            logger = logging.getLogger(__name__)
 
-m = run(Env, add_verbosity=True)
-logger.info("Info shown") # needs `-v` or `--verbose`
-logger.debug("Debug not shown")  # needs `-vv`
-# $ program.py --verbose
-# Info shown
-```
+            m = run(Env, add_verbosity=True)
+            logger.info("Info shown") # needs `-v` or `--verbose`
+            logger.debug("Debug not shown")  # needs `-vv`
+            # $ program.py --verbose
+            # Info shown
+            ```
 
-```bash
-$ program.py --verbose
-Info shown
-```
+            ```bash
+            $ program.py --verbose
+            Info shown
+            ```
 
-   :param ask_for_missing: If some required fields are missing at startup, we ask for them in a UI instead of program exit.
+        ask_for_missing: If some required fields are missing at startup, we ask for them in a UI instead of program exit.
 
-```python
-@dataclass
-class Env:
-  required_number: int
-m = run(Env, ask_for_missing=True)
-```
+            ```python
+            @dataclass
+            class Env:
+            required_number: int
+            m = run(Env, ask_for_missing=True)
+            ```
 
-```bash
-$ program.py  # omitting --required-number
-# Dialog for `required_number` appears
-```
-    :param interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
-    :param **kwargs The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
-    :return: An interface, ready to be used.
+            ```bash
+            $ program.py  # omitting --required-number
+            # Dialog for `required_number` appears
+            ```
+        interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full [list](/Mininterface#all-possible-interfaces) of possible interfaces.
+
+    Kwargs:
+        The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
+
+
+    Returns:
+        An interface, ready to be used.
 
     You cay context manager the function by a `with` statement.
     The stdout will be redirected to the interface (ex. a GUI window).
+    TODO add wrap example
 
-    Undocumented: The `env_class` may be a function as well. We invoke its parameters.
+    Undocumented experimental: The `env_class` may be a function as well. We invoke its parameters.
     However, as Mininterface.env stores the output of the function instead of the Argparse namespace,
     methods like `Mininterface.form(None)` (to ask for editing the env values) will work unpredictibly.
     Also, the config file seems to be fetched only for positional (missing) parameters,
@@ -117,16 +123,21 @@ $ program.py  # omitting --required-number
     If not, we might help it this way:
         `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
 
-    Undocumented: `default` keyword argument for tyro may serve for default values instead of a config file.
+    Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
     """
 
     # Prepare the config file
     if config_file is True and not kwargs.get("default") and env_class:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
-        cf = Path(sys.argv[0]).with_suffix(".yaml")
-        if cf.exists():
-            config_file = cf
+        try:
+            cf = Path(sys.argv[0]).with_suffix(".yaml")
+        except ValueError:
+            # when invoking raw python interpreter in CLI: PosixPath('.') has an empty name
+            config_file = None
+        else:
+            if cf.exists():
+                config_file = cf
     if isinstance(config_file, bool):
         config_file = None
     elif isinstance(config_file, str):

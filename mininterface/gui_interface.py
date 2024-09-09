@@ -1,6 +1,4 @@
 import sys
-from tkinter import Widget
-from types import FunctionType, LambdaType, MethodType
 from typing import Any, Callable
 
 from .facet import BackendAdaptor
@@ -51,15 +49,17 @@ class GuiInterface(Redirectable, Mininterface):
 
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up whole form.
-            :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
+        Args:
+            form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The default value might be `mininterface.Tag` that allows you to add descriptions.
                 A checkbox example: {"my label": Tag(True, "my description")}
-            :param title: Optional form title.
+            title: Optional form title.
         """
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         self.window.run_dialog(dict_to_formdict(form), title=title)
+        # TODO what does it return? A clean dict? Should we return a clean (without Tag) dict, always?
         return form
 
     def ask_number(self, text: str) -> int:
@@ -131,7 +131,8 @@ class TkWindow(Tk, BackendAdaptor):
             # Change label name as the field name might have changed (ex. highlighted by an asterisk)
             # But we cannot change the dict key itself
             # as the user expects the consistency – the original one in the dict.
-            label.config(text=tag.name)
+            if tag.name:
+                label.config(text=tag.name)
 
         # Set the submit and exit options
         self.form.button.config(command=self._ok)
@@ -145,7 +146,7 @@ class TkWindow(Tk, BackendAdaptor):
         return self.mainloop(lambda: self.validate(form, title))
 
     def validate(self, formDict: FormDict, title: str) -> FormDict:
-        if not Tag.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
+        if not Tag._submit_values(zip(flatten(formDict), flatten(self.form.get()))):
             return self.run_dialog(formDict, title)
         return formDict
 

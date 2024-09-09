@@ -20,11 +20,10 @@ class Cancelled(SystemExit):
 
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
-        You get one through `mininterface.run` which fills CLI arguments and config file to `mininterface.env`
-        or you can create it directly (without benefiting from the CLI parsing).
-
-        This base interface does not require any user input and hence is suitable for headless testing.
+        You get one through [`mininterface.run`](run.md) which fills CLI arguments and config file to `mininterface.env`
+        or you can create [one](.#all-possible-interfaces) directly (without benefiting from the CLI parsing).
     """
+    # This base interface does not require any user input and hence is suitable for headless testing.
 
     def __init__(self, title: str = "",
                  _env: EnvClass | None = None,
@@ -38,6 +37,24 @@ class Mininterface(Generic[EnvClass]):
         self.env: EnvClass = _env or SimpleNamespace()
         """ Parsed arguments, fetched from cli
             Contains whole configuration (previously fetched from CLI and config file).
+
+        ```bash
+        $ program.py --number 10
+        ```
+
+        ```python
+        from dataclasses import dataclass
+        from mininterface import run
+
+        @dataclass
+        class Env:
+            number: int = 3
+            text: str = ""
+
+        m = run(Env)
+        print(m.env.number)  # 10
+        ```
+
         """
         self._descriptions = _descriptions or {}
         """ Field descriptions """
@@ -67,20 +84,30 @@ class Mininterface(Generic[EnvClass]):
 
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up whole form.
-            :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
+
+        Args:
+            form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The default value might be `mininterface.Tag` that allows you to add descriptions.
                 If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
                     (Previously fetched from CLI and config file.)
                 A checkbox example: `{"my label": Tag(True, "my description")}`
-            :param title: Optional form title
+            title: Optional form title
         """
         f = self.env if form is None else form
         print(f"Asking the form {title}".strip(), f)
         return f  # NOTE – this should return dict, not FormDict (get rid of auxiliary.Tag values)
 
     def is_yes(self, text: str) -> bool:
-        """ Display confirm box, focusing yes. """
+        """ Display confirm box, focusing yes.
+
+        ```python
+        m = run()
+        print(m.is_yes("Is that alright?"))  # True/False
+        ```
+
+        ![Is yes window](asset/is_yes.avif "A prompted dialog")
+        """
         print("Asking yes:", text)
         return True
 

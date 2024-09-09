@@ -1,9 +1,9 @@
 from typing import Callable
-from .tag import Tag, ValidationResult, FieldValue
+from .tag import Tag, ValidationResult, TagValue
 
 
-def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, FieldValue]]):
-    """ Alias to `Tag(validation=...)`
+def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
+    """ Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
 
     ```python
     from mininterface import Tag, Validation
@@ -15,6 +15,7 @@ def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResul
         # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
     ```
 
-    :param check: Callback function.
+    Args:
+        check: Callback function.
     """
     return Tag(validation=check)

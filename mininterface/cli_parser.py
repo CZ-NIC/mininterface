@@ -154,11 +154,15 @@ def _parse_cli(env_class: Type[EnvClass],
                **kwargs) -> tuple[EnvClass | None, dict, WrongFields]:
     """ Parse CLI arguments, possibly merged from a config file.
 
-    :param env_class: Class with the configuration.
-    :param config_file: File to load YAML to be merged with the configuration.
-        You do not have to re-define all the settings in the config file, you can choose a few.
-    :param **kwargs The same as for argparse.ArgumentParser.
-    :return: Configuration namespace.
+    Args:
+        env_class: Class with the configuration.
+        config_file: File to load YAML to be merged with the configuration.
+            You do not have to re-define all the settings in the config file, you can choose a few.
+    Kwargs:
+        The same as for argparse.ArgumentParser.
+
+    Returns:
+        Configuration namespace.
     """
     # Load config file
     if "default" not in kwargs:
