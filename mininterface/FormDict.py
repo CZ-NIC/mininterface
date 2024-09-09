@@ -2,6 +2,7 @@
     FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
 import logging
+from types import FunctionType, MethodType
 from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
 
 from .FormField import FormField
@@ -71,7 +72,8 @@ def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
                 val = False
                 logger.warn(f"Annotation {annotation} of `{param}` not supported by Mininterface."
                             "None converted to False.")
-        if hasattr(val, "__dict__"):  # nested config hierarchy
+        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
+            # Why checking the isinstance? See FormField._is_a_callable.
             subdict[param] = dataclass_to_formdict(val, descr, _path=f"{_path}{param}.")
         else:
             params = {"val": val,

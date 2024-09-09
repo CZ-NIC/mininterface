@@ -1,7 +1,7 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
-from types import UnionType
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, Self, TypeVar, get_args, get_type_hints
+from types import FunctionType, MethodType, UnionType
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_type_hints
 
 from .auxiliary import flatten
 
@@ -41,7 +41,7 @@ AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 
 @dataclass
 class FormField:
-    """ Enrich a value with a description, validation etc.
+    """ Wrapper around a value that manages a description, validation etc.
         When you provide a value to an interface, you may instead use this object.
 
         Bridge between the input values and a UI widget. The widget is created with the help of this object,
@@ -67,11 +67,7 @@ class FormField:
         If not set, will be determined automatically from the `val` type.
     """
     name: str | None = None
-    """ Name displayed in the UI.
-        NOTE: Only TextualInterface uses this by now.
-        GuiInterface reads the name from the dict only.
-        Thus, it is not easy to change the dict key as the user expects the original one in the dict.
-    """
+    """ Name displayed in the UI. """
 
     validation: Callable[["FormField"], ValidationResult | tuple[ValidationResult,
                                                                  FieldValue]] | None = None
@@ -111,6 +107,9 @@ class FormField:
     would not annotation check spoil it before validation can transoform the value?
     I am not sure whether to store the transformed value in the ui_value or fixed_value.
     """
+
+    choices: list[str] = None
+    # TODO
 
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
@@ -195,16 +194,19 @@ class FormField:
 
     def _fetch_from(self, ff: "Self"):
         """ Fetches public attributes from another instance. """
-        if self.val is None:
-            self.val = ff.val
-        if self.description is None:
-            self.description = ff.description
-        if self.annotation is None:
-            self.annotation = ff.annotation
-        if self.name is None:
-            self.name = ff.name
-        if self.validation is None:
-            self.validation = ff.validation
+        for attr in ['val', 'description', 'annotation', 'name', 'validation', 'choices']:
+            if getattr(self, attr) is None:
+                setattr(self, attr, getattr(ff, attr))
+
+    def _is_a_callable(self) -> bool:
+        """ True, if the value is a callable function.
+        Why not checking isinstance(self.annotation, Callable)?
+        Because a str is a Callable too. We disburden the user when instructing them to write
+            `my_var: Callable = x` instead of `my_var: FunctionType = x`
+            but then, we need this check.
+        """
+        return isinstance(self.annotation, (FunctionType, MethodType)) \
+            or isinstance(self.annotation, Callable) and isinstance(self.val, (FunctionType, MethodType))
 
     def set_error_text(self, s):
         self._original_desc = o = self.description

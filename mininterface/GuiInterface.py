@@ -1,4 +1,6 @@
 import sys
+from tkinter import Widget
+from types import FunctionType, LambdaType, MethodType
 from typing import Any, Callable
 
 try:
@@ -12,7 +14,7 @@ except ImportError:
 
 from .common import InterfaceNotAvailable
 from .FormDict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
-from .auxiliary import recursive_set_focus, flatten
+from .auxiliary import replace_widget_with, widgets_to_dict, recursive_set_focus, flatten
 from .Redirectable import RedirectTextTkinter, Redirectable
 from .FormField import FormField
 from .Mininterface import BackendAdaptor, Cancelled, EnvClass, Mininterface
@@ -102,7 +104,7 @@ class TkWindow(Tk, BackendAdaptor):
             v = str(v)
         return Value(v, ff.description)
 
-    def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
+    def run_dialog(self, form: FormDict, title: str = "") -> FormDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
@@ -111,10 +113,23 @@ class TkWindow(Tk, BackendAdaptor):
             label.pack(pady=10)
         self.form = Form(self.frame,
                          name_form="",
-                         form_dict=formdict_to_widgetdict(formDict, self.widgetize),
+                         form_dict=formdict_to_widgetdict(form, self.widgetize),
                          name_config="Ok",
                          )
         self.form.pack()
+
+        # Add radio
+        nested_widgets = widgets_to_dict(self.form.widgets)
+        for ff, (label, widget) in zip(flatten(form), flatten(nested_widgets)):
+            if ff.choices:
+                replace_widget_with("radio", widget, label.cget("text"), ff)
+            if ff._is_a_callable():
+                replace_widget_with("button", widget, label.cget("text"), ff)
+
+            # Change label name as the field name might have changed (ex. highlighted by an asterisk)
+            # But we cannot change the dict key itself
+            # as the user expects the consistency – the original one in the dict.
+            label.config(text=ff.name)
 
         # Set the submit and exit options
         self.form.button.config(command=self._ok)
@@ -125,7 +140,7 @@ class TkWindow(Tk, BackendAdaptor):
 
         # focus the first element and run
         recursive_set_focus(self.form)
-        return self.mainloop(lambda: self.validate(formDict, title))
+        return self.mainloop(lambda: self.validate(form, title))
 
     def validate(self, formDict: FormDict, title: str) -> FormDict:
         if not FormField.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
