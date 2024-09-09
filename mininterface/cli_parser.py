@@ -18,7 +18,7 @@ from tyro.extras import get_parser
 
 from .auxiliary import get_descriptions
 from .FormDict import EnvClass
-from .FormField import FormField
+from .tag import Tag
 from .validators import not_empty
 
 # Pydantic is not a project dependency, that is just an optional integration
@@ -34,7 +34,7 @@ except:
     attr = None
 
 
-WrongFields = dict[str, FormField]
+WrongFields = dict[str, Tag]
 
 eavesdrop = ""
 """ Used to intercept an error message from tyro """
@@ -123,7 +123,7 @@ def run_tyro_parser(env_class: Type[EnvClass],
                 else:
                     # NOTE: We put '' to the UI to clearly state that the value is missing.
                     # However, the UI then is not able to use the number filtering capabilities.
-                    ff = wf[argument.dest] = FormField("",
+                    tag = wf[argument.dest] = Tag("",
                                                        argument.help.replace("(required)", ""),
                                                        validation=not_empty,
                                                        _src_class=env_class,
@@ -132,7 +132,7 @@ def run_tyro_parser(env_class: Type[EnvClass],
                     # Why `type_()`? We need to put a default value so that the parsing will not fail.
                     # A None would be enough because Mininterface will ask for the missing values
                     # promply, however, Pydantic model would fail.
-                    setattr(kwargs["default"], argument.dest, ff.annotation())
+                    setattr(kwargs["default"], argument.dest, tag.annotation())
 
             # Second attempt to parse CLI
             # Why catching warnings? All the meaningful warnings

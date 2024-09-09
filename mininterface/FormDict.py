@@ -5,13 +5,13 @@ import logging
 from types import FunctionType, MethodType
 from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
 
-from .FormField import FormField
+from .tag import Tag
 
 logger = logging.getLogger(__name__)
 
 EnvClass = TypeVar("EnvClass")
-FormDict = dict[str, Union[FormField, 'FormDict']]
-""" Nested form that can have descriptions (through FormField) instead of plain values. """
+FormDict = dict[str, Union[Tag, 'FormDict']]
+""" Nested form that can have descriptions (through Tag) instead of plain values. """
 
 # NOTE: In the future, allow `bound=FormDict | EnvClass`, a dataclass (or its instance)
 # to be edited too
@@ -21,10 +21,10 @@ FormDictOrEnv = TypeVar('FormT', bound=FormDict)  # | EnvClass)
 
 
 def formdict_repr(d: FormDict) -> dict:
-    """ For the testing purposes, returns a new dict when all FormFields are replaced with their values. """
+    """ For the testing purposes, returns a new dict when all Tags are replaced with their values. """
     out = {}
     for k, v in d.items():
-        if isinstance(v, FormField):
+        if isinstance(v, Tag):
             v = v.val
         out[k] = formdict_repr(v) if isinstance(v, dict) else v
     return out
@@ -36,15 +36,15 @@ def dict_to_formdict(data: dict) -> FormDict:
         if isinstance(val, dict):  # nested config hierarchy
             fd[key] = dict_to_formdict(val)
         else:  # scalar value
-            fd[key] = FormField(val, "", name=key, _src_dict=data, _src_key=key) \
-                if not isinstance(val, FormField) else val
+            fd[key] = Tag(val, "", name=key, _src_dict=data, _src_key=key) \
+                if not isinstance(val, Tag) else val
     return fd
 
 
 def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key=None):
     if isinstance(d, dict):
         return {k: formdict_to_widgetdict(v, widgetize_callback, k) for k, v in d.items()}
-    elif isinstance(d, FormField):
+    elif isinstance(d, Tag):
         if not d.name:  # restore the name from the user provided dict
             d.name = _key
         return widgetize_callback(d)
@@ -73,7 +73,7 @@ def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
                 logger.warn(f"Annotation {annotation} of `{param}` not supported by Mininterface."
                             "None converted to False.")
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
-            # Why checking the isinstance? See FormField._is_a_callable.
+            # Why checking the isinstance? See Tag._is_a_callable.
             subdict[param] = dataclass_to_formdict(val, descr, _path=f"{_path}{param}.")
         else:
             params = {"val": val,
@@ -81,7 +81,7 @@ def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
                       "_src_obj": env
                       }
             if not _path:  # scalar value in root
-                subdict[main][param] = FormField(description=descr.get(param), **params)
+                subdict[main][param] = Tag(description=descr.get(param), **params)
             else:  # scalar value in nested
-                subdict[param] = FormField(description=descr.get(f"{_path}{param}"), **params)
+                subdict[param] = Tag(description=descr.get(f"{_path}{param}"), **params)
     return subdict

@@ -1,12 +1,12 @@
-from .FormField import FormField
+from .tag import Tag
 
 __doc__ = """
-Functions suitable for FormField validation. When the user submits a value whose validation fails,
+Functions suitable for Tag validation. When the user submits a value whose validation fails,
 they are prompted to edit the value.
 
 ```python
 m = run()
-my_dict = m.form({"my_text", FormField("", validation=validators.not_empty)})
+my_dict = m.form({"my_text", Tag("", validation=validators.not_empty)})
 my_dict["my_text"]  # You can be sure the value is not empty here.
 ```
 
@@ -29,13 +29,13 @@ class AttrsModel:
 ```
 """
 
-def not_empty(ff: FormField):
-    """ Assures that FormField the user has written a value and did not let the field empty.
+def not_empty(tag: Tag):
+    """ Assures that Tag the user has written a value and did not let the field empty.
 
     ```python
-    from mininterface import FormField, validators
+    from mininterface import Tag, validators
 
-    m.form({"my_text", FormField("", validation=validators.not_empty)})
+    m.form({"my_text", Tag("", validation=validators.not_empty)})
     # User cannot leave the string field empty.
     ```
 
@@ -45,13 +45,13 @@ def not_empty(ff: FormField):
     This does not seem to me as a bad behaviour as in CLI you clearly see the CWD,
     whereas in a UI the CWD is not evident.
     """
-    v = ff.val
+    v = tag.val
     if v == "":
         return False
     elif v is False:
         return True
     try:
-        return v != ff.annotation()
+        return v != tag.annotation()
     except:
         pass
     return True

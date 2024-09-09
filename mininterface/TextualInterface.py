@@ -15,7 +15,7 @@ except ImportError:
 from .auxiliary import flatten
 from .FormDict import (EnvClass, FormDict, FormDictOrEnv, dataclass_to_formdict,
                        dict_to_formdict, formdict_to_widgetdict)
-from .FormField import FormField
+from .tag import Tag
 from .Mininterface import BackendAdaptor, Cancelled
 from .Redirectable import Redirectable
 from .TextInterface import TextInterface
@@ -54,7 +54,7 @@ class TextualInterface(Redirectable, TextInterface):
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):
-        return self.form({text: FormField("", "", int, text)})[text].val
+        return self.form({text: Tag("", "", int, text)})[text].val
 
     def is_yes(self, text: str):
         return TextualButtonApp(self).yes_no(text, False).val
@@ -86,16 +86,16 @@ class TextualApp(App[bool | None]):
         self.interface = interface
 
     @staticmethod
-    def widgetize(ff: FormField) -> Checkbox | Input:
-        """ Wrap FormField to a textual widget. """
-        v = ff.val
-        if ff.annotation is bool or not ff.annotation and (v is True or v is False):
-            o = Checkbox(ff.name or "", v)
+    def widgetize(tag: Tag) -> Checkbox | Input:
+        """ Wrap Tag to a textual widget. """
+        v = tag.val
+        if tag.annotation is bool or not tag.annotation and (v is True or v is False):
+            o = Checkbox(tag.name or "", v)
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
-            o = Input(str(v), placeholder=ff.name or "")
-        o._link = ff  # The Textual widgets need to get back to this value
+            o = Input(str(v), placeholder=tag.name or "")
+        o._link = tag  # The Textual widgets need to get back to this value
         return o
 
     # Why class method? I do not know how to re-create the dialog if needed.
@@ -112,8 +112,8 @@ class TextualApp(App[bool | None]):
         if not window.run():
             raise Cancelled
 
-        # validate and store the UI value → FormField value → original value
-        if not FormField.submit_values((field._link, field.value) for field in widgets):
+        # validate and store the UI value → Tag value → original value
+        if not Tag.submit_values((field._link, field.value) for field in widgets):
             return cls.run_dialog(TextualApp(window.interface), formDict, title)
         return formDict
 

@@ -4,10 +4,11 @@ from argparse import ArgumentParser
 from tkinter import Button, StringVar, Variable
 from tkinter.ttk import Frame, Radiobutton
 from types import SimpleNamespace
-from typing import Iterable, Literal, TypeVar
+from typing import TYPE_CHECKING, Iterable, Literal, TypeVar
 from warnings import warn
 
-from mininterface import FormField
+if TYPE_CHECKING:
+    from .tag import Tag
 
 try:
     from tkinter import Entry, Widget
@@ -68,7 +69,7 @@ class AnyVariable(Variable):
         return self.val
 
 
-def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, value: FormField) -> Widget:
+def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, value: Tag) -> Widget:
     if widget.winfo_manager() == 'grid':
         grid_info = widget.grid_info()
         widget.grid_forget()
@@ -88,7 +89,7 @@ def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Wi
                     radio.grid(row=i, column=1)
             case "button":
                 master._Form__vars[name] = AnyVariable(value.val)
-                radio = Button(master, text=name, command=lambda ff=value: ff.val(ff))
+                radio = Button(master, text=name, command=lambda tag=value: tag.val(tag))
                 radio.grid(row=grid_info['row'], column=grid_info['column'])
     else:
         warn(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")

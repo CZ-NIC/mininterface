@@ -16,7 +16,7 @@ from .common import InterfaceNotAvailable
 from .FormDict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
 from .auxiliary import replace_widget_with, widgets_to_dict, recursive_set_focus, flatten
 from .Redirectable import RedirectTextTkinter, Redirectable
-from .FormField import FormField
+from .tag import Tag
 from .Mininterface import BackendAdaptor, Cancelled, EnvClass, Mininterface
 
 
@@ -51,8 +51,8 @@ class GuiInterface(Redirectable, Mininterface):
         """ Prompt the user to fill up whole form.
             :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.FormField` that allows you to add descriptions.
-                A checkbox example: {"my label": FormField(True, "my description")}
+                The default value might be `mininterface.Tag` that allows you to add descriptions.
+                A checkbox example: {"my label": Tag(True, "my description")}
             :param title: Optional form title.
         """
         if form is None:
@@ -93,16 +93,16 @@ class TkWindow(Tk, BackendAdaptor):
         """
 
     @staticmethod
-    def widgetize(ff: FormField) -> Value:
-        """ Wrap FormField to a textual widget. """
-        v = ff.val
-        if ff.annotation is bool and not isinstance(v, bool):
+    def widgetize(tag: Tag) -> Value:
+        """ Wrap Tag to a textual widget. """
+        v = tag.val
+        if tag.annotation is bool and not isinstance(v, bool):
             # tkinter_form unfortunately needs the bool type to display correct widget,
             # otherwise we end up with a text Entry.
             v = bool(v)
         elif not isinstance(v, (float, int, str, bool)):
             v = str(v)
-        return Value(v, ff.description)
+        return Value(v, tag.description)
 
     def run_dialog(self, form: FormDict, title: str = "") -> FormDict:
         """ Let the user edit the form_dict values in a GUI window.
@@ -120,16 +120,16 @@ class TkWindow(Tk, BackendAdaptor):
 
         # Add radio
         nested_widgets = widgets_to_dict(self.form.widgets)
-        for ff, (label, widget) in zip(flatten(form), flatten(nested_widgets)):
-            if ff.choices:
-                replace_widget_with("radio", widget, label.cget("text"), ff)
-            if ff._is_a_callable():
-                replace_widget_with("button", widget, label.cget("text"), ff)
+        for tag, (label, widget) in zip(flatten(form), flatten(nested_widgets)):
+            if tag.choices:
+                replace_widget_with("radio", widget, label.cget("text"), tag)
+            if tag._is_a_callable():
+                replace_widget_with("button", widget, label.cget("text"), tag)
 
             # Change label name as the field name might have changed (ex. highlighted by an asterisk)
             # But we cannot change the dict key itself
             # as the user expects the consistency – the original one in the dict.
-            label.config(text=ff.name)
+            label.config(text=tag.name)
 
         # Set the submit and exit options
         self.form.button.config(command=self._ok)
@@ -143,7 +143,7 @@ class TkWindow(Tk, BackendAdaptor):
         return self.mainloop(lambda: self.validate(form, title))
 
     def validate(self, formDict: FormDict, title: str) -> FormDict:
-        if not FormField.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
+        if not Tag.submit_values(zip(flatten(formDict), flatten(self.form.get()))):
             return self.run_dialog(formDict, title)
         return formDict
 

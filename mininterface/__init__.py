@@ -6,7 +6,7 @@ from .aliases import Validation
 from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable
 from .FormDict import EnvClass
-from .FormField import FormField
+from .tag import Tag
 from .Mininterface import EnvClass, Mininterface
 from .TextInterface import ReplInterface, TextInterface
 from . import validators
@@ -157,7 +157,7 @@ $ program.py  # omitting --required-number
     return interface
 
 
-__all__ = ["run", "FormField", "validators", "InterfaceNotAvailable",
+__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable",
            "Validation",
            "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
            ]

@@ -40,8 +40,8 @@ AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 
 
 @dataclass
-class FormField:
-    """ Wrapper around a value that manages a description, validation etc.
+class Tag:
+    """ Wrapper around a value that encapsulates a description, validation etc.
         When you provide a value to an interface, you may instead use this object.
 
         Bridge between the input values and a UI widget. The widget is created with the help of this object,
@@ -54,9 +54,9 @@ class FormField:
     """ The value wrapped by FormField.
 
     ```python
-    ff = FormField(True, "", bool)
-    m.form({"My boolean": ff})
-    print(ff.val)  # True/False
+    tag = FormField(True, "", bool)
+    m.form({"My boolean": tag})
+    print(tag.val)  # True/False
     ```
     """
     description: str = ""
@@ -69,15 +69,15 @@ class FormField:
     name: str | None = None
     """ Name displayed in the UI. """
 
-    validation: Callable[["FormField"], ValidationResult | tuple[ValidationResult,
+    validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
                                                                  FieldValue]] | None = None
     """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
         If the validation fails, user is prompted to edit the value.
         Return True if validation succeeded or False or an error message when it failed.
 
         ```python
-        def check(ff: FormField):
-            if ff.val < 10:
+        def check(tag: FormField):
+            if tag.val < 10:
                 return "The value must be at least 10"
         m.form({"number", FormField(12, validation=check)})
         ```
@@ -130,8 +130,8 @@ class FormField:
     """ The original value, preceding UI change.  Handy while validating.
 
     ```python
-    def check(ff.val):
-        if ff.val != ff.original_val:
+    def check(tag.val):
+        if tag.val != tag.original_val:
             return "You have to change the value."
     m.form({"number", FormField(8, validation=check)})
     ```
@@ -157,7 +157,7 @@ class FormField:
                 field_type = self._src_class.__annotations__.get(self._src_key)
                 if field_type and hasattr(field_type, '__metadata__'):
                     for metadata in field_type.__metadata__:
-                        if isinstance(metadata, FormField):
+                        if isinstance(metadata, Tag):
                             self._fetch_from(metadata)  # NOTE might fetch from a pydantic model too
             if pydantic:  # Pydantic integration
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
@@ -192,11 +192,11 @@ class FormField:
             field_strings.append(v)
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
-    def _fetch_from(self, ff: "Self"):
+    def _fetch_from(self, tag: "Self"):
         """ Fetches public attributes from another instance. """
         for attr in ['val', 'description', 'annotation', 'name', 'validation', 'choices']:
             if getattr(self, attr) is None:
-                setattr(self, attr, getattr(ff, attr))
+                setattr(self, attr, getattr(tag, attr))
 
     def _is_a_callable(self) -> bool:
         """ True, if the value is a callable function.
@@ -375,18 +375,18 @@ class FormField:
         #     return self.val
 
     @staticmethod
-    def submit_values(updater: Iterable[tuple["FormField", FFValue]]) -> bool:
+    def submit_values(updater: Iterable[tuple["Tag", FFValue]]) -> bool:
         """ Returns whether the form is alright or whether we should revise it.
         Input is tuple of the FormFields and their new values from the UI.
         """
         # Why list? We need all the FormField values be updates from the UI.
         # If the revision is needed, the UI fetches the values from the FormField.
         # We need the keep the values so that the user does not have to re-write them.
-        return all(list(ff.update(ui_value) for ff, ui_value in updater))
+        return all(list(tag.update(ui_value) for tag, ui_value in updater))
 
     @staticmethod
     def submit(fd: "FormDict", ui: dict):
         """ Returns whether the form is alright or whether we should revise it.
         Input is the FormDict and the UI dict in the very same form.
         """
-        return FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        return Tag.submit_values(zip(flatten(fd), flatten(ui)))

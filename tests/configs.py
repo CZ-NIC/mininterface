@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from mininterface import FormField
+from mininterface import Tag
 from mininterface.aliases import Validation
 from mininterface.validators import not_empty
 
@@ -65,7 +65,7 @@ class OptionalFlagEnv:
 class ConstrinedEnv:
     """Set of options."""
 
-    test: Annotated[str, FormField(validation=not_empty)] = "hello"
+    test: Annotated[str, Tag(validation=not_empty)] = "hello"
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"

@@ -9,7 +9,7 @@ else:
     from typing import Generic
 
 from .FormDict import EnvClass, FormDict, FormDictOrEnv
-from .FormField import FormField
+from .tag import Tag
 
 logger = logging.getLogger(__name__)
 
@@ -71,15 +71,15 @@ class Mininterface(Generic[EnvClass]):
         """ Prompt the user to fill up whole form.
             :param form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.FormField` that allows you to add descriptions.
+                The default value might be `mininterface.Tag` that allows you to add descriptions.
                 If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
                     (Previously fetched from CLI and config file.)
-                A checkbox example: `{"my label": FormField(True, "my description")}`
+                A checkbox example: `{"my label": Tag(True, "my description")}`
             :param title: Optional form title
         """
         f = self.env if form is None else form
         print(f"Asking the form {title}".strip(), f)
-        return f  # NOTE – this should return dict, not FormDict (get rid of auxiliary.FormField values)
+        return f  # NOTE – this should return dict, not FormDict (get rid of auxiliary.Tag values)
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes. """
@@ -96,8 +96,8 @@ class BackendAdaptor(ABC):
 
     @staticmethod
     @abstractmethod
-    def widgetize(ff: FormField):
-        """ Wrap FormField to a textual widget. """
+    def widgetize(tag: Tag):
+        """ Wrap Tag to a textual widget. """
         pass
 
     @abstractmethod

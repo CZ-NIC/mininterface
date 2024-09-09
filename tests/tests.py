@@ -15,7 +15,7 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from mininterface import Mininterface, TextInterface, run, validators
 from mininterface.auxiliary import flatten
 from mininterface.FormDict import dataclass_to_formdict, formdict_repr
-from mininterface.FormField import FormField
+from mininterface.tag import Tag
 from mininterface.Mininterface import Cancelled
 
 SYS_ARGV = None  # To be redirected
@@ -102,10 +102,10 @@ class TestInteface(TestAbstract):
 
     def test_ask_form(self):
         m = TextInterface()
-        dict1 = {"my label": FormField(True, "my description"), "nested": {"inner": "text"}}
+        dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
-        self.assertEqual({"my label": FormField(True, "my description"), "nested": {"inner": "another"}}, dict1)
+        self.assertEqual({"my label": Tag(True, "my description"), "nested": {"inner": "another"}}, dict1)
 
         # Empty form invokes editing self.env, which is empty
         with patch('builtins.input', side_effect=["c"]):
@@ -125,47 +125,47 @@ class TestConversion(TestAbstract):
         When using GUI interface, we input an empty string and that should mean None
         for annotation `int | None`.
         """
-        origin = {'': {'test': FormField(False, 'Testing flag ', annotation=None),
-                       'numb': FormField(4, 'A number', annotation=None),
-                       'severity': FormField('', 'integer or none ', annotation=int | None),
-                       'msg': FormField('', 'string or none', annotation=str | None)}}
+        origin = {'': {'test': Tag(False, 'Testing flag ', annotation=None),
+                       'numb': Tag(4, 'A number', annotation=None),
+                       'severity': Tag('', 'integer or none ', annotation=int | None),
+                       'msg': Tag('', 'string or none', annotation=str | None)}}
         data = {'': {'test': False, 'numb': 4, 'severity': 'fd', 'msg': ''}}
 
-        self.assertFalse(FormField.submit(origin, data))
+        self.assertFalse(Tag.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': ''}}
-        self.assertTrue(FormField.submit(origin, data))
+        self.assertTrue(Tag.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '', 'msg': ''}}
-        self.assertTrue(FormField.submit(origin, data))
+        self.assertTrue(Tag.submit(origin, data))
         data = {'': {'test': False, 'numb': 4, 'severity': '1', 'msg': 'Text'}}
-        self.assertTrue(FormField.submit(origin, data))
+        self.assertTrue(Tag.submit(origin, data))
 
         # check value is kept if revision needed
         self.assertEqual(False, origin[""]["test"].val)
         data = {'': {'test': True, 'numb': 100, 'severity': '1', 'msg': 1}}  # ui put a wrong 'msg' type
-        self.assertFalse(FormField.submit(origin, data))
+        self.assertFalse(Tag.submit(origin, data))
         self.assertEqual(True, origin[""]["test"].val)
         self.assertEqual(100, origin[""]["numb"].val)
 
         # Check flat FormDict
-        origin = {'test': FormField(False, 'Testing flag ', annotation=None),
-                  'severity': FormField('', 'integer or none ', annotation=int | None),
-                  'nested': {'test2': FormField(4, '')}}
+        origin = {'test': Tag(False, 'Testing flag ', annotation=None),
+                  'severity': Tag('', 'integer or none ', annotation=int | None),
+                  'nested': {'test2': Tag(4, '')}}
         #   'nested': {'test2': 4}} TODO, allow combined FormDict
         data = {'test': True, 'severity': "", 'nested': {'test2': 8}}
-        self.assertTrue(FormField.submit(origin, data))
+        self.assertTrue(Tag.submit(origin, data))
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
-        self.assertFalse(FormField.submit(origin, data))
+        self.assertFalse(Tag.submit(origin, data))
 
     def test_non_scalar(self):
-        ff = FormField(Path("/tmp"), '')
-        origin = {'': {'path': ff}}
+        tag = Tag(Path("/tmp"), '')
+        origin = {'': {'path': tag}}
         data = {'': {'path': "/usr"}}  # the input '/usr' is a str
-        self.assertTrue(FormField.submit(origin, data))
-        self.assertEqual(Path("/usr"), ff.val)  # the output is still a Path
+        self.assertTrue(Tag.submit(origin, data))
+        self.assertEqual(Path("/usr"), tag.val)  # the output is still a Path
 
     def test_validation(self):
-        def validate(ff: FormField):
-            val = ff.val
+        def validate(tag: Tag):
+            val = tag.val
             if 10 < val < 20:
                 return "Number must be between 0 ... 10 or 20 ... 100", 20
             if val < 0:
@@ -174,26 +174,26 @@ class TestConversion(TestAbstract):
                 return "Too high"
             return True
 
-        ff = FormField(100, 'Testing flag', validation=validate)
-        origin = {'': {'number': ff}}
+        tag = Tag(100, 'Testing flag', validation=validate)
+        origin = {'': {'number': tag}}
         # validation passes
-        self.assertTrue(FormField.submit(origin, {'': {'number': 100}}))
-        self.assertIsNone(ff.error_text)
+        self.assertTrue(Tag.submit(origin, {'': {'number': 100}}))
+        self.assertIsNone(tag.error_text)
         # validation fail, value set by validion
-        self.assertFalse(FormField.submit(origin, {'': {'number': 15}}))
-        self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", ff.error_text)
-        self.assertEqual(20, ff.val)  # value set by validation
+        self.assertFalse(Tag.submit(origin, {'': {'number': 15}}))
+        self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", tag.error_text)
+        self.assertEqual(20, tag.val)  # value set by validation
         # validation passes again, error text restored
-        self.assertTrue(FormField.submit(origin, {'': {'number': 5}}))
-        self.assertIsNone(ff.error_text)
+        self.assertTrue(Tag.submit(origin, {'': {'number': 5}}))
+        self.assertIsNone(tag.error_text)
         # validation fails, default error text
-        self.assertFalse(FormField.submit(origin, {'': {'number': -5}}))
-        self.assertEqual("Validation fail", ff.error_text)  # default error text
-        self.assertEqual(30, ff.val)
+        self.assertFalse(Tag.submit(origin, {'': {'number': -5}}))
+        self.assertEqual("Validation fail", tag.error_text)  # default error text
+        self.assertEqual(30, tag.val)
         # validation fails, value not set by validation
-        self.assertFalse(FormField.submit(origin, {'': {'number': 101}}))
-        self.assertEqual("Too high", ff.error_text)
-        self.assertEqual(30, ff.val)
+        self.assertFalse(Tag.submit(origin, {'': {'number': 101}}))
+        self.assertEqual("Too high", tag.error_text)
+        self.assertEqual(30, tag.val)
 
     def test_env_instance_dict_conversion(self):
         m: TextInterface = run(OptionalFlagEnv, interface=TextInterface, prog="My application")
@@ -208,7 +208,7 @@ class TestConversion(TestAbstract):
         self.assertIsNone(env1.severity)
 
         # do the same as if the tkinter_form was just submitted without any changes
-        FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag.submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
         # changes in the UI should not directly affect the original
@@ -218,14 +218,14 @@ class TestConversion(TestAbstract):
         self.assertEqual("Default text", env1.msg2)
 
         # on UI submit, the original is affected
-        FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag.submit_values(zip(flatten(fd), flatten(ui)))
         self.assertEqual("Another", env1.msg2)
         self.assertEqual(5, env1.severity)
         self.assertTrue(env1.further.deep.flag)
 
         # Another UI changes, makes None from an int
         ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
-        FormField.submit_values(zip(flatten(fd), flatten(ui)))
+        Tag.submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
 
@@ -239,7 +239,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': FormField(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty, choices=None)}"""
+        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty, choices=None)}"""
         # Ask for missing, no interference with ask_on_empty_cli
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, interface=Mininterface)
@@ -275,7 +275,7 @@ class TestRun(TestAbstract):
 
 class TestValidators(TestAbstract):
     def test_not_empty(self):
-        f = FormField("", validation=validators.not_empty)
+        f = Tag("", validation=validators.not_empty)
         self.assertFalse(f.update(""))
         self.assertTrue(f.update("1"))
 
