@@ -1,5 +1,6 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
+from datetime import datetime
 from types import FunctionType, MethodType, UnionType
 from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_type_hints
 
@@ -299,9 +300,6 @@ class Tag:
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
-        # NOTE might be removed
-        # self._ui_val = ui_value
-        # self._has_ui_val = True
 
         # Type conversion
         # Even though GuiInterface does some type conversion (str → int) independently,
@@ -324,6 +322,11 @@ class Tag:
                 except SyntaxError:
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
+            elif issubclass(self.annotation, datetime):
+                try:
+                    out_value = self.annotation.fromisoformat(ui_value)
+                except ValueError:
+                    pass
 
             try:
                 seems_bad = not isinstance(out_value, self.annotation) and isinstance(out_value, str)

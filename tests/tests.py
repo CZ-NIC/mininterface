@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import os
 import sys
@@ -163,6 +164,13 @@ class TestConversion(TestAbstract):
         data = {'': {'path': "/usr"}}  # the input '/usr' is a str
         self.assertTrue(Tag._submit(origin, data))
         self.assertEqual(Path("/usr"), tag.val)  # the output is still a Path
+
+    def test_datetime(self):
+        new_date = "2020-01-01 17:35"
+        tag = Tag(datetime.fromisoformat("2024-09-10 17:35:39.922044"))
+        self.assertFalse(tag.update("fail"))
+        self.assertTrue(tag.update(new_date))
+        self.assertEqual(datetime.fromisoformat(new_date), tag.val)
 
     def test_validation(self):
         def validate(tag: Tag):

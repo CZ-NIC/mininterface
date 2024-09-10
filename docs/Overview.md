@@ -4,7 +4,7 @@ Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#data
 
 ## Supported types
 
-Various types are supported: scalars, functions, well-known objects (Path), iterables, custom classes.
+Various types are supported: scalars, functions, well-known objects (Path, datetime), iterables, custom classes.
 
 Take a look how it works with the variables organized in a dataclass:
 
