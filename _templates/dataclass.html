@@ -1,0 +1,26 @@
+TODO
+{%- extends "default/members.html" -%}
+
+{%- block attributes %}
+{%- if doc.attributes -%}
+<h3>DataClass Attributes</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%- for attribute in doc.attributes -%}
+        <tr>
+            <td>{{ attribute.name }}</td>
+            <td>{{ attribute.annotation }}</td>
+            <td>{{ attribute.docstring }}</td>
+        </tr>
+        {%- endfor -%}
+    </tbody>
+</table>
+{%- endif -%}
+{%- endblock %}
