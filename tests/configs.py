@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Annotated
 
 from mininterface import Tag
@@ -69,3 +70,7 @@ class ConstrinedEnv:
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
+
+@dataclass
+class ParametrizedGeneric:
+    paths: list[Path]

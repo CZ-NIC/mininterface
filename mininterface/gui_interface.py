@@ -97,7 +97,7 @@ class TkWindow(Tk, BackendAdaptor):
     @staticmethod
     def widgetize(tag: Tag) -> Value:
         """ Wrap Tag to a textual widget. """
-        v = tag.val
+        v = tag._get_ui_val()
         if tag.annotation is bool and not isinstance(v, bool):
             # tkinter_form unfortunately needs the bool type to display correct widget,
             # otherwise we end up with a text Entry.

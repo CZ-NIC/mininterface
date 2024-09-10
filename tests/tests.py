@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (ConstrinedEnv, FurtherEnv2, NestedDefaultedEnv,
-                     NestedMissingEnv, OptionalFlagEnv, SimpleEnv)
+                     NestedMissingEnv, OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import Mininterface, TextInterface, run
@@ -437,6 +437,48 @@ class TestAnnotated(TestAbstract):
         self.assertFalse(d[""]["test2"].update(""))
         self.assertTrue(d[""]["test"].update(" "))
         self.assertTrue(d[""]["test2"].update(" "))
+
+
+class TestParametrizedGeneric(TestAbstract):
+    def test_generic(self):
+        t = Tag("", annotation=list)
+        t.update("")
+        self.assertEqual("", t.val)
+        t.update("[1,2,3]")
+        self.assertEqual([1, 2, 3], t.val)
+        t.update("['1',2,3]")
+        self.assertEqual(["1", 2, 3], t.val)
+
+    def test_parametrized_generic(self):
+        t = Tag("", annotation=list[str])
+        self.assertFalse(t.update(""))  # NOTE we should consider this as an empty list instead and return True
+        t.update("[1,2,3]")
+        self.assertEqual(["1", "2", "3"], t.val)
+        t.update("[1,'2',3]")
+        self.assertEqual(["1", "2", "3"], t.val)
+
+    def test_path(self):
+        t = Tag("", annotation=list[Path])
+        t.update("['/tmp/','/usr']")
+        self.assertEqual([Path("/tmp"), Path("/usr")], t.val)
+        self.assertFalse(t.update("[1,2,3]"))
+        self.assertFalse(t.update("[/home, /usr]"))  # missing parenthesis
+
+    def test_path_cli(self):
+        # self.sys("--paths")
+        m = run(ParametrizedGeneric, interface=Mininterface)
+        f = dataclass_to_formdict(m.env, m._descriptions)[""]["paths"]
+        self.assertEqual("", f.val)
+        self.assertTrue(f.update("[]"))
+
+        self.sys("--paths", "/usr", "/tmp")
+        m = run(ParametrizedGeneric, interface=Mininterface)
+        f = dataclass_to_formdict(m.env, m._descriptions)[""]["paths"]
+        self.assertEqual([Path("/usr"), Path("/tmp")], f.val)
+        self.assertEqual(['/usr', '/tmp'], f._get_ui_val())
+        self.assertTrue(f.update("['/var']"))
+        self.assertEqual([Path("/var")], f.val)
+        self.assertEqual(['/var'], f._get_ui_val())
 
 
 if __name__ == '__main__':

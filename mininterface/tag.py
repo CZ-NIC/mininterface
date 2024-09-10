@@ -2,7 +2,8 @@ from ast import literal_eval
 from dataclasses import dataclass, fields
 from datetime import datetime
 from types import FunctionType, MethodType, UnionType
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_type_hints
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
+from warnings import warn
 
 from .auxiliary import flatten
 
@@ -38,6 +39,7 @@ ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo")
 AttrsFieldInfo = TypeVar("AttrsFieldInfo")
+common_iterables = list, tuple, set
 
 
 @dataclass
@@ -78,7 +80,7 @@ class Tag:
     """ Name displayed in the UI. """
 
     validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
-                                                                 TagValue]] | None = None
+                                                           TagValue]] | None = None
     """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
         If the validation fails, user is prompted to edit the value.
         Return True if validation succeeded or False or an error message when it failed.
@@ -213,6 +215,35 @@ class Tag:
         return isinstance(self.annotation, (FunctionType, MethodType)) \
             or isinstance(self.annotation, Callable) and isinstance(self.val, (FunctionType, MethodType))
 
+    def _is_right_instance(self, val) -> bool:
+        """ Check if the value conforms self.annotation.
+
+        Like `isinstance` but able to parse complex annotation.
+
+        class Env:
+            items1: List[Item] = []
+                 'TypeError: Subscripted generics cannot be used with class and instance checks'
+            items2: list[Item] = []
+                  'TypeError: cannot be a parameterized generic'
+
+        """
+        try:
+            return isinstance(val, self.annotation)
+        except TypeError:
+            if complex_ := self._get_annotation_parametrized():
+                origin, subtype = complex_
+                # import ipdb; ipdb.set_trace()  # TODO
+                return isinstance(val, origin) and all(isinstance(item, subtype) for item in val)
+
+    def _get_annotation_parametrized(self):
+        if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
+            subtype = get_args(self.annotation)  # list[str] -> (str,), list -> ()
+            if (len(subtype) == 1):
+                return origin, subtype[0]
+            else:
+                warn(f"This parametrized generic not implemented: {self.annotation}")
+        return None
+
     def set_error_text(self, s):
         self._original_desc = o = self.description
         self._original_name = n = self.name
@@ -231,10 +262,23 @@ class Tag:
         self.error_text = None
 
     def _repr_annotation(self):
-        if isinstance(self.annotation, UnionType):
+        if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
+            # ex: `list[str]`
             return repr(self.annotation)
-        else:
-            return self.annotation.__name__
+        # ex: `list`` (without name it would be <class list>)
+        return self.annotation.__name__
+
+    def _get_ui_val(self):
+        """ Some values are not expected to be parsed by any UI.
+        But we will reconstruct them in self.update later.
+
+        Ex: [Path("/tmp"), Path("/usr")] -> ["/tmp", "/usr"].
+        We need the latter in the UI because in the first case, ast_literal would not not reconstruct it later.
+        """
+        if complex_ := self._get_annotation_parametrized():
+            origin, _ = complex_
+            return origin(str(v)for v in self.val)
+        return self.val
 
     def _validate(self, out_value) -> TagValue:
         """ Runs
@@ -278,12 +322,12 @@ class Tag:
                 raise
 
         # Type check
-        if self.annotation and not isinstance(out_value, self.annotation):
+        if self.annotation and not self._is_right_instance(out_value):
             self.set_error_text(f"Type must be {self._repr_annotation()}!")
             raise ValueError
         return out_value
 
-    def update(self, ui_value:TagValue) -> bool:
+    def update(self, ui_value: TagValue) -> bool:
         """ UI value → Tag value → original value. (With type conversion and checks.)
 
         Args:
@@ -315,40 +359,36 @@ class Tag:
                     out_value = int(ui_value)
                 except ValueError:
                     pass
-            elif self.annotation in (list, tuple, set):
+            elif self.annotation in common_iterables:
                 # basic support for iterables, however, it will not work for custom subclasses of these built-ins
                 try:
                     out_value = literal_eval(ui_value)
                 except SyntaxError:
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
-            elif issubclass(self.annotation, datetime):
+            elif self.annotation is datetime:
                 try:
                     out_value = self.annotation.fromisoformat(ui_value)
                 except ValueError:
                     pass
 
-            try:
-                seems_bad = not isinstance(out_value, self.annotation) and isinstance(out_value, str)
-            except TypeError:
-                # Why checking TypeError? Due to Pydantic.
-                # class Inner(BaseModel):
-                #     id: int
-                # class Model(BaseModel):
-                #     items1: List[Item] = []
-                #          'TypeError: Subscripted generics cannot be used with class and instance checks'
-                #     items2: list[Item] = []
-                #           'TypeError: cannot be a parameterized generic'
-                pass
-            else:
-                if seems_bad:
-                    try:
+            # import ipdb; ipdb.set_trace()  # TODO
+            if not self._is_right_instance(out_value) and isinstance(out_value, str):
+                try:
+                    if complex_ := self._get_annotation_parametrized():
+                        origin, cast_to = complex_
                         # Textual ask_number -> user writes '123', this has to be converted to int 123
                         # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
+                        # (Maybe that's better now.)
+                        # import ipdb; ipdb.set_trace()  # TODO
+                        candidate = origin(cast_to(v) for v in literal_eval(ui_value))
+                        if self._is_right_instance(candidate):
+                            out_value = candidate
+                    else:
                         out_value = self.annotation(ui_value)
-                    except (TypeError, ValueError):
-                        # Automatic conversion failed
-                        pass
+                except (TypeError, ValueError, SyntaxError):
+                    # Automatic conversion failed
+                    pass
 
         # User and type validation check
         try:

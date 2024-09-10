@@ -99,7 +99,7 @@ See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic
 
 # Examples
 
-This is a complex example.
+## A complex dataclass.
 
 ```python3
 from typing import Annotated
@@ -138,3 +138,22 @@ print(m.env)
 m.form()
 ```
 
+## Form with paths
+
+We have a dict with some paths. Here is how it looks.
+
+```python
+from pathlib import Path
+from mininterface import run, Tag
+
+m = run(title="My program")
+my_dictionary = {
+  "paths": Tag("", annotation=list[Path]),
+  "default_paths": Tag([Path("/tmp"), Path("/usr")], annotation=list[Path])
+  }
+
+# Edit values in a dialog
+m.form(my_dictionary)
+```
+
+![List of paths](asset/list_of_paths.avif)

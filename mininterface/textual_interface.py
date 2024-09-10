@@ -90,7 +90,7 @@ class TextualApp(App[bool | None]):
     @staticmethod
     def widgetize(tag: Tag) -> Checkbox | Input:
         """ Wrap Tag to a textual widget. """
-        v = tag.val
+        v = tag._get_ui_val()
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = Checkbox(tag.name or "", v)
         else:
