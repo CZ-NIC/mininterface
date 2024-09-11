@@ -16,6 +16,7 @@ plugins:
             docstring_section_style: table
             show_source: false
             members_order: source
+            show_bases: false
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -40,3 +41,4 @@ nav:
   - Tag: "Tag.md"
   - Validation: "Validation.md"
   - Standalone: "Standalone.md"
+  - Changelog: "Changelog.md"

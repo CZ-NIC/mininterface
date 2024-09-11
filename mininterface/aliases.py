@@ -19,3 +19,8 @@ def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResul
         check: Callback function.
     """
     return Tag(validation=check)
+
+
+def Choices(*choices: list[str]):
+    """ An alias, see [`Tag.choices`][mininterface.Tag.choices] """
+    return Tag(choices=choices)

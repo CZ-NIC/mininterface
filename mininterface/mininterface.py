@@ -7,7 +7,7 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 else:
     from typing import Generic
 
-from .form_dict import EnvClass, FormDictOrEnv
+from .form_dict import EnvClass, FormDictOrEnv, dataclass_to_formdict, formdict_resolve
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 class Cancelled(SystemExit):
     # We inherit from SystemExit so that the program exits without a traceback on GUI Escape.
     pass
-
 
 
 class Mininterface(Generic[EnvClass]):
@@ -88,15 +87,59 @@ class Mininterface(Generic[EnvClass]):
         Args:
             form: Dict of `{labels: default value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.Tag` that allows you to add descriptions.
+                The value might be a [`Tag`][mininterface.Tag] that allows you to add descriptions.
                 If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
                     (Previously fetched from CLI and config file.)
                 A checkbox example: `{"my label": Tag(True, "my description")}`
             title: Optional form title
+
+        Returns:
+            dict or dataclass:
+                If the `form` is null, the output is [`self.env`][mininterface.Mininterface.env].
+
+                If the `form` is a dict, the output is another dict.
+                Whereas the original form stays intact (with the values update),
+                we return a new raw dict with all values resolved
+                (all [`Tag`][mininterface.Tag] objects are resolved to their value).
+
+                ```python
+                original = {"my label": Tag(True, "my description")}
+                output = m.form(original)  # Sets the label to False in the dialog
+
+                # Original dict was updated
+                print(original["my label"])  # Tag(False, "my description")
+
+                # Output dict is resolved, contains only raw values
+                print(output["my label"])  # False
+                ```
+
+                Why this behaviour? You need to do some validation, hence you put
+                `Tag` objects in the input dict. Then, you just need to work with the values.
+
+                ```python
+                original = {"my label": Tag(True, "my description")}
+                output = m.form(original)  # Sets the label to False in the dialog
+                output["my_label"]
+                ```
+
+                In the case you are willing to re-use the dict, you need not to lose the definitions,
+                hence you end up with accessing via the `.val`.
+
+                ```python
+                original = {"my label": Tag(True, "my description")}
+
+                for i in range(10):
+                    m.form(original, f"Attempt {i}")
+                    print("The result", original["my label"].val)
+                ```
         """
-        f = self.env if form is None else form
+        # NOTE in the future, support form=arbitrary dataclass too
+        if form is None:
+            print(f"Asking the form {title}".strip(), self.env)
+            return self.env
+        f = form
         print(f"Asking the form {title}".strip(), f)
-        return f  # NOTE – this should return dict, not FormDict (get rid of auxiliary.Tag values)
+        return formdict_resolve(f, extract_main=True)
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes.
@@ -115,5 +158,3 @@ class Mininterface(Generic[EnvClass]):
         """ Display confirm box, focusing no. """
         print("Asking no:", text)
         return False
-
-

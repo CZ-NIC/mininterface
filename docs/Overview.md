@@ -81,42 +81,39 @@ class Config:
 print(config.further.host)  # example.org
 ```
 
-A subset might be defaulted in YAML:
+The attributes can by defaulted by CLI:
+
+```
+$./program.py --further.host example.net
+```
+
+And in a YAML config file. Note that you are not obliged to define all the attributes, a subset will do.
+(Ex. you do not need to specify `token` too.)
 
 ```yaml
 further:
   host: example.com
 ```
 
-Or by CLI:
 
+## All possible interfaces
+
+Normally, you get an interface through [mininterface.run](#run)
+but if you do not wish to parse CLI and config file, you can invoke one directly.
+
+Several interfaces exist:
+
+* [`Mininterface`][mininterface.Mininterface] – The base interface the others are fully compatible with.
+* `GuiInterface` – A tkinter window.
+* `TuiInterface` – An interactive terminal.
+  * `TextualInterface` – If [textual](https://github.com/Textualize/textual) installed, rich interface is used.
+  * `TextInterface` – Plain text only interface with no dependency as a fallback.
+* `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
+
+
+How to invoke a specific interface.
+
+```python
+with TuiInterface("My program") as m:
+    number = m.ask_number("Returns number")
 ```
-$./program.py --further.host example.net
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -76,7 +76,7 @@ def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Wi
 
         master = widget.master
 
-        # TODO tab order broken, injected to another position
+        # NOTE tab order broken, injected to another position
         match target:
             case "radio":
                 choices = value.choices

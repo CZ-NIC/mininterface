@@ -9,14 +9,14 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ConstrinedEnv, FurtherEnv2, NestedDefaultedEnv,
+from configs import (ConstrainedEnv, FurtherEnv2, NestedDefaultedEnv,
                      NestedMissingEnv, OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import Mininterface, TextInterface, run
 from mininterface.validators import not_empty, limit
 from mininterface.auxiliary import flatten
-from mininterface.form_dict import dataclass_to_formdict, formdict_repr
+from mininterface.form_dict import dataclass_to_formdict, formdict_resolve
 from mininterface.tag import Tag
 from mininterface.mininterface import Cancelled
 
@@ -120,6 +120,20 @@ class TestInteface(TestAbstract):
             self.assertEqual(m2.env, m2.form())
             self.assertTrue(m2.env.test)
 
+    def test_form_output(self):
+        m = run(SimpleEnv, interface=Mininterface)
+        d1 = {"test1": "str", "test2": Tag(True)}
+        r1 = m.form(d1)
+        # the original dict is not changed in the form
+        self.assertEqual(True, d1["test2"].val)
+        # and even, when it changes, the output dict is not altered
+        d1["test2"].val = False
+        self.assertEqual(True, r1["test2"])
+
+        # when having empty form, it returns the env object
+        self.assertIs(m.env, m.form())
+
+
 
 class TestConversion(TestAbstract):
     def test_normalize_types(self):
@@ -211,7 +225,7 @@ class TestConversion(TestAbstract):
         self.assertIsNone(env1.severity)
 
         fd = dataclass_to_formdict(env1, m._descriptions)
-        ui = formdict_repr(fd)
+        ui = formdict_resolve(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
         self.assertIsNone(env1.severity)
@@ -236,6 +250,19 @@ class TestConversion(TestAbstract):
         ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
         Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
+
+    def test_choice(self):
+        t = Tag("one", choices=["one", "two"])
+        t.update("two")
+        self.assertEqual(t.val, "two")
+        t.update("three")
+        self.assertEqual(t.val, "two")
+
+        m = run(ConstrainedEnv)
+        d = dataclass_to_formdict(m.env, m._descriptions)
+        self.assertFalse(d[""]["choices"].update(""))
+        self.assertTrue(d[""]["choices"].update("two"))
+
 
 
 class TestRun(TestAbstract):
@@ -431,7 +458,7 @@ class TestAttrsIntegration(TestAbstract):
 
 class TestAnnotated(TestAbstract):
     def test_annotated(self):
-        m = run(ConstrinedEnv)
+        m = run(ConstrainedEnv)
         d = dataclass_to_formdict(m.env, m._descriptions)
         self.assertFalse(d[""]["test"].update(""))
         self.assertFalse(d[""]["test2"].update(""))

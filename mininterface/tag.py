@@ -26,7 +26,8 @@ except:
     attr = None
 
 
-FFValue = TypeVar("FFValue")
+UiValue = TypeVar("UiValue")
+""" Candidate for the TagValue. """
 TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
@@ -118,9 +119,29 @@ class Tag:
     """
 
     choices: list[str] | None = None
-    """ TODO """
-    # TODO docs missing
-    # TODO impementation in TextualInterface missing
+    """ Print the radio buttons. Constraint the value.
+
+    ```python
+    from dataclasses import dataclass
+    from typing import Annotated
+
+    from mininterface import run, Choices
+
+
+    @dataclass
+    class Env:
+        foo: Annotated["str", Choices("one", "two")] = "one"
+
+        # `Choices` is an alias for `Tag(choices=)`
+
+    m = run(Env)
+    m.form()  # prompts a dialog
+    ```
+    """
+    # NOTE we should support
+    # * Enums: Tag(enum) # no `choice` param`
+    # * more date types (now only str possible)
+    # * mininterface.choice `def choice(choices=, guesses=)`
 
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
@@ -232,7 +253,6 @@ class Tag:
         except TypeError:
             if complex_ := self._get_annotation_parametrized():
                 origin, subtype = complex_
-                # import ipdb; ipdb.set_trace()  # TODO
                 return isinstance(val, origin) and all(isinstance(item, subtype) for item in val)
 
     def _get_annotation_parametrized(self):
@@ -285,9 +305,13 @@ class Tag:
             * self.validation callback
             * pydantic validation
             * annotation type validation
+            * choice check
 
+        Returns:
             If succeeded, return the (possibly transformed) value.
-            If failed, raises ValueError.
+
+        Raises:
+            ValueError: If failed, raises ValueError.
         """
         if self.validation:
             last = self.val
@@ -325,6 +349,12 @@ class Tag:
         if self.annotation and not self._is_right_instance(out_value):
             self.set_error_text(f"Type must be {self._repr_annotation()}!")
             raise ValueError
+
+        # Choice check
+        if self.choices and out_value not in self.choices:
+            self.set_error_text(f"Must be one of {self.choices}")
+            raise ValueError
+
         return out_value
 
     def update(self, ui_value: TagValue) -> bool:
@@ -372,7 +402,6 @@ class Tag:
                 except ValueError:
                     pass
 
-            # import ipdb; ipdb.set_trace()  # TODO
             if not self._is_right_instance(out_value) and isinstance(out_value, str):
                 try:
                     if complex_ := self._get_annotation_parametrized():
@@ -380,7 +409,6 @@ class Tag:
                         # Textual ask_number -> user writes '123', this has to be converted to int 123
                         # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
                         # (Maybe that's better now.)
-                        # import ipdb; ipdb.set_trace()  # TODO
                         candidate = origin(cast_to(v) for v in literal_eval(ui_value))
                         if self._is_right_instance(candidate):
                             out_value = candidate
@@ -429,7 +457,7 @@ class Tag:
         #     return self.val
 
     @staticmethod
-    def _submit_values(updater: Iterable[tuple["Tag", FFValue]]) -> bool:
+    def _submit_values(updater: Iterable[tuple["Tag", UiValue]]) -> bool:
         """ Returns whether the form is alright or whether we should revise it.
         Input is tuple of the Tags and their new values from the UI.
         """

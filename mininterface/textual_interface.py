@@ -6,7 +6,7 @@ try:
     from textual.app import App, ComposeResult
     from textual.binding import Binding
     from textual.containers import VerticalScroll
-    from textual.widgets import Button, Checkbox, Footer, Header, Input, Label
+    from textual.widgets import Button, Checkbox, Footer, Header, Input, Label, RadioSet, RadioButton
 except ImportError:
     from mininterface.common import InterfaceNotAvailable
     raise InterfaceNotAvailable
@@ -14,7 +14,7 @@ except ImportError:
 from .auxiliary import flatten
 from .facet import BackendAdaptor
 from .form_dict import (EnvClass, FormDict, FormDictOrEnv,
-                        dataclass_to_formdict, dict_to_formdict,
+                        dataclass_to_formdict, dict_to_formdict, formdict_resolve,
                         formdict_to_widgetdict)
 from .mininterface import Cancelled
 from .redirectable import Redirectable
@@ -43,16 +43,15 @@ class TextualInterface(Redirectable, TextInterface):
         params_ = dataclass_to_formdict(self.env, self._descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        TextualApp.run_dialog(TextualApp(self), params_)
-        return self.env
+        return TextualApp.run_dialog(TextualApp(self), params_)
 
     # NOTE: This works bad with lists. GuiInterface considers list as combobox (which is now suppressed by str conversion),
     # TextualInterface as str. We should decide what should happen.
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
-        TextualApp.run_dialog(TextualApp(self), dict_to_formdict(form), title)
-        return form
+        else:
+            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_formdict(form), title), extract_main=True)
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):
@@ -93,6 +92,8 @@ class TextualApp(App[bool | None]):
         v = tag._get_ui_val()
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = Checkbox(tag.name or "", v)
+        elif tag.choices:
+            o = RadioSet(*(RadioButton(ch, value=ch == tag.val) for ch in tag.choices))
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
@@ -115,7 +116,11 @@ class TextualApp(App[bool | None]):
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        if not Tag._submit_values((field._link, field.value) for field in widgets):
+        candidates = ((
+            field._link,
+            str(field.pressed_button.label) if isinstance(field, RadioSet) else field.value
+        ) for field in widgets)
+        if not Tag._submit_values(candidates):
             return cls.run_dialog(TextualApp(window.interface), formDict, title)
         return formDict
 

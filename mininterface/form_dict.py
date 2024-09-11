@@ -3,31 +3,71 @@
 """
 import logging
 from types import FunctionType, MethodType
-from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
+from typing import Any, Callable, Optional, Self, TypeVar, Union, get_type_hints
 
 from .tag import Tag
 
 logger = logging.getLogger(__name__)
 
 EnvClass = TypeVar("EnvClass")
-FormDict = dict[str, Union[Tag, 'FormDict']]
-""" Nested form that can have descriptions (through Tag) instead of plain values. """
+FormDict = dict[str,TypeVar("FormDictRecursiveValue", str, "Self")]
+""" Nested form that can have descriptions (through Tag) instead of plain values.
 
-# NOTE: In the future, allow `bound=FormDict | EnvClass`, a dataclass (or its instance)
+Attention to programmers. Should we to change this type, check these IDE suggestions are still the same.
+It is easy to mess it up because it is partly unclear and fragile.
+
+```
+from dataclasses import dataclass
+from mininterface import run, Tag
+
+@dataclass
+class Env:
+    test:int = 1
+    pass
+
+m = run(Env)
+o1 = {"test1": "str", "test2": Tag(True)}
+r1 = m.form(o1)
+r1  # dict[str, Any] | Env
+o2 = {"test1": "str"}
+r2 = m.form(o2)
+r2  # dict[str, str] | Env
+o3 = {"test2": Tag(True)}
+r3 = m.form(o3)
+r3  # dict[str, Tag] | Env
+r4 = m.form()
+r4  # Env
+```
+"""
+
+# NOTE: In the future, allow `FormDict , EnvClass`, a dataclass (or its instance)
 # to be edited too
 # is_dataclass(v) -> dataclass or its instance
 # isinstance(v, type) -> class, not an instance
 # Then, we might get rid of ._descriptions because we will read from the model itself
-FormDictOrEnv = TypeVar('FormT', bound=FormDict)  # | EnvClass)
+# TypeVar('FormDictOrEnv', FormDict, EnvClass)
+FormDictOrEnv = TypeVar('FormDictOrEnv', bound=FormDict)  # , EnvClass)
 
 
-def formdict_repr(d: FormDict) -> dict:
-    """ For the testing purposes, returns a new dict when all Tags are replaced with their values. """
+
+def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
+    """ For the testing purposes, returns a new dict when all Tags are replaced with their values.
+
+    Args:
+        extract_main: UI need the main section act as nested.
+            At least `dataclass_to_formdict` does this.
+            This extracts it back.
+            {"": {"key": "val"}, "nested": {...}} -> {"key": "val", "nested": {...}}
+    """
     out = {}
     for k, v in d.items():
         if isinstance(v, Tag):
             v = v.val
-        out[k] = formdict_repr(v) if isinstance(v, dict) else v
+        out[k] = formdict_resolve(v, _root=False) if isinstance(v, dict) else v
+    if extract_main and _root and "" in out:
+        main = out[""]
+        del out[""]
+        return {**main, **out}
     return out
 
 

@@ -13,7 +13,7 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .form_dict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_to_widgetdict
+from .form_dict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_resolve, formdict_to_widgetdict
 from .auxiliary import replace_widget_with, widgets_to_dict, recursive_set_focus, flatten
 from .redirectable import RedirectTextTkinter, Redirectable
 from .tag import Tag
@@ -41,26 +41,20 @@ class GuiInterface(Redirectable, Mininterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        formDict = dataclass_to_formdict(self.env, self._descriptions)
+        form = dataclass_to_formdict(self.env, self._descriptions)
 
         # formDict automatically fetches the edited values back to the EnvInstance
-        self.window.run_dialog(formDict)
-        return self.env
+        return self.window.run_dialog(form)
 
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up whole form.
-        Args:
-            form: Dict of `{labels: default value}`. The form widget infers from the default value type.
-                The dict can be nested, it can contain a subgroup.
-                The default value might be `mininterface.Tag` that allows you to add descriptions.
-                A checkbox example: {"my label": Tag(True, "my description")}
-            title: Optional form title.
+         See Mininterface.form
         """
         if form is None:
-            return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
-        self.window.run_dialog(dict_to_formdict(form), title=title)
-        # TODO what does it return? A clean dict? Should we return a clean (without Tag) dict, always?
-        return form
+            # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
+            return self._ask_env()
+        else:
+            return formdict_resolve(self.window.run_dialog(dict_to_formdict(form), title=title), extract_main=True)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]

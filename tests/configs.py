@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated
 
 from mininterface import Tag
-from mininterface.aliases import Validation
+from mininterface.aliases import Validation, Choices
 from mininterface.validators import not_empty
 
 
@@ -63,13 +63,15 @@ class OptionalFlagEnv:
 
 
 @dataclass
-class ConstrinedEnv:
+class ConstrainedEnv:
     """Set of options."""
 
     test: Annotated[str, Tag(validation=not_empty)] = "hello"
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
+
+    choices: Annotated[str, Choices("one", "two")] = "one"
 
 @dataclass
 class ParametrizedGeneric:
