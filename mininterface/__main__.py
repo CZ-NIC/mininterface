@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from mininterface import TextualInterface
+
 from . import run
 
 __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
@@ -23,8 +25,7 @@ def main():
     result = []
     # We tested both GuiInterface and TextualInterface are able to pass a variable to i.e. a bash script.
     # TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
-    with run(CliInteface, prog="Mininterface", description=__doc__) as m:
-        print("ENV", m.env)
+    with run(CliInteface, prog="Mininterface", description=__doc__, interface=TextualInterface) as m:
         for method, label in vars(m.env).items():
             if label:
                 result.append(getattr(m, method)(label))

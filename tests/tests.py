@@ -16,7 +16,7 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from mininterface import Mininterface, TextInterface, run
 from mininterface.validators import not_empty, limit
 from mininterface.auxiliary import flatten
-from mininterface.form_dict import dataclass_to_formdict, formdict_resolve
+from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve
 from mininterface.tag import Tag
 from mininterface.mininterface import Cancelled
 
@@ -134,8 +134,14 @@ class TestInteface(TestAbstract):
         self.assertIs(m.env, m.form())
 
 
-
 class TestConversion(TestAbstract):
+    def test_tagdict_resolve(self):
+        self.assertEqual({"one":1}, formdict_resolve({"one":1}))
+        self.assertEqual({"one":1}, formdict_resolve({"one":Tag(1)}))
+        self.assertEqual({"one":1}, formdict_resolve({"one":Tag(Tag(1))}))
+        self.assertEqual({"":{"one":1}}, formdict_resolve({"":{"one":Tag(Tag(1))}}))
+        self.assertEqual({"one":1}, formdict_resolve({"":{"one":Tag(Tag(1))}},extract_main=True))
+
     def test_normalize_types(self):
         """ Conversion str("") to None and back.
         When using GUI interface, we input an empty string and that should mean None
@@ -162,11 +168,10 @@ class TestConversion(TestAbstract):
         self.assertEqual(True, origin[""]["test"].val)
         self.assertEqual(100, origin[""]["numb"].val)
 
-        # Check flat FormDict
+        # Check nested TagDict
         origin = {'test': Tag(False, 'Testing flag ', annotation=None),
                   'severity': Tag('', 'integer or none ', annotation=int | None),
                   'nested': {'test2': Tag(4, '')}}
-        #   'nested': {'test2': 4}} TODO, allow combined FormDict
         data = {'test': True, 'severity': "", 'nested': {'test2': 8}}
         self.assertTrue(Tag._submit(origin, data))
         data = {'test': True, 'severity': "str", 'nested': {'test2': 8}}
@@ -201,21 +206,21 @@ class TestConversion(TestAbstract):
         origin = {'': {'number': tag}}
         # validation passes
         self.assertTrue(Tag._submit(origin, {'': {'number': 100}}))
-        self.assertIsNone(tag.error_text)
+        self.assertIsNone(tag._error_text)
         # validation fail, value set by validion
         self.assertFalse(Tag._submit(origin, {'': {'number': 15}}))
-        self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", tag.error_text)
+        self.assertEqual("Number must be between 0 ... 10 or 20 ... 100", tag._error_text)
         self.assertEqual(20, tag.val)  # value set by validation
         # validation passes again, error text restored
         self.assertTrue(Tag._submit(origin, {'': {'number': 5}}))
-        self.assertIsNone(tag.error_text)
+        self.assertIsNone(tag._error_text)
         # validation fails, default error text
         self.assertFalse(Tag._submit(origin, {'': {'number': -5}}))
-        self.assertEqual("Validation fail", tag.error_text)  # default error text
+        self.assertEqual("Validation fail", tag._error_text)  # default error text
         self.assertEqual(30, tag.val)
         # validation fails, value not set by validation
         self.assertFalse(Tag._submit(origin, {'': {'number': 101}}))
-        self.assertEqual("Too high", tag.error_text)
+        self.assertEqual("Too high", tag._error_text)
         self.assertEqual(30, tag.val)
 
     def test_env_instance_dict_conversion(self):
@@ -224,7 +229,7 @@ class TestConversion(TestAbstract):
 
         self.assertIsNone(env1.severity)
 
-        fd = dataclass_to_formdict(env1, m._descriptions)
+        fd = dataclass_to_tagdict(env1, m._descriptions)
         ui = formdict_resolve(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
@@ -259,10 +264,31 @@ class TestConversion(TestAbstract):
         self.assertEqual(t.val, "two")
 
         m = run(ConstrainedEnv)
-        d = dataclass_to_formdict(m.env, m._descriptions)
+        d = dataclass_to_tagdict(m.env, m._descriptions)
         self.assertFalse(d[""]["choices"].update(""))
         self.assertTrue(d[""]["choices"].update("two"))
 
+        # dict is the input
+        t = Tag(1, choices={"one": 1, "two": 2})
+        self.assertTrue(t.update("two"))
+        self.assertEqual(2, t.val)
+        self.assertFalse(t.update("three"))
+        self.assertEqual(2, t.val)
+        self.assertTrue(t.update("one"))
+        self.assertEqual(1, t.val)
+
+        # list of Tags are the input
+        t1 = Tag(1, name="one")
+        t2 = Tag(2, name="two")
+        t = Tag(1, choices=[t1, t2])
+        self.assertTrue(t.update("two"))
+        self.assertEqual(t2, t.val)
+        self.assertFalse(t.update("three"))
+        self.assertEqual(t2, t.val)
+        self.assertTrue(t.update("one"))
+        self.assertEqual(t1, t.val)
+
+        # self.assertEqual(m.choice(["one", "two"]), "two")
 
 
 class TestRun(TestAbstract):
@@ -409,7 +435,7 @@ class TestPydanticIntegration(TestAbstract):
         m = run(PydNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_formdict(m.env, m._descriptions)["inner"]["name"]
+        f = dataclass_to_tagdict(m.env, m._descriptions)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -447,7 +473,7 @@ class TestAttrsIntegration(TestAbstract):
         m = run(AttrsNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_formdict(m.env, m._descriptions)["inner"]["name"]
+        f = dataclass_to_tagdict(m.env, m._descriptions)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -459,7 +485,7 @@ class TestAttrsIntegration(TestAbstract):
 class TestAnnotated(TestAbstract):
     def test_annotated(self):
         m = run(ConstrainedEnv)
-        d = dataclass_to_formdict(m.env, m._descriptions)
+        d = dataclass_to_tagdict(m.env, m._descriptions)
         self.assertFalse(d[""]["test"].update(""))
         self.assertFalse(d[""]["test2"].update(""))
         self.assertTrue(d[""]["test"].update(" "))
@@ -494,18 +520,23 @@ class TestParametrizedGeneric(TestAbstract):
     def test_path_cli(self):
         # self.sys("--paths")
         m = run(ParametrizedGeneric, interface=Mininterface)
-        f = dataclass_to_formdict(m.env, m._descriptions)[""]["paths"]
+        f = dataclass_to_tagdict(m.env, m._descriptions)[""]["paths"]
         self.assertEqual("", f.val)
         self.assertTrue(f.update("[]"))
 
         self.sys("--paths", "/usr", "/tmp")
         m = run(ParametrizedGeneric, interface=Mininterface)
-        f = dataclass_to_formdict(m.env, m._descriptions)[""]["paths"]
+        f = dataclass_to_tagdict(m.env, m._descriptions)[""]["paths"]
         self.assertEqual([Path("/usr"), Path("/tmp")], f.val)
         self.assertEqual(['/usr', '/tmp'], f._get_ui_val())
         self.assertTrue(f.update("['/var']"))
         self.assertEqual([Path("/var")], f.val)
         self.assertEqual(['/var'], f._get_ui_val())
+
+    # NOTE Mininterface.choice cannot set the chosen value.
+    # def test_choice(self):
+    #     m = run(interface=Mininterface)
+    #     m.choice()
 
 
 if __name__ == '__main__':

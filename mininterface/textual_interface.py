@@ -13,8 +13,8 @@ except ImportError:
 
 from .auxiliary import flatten
 from .facet import BackendAdaptor
-from .form_dict import (EnvClass, FormDict, FormDictOrEnv,
-                        dataclass_to_formdict, dict_to_formdict, formdict_resolve,
+from .form_dict import (EnvClass, FormDict, FormDictOrEnv, TagDict,
+                        dataclass_to_tagdict, dict_to_tagdict, formdict_resolve,
                         formdict_to_widgetdict)
 from .mininterface import Cancelled
 from .redirectable import Redirectable
@@ -40,7 +40,7 @@ class TextualInterface(Redirectable, TextInterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        params_ = dataclass_to_formdict(self.env, self._descriptions)
+        params_ = dataclass_to_tagdict(self.env, self._descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
         return TextualApp.run_dialog(TextualApp(self), params_)
@@ -51,7 +51,7 @@ class TextualInterface(Redirectable, TextInterface):
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         else:
-            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_formdict(form), title), extract_main=True)
+            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_tagdict(form), title), extract_main=True)
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):
@@ -92,7 +92,7 @@ class TextualApp(App[bool | None]):
         v = tag._get_ui_val()
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = Checkbox(tag.name or "", v)
-        elif tag.choices:
+        elif tag._get_choices():
             o = RadioSet(*(RadioButton(ch, value=ch == tag.val) for ch in tag.choices))
         else:
             if not isinstance(v, (float, int, str, bool)):
@@ -103,13 +103,13 @@ class TextualApp(App[bool | None]):
 
     # Why class method? I do not know how to re-create the dialog if needed.
     @classmethod
-    def run_dialog(cls, window: "TextualApp", formDict: FormDict, title: str = "") -> FormDict:
+    def run_dialog(cls, window: "TextualApp", form: TagDict, title: str = "") -> TagDict:
         if title:
             window.title = title
 
         # NOTE Sections (~ nested dicts) are not implemented, they flatten.
         # Maybe just 'flatten' might be removed.
-        widgets: list[Checkbox | Input] = [f for f in flatten(formdict_to_widgetdict(formDict, cls.widgetize))]
+        widgets: list[Checkbox | Input] = [f for f in flatten(formdict_to_widgetdict(form, cls.widgetize))]
         window.widgets = widgets
 
         if not window.run():
@@ -121,8 +121,8 @@ class TextualApp(App[bool | None]):
             str(field.pressed_button.label) if isinstance(field, RadioSet) else field.value
         ) for field in widgets)
         if not Tag._submit_values(candidates):
-            return cls.run_dialog(TextualApp(window.interface), formDict, title)
-        return formDict
+            return cls.run_dialog(TextualApp(window.interface), form, title)
+        return form
 
     def compose(self) -> ComposeResult:
         if self.title:

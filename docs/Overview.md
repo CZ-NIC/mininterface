@@ -1,10 +1,19 @@
 ## Basic usage
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] method that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes]. To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag]. For a validation only, use its [`Validation alias`](#validation-alias).
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] method that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
+
+To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag]. For a validation only, use its [`Validation alias`](#validation-alias).
 
 
 ## Supported types
 
-Various types are supported: scalars, functions, well-known objects (Path, datetime), iterables, custom classes.
+Various types are supported:
+
+* scalars
+* functions
+* well-known objects (`Path`, `datetime`)
+* iterables (like `list[Path]`)
+* custom classes (somewhat)
+* union types (like `int | None`)
 
 Take a look how it works with the variables organized in a dataclass:
 
@@ -21,6 +30,8 @@ class Env:
     """ A dummy number """
     my_boolean: bool = True
     """ A dummy boolean """
+    my_conditional_number: int | None = None
+    """ A number that can be null if left empty """
     my_path: Path = Path("/tmp")
     """ A dummy path """
 

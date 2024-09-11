@@ -13,7 +13,7 @@ except ImportError:
 
 
 from .common import InterfaceNotAvailable
-from .form_dict import FormDict, FormDictOrEnv, dataclass_to_formdict, dict_to_formdict, formdict_resolve, formdict_to_widgetdict
+from .form_dict import FormDictOrEnv, TagDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve, formdict_to_widgetdict
 from .auxiliary import replace_widget_with, widgets_to_dict, recursive_set_focus, flatten
 from .redirectable import RedirectTextTkinter, Redirectable
 from .tag import Tag
@@ -41,7 +41,7 @@ class GuiInterface(Redirectable, Mininterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        form = dataclass_to_formdict(self.env, self._descriptions)
+        form = dataclass_to_tagdict(self.env, self._descriptions)
 
         # formDict automatically fetches the edited values back to the EnvInstance
         return self.window.run_dialog(form)
@@ -54,7 +54,7 @@ class GuiInterface(Redirectable, Mininterface):
             # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
             return self._ask_env()
         else:
-            return formdict_resolve(self.window.run_dialog(dict_to_formdict(form), title=title), extract_main=True)
+            return formdict_resolve(self.window.run_dialog(dict_to_tagdict(form), title=title), extract_main=True)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]
@@ -100,7 +100,7 @@ class TkWindow(Tk, BackendAdaptor):
             v = str(v)
         return Value(v, tag.description)
 
-    def run_dialog(self, form: FormDict, title: str = "") -> FormDict:
+    def run_dialog(self, form: TagDict, title: str = "") -> TagDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
@@ -139,10 +139,10 @@ class TkWindow(Tk, BackendAdaptor):
         recursive_set_focus(self.form)
         return self.mainloop(lambda: self.validate(form, title))
 
-    def validate(self, formDict: FormDict, title: str) -> FormDict:
-        if not Tag._submit_values(zip(flatten(formDict), flatten(self.form.get()))):
-            return self.run_dialog(formDict, title)
-        return formDict
+    def validate(self, form: TagDict, title: str) -> TagDict:
+        if not Tag._submit(form, self.form.get()):
+            return self.run_dialog(form, title)
+        return form
 
     def yes_no(self, text: str, focus_no=True):
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)

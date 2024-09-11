@@ -79,8 +79,8 @@ def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Wi
         # NOTE tab order broken, injected to another position
         match target:
             case "radio":
-                choices = value.choices
-                master._Form__vars[name] = variable = Variable(value=value.val)
+                choices = value._get_choices()
+                master._Form__vars[name] = variable = Variable(value=value.val)  # the chosen default
                 nested_frame = Frame(master)
                 nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 

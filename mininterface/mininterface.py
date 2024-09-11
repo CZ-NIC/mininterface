@@ -2,12 +2,14 @@ import logging
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Generic, Self
 else:
     from typing import Generic
 
-from .form_dict import EnvClass, FormDictOrEnv, dataclass_to_formdict, formdict_resolve
+from .form_dict import EnvClass, FormDictOrEnv, dict_to_tagdict, formdict_resolve
+from .tag import ChoicesType, Tag, TagValue
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ class Mininterface(Generic[EnvClass]):
     # This base interface does not require any user input and hence is suitable for headless testing.
 
     def __init__(self, title: str = "",
-                 _env: EnvClass | None = None,
+                 _env: EnvClass | SimpleNamespace | None = None,
                  _descriptions: dict | None = None,
                  ):
         self.title = title or "Mininterface"
@@ -33,8 +35,10 @@ class Mininterface(Generic[EnvClass]):
         # We want to prevent error raised in `self.form(None)` if self.env would have been set to None.
         # It would be None if the user created this mininterface (without setting env)
         # or if __init__.run is used but Env is not a dataclass but a function (which means it has no attributes).
-        self.env: EnvClass = _env or SimpleNamespace()
-        """ Parsed arguments, fetched from cli
+        # Why using EnvInstance? So that the docs looks nice, otherwise, there would be `_env or SimpleNamespace()`.
+        EnvInstance = _env or SimpleNamespace()
+        self.env: EnvClass = EnvInstance
+        """ Parsed arguments, fetched from cli.
             Contains whole configuration (previously fetched from CLI and config file).
 
         ```bash
@@ -81,11 +85,75 @@ class Mininterface(Generic[EnvClass]):
         print("Asking number", text)
         return 0
 
+    def choice(self, choices: ChoicesType, title: str = "", _guesses=None,
+               skippable: bool = True, launch: bool = True, _multiple=True, _default: str | None = None
+               ) -> TagValue | list[TagValue] | None:
+        """ Prompt the user to select. Useful for a menu creation.
+
+        Args:
+            choices: You can denote the choices in many ways.
+                Either put options in an iterable:
+
+                ```python
+                from mininterface import run, Tag
+                m = run()
+                m.choice([1, 2])
+                ```
+
+                ![Choices as a list](asset/choices_list.avif)
+
+                Or to a dict `{name: value}`. Then name are used as labels.
+
+                ```python
+                m.choice({"one": 1, "two": 2})  # returns 1
+                ```
+
+                Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
+
+                ```python
+                m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
+                ```
+
+                ![Choices with labels](asset/choices_labels.avif)
+            title: Form title
+            skippable: If there is a single option, choose it directly, without dialog.
+            launch: If the chosen value is a callback, we directly call it. Then, the function returns None.
+
+        Returns:
+            The chosen value.
+            If launch=True and the chosen value is a callback, we call it and return None.
+
+        """
+        # TODO to build a nice menu, I need this
+        # Args:
+            # guesses: Choices to be highlighted.
+            # multiple: Multiple choice.
+            # default: The name of the checked choice.
+        # Returns: If multiple=True, list of the chosen values.
+        #
+        # * When inputing choices as Tags, make sure the original Tag.val changes too.
+        # * multiple, checked, guesses
+        #
+        # NOTE UserWarning: GuiInterface: Cannot tackle the form, unknown winfo_manager .
+        # m = run(Env)
+        # tag = Tag(x, choices=["one", "two", x])
+        if skippable and len(choices) == 1:
+            out = choices[0]
+        else:
+            tag = Tag(choices=choices)
+            key = title or "Choose"
+            out = self.form({key: tag})[key]
+
+        if launch and Tag._is_a_callable_val(out):
+            out()
+            return None
+        return out
+
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up whole form.
 
         Args:
-            form: Dict of `{labels: default value}`. The form widget infers from the default value type.
+            form: Dict of `{labels: value}`. The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The value might be a [`Tag`][mininterface.Tag] that allows you to add descriptions.
                 If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
@@ -136,10 +204,16 @@ class Mininterface(Generic[EnvClass]):
         # NOTE in the future, support form=arbitrary dataclass too
         if form is None:
             print(f"Asking the form {title}".strip(), self.env)
+            # NOTE for testing, this might be converted to a tag_dict, see below
             return self.env
         f = form
         print(f"Asking the form {title}".strip(), f)
-        return formdict_resolve(f, extract_main=True)
+
+        tag_dict = dict_to_tagdict(f)
+        if True:  # NOTE for testing, this might validate the fields with Tag._submit(ddd, ddd)
+            return formdict_resolve(tag_dict, extract_main=True)
+        else:
+            raise ValueError
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes.

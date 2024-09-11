@@ -116,8 +116,11 @@ class NestedEnv:
 class Env:
   nested_config: NestedEnv
 
-  my_number: int = 5
-  """ This is just a dummy number """
+  mandatory_str: str
+  """ As there is not default value, you will be prompted automatically to fill up the field """
+
+  my_number: int | None = None
+  """ This is not just a dummy number, if left empty, it is None. """
 
   my_string: str = "Hello"
   """ A dummy string """
@@ -157,6 +160,35 @@ m.form(my_dictionary)
 ```
 
 ![List of paths](asset/list_of_paths.avif)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -8,7 +8,7 @@ from warnings import warn
 from .auxiliary import flatten
 
 if TYPE_CHECKING:
-    from .form_dict import FormDict
+    from .form_dict import TagDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 # Pydantic is not a project dependency, that is just an optional integration
@@ -41,6 +41,12 @@ ValidationResult = bool | ErrorMessage
 PydanticFieldInfo = TypeVar("PydanticFieldInfo")
 AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 common_iterables = list, tuple, set
+ChoiceLabel = str
+ChoicesType =  list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue]
+""" You can denote the choices in many ways.
+Either put options in an iterable or to a dict `{labels: value}`.
+Values might be Tags as well.
+"""
 
 
 @dataclass
@@ -118,15 +124,13 @@ class Tag:
     NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
     """
 
-    choices: list[str] | None = None
+    choices: ChoicesType | None = None
     """ Print the radio buttons. Constraint the value.
 
     ```python
     from dataclasses import dataclass
     from typing import Annotated
-
     from mininterface import run, Choices
-
 
     @dataclass
     class Env:
@@ -159,7 +163,7 @@ class Tag:
     # Following attributes are not meant to be set externally.
     #
     original_val = None
-    """ Read only. The original value, preceding UI change. Handy while validating.
+    """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
 
     ```python
     def check(tag.val):
@@ -169,8 +173,8 @@ class Tag:
     ```
     """
 
-    error_text = None
-    """ Read only. Error text if type check or validation fail and the UI has to be revised """
+    _error_text = None
+    """ Meant to be read only. Error text if type check or validation fail and the UI has to be revised """
 
     _pydantic_field: PydanticFieldInfo = None
     _attrs_field: AttrsFieldInfo = None
@@ -194,11 +198,13 @@ class Tag:
                     self._attrs_field: dict | None = attr.fields_dict(self._src_class.__class__).get(self._src_key)
                 except attr.exceptions.NotAnAttrsClassError:
                     pass
+        if not self.annotation and not self.choices:
+            # When having choices with None default self.val, this would impose self.val be of a NoneType,
+            # preventing it to set a value.
+            self.annotation = type(self.val)
+
         if not self.name and self._src_key:
             self.name = self._src_key
-
-        if not self.annotation:
-            self.annotation = type(self.val)
         self._original_desc = self.description
         self._original_name = self.name
         self.original_val = self.val
@@ -233,8 +239,14 @@ class Tag:
             `my_var: Callable = x` instead of `my_var: FunctionType = x`
             but then, we need this check.
         """
-        return isinstance(self.annotation, (FunctionType, MethodType)) \
-            or isinstance(self.annotation, Callable) and isinstance(self.val, (FunctionType, MethodType))
+        return self._is_a_callable_val(self.val, self.annotation)
+
+    @staticmethod
+    def _is_a_callable_val(val: TagValue, annot: type = None) -> bool:
+        if annot is None:
+            return isinstance(val, (FunctionType, MethodType))
+        return isinstance(annot, (FunctionType, MethodType)) \
+            or isinstance(annot, Callable) and isinstance(val, (FunctionType, MethodType))
 
     def _is_right_instance(self, val) -> bool:
         """ Check if the value conforms self.annotation.
@@ -248,6 +260,8 @@ class Tag:
                   'TypeError: cannot be a parameterized generic'
 
         """
+        if self.annotation is None:
+            return True
         try:
             return isinstance(val, self.annotation)
         except TypeError:
@@ -257,6 +271,8 @@ class Tag:
 
     def _get_annotation_parametrized(self):
         if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
+            if origin == UnionType:  # might be just `int | None`
+                return
             subtype = get_args(self.annotation)  # list[str] -> (str,), list -> ()
             if (len(subtype) == 1):
                 return origin, subtype[0]
@@ -274,12 +290,12 @@ class Tag:
             # If not set, we would end up with '* None'
             # `m.form({"my_text": Tag("", validation=validators.not_empty)})`
             self.name = f"* {n}"
-        self.error_text = s
+        self._error_text = s
 
     def remove_error_text(self):
         self.description = self._original_desc
         self.name = self._original_name
-        self.error_text = None
+        self._error_text = None
 
     def _repr_annotation(self):
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
@@ -300,12 +316,26 @@ class Tag:
             return origin(str(v)for v in self.val)
         return self.val
 
+    def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
+        """ Wherease self.choices might have different format, this returns a canonic dict. """
+        def _edit(v):
+            if self._is_a_callable_val(v):
+               return v.__name__
+            if isinstance(v, Tag):
+                return v.name
+            return v
+
+        if isinstance(self.choices, dict):
+            return self.choices
+        if isinstance(self.choices, common_iterables):
+            return {_edit(v): v for v in self.choices}
+        warn(f"Not implemented choices: {self.choices}")
+
     def _validate(self, out_value) -> TagValue:
         """ Runs
             * self.validation callback
             * pydantic validation
             * annotation type validation
-            * choice check
 
         Returns:
             If succeeded, return the (possibly transformed) value.
@@ -346,13 +376,8 @@ class Tag:
                 raise
 
         # Type check
-        if self.annotation and not self._is_right_instance(out_value):
+        if not self._is_right_instance(out_value):
             self.set_error_text(f"Type must be {self._repr_annotation()}!")
-            raise ValueError
-
-        # Choice check
-        if self.choices and out_value not in self.choices:
-            self.set_error_text(f"Must be one of {self.choices}")
             raise ValueError
 
         return out_value
@@ -374,6 +399,14 @@ class Tag:
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
+
+        # Choice check
+        if (ch := self._get_choices()):
+            if out_value in ch:
+                out_value = ch[out_value]
+            else:
+                self.set_error_text(f"Must be one of {list(ch.keys())}")
+                return False
 
         # Type conversion
         # Even though GuiInterface does some type conversion (str → int) independently,
@@ -467,8 +500,8 @@ class Tag:
         return all(list(tag.update(ui_value) for tag, ui_value in updater))
 
     @staticmethod
-    def _submit(fd: "FormDict", ui: dict):
+    def _submit(fd: "TagDict", ui: dict):
         """ Returns whether the form is alright or whether we should revise it.
-        Input is the FormDict and the UI dict in the very same form.
+        Input is the TagDict and the UI dict in the very same form.
         """
         return Tag._submit_values(zip(flatten(fd), flatten(ui)))

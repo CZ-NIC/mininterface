@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .form_dict import FormDict
+from .form_dict import TagDict
 from .tag import Tag
 
 
@@ -23,6 +23,6 @@ class BackendAdaptor(ABC):
         pass
 
     @abstractmethod
-    def run_dialog(self, formDict: FormDict, title: str = "") -> FormDict:
+    def run_dialog(self, form: TagDict, title: str = "") -> TagDict:
         """ Let the user edit the dict values. """
         pass

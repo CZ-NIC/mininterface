@@ -5,12 +5,12 @@ import logging
 from types import FunctionType, MethodType
 from typing import Any, Callable, Optional, Self, TypeVar, Union, get_type_hints
 
-from .tag import Tag
+from .tag import Tag, TagValue
 
 logger = logging.getLogger(__name__)
 
 EnvClass = TypeVar("EnvClass")
-FormDict = dict[str,TypeVar("FormDictRecursiveValue", str, "Self")]
+FormDict = dict[str, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
 """ Nested form that can have descriptions (through Tag) instead of plain values.
 
 Attention to programmers. Should we to change this type, check these IDE suggestions are still the same.
@@ -39,6 +39,8 @@ r4 = m.form()
 r4  # Env
 ```
 """
+TagDict = dict[str, Union["Self" , Tag]]
+""" Strict FormDict where the values are just recursive TagDicts or tags. """
 
 # NOTE: In the future, allow `FormDict , EnvClass`, a dataclass (or its instance)
 # to be edited too
@@ -47,7 +49,6 @@ r4  # Env
 # Then, we might get rid of ._descriptions because we will read from the model itself
 # TypeVar('FormDictOrEnv', FormDict, EnvClass)
 FormDictOrEnv = TypeVar('FormDictOrEnv', bound=FormDict)  # , EnvClass)
-
 
 
 def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
@@ -61,7 +62,7 @@ def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
     """
     out = {}
     for k, v in d.items():
-        if isinstance(v, Tag):
+        while isinstance(v, Tag):
             v = v.val
         out[k] = formdict_resolve(v, _root=False) if isinstance(v, dict) else v
     if extract_main and _root and "" in out:
@@ -71,11 +72,11 @@ def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
     return out
 
 
-def dict_to_formdict(data: dict) -> FormDict:
+def dict_to_tagdict(data: dict) -> TagDict:
     fd = {}
     for key, val in data.items():
         if isinstance(val, dict):  # nested config hierarchy
-            fd[key] = dict_to_formdict(val)
+            fd[key] = dict_to_tagdict(val)
         else:  # scalar value
             fd[key] = Tag(val, "", name=key, _src_dict=data, _src_key=key) \
                 if not isinstance(val, Tag) else val
@@ -93,7 +94,7 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key
         return d
 
 
-def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
+def dataclass_to_tagdict(env: EnvClass, descr: dict, _path="") -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = ""
     subdict = {main: {}} if not _path else {}
@@ -115,7 +116,7 @@ def dataclass_to_formdict(env: EnvClass, descr: dict, _path="") -> FormDict:
                             "None converted to False.")
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
-            subdict[param] = dataclass_to_formdict(val, descr, _path=f"{_path}{param}.")
+            subdict[param] = dataclass_to_tagdict(val, descr, _path=f"{_path}{param}.")
         else:
             params = {"val": val,
                       "_src_key": param,

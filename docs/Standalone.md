@@ -19,6 +19,9 @@ Simple GUI dialog. Outputs the value the user entered.
 You can fetch a value to i.e. a bash script.
 
 ```bash
-$ mininterface  --ask-number "What's your age?"  # GUI window invoked
+$ mininterface  --ask-number "What's your age?"  # GUI or TUI window invoked
 18
 ```
+
+![Standalone number](asset/standalone_number.avif)
+![Standalone number in terminal](asset/standalone_number_textual.avif)

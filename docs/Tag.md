@@ -1,3 +1,4 @@
+# Tag
 ::: mininterface.Tag
     options:
       show_signature: false
@@ -10,7 +11,7 @@
       show_labels: false
 
 
-# Helper types
+## Helper types
 ::: mininterface.tag.ValidationResult
     options:
       show_root_full_path: false
