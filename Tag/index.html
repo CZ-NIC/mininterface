@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mininterface.Tag" class="md-skip">
+        <a href="#tag" class="md-skip">
           Skip to content
         </a>
       
@@ -303,6 +303,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -330,6 +332,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -411,18 +415,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.Tag.error_text" class="md-nav__link">
+  <a href="#mininterface.Tag.update" class="md-nav__link">
     <span class="md-ellipsis">
-      error_text
+      update
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.Tag.update" class="md-nav__link">
+  <a href="#mininterface.Choices" class="md-nav__link">
     <span class="md-ellipsis">
-      update
+      Choices
     </span>
   </a>
   
@@ -435,10 +439,9 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Helper types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.ValidationResult" class="md-nav__link">
     <span class="md-ellipsis">
       ValidationResult
@@ -446,8 +449,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.ErrorMessage" class="md-nav__link">
     <span class="md-ellipsis">
       ErrorMessage
@@ -455,18 +458,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.TagValue" class="md-nav__link">
     <span class="md-ellipsis">
       TagValue
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -518,6 +516,26 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -534,6 +552,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -615,18 +635,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.Tag.error_text" class="md-nav__link">
+  <a href="#mininterface.Tag.update" class="md-nav__link">
     <span class="md-ellipsis">
-      error_text
+      update
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.Tag.update" class="md-nav__link">
+  <a href="#mininterface.Choices" class="md-nav__link">
     <span class="md-ellipsis">
-      update
+      Choices
     </span>
   </a>
   
@@ -639,10 +659,9 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Helper types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.ValidationResult" class="md-nav__link">
     <span class="md-ellipsis">
       ValidationResult
@@ -650,8 +669,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.ErrorMessage" class="md-nav__link">
     <span class="md-ellipsis">
       ErrorMessage
@@ -659,18 +678,13 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#mininterface.tag.TagValue" class="md-nav__link">
     <span class="md-ellipsis">
       TagValue
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -690,6 +704,9 @@
 
   
   
+
+
+<h1 id="tag">Tag</h1>
 
 
 <div class="doc doc-object doc-class">
@@ -841,14 +858,27 @@ If not set, will be determined automatically from the <a class="autorefs autoref
 
 
 <h2 id="mininterface.Tag.choices" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></code>
+            <code class="highlight language-python"><span class="n">choices</span><span class="p">:</span> <span class="n">ChoicesType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></code>
 
 </h2>
 
 
     <div class="doc doc-contents ">
 
-        <p>TODO</p>
+        <p>Print the radio buttons. Constraint the value.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Choices</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">foo</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="n">Choices</span><span class="p">(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;one&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="c1"># `Choices` is an alias for `Tag(choices=)`</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># prompts a dialog</span>
+</code></pre></div>
     </div>
 
 </div>
@@ -865,29 +895,12 @@ If not set, will be determined automatically from the <a class="autorefs autoref
 
     <div class="doc doc-contents ">
 
-        <p>Read only. The original value, preceding UI change. Handy while validating.</p>
+        <p>Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">val</span><span class="p">):</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">!=</span> <span class="n">tag</span><span class="o">.</span><span class="n">original_val</span><span class="p">:</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        <span class="k">return</span> <span class="s2">&quot;You have to change the value.&quot;</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">&quot;number&quot;</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">check</span><span class="p">)})</span>
 </code></pre></div>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h2 id="mininterface.Tag.error_text" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">error_text</span> <span class="o">=</span> <span class="kc">None</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Read only. Error text if type check or validation fail and the UI has to be revised</p>
     </div>
 
 </div>
@@ -973,7 +986,24 @@ the mininterface was invoked with.</p>
 
     </div>
 
-</div><h1 id="helper-types">Helper types</h1>
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="mininterface.Choices" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">Choices</span><span class="p">(</span><span class="o">*</span><span class="n">choices</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>An alias, see <a class="autorefs autorefs-internal" href="#mininterface.Tag.choices"><code>Tag.choices</code></a></p>
+
+    </div>
+
+</div><h2 id="helper-types">Helper types</h2>
 
 
 <div class="doc doc-object doc-attribute">

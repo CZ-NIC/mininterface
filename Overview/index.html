@@ -305,6 +305,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#all-possible-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      All possible interfaces
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -413,6 +422,26 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -464,6 +493,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#all-possible-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      All possible interfaces
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -485,9 +523,18 @@
   <h1>Overview</h1>
 
 <h2 id="basic-usage">Basic usage</h2>
-<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.mininterface.Mininterface.is_yes"><code>m.is_yes("Is that alright?")</code></a>. To do any advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a>. For a validation only, use its <a href="#validation-alias"><code>Validation alias</code></a>.</p>
+<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.is_yes"><code>m.is_yes("Is that alright?")</code></a>.</p>
+<p>To do any advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a>. For a validation only, use its <a href="#validation-alias"><code>Validation alias</code></a>.</p>
 <h2 id="supported-types">Supported types</h2>
-<p>Various types are supported: scalars, functions, well-known objects (Path), iterables, custom classes.</p>
+<p>Various types are supported:</p>
+<ul>
+<li>scalars</li>
+<li>functions</li>
+<li>well-known objects (<code>Path</code>, <code>datetime</code>)</li>
+<li>iterables (like <code>list[Path]</code>)</li>
+<li>custom classes (somewhat)</li>
+<li>union types (like <code>int | None</code>)</li>
+</ul>
 <p>Take a look how it works with the variables organized in a dataclass:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
@@ -501,15 +548,17 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy number &quot;&quot;&quot;</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">my_boolean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy boolean &quot;&quot;&quot;</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy path &quot;&quot;&quot;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath(&#39;/tmp&#39;),</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">my_conditional_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A number that can be null if left empty &quot;&quot;&quot;</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy path &quot;&quot;&quot;</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath(&#39;/tmp&#39;),</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
 </code></pre></div>
 <p><img alt="GUI window" src="../asset/supported_types_1.avif" title="A prompted dialog" /></p>
 <p>Variables organized in a dict:</p>
@@ -550,12 +599,29 @@
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="o">...</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
 </code></pre></div>
-<p>A subset might be defaulted in YAML:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">further</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
+<p>The attributes can by defaulted by CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$./program.py --further.host example.net
 </code></pre></div>
-<p>Or by CLI:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$./program.py --further.host example.net
+<p>And in a YAML config file. Note that you are not obliged to define all the attributes, a subset will do.
+(Ex. you do not need to specify <code>token</code> too.)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">further</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
+</code></pre></div>
+<h2 id="all-possible-interfaces">All possible interfaces</h2>
+<p>Normally, you get an interface through <a href="#run">mininterface.run</a>
+but if you do not wish to parse CLI and config file, you can invoke one directly.</p>
+<p>Several interfaces exist:</p>
+<ul>
+<li><a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface"><code>Mininterface</code></a> – The base interface the others are fully compatible with.</li>
+<li><code>GuiInterface</code> – A tkinter window.</li>
+<li><code>TuiInterface</code> – An interactive terminal.</li>
+<li><code>TextualInterface</code> – If <a href="https://github.com/Textualize/textual">textual</a> installed, rich interface is used.</li>
+<li><code>TextInterface</code> – Plain text only interface with no dependency as a fallback.</li>
+<li><code>ReplInterface</code> – A debug terminal. Invokes a breakpoint after every dialog.</li>
+</ul>
+<p>How to invoke a specific interface.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">with</span> <span class="n">TuiInterface</span><span class="p">(</span><span class="s2">&quot;My program&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">number</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">ask_number</span><span class="p">(</span><span class="s2">&quot;Returns number&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 
