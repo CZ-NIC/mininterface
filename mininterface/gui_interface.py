@@ -1,10 +1,10 @@
 import sys
 from typing import Any, Callable
 
-from .facet import BackendAdaptor
+from .facet import BackendAdaptor, Facet
 
 try:
-    from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk
+    from tkinter import TclError, LEFT, Button, Frame, Label, Text, Tk, Widget
     from tktooltip import ToolTip
     from tkinter_form import Form, Value
 except ImportError:
@@ -54,7 +54,7 @@ class GuiInterface(Redirectable, Mininterface):
             # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
             return self._ask_env()
         else:
-            return formdict_resolve(self.window.run_dialog(dict_to_tagdict(form), title=title), extract_main=True)
+            return formdict_resolve(self.window.run_dialog(dict_to_tagdict(form, self.facet), title=title), extract_main=True)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]
@@ -71,6 +71,7 @@ class TkWindow(Tk, BackendAdaptor):
 
     def __init__(self, interface: GuiInterface):
         super().__init__()
+        self.facet = interface.facet = TkFacet(self)
         self.params = None
         self._result = None
         self._event_bindings = {}
@@ -80,6 +81,9 @@ class TkWindow(Tk, BackendAdaptor):
 
         self.frame = Frame(self)
         """ dialog frame """
+
+        self.label = Label(self, text="")
+        self.label.pack_forget()
 
         self.text_widget = Text(self, wrap='word', height=20, width=80)
         self.text_widget.pack_forget()
@@ -105,8 +109,8 @@ class TkWindow(Tk, BackendAdaptor):
         On abrupt window close, the program exits.
         """
         if title:
-            label = Label(self.frame, text=title)
-            label.pack(pady=10)
+            self.facet.set_title(title)
+
         self.form = Form(self.frame,
                          name_form="",
                          form_dict=formdict_to_widgetdict(form, self.widgetize),
@@ -117,10 +121,14 @@ class TkWindow(Tk, BackendAdaptor):
         # Add radio
         nested_widgets = widgets_to_dict(self.form.widgets)
         for tag, (label, widget) in zip(flatten(form), flatten(nested_widgets)):
+            tag: Tag
+            label: Widget
+            widget: Widget
             if tag.choices:
-                replace_widget_with("radio", widget, label.cget("text"), tag)
+                replace_widget_with("radio", widget, tag.name or label.cget("text"), tag)
             if tag._is_a_callable():
-                replace_widget_with("button", widget, label.cget("text"), tag)
+                replace_widget_with("button", widget, tag.name or label.cget("text"), tag)
+                label.grid_forget()
 
             # Change label name as the field name might have changed (ex. highlighted by an asterisk)
             # But we cannot change the dict key itself
@@ -193,3 +201,16 @@ class TkWindow(Tk, BackendAdaptor):
             self.unbind(key)
         self._event_bindings.clear()
         self._result = None
+
+
+class TkFacet(Facet):
+    def __init__(self, window: TkWindow):
+        self.window = window
+
+    def set_title(self, title: str):
+        if not title:
+            self.window.label.pack_forget()
+        else:
+            self.window.label.config(text=title)
+            self.window.label.pack(pady=10)
+            pass

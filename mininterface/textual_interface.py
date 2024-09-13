@@ -12,7 +12,7 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from .auxiliary import flatten
-from .facet import BackendAdaptor
+from .facet import BackendAdaptor, Facet, MinFacet
 from .form_dict import (EnvClass, FormDict, FormDictOrEnv, TagDict,
                         dataclass_to_tagdict, dict_to_tagdict, formdict_resolve,
                         formdict_to_widgetdict)
@@ -30,6 +30,10 @@ class DummyWrapper:
 
 
 class TextualInterface(Redirectable, TextInterface):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.facet: TextualAppFacet = TextualAppFacet(self)  # since no app is running
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -51,7 +55,7 @@ class TextualInterface(Redirectable, TextInterface):
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         else:
-            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_tagdict(form), title), extract_main=True)
+            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_tagdict(form, self.facet), title), extract_main=True)
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):
@@ -81,7 +85,8 @@ class TextualApp(App[bool | None]):
 
     def __init__(self, interface: TextualInterface):
         super().__init__()
-        self.title = ""
+        self.facet = interface.facet
+        self.title = self.facet._title
         self.widgets = None
         self.focused_i: int = 0
         self.interface = interface
@@ -93,7 +98,7 @@ class TextualApp(App[bool | None]):
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = Checkbox(tag.name or "", v)
         elif tag._get_choices():
-            o = RadioSet(*(RadioButton(ch, value=ch == tag.val) for ch in tag.choices))
+            o = RadioSet(*(RadioButton(label, value=val == tag.val) for label, val in tag.choices.items()))
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
@@ -169,6 +174,8 @@ class TextualApp(App[bool | None]):
 
 
 class TextualButtonApp(App):
+    """ A helper TextualApp, just for static dialogs, does not inherit from BackendAdaptor and thus has not Facet. """
+
     CSS = """
     Screen {
         layout: grid;
@@ -243,3 +250,13 @@ class TextualButtonApp(App):
 
     def action_exit(self):
         self.exit()
+
+
+class TextualAppFacet(Facet):
+    def __init__(self, window: TextualApp):
+        self.window = window
+        # Since TextualApp turns off, we need to have its values stored somewhere
+        self._title = ""
+
+    def set_title(self, title: str):
+        self._title = title

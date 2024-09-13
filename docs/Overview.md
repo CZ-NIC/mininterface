@@ -1,7 +1,9 @@
 ## Basic usage
 Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] method that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
 
-To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag]. For a validation only, use its [`Validation alias`](#validation-alias).
+To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag]. For a validation only, use its [`Validation alias`](Validation.md/#validation-alias).
+
+At last, use [`Facet`](Facet.md) to tackle the interface from the back-end (`m`) or the front-end (`Tag`) side.
 
 
 ## Supported types
@@ -109,7 +111,7 @@ further:
 
 ## All possible interfaces
 
-Normally, you get an interface through [mininterface.run](#run)
+Normally, you get an interface through [mininterface.run][]
 but if you do not wish to parse CLI and config file, you can invoke one directly.
 
 Several interfaces exist:

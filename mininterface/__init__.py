@@ -101,7 +101,7 @@ def run(env_class: Type[EnvClass] | None = None,
             $ program.py  # omitting --required-number
             # Dialog for `required_number` appears
             ```
-        interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full [list](/Mininterface#all-possible-interfaces) of possible interfaces.
+        interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full [list](Overview.md#all-possible-interfaces) of possible interfaces.
 
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
@@ -112,19 +112,26 @@ def run(env_class: Type[EnvClass] | None = None,
 
     You cay context manager the function by a `with` statement.
     The stdout will be redirected to the interface (ex. a GUI window).
-    TODO add wrap example
 
-    Undocumented experimental: The `env_class` may be a function as well. We invoke its parameters.
-    However, as Mininterface.env stores the output of the function instead of the Argparse namespace,
-    methods like `Mininterface.form(None)` (to ask for editing the env values) will work unpredictibly.
-    Also, the config file seems to be fetched only for positional (missing) parameters,
-    and ignored for keyword (filled) parameters.
-    It seems to be this is the tyro's deal and hence it might start working any time.
-    If not, we might help it this way:
-        `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
+    ```python
+    with run(Env) as m:
+        print(f"Your important number is {m.env.important_number}")
+        boolean = m.is_yes("Is that alright?")
+    ```
 
-    Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
+    ![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")
+    ![The same in terminal'](asset/hello-with-statement-tui.avif "With statement in TUI fallback")
     """
+    # Undocumented experimental: The `env_class` may be a function as well. We invoke its parameters.
+    # However, as Mininterface.env stores the output of the function instead of the Argparse namespace,
+    # methods like `Mininterface.form(None)` (to ask for editing the env values) will work unpredictibly.
+    # Also, the config file seems to be fetched only for positional (missing) parameters,
+    # and ignored for keyword (filled) parameters.
+    # It seems to be this is the tyro's deal and hence it might start working any time.
+    # If not, we might help it this way:
+    #     `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
+    #
+    # Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
 
     # Prepare the config file
     if config_file is True and not kwargs.get("default") and env_class:
@@ -153,6 +160,10 @@ def run(env_class: Type[EnvClass] | None = None,
     if "prog" not in kwargs:
         kwargs["prog"] = title
     try:
+        if interface == "tui":  # undocumented feature
+            interface = TuiInterface
+        elif interface == "gui":  # undocumented feature
+            interface = GuiInterface
         interface = interface(title, env, descriptions)
     except InterfaceNotAvailable:  # Fallback to a different interface
         interface = TuiInterface(title, env, descriptions)

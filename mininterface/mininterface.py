@@ -3,6 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
+from .facet import Facet, MinFacet
+
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Generic, Self
 else:
@@ -22,7 +24,7 @@ class Cancelled(SystemExit):
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
         You get one through [`mininterface.run`](run.md) which fills CLI arguments and config file to `mininterface.env`
-        or you can create [one](.#all-possible-interfaces) directly (without benefiting from the CLI parsing).
+        or you can create [one](Overview.md#all-possible-interfaces) directly (without benefiting from the CLI parsing).
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 
@@ -59,6 +61,21 @@ class Mininterface(Generic[EnvClass]):
         ```
 
         """
+
+        self.facet: Facet = MinFacet()
+        """ Access to the UI [`facet`][mininterface.facet.Facet] from the back-end side.
+        (Read [`Tag.facet`][mininterface.Tag.facet] to access from the front-end side.)
+
+        ```python
+        from mininterface import run
+        with run(title='My window title') as m:
+            m.facet.set_title("My form title")
+            m.form({"My form": 1})
+        ```
+
+        ![Facet back-end](asset/facet_backend.avif)
+        """
+
         self._descriptions = _descriptions or {}
         """ Field descriptions """
 
@@ -86,7 +103,7 @@ class Mininterface(Generic[EnvClass]):
         return 0
 
     def choice(self, choices: ChoicesType, title: str = "", _guesses=None,
-               skippable: bool = True, launch: bool = True, _multiple=True, _default: str | None = None
+               skippable: bool = True, launch: bool = True, _multiple=True, default: str | None = None
                ) -> TagValue | list[TagValue] | None:
         """ Prompt the user to select. Useful for a menu creation.
 
@@ -116,7 +133,13 @@ class Mininterface(Generic[EnvClass]):
 
                 ![Choices with labels](asset/choices_labels.avif)
             title: Form title
-            skippable: If there is a single option, choose it directly, without dialog.
+            default: The value of the checked choice.
+
+                ```python
+                m.choice({"one": 1, "two": 2}, default=2)  # returns 2
+                ```
+                ![Default choice](asset/choices_default.avif)
+            skippable: If there is a single option, choose it directly, without a dialog.
             launch: If the chosen value is a callback, we directly call it. Then, the function returns None.
 
         Returns:
@@ -128,19 +151,18 @@ class Mininterface(Generic[EnvClass]):
         # Args:
             # guesses: Choices to be highlighted.
             # multiple: Multiple choice.
-            # default: The name of the checked choice.
         # Returns: If multiple=True, list of the chosen values.
         #
-        # * When inputing choices as Tags, make sure the original Tag.val changes too.
-        # * multiple, checked, guesses
+        # * Check: When inputing choices as Tags, make sure the original Tag.val changes too.
         #
         # NOTE UserWarning: GuiInterface: Cannot tackle the form, unknown winfo_manager .
+        #   (possibly because the lambda hides a part of GUI)
         # m = run(Env)
         # tag = Tag(x, choices=["one", "two", x])
         if skippable and len(choices) == 1:
             out = choices[0]
         else:
-            tag = Tag(choices=choices)
+            tag = Tag(val=default, choices=choices)
             key = title or "Choose"
             out = self.form({key: tag})[key]
 
@@ -209,7 +231,7 @@ class Mininterface(Generic[EnvClass]):
         f = form
         print(f"Asking the form {title}".strip(), f)
 
-        tag_dict = dict_to_tagdict(f)
+        tag_dict = dict_to_tagdict(f, self.facet)
         if True:  # NOTE for testing, this might validate the fields with Tag._submit(ddd, ddd)
             return formdict_resolve(tag_dict, extract_main=True)
         else:

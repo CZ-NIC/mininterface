@@ -5,9 +5,11 @@ from types import FunctionType, MethodType, UnionType
 from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
 from warnings import warn
 
+
 from .auxiliary import flatten
 
 if TYPE_CHECKING:
+    from .facet import Facet
     from .form_dict import TagDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
@@ -162,6 +164,28 @@ class Tag:
     #
     # Following attributes are not meant to be set externally.
     #
+    facet: Optional["Facet"] = None
+    """ Access to the UI [`facet`][mininterface.facet.Facet] from the front-end side.
+    (Read [`Mininterface.facet`][mininterface.Mininterface.facet] to access from the back-end side.)
+
+    Set the UI facet from within a callback, ex. a validator.
+
+    ```python
+    from mininterface import run, Tag
+
+    def my_check(tag: Tag):
+        tag.facet.set_title("My form title")
+        return "Validation failed"
+
+    with run(title='My window title') as m:
+        m.form({"My form": Tag(1, validation=my_check)})
+    ```
+
+    This happens when you click ok.
+
+    ![Facet front-end](asset/facet_frontend.avif)
+    """
+
     original_val = None
     """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
 
@@ -172,6 +196,7 @@ class Tag:
     m.form({"number", Tag(8, validation=check)})
     ```
     """
+
 
     _error_text = None
     """ Meant to be read only. Error text if type check or validation fail and the UI has to be revised """
@@ -198,10 +223,14 @@ class Tag:
                     self._attrs_field: dict | None = attr.fields_dict(self._src_class.__class__).get(self._src_key)
                 except attr.exceptions.NotAnAttrsClassError:
                     pass
-        if not self.annotation and not self.choices:
+        if not self.annotation and self.val is not None and not self.choices:
             # When having choices with None default self.val, this would impose self.val be of a NoneType,
             # preventing it to set a value.
+            # Why checking self.val is not None? We do not want to end up with
+            # annotated as a NoneType.
             self.annotation = type(self.val)
+
+
 
         if not self.name and self._src_key:
             self.name = self._src_key
@@ -226,11 +255,14 @@ class Tag:
             field_strings.append(v)
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
-    def _fetch_from(self, tag: "Self"):
+    def _fetch_from(self, tag: "Self") -> "Self":
         """ Fetches public attributes from another instance. """
-        for attr in ['val', 'description', 'annotation', 'name', 'validation', 'choices']:
+        for attr in ['val', 'annotation', 'name', 'validation', 'choices']:
             if getattr(self, attr) is None:
                 setattr(self, attr, getattr(tag, attr))
+        if self.description == "":
+            self.description = tag.description
+        return self
 
     def _is_a_callable(self) -> bool:
         """ True, if the value is a callable function.
@@ -325,6 +357,8 @@ class Tag:
                 return v.name
             return v
 
+        if self.choices is None:
+            return {}
         if isinstance(self.choices, dict):
             return self.choices
         if isinstance(self.choices, common_iterables):

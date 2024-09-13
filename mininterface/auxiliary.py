@@ -1,7 +1,7 @@
 import os
 import re
 from argparse import ArgumentParser
-from tkinter import Button, StringVar, Variable
+from tkinter import Button, Label, StringVar, Variable
 from tkinter.ttk import Frame, Radiobutton
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Iterable, Literal, TypeVar
@@ -69,7 +69,7 @@ class AnyVariable(Variable):
         return self.val
 
 
-def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, value: "Tag") -> Widget:
+def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Widget, name, tag: "Tag") -> Widget:
     if widget.winfo_manager() == 'grid':
         grid_info = widget.grid_info()
         widget.grid_forget()
@@ -79,17 +79,20 @@ def replace_widget_with(target: Literal["button"] | Literal["radio"], widget: Wi
         # NOTE tab order broken, injected to another position
         match target:
             case "radio":
-                choices = value._get_choices()
-                master._Form__vars[name] = variable = Variable(value=value.val)  # the chosen default
+                choices = tag._get_choices()
+                master._Form__vars[name] = variable = Variable(value=tag.val)  # the chosen default
                 nested_frame = Frame(master)
                 nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-                for i, choice in enumerate(choices):
-                    radio = Radiobutton(nested_frame, text=choice, variable=variable, value=choice)
+
+                for i, (label, val) in enumerate(choices.items()):
+                    radio = Radiobutton(nested_frame, text=label, variable=variable, value=val)
                     radio.grid(row=i, column=1)
             case "button":
-                master._Form__vars[name] = AnyVariable(value.val)
-                radio = Button(master, text=name, command=lambda tag=value: tag.val(tag))
+                # TODO should the button receive tag or directly the whole facet (to change the current form).
+                #   Implement to textual. Docs.
+                master._Form__vars[name] = AnyVariable(tag.val)
+                radio = Button(master, text=name, command=lambda tag=tag: tag.val(tag.facet))
                 radio.grid(row=grid_info['row'], column=grid_info['column'])
     else:
         warn(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")

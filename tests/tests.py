@@ -301,7 +301,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty, choices=None)}"""
+        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty, choices=None, facet=None)}"""
         # Ask for missing, no interference with ask_on_empty_cli
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, interface=Mininterface)
@@ -533,10 +533,15 @@ class TestParametrizedGeneric(TestAbstract):
         self.assertEqual([Path("/var")], f.val)
         self.assertEqual(['/var'], f._get_ui_val())
 
-    # NOTE Mininterface.choice cannot set the chosen value.
-    # def test_choice(self):
-    #     m = run(interface=Mininterface)
-    #     m.choice()
+    def test_choice(self):
+        m = run(interface=Mininterface)
+        self.assertIsNone(None, m.choice((1,2,3)))
+        self.assertEqual(2, m.choice((1,2,3), default=2))
+        self.assertEqual(2, m.choice((1,2,3), default=2))
+        self.assertEqual(2, m.choice({"one": 1, "two": 2}, default=2))
+        self.assertEqual(2, m.choice([Tag(1, name="one"), Tag(2, name="two")],default=2))
+
+
 
 
 if __name__ == '__main__':
