@@ -362,6 +362,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../Facet/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Facet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Validation/" class="md-nav__link">
         
   
@@ -623,7 +643,7 @@ If False, no config file is used.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full <a href="/Mininterface#all-possible-interfaces">list</a> of possible interfaces.</p>
+                <p>Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full <a href="../Overview/#all-possible-interfaces">list</a> of possible interfaces.</p>
               </div>
             </td>
             <td>
@@ -661,17 +681,13 @@ If False, no config file is used.</p>
       </tbody>
     </table>
         <p>You cay context manager the function by a <code>with</code> statement.
-The stdout will be redirected to the interface (ex. a GUI window).
-TODO add wrap example</p>
-<p>Undocumented experimental: The <code>env_class</code> may be a function as well. We invoke its parameters.
-However, as Mininterface.env stores the output of the function instead of the Argparse namespace,
-methods like <code>Mininterface.form(None)</code> (to ask for editing the env values) will work unpredictibly.
-Also, the config file seems to be fetched only for positional (missing) parameters,
-and ignored for keyword (filled) parameters.
-It seems to be this is the tyro's deal and hence it might start working any time.
-If not, we might help it this way:
-    <code>if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])</code></p>
-<p>Undocumented experimental: <code>default</code> keyword argument for tyro may serve for default values instead of a config file.</p>
+The stdout will be redirected to the interface (ex. a GUI window).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Your important number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">important_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">boolean</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">is_yes</span><span class="p">(</span><span class="s2">&quot;Is that alright?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="Small window with the text 'Your important number'" src="../asset/hello-with-statement.webp" title="With statement to redirect the output" />
+<img alt="The same in terminal'" src="../asset/hello-with-statement-tui.avif" title="With statement in TUI fallback" /></p>
 
     </div>
 

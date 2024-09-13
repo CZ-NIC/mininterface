@@ -9,8 +9,10 @@
       
       
       
-        <link rel="prev" href="../Standalone/">
+        <link rel="prev" href="../Tag/">
       
+      
+        <link rel="next" href="../Validation/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -18,7 +20,7 @@
     
     
       
-        <title>Changelog - Mininterface</title>
+        <title>Facet - Mininterface</title>
       
     
     
@@ -61,6 +63,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#facet" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -93,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Changelog
+              Facet
             
           </span>
         </div>
@@ -307,10 +314,30 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Facet/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Facet
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -319,6 +346,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Facet
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet.set_title" class="md-nav__link">
+    <span class="md-ellipsis">
+      set_title
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -367,17 +432,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Changelog/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -386,7 +444,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -408,6 +465,34 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet" class="md-nav__link">
+    <span class="md-ellipsis">
+      Facet
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet.set_title" class="md-nav__link">
+    <span class="md-ellipsis">
+      set_title
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -425,9 +510,59 @@
   
 
 
-  <h1>Changelog</h1>
+<h1 id="facet">Facet</h1>
 
-<p>Due to an early stage of development, changes are tracked in commit messages only.</p>
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="mininterface.facet.Facet"></a>
+    <div class="doc doc-contents first">
+
+
+        <p>A frontend side of the interface. While a dialog is open,
+    this allows to set frontend properties like the heading.</p>
+<p>Read <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.facet"><code>Tag.facet</code></a> to see how to access from the front-end side.
+Read <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.facet"><code>Mininterface.facet</code></a> to see how to access from the back-end side.</p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="mininterface.facet.Facet.set_title" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">set_title</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Set the main heading.</p>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 

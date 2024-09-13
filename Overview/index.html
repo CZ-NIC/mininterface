@@ -389,6 +389,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../Facet/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Facet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Validation/" class="md-nav__link">
         
   
@@ -524,7 +544,8 @@
 
 <h2 id="basic-usage">Basic usage</h2>
 <p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.is_yes"><code>m.is_yes("Is that alright?")</code></a>.</p>
-<p>To do any advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a>. For a validation only, use its <a href="#validation-alias"><code>Validation alias</code></a>.</p>
+<p>To do any advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a>. For a validation only, use its <a href="../Validation/#validation-alias"><code>Validation alias</code></a>.</p>
+<p>At last, use <a href="../Facet/"><code>Facet</code></a> to tackle the interface from the back-end (<code>m</code>) or the front-end (<code>Tag</code>) side.</p>
 <h2 id="supported-types">Supported types</h2>
 <p>Various types are supported:</p>
 <ul>
@@ -608,7 +629,7 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
 </code></pre></div>
 <h2 id="all-possible-interfaces">All possible interfaces</h2>
-<p>Normally, you get an interface through <a href="#run">mininterface.run</a>
+<p>Normally, you get an interface through <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a>
 but if you do not wish to parse CLI and config file, you can invoke one directly.</p>
 <p>Several interfaces exist:</p>
 <ul>
