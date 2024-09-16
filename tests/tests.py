@@ -18,7 +18,7 @@ from mininterface.validators import not_empty, limit
 from mininterface.auxiliary import flatten
 from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve
 from mininterface.tag import Tag
-from mininterface.mininterface import Cancelled
+from mininterface.common import Cancelled
 
 SYS_ARGV = None  # To be redirected
 

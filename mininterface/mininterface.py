@@ -1,30 +1,28 @@
 import logging
-from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic
 
+from .common import Cancelled
 from .facet import Facet, MinFacet
-
-if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
-    from typing import Generic, Self
-else:
-    from typing import Generic
-
 from .form_dict import EnvClass, FormDictOrEnv, dict_to_tagdict, formdict_resolve
 from .tag import ChoicesType, Tag, TagValue
 
+if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from typing import Self
+
 logger = logging.getLogger(__name__)
-
-
-class Cancelled(SystemExit):
-    # We inherit from SystemExit so that the program exits without a traceback on GUI Escape.
-    pass
 
 
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
         You get one through [`mininterface.run`](run.md) which fills CLI arguments and config file to `mininterface.env`
         or you can create [one](Overview.md#all-possible-interfaces) directly (without benefiting from the CLI parsing).
+
+    Raise:
+        Cancelled: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
+
+    Raise:
+        InterfaceNotAvailable: Interface failed to init, ex. display not available in GUI.
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 
@@ -88,12 +86,12 @@ class Mininterface(Generic[EnvClass]):
         pass
 
     def alert(self, text: str) -> None:
-        """ Prompt the user to confirm the text.  """
+        """ Prompt the user to confirm the text. """
         print("Alert text", text)
         return
 
     def ask(self, text: str) -> str:
-        """ Prompt the user to input a text.  """
+        """ Prompt the user to input a text. """
         print("Asking", text)
         raise Cancelled(".. cancelled")
 
@@ -147,7 +145,7 @@ class Mininterface(Generic[EnvClass]):
             If launch=True and the chosen value is a callback, we call it and return None.
 
         """
-        # TODO to build a nice menu, I need this
+        # NOTE to build a nice menu, I need this
         # Args:
             # guesses: Choices to be highlighted.
             # multiple: Multiple choice.

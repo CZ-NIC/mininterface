@@ -5,6 +5,8 @@ from types import FunctionType, MethodType, UnionType
 from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
 from warnings import warn
 
+# from .experimental import SubmitToTrue # NOTE EXPERIMENTAL
+
 
 from .auxiliary import flatten
 
@@ -294,6 +296,9 @@ class Tag:
         """
         if self.annotation is None:
             return True
+        # elif self.annotation is SubmitToTrue: # NOTE EXPERIMENTAL
+        #     return val is True or val is False
+
         try:
             return isinstance(val, self.annotation)
         except TypeError:

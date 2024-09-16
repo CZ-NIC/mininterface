@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Type
 
 from .aliases import Validation, Choices
 from .cli_parser import _parse_cli
-from .common import InterfaceNotAvailable
+from .common import InterfaceNotAvailable, Cancelled
 from .form_dict import EnvClass
 from .tag import Tag
 from .mininterface import EnvClass, Mininterface
@@ -164,6 +164,8 @@ def run(env_class: Type[EnvClass] | None = None,
             interface = TuiInterface
         elif interface == "gui":  # undocumented feature
             interface = GuiInterface
+        if interface is None:
+            raise InterfaceNotAvailable  # GuiInterface might be None when import fails
         interface = interface(title, env, descriptions)
     except InterfaceNotAvailable:  # Fallback to a different interface
         interface = TuiInterface(title, env, descriptions)
@@ -179,7 +181,7 @@ def run(env_class: Type[EnvClass] | None = None,
     return interface
 
 
-__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable",
+__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
            "Validation", "Choices",
            "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
            ]

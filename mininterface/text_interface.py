@@ -1,7 +1,9 @@
 from pprint import pprint
 
+from .common import Cancelled
+
 from .form_dict import EnvClass, FormDict, FormDictOrEnv
-from .mininterface import Cancelled, Mininterface
+from .mininterface import Mininterface
 
 
 class TextInterface(Mininterface):

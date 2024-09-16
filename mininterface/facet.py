@@ -38,12 +38,13 @@ class Facet:
         """ Set the main heading. """
         ...
 
-    # @abstractmethod
-    # def submit(self, text):
-    #     """ Submits the whole form """
-    #   (ex for checkbox on_change)
-    #     raise NotImplementedError  # NOTE
-    #
+    @abstractmethod
+    def submit(self):
+        """ Submits the whole form """
+        # NOTE (ex. for checkbox on_change), docs
+        ...
+
+    # NOTE we should get
     # Access to the fields.
 
 
