@@ -33,7 +33,7 @@ class GuiInterface(Redirectable, Mininterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        form = dataclass_to_tagdict(self.env, self._descriptions)
+        form = dataclass_to_tagdict(self.env, self._descriptions, self.facet)
 
         # formDict automatically fetches the edited values back to the EnvInstance
         return self.window.run_dialog(form)

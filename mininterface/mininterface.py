@@ -1,6 +1,6 @@
 import logging
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Any, Generic
 
 from .common import Cancelled
 from .facet import Facet, MinFacet
@@ -102,7 +102,7 @@ class Mininterface(Generic[EnvClass]):
 
     def choice(self, choices: ChoicesType, title: str = "", _guesses=None,
                skippable: bool = True, launch: bool = True, _multiple=True, default: str | None = None
-               ) -> TagValue | list[TagValue] | None:
+               ) -> TagValue | list[TagValue] | Any:
         """ Prompt the user to select. Useful for a menu creation.
 
         Args:
@@ -142,7 +142,7 @@ class Mininterface(Generic[EnvClass]):
 
         Returns:
             The chosen value.
-            If launch=True and the chosen value is a callback, we call it and return None.
+            If launch=True and the chosen value is a callback, we call it and return its result.
 
         """
         # NOTE to build a nice menu, I need this
@@ -165,8 +165,7 @@ class Mininterface(Generic[EnvClass]):
             out = self.form({key: tag})[key]
 
         if launch and Tag._is_a_callable_val(out):
-            out()
-            return None
+            return out()
         return out
 
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:

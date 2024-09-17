@@ -152,7 +152,8 @@ class Tag:
     # * mininterface.choice `def choice(choices=, guesses=)`
 
     on_change: Callable[["Tag"], Any] | None = None
-    """ Accepts a callback that launches whenever the value changes, while the dialog is still running.
+    """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
+    The callback runs while the dialog is still running.
     The return value of the callback is currently not used.
 
     In the following example, we alter the heading title according to the chosen value.
@@ -287,7 +288,9 @@ class Tag:
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
     def _fetch_from(self, tag: "Self") -> "Self":
-        """ Fetches public attributes from another instance. """
+        """ Fetches public attributes from another instance.
+        (Skips the attributes that are already set.)
+        """
         for attr in ['val', 'annotation', 'name', 'validation', 'choices', 'on_change']:
             if getattr(self, attr) is None:
                 setattr(self, attr, getattr(tag, attr))
@@ -305,14 +308,12 @@ class Tag:
         return self._is_a_callable_val(self.val, self.annotation)
 
     def _on_change_trigger(self, ui_val):
-        """ Trigger on_change only if the value has changed. """
-        if self.on_change and self._last_ui_val != ui_val:
-            last = self.val
-            self._last_ui_val = self.val = ui_val
-            self.on_change(self)
-            # We restore the value after the callback. (The same happens during validation callbacks.)
-            # Because the self.val gets finally set on form submit.
-            self.val = last
+        """ Trigger on_change only if the value has changed and if the validation succeeds. """
+        if self._last_ui_val != ui_val:
+            # NOTE we should refresh the Widget when update fails. However, facet does not allow method for that yet.
+            if self.update(ui_val) and self.on_change:
+                self.on_change(self)
+            self._last_ui_val = ui_val
 
     @staticmethod
     def _is_a_callable_val(val: TagValue, annot: type = None) -> bool:
@@ -335,7 +336,7 @@ class Tag:
         """
         if self.annotation is None:
             return True
-        elif self.annotation is SubmitButton: # NOTE EXPERIMENTAL
+        elif self.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             return val is True or val is False
 
         try:

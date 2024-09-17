@@ -46,7 +46,7 @@ r4 = m.form()
 r4  # Env
 ```
 """
-TagDict = dict[str, Union["Self" , Tag]]
+TagDict = dict[str, Union["Self", Tag]]
 """ Strict FormDict where the values are just recursive TagDicts or tags. """
 
 # NOTE: In the future, allow `FormDict , EnvClass`, a dataclass (or its instance)
@@ -84,10 +84,8 @@ def dict_to_tagdict(data: dict, facet: "Facet" = None) -> TagDict:
     for key, val in data.items():
         if isinstance(val, dict):  # nested config hierarchy
             fd[key] = dict_to_tagdict(val, facet)
-        else:  # scalar value
-            # TODO implement object fetching to the dataclasses below too
-            # dataclass_to_tagdict
-            d = {"facet": facet, "_src_dict":data, "_src_key":key}
+        else:  # scalar or Tag value
+            d = {"facet": facet, "_src_dict": data, "_src_key": key}
             if not isinstance(val, Tag):
                 tag = Tag(val, "", name=key, **d)
             else:
@@ -107,10 +105,14 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key
         return d
 
 
-def dataclass_to_tagdict(env: EnvClass, descr: dict, _path="") -> TagDict:
+def dataclass_to_tagdict(env: EnvClass, descr: dict, facet: "Facet" = None, _path="") -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
-    main = ""
-    subdict = {main: {}} if not _path else {}
+    main = {}
+    if not _path:  # root is nested under "" path
+        subdict = {"": main} if not _path else {}
+    else:
+        subdict = {}
+
     for param, val in vars(env).items():
         annotation = get_type_hints(env.__class__).get(param)
         if val is None:
@@ -126,17 +128,17 @@ def dataclass_to_tagdict(env: EnvClass, descr: dict, _path="") -> TagDict:
                 # Which is not probably wanted.
                 val = False
                 logger.warning(f"Annotation {annotation} of `{param}` not supported by Mininterface."
-                            "None converted to False.")
+                               "None converted to False.")
+
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
+            # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
-            subdict[param] = dataclass_to_tagdict(val, descr, _path=f"{_path}{param}.")
-        else:
-            params = {"val": val,
-                      "_src_key": param,
-                      "_src_obj": env
-                      }
-            if not _path:  # scalar value in root
-                subdict[main][param] = Tag(description=descr.get(param), **params)
-            else:  # scalar value in nested
-                subdict[param] = Tag(description=descr.get(f"{_path}{param}"), **params)
+            subdict[param] = dataclass_to_tagdict(val, descr, facet, _path=f"{_path}{param}.")
+        else:  # scalar or Tag value
+            d = {"description": descr.get(f"{_path}{param}"), "facet": facet, "_src_key": param, "_src_obj": env}
+            if not isinstance(val, Tag):
+                tag = Tag(val, **d)
+            else:
+                tag = Tag(**d)._fetch_from(val)
+            (subdict if _path else main)[param] = tag
     return subdict

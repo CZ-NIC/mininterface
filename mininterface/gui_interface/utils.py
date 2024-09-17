@@ -65,10 +65,8 @@ def replace_widgets(nested_widgets, form: TagDict):
         return ready_to_replace(widget, var_name, tag, variable)
 
     # NOTE tab order broken, injected to another position
-    # TODO should the button receive tag or directly the whole facet (to change the current form).
-    #   Implement to textual. Docs.
-    # TODO Not able to choose 'x': "My choice2": Choices("tri", x)
-
+    # NOTE should the button receive tag or directly
+    #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
     for tag, (label1, widget) in zip(flatten(form), flatten(nested_widgets)):
         tag: Tag
@@ -86,8 +84,8 @@ def replace_widgets(nested_widgets, form: TagDict):
             nested_frame = Frame(master)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-            for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
-                widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_val)
+            for i, choice_label in enumerate(tag._get_choices()):
+                widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
                 widget2.grid(row=i, column=1)
                 subwidgets.append(widget2)
 
@@ -95,7 +93,6 @@ def replace_widgets(nested_widgets, form: TagDict):
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             variable, widget = create_button(_fetch, tag, label1)
             widget.config(command=_set_true(variable, tag))
-            # variable.set(False)
 
         # Special type: FacetCallback button
         elif tag.annotation is FacetCallback:  # NOTE EXPERIMENTAL
@@ -106,16 +103,15 @@ def replace_widgets(nested_widgets, form: TagDict):
             variable, widget = create_button(_fetch, tag, label1, tag.val)
 
         # Add event handler
-        if tag.on_change:
-            tag._last_ui_val = variable.get()
-            for w in subwidgets + [widget]:
-                h = _hand(variable, tag)
-                if isinstance(w, (Entry, Combobox)):
-                    w.bind("<FocusOut>", h)
-                elif isinstance(w, Checkbutton):
-                    w.configure(command=h)
-                elif isinstance(w, Radiobutton):
-                    variable.trace_add("write", h)
+        tag._last_ui_val = variable.get()
+        for w in subwidgets + [widget]:
+            h = _hand(variable, tag)
+            if isinstance(w, (Entry, Combobox)):
+                w.bind("<FocusOut>", h)
+            elif isinstance(w, Checkbutton):
+                w.configure(command=h)
+            elif isinstance(w, Radiobutton):
+                variable.trace_add("write", h)
 
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself

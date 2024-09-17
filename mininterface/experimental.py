@@ -13,7 +13,7 @@ class SubmitButton:
     from mininterface import run, Tag
     from mininterface.experimental import SubmitButton
 
-    m = run(interface="gui")
+    m = run()
     out = m.form({
         "File name": Tag("/tmp", annotation=Path),
         "Append text": {
@@ -33,7 +33,7 @@ class SubmitButton:
     ```
 
     ![Submit button](asset/submitButton.avif)
-        """
+    """
     pass
     # NOTE I would prefer this is a mere type, not a class.
 
@@ -44,12 +44,4 @@ class FacetCallback():
     A button should be created. When clicked, it gets the facet as the argument.
     """
     pass
-    # TODO, not complete
-
-# NOTE EXPERIMENTAL
-# def SubmitButton(name=None, description=""):
-#     """ Create a button. When clicked, the form submits.
-#         If submission succeeds (validation checks pass), its value becomes True.
-#     """
-#     from .tag import Tag
-#     return Tag(val=False, description=description, name=None, annotation=SubmitButton)
+    # NOTE, just a stub

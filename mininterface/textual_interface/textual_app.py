@@ -30,9 +30,9 @@ class TextualApp(App[bool | None]):
         ("down", "go_up", "Go down"),
         # Form confirmation
         # * ctrl/alt+enter does not work
-        # * enter without priority is consumed by input fields
-        # * enter with priority is not shown in the footer
-        Binding("enter", "confirm", "Ok", show=True, priority=True),
+        # * enter with priority is not shown in the footer:
+        #       Binding("enter", "confirm", "Ok", show=True, priority=True),
+        # * enter without priority is consumed by input fields (and recaught by on_key)
         Binding("Enter", "confirm", "Ok"),
         ("escape", "exit", "Cancel"),
     ]
@@ -65,7 +65,7 @@ class TextualApp(App[bool | None]):
 
         # Replace with a callback button
         elif tag._is_a_callable():
-            o = MyButton(tag.name)
+            o = MyButton(tag.name, val=tag.val)
 
         else:
             if not isinstance(v, (float, int, str, bool)):
@@ -132,6 +132,10 @@ class TextualApp(App[bool | None]):
                 self.widgets[(index + 1) % len(self.widgets)].focus()
             case "up":
                 self.widgets[(index - 1) % len(self.widgets)].focus()
+            case "enter":
+                # NOTE a multiline input might be
+                # isinstance(self.focused,
+                self.action_confirm()
             case letter if len(letter) == 1:  # navigate by letters
                 for inp_ in self.widgets[index+1:] + self.widgets[:index]:
                     label = inp_.label if isinstance(inp_, Checkbox) else inp_.placeholder
