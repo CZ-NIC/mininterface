@@ -2,10 +2,10 @@ from ast import literal_eval
 from dataclasses import dataclass, fields
 from datetime import datetime
 from types import FunctionType, MethodType, UnionType
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
 from warnings import warn
 
-# from .experimental import SubmitToTrue # NOTE EXPERIMENTAL
+from .experimental import SubmitButton
 
 
 from .auxiliary import flatten
@@ -46,7 +46,7 @@ PydanticFieldInfo = TypeVar("PydanticFieldInfo")
 AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 common_iterables = list, tuple, set
 ChoiceLabel = str
-ChoicesType =  list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue]
+ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue]
 """ You can denote the choices in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
 Values might be Tags as well.
@@ -151,6 +151,29 @@ class Tag:
     # * more date types (now only str possible)
     # * mininterface.choice `def choice(choices=, guesses=)`
 
+    on_change: Callable[["Tag"], Any] | None = None
+    """ Accepts a callback that launches whenever the value changes, while the dialog is still running.
+    The return value of the callback is currently not used.
+
+    In the following example, we alter the heading title according to the chosen value.
+
+    ```python
+    from mininterface import run, Tag
+
+    def callback(tag: Tag):
+        tag.facet.set_title(f"Value changed to {tag.val}")
+
+    m = run()
+    m.facet.set_title("Click the checkbox")
+    m.form({
+        "My choice": Tag(choices=["one", "two"], on_change=callback)
+    })
+    ```
+
+    ![Choice with on change callback](asset/on_change1.avif)
+    ![Choice with on change callback chosen](asset/on_change2.avif)
+    """
+
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
 
@@ -199,7 +222,6 @@ class Tag:
     ```
     """
 
-
     _error_text = None
     """ Meant to be read only. Error text if type check or validation fail and the UI has to be revised """
 
@@ -217,6 +239,8 @@ class Tag:
                 if field_type and hasattr(field_type, '__metadata__'):
                     for metadata in field_type.__metadata__:
                         if isinstance(metadata, Tag):
+                            # The type of the Tag is another Tag
+                            # Ex: `my_field: Validation(...) = 4`
                             self._fetch_from(metadata)  # NOTE might fetch from a pydantic model too
             if pydantic:  # Pydantic integration
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
@@ -232,13 +256,16 @@ class Tag:
             # annotated as a NoneType.
             self.annotation = type(self.val)
 
-
+        if self.annotation is SubmitButton:
+            self.val = False
 
         if not self.name and self._src_key:
             self.name = self._src_key
         self._original_desc = self.description
         self._original_name = self.name
         self.original_val = self.val
+        self._last_ui_val = None
+        """ This is the value as was in the current UI. Used by on_change. """
 
     def __repr__(self):
         field_strings = []
@@ -246,6 +273,8 @@ class Tag:
             field_value = getattr(self, field.name)
             # clean-up protected members
             if field.name.startswith("_"):
+                continue
+            if field.name not in ("val", "description", "annotation", "name"):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
@@ -259,7 +288,7 @@ class Tag:
 
     def _fetch_from(self, tag: "Self") -> "Self":
         """ Fetches public attributes from another instance. """
-        for attr in ['val', 'annotation', 'name', 'validation', 'choices']:
+        for attr in ['val', 'annotation', 'name', 'validation', 'choices', 'on_change']:
             if getattr(self, attr) is None:
                 setattr(self, attr, getattr(tag, attr))
         if self.description == "":
@@ -274,6 +303,16 @@ class Tag:
             but then, we need this check.
         """
         return self._is_a_callable_val(self.val, self.annotation)
+
+    def _on_change_trigger(self, ui_val):
+        """ Trigger on_change only if the value has changed. """
+        if self.on_change and self._last_ui_val != ui_val:
+            last = self.val
+            self._last_ui_val = self.val = ui_val
+            self.on_change(self)
+            # We restore the value after the callback. (The same happens during validation callbacks.)
+            # Because the self.val gets finally set on form submit.
+            self.val = last
 
     @staticmethod
     def _is_a_callable_val(val: TagValue, annot: type = None) -> bool:
@@ -296,8 +335,8 @@ class Tag:
         """
         if self.annotation is None:
             return True
-        # elif self.annotation is SubmitToTrue: # NOTE EXPERIMENTAL
-        #     return val is True or val is False
+        elif self.annotation is SubmitButton: # NOTE EXPERIMENTAL
+            return val is True or val is False
 
         try:
             return isinstance(val, self.annotation)
@@ -342,7 +381,8 @@ class Tag:
         return self.annotation.__name__
 
     def _get_ui_val(self):
-        """ Some values are not expected to be parsed by any UI.
+        """ Get values as suitable for UI.
+        Some values are not expected to be parsed by any UI.
         But we will reconstruct them in self.update later.
 
         Ex: [Path("/tmp"), Path("/usr")] -> ["/tmp", "/usr"].
@@ -357,7 +397,7 @@ class Tag:
         """ Wherease self.choices might have different format, this returns a canonic dict. """
         def _edit(v):
             if self._is_a_callable_val(v):
-               return v.__name__
+                return v.__name__
             if isinstance(v, Tag):
                 return v.name
             return v

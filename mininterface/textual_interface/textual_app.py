@@ -3,8 +3,12 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
-from textual.widgets import (Checkbox, Footer, Header, Input, Label,
-                             RadioButton, RadioSet)
+from textual.widget import Widget
+from textual.widgets import Footer, Header, Label, RadioButton, Static, Checkbox, Input
+
+from mininterface.textual_interface.widgets import Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet, MySubmitButton
+
+from ..experimental import SubmitButton
 
 from ..auxiliary import flatten
 from ..common import Cancelled
@@ -12,10 +16,14 @@ from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
 
 if TYPE_CHECKING:
-    from .. import TextualInterface
+    from . import TextualInterface
 
-# NOTE: For a metaclass conflict I was not able to inherit from BackendAdaptor
+
+WidgetList = list[Widget | Changeable]
+
+
 class TextualApp(App[bool | None]):
+    # NOTE: For a metaclass conflict I was not able to inherit from BackendAdaptor.
 
     BINDINGS = [
         ("up", "go_up", "Go up"),
@@ -32,24 +40,40 @@ class TextualApp(App[bool | None]):
     def __init__(self, interface: "TextualInterface"):
         super().__init__()
         self.facet = interface.facet
+        self.facet.window = self
         self.title = self.facet._title
-        self.widgets = None
+        self.widgets: WidgetList = None
         self.focused_i: int = 0
         self.interface = interface
+        self.output = Static("")
 
     @staticmethod
-    def widgetize(tag: Tag) -> Checkbox | Input:
+    def widgetize(tag: Tag) -> Widget | Changeable:
         """ Wrap Tag to a textual widget. """
+
         v = tag._get_ui_val()
+        # Handle boolean
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
-            o = Checkbox(tag.name or "", v)
+            o = MyCheckbox(tag.name or "", v)
+        # Replace with radio buttons
         elif tag._get_choices():
-            o = RadioSet(*(RadioButton(label, value=val == tag.val) for label, val in tag._get_choices().items()))
+            o = MyRadioSet(*(RadioButton(label, value=val == tag.val)
+                             for label, val in tag._get_choices().items()))
+        # Special type: Submit button
+        elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
+            o = MySubmitButton(tag.name)
+
+        # Replace with a callback button
+        elif tag._is_a_callable():
+            o = MyButton(tag.name)
+
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
-            o = Input(str(v), placeholder=tag.name or "")
+            o = MyInput(str(v), placeholder=tag.name or "")
+
         o._link = tag  # The Textual widgets need to get back to this value
+        tag._last_ui_val = o.get_ui_value()
         return o
 
     # Why class method? I do not know how to re-create the dialog if needed.
@@ -60,24 +84,21 @@ class TextualApp(App[bool | None]):
 
         # NOTE Sections (~ nested dicts) are not implemented, they flatten.
         # Maybe just 'flatten' might be removed.
-        widgets: list[Checkbox | Input] = [f for f in flatten(formdict_to_widgetdict(form, cls.widgetize))]
+        widgets: WidgetList = [f for f in flatten(formdict_to_widgetdict(form, cls.widgetize))]
         window.widgets = widgets
 
         if not window.run():
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        candidates = ((
-            field._link,
-            str(field.pressed_button.label) if isinstance(field, RadioSet) else field.value
-        ) for field in widgets)
-        if not Tag._submit_values(candidates):
+        if not Tag._submit_values((field._link, field.get_ui_value()) for field in widgets):
             return cls.run_dialog(TextualApp(window.interface), form, title)
         return form
 
     def compose(self) -> ComposeResult:
         if self.title:
             yield Header()
+        yield self.output  # NOTE not used
         yield Footer()
         if text := self.interface._redirected.join():
             yield Label(text, id="buffered_text")

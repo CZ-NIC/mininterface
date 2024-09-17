@@ -10,7 +10,7 @@ class BackendAdaptor(ABC):
     @staticmethod
     @abstractmethod
     def widgetize(tag: Tag):
-        """ Wrap Tag to a textual widget. """
+        """ Wrap Tag to a UI widget. """
         pass
 
     @abstractmethod
@@ -45,7 +45,8 @@ class Facet:
         ...
 
     # NOTE we should get
-    # Access to the fields.
+    # Access to the fields. What is a catch,
+    # if we change a value in the UI, their respective tag val is unchanged. Do we publish Tag values or UI values?
 
 
 class MinFacet(Facet):

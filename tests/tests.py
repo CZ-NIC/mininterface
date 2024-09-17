@@ -301,7 +301,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token', validation=not_empty, choices=None, facet=None)}"""
+        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token')}"""
         # Ask for missing, no interference with ask_on_empty_cli
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, interface=Mininterface)

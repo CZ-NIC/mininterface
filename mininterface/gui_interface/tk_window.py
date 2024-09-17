@@ -69,7 +69,7 @@ class TkWindow(Tk, BackendAdaptor):
                          )
         self.form.pack()
 
-        # Add radio
+        # Add radio etc.
         replace_widgets(self.form.widgets, form)
 
         # Set the submit and exit options

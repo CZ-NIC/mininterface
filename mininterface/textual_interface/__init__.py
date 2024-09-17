@@ -3,7 +3,7 @@ from typing import Any
 
 from mininterface.textual_interface.textual_button_app import TextualButtonApp
 from mininterface.textual_interface.textual_app import TextualApp
-from mininterface.textual_interface.textual_facet import TextualAppFacet
+from mininterface.textual_interface.textual_facet import TextualFacet
 
 try:
     from textual.app import App as _ImportCheck
@@ -11,7 +11,6 @@ except ImportError:
     from mininterface.common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
-from ..facet import BackendAdaptor, MinFacet
 from ..form_dict import (EnvClass, FormDictOrEnv, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve)
 from ..redirectable import Redirectable
 from ..tag import Tag
@@ -22,7 +21,10 @@ class TextualInterface(Redirectable, TextInterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.facet: TextualAppFacet = TextualAppFacet(self)  # since no app is running
+        self.facet: TextualFacet = TextualFacet(self)  # since no app is running
+
+    def _get_app(self):
+        return TextualApp(self)
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -33,10 +35,10 @@ class TextualInterface(Redirectable, TextInterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        params_ = dataclass_to_tagdict(self.env, self._descriptions)
+        form = dataclass_to_tagdict(self.env, self._descriptions)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
-        return TextualApp.run_dialog(TextualApp(self), params_)
+        return TextualApp.run_dialog(self._get_app(), form)
 
     # NOTE: This works bad with lists. GuiInterface considers list as combobox (which is now suppressed by str conversion),
     # TextualInterface as str. We should decide what should happen.
@@ -44,7 +46,7 @@ class TextualInterface(Redirectable, TextInterface):
         if form is None:
             return self._ask_env()  # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
         else:
-            return formdict_resolve(TextualApp.run_dialog(TextualApp(self), dict_to_tagdict(form, self.facet), title), extract_main=True)
+            return formdict_resolve(TextualApp.run_dialog(self._get_app(), dict_to_tagdict(form, self.facet), title), extract_main=True)
 
     # NOTE we should implement better, now the user does not know it needs an int
     def ask_number(self, text: str):

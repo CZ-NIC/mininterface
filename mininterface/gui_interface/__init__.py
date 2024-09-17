@@ -1,6 +1,3 @@
-
-
-
 try:
     from tkinter import TclError
 except ImportError:

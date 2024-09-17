@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from .textual_app import TextualApp
 
 
-class TextualAppFacet(Facet):
+class TextualFacet(Facet):
     def __init__(self, window: "TextualApp"):
         self.window = window
         # Since TextualApp turns off, we need to have its values stored somewhere
@@ -12,3 +12,7 @@ class TextualAppFacet(Facet):
 
     def set_title(self, title: str):
         self._title = title
+        self.window.title = title
+
+    def submit(self):
+        self.window.action_confirm()
