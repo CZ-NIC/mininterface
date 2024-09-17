@@ -1,6 +1,9 @@
+from pathlib import Path
 from tkinter import Button, Entry, Variable, Widget
+from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 
+from ..types import PathTag
 from ..auxiliary import flatten
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
@@ -38,23 +41,29 @@ def ready_to_replace(widget: Widget,
     if widget.winfo_manager() == 'grid':
         grid_info = widget.grid_info()
         widget.grid_forget()
-
-        master = widget.master
-        # master._Form__vars[name] = variable = Variable(tag.val)  # the chosen default
-        master._Form__vars[name] = variable
-
-        return master, grid_info
+        widget.master._Form__vars[name] = variable
+        return grid_info
     else:
         raise ValueError(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")
 
 
-def _hand(variable: Variable, tag: Tag):
+def choose_file_handler(variable: Variable, tag: PathTag):
+    def _(*_):
+        if tag.multiple:
+            out = str(list(askopenfilenames(title="Choose files")))
+        else:
+            out = askopenfilename(title="Choose a file")
+        variable.set(out)
+    return _
+
+
+def on_change_handler(variable: Variable, tag: Tag):
     """ Closure handler """
-    return lambda *args: tag._on_change_trigger(variable.get())
+    return lambda *_: tag._on_change_trigger(variable.get())
 
 
 def _set_true(variable: Variable, tag: Tag):
-    def _(*args):
+    def _(*_):
         variable.set(True)
         tag.facet.submit()
     return _
@@ -75,11 +84,12 @@ def replace_widgets(nested_widgets, form: TagDict):
         var_name = tag._original_name or label1.cget("text")
         variable = widget.master._Form__vars[var_name]
         subwidgets = []
+        master = widget.master
 
         # Replace with radio buttons
         if tag.choices:
             variable = Variable(value=tag.val)
-            master, grid_info = _fetch(variable)
+            grid_info = _fetch(variable)
 
             nested_frame = Frame(master)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
@@ -89,23 +99,31 @@ def replace_widgets(nested_widgets, form: TagDict):
                 widget2.grid(row=i, column=1)
                 subwidgets.append(widget2)
 
+        # File dialog
+        if path_tag := tag._morph(PathTag, Path):
+            grid_info = widget.grid_info()
+            master.grid(row=grid_info['row'], column=grid_info['column'])
+
+            widget2 = Button(master, text='👓', command=choose_file_handler(variable, path_tag))
+            widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
-            variable, widget = create_button(_fetch, tag, label1)
+            variable, widget = create_button(master, _fetch, tag, label1)
             widget.config(command=_set_true(variable, tag))
 
         # Special type: FacetCallback button
         elif tag.annotation is FacetCallback:  # NOTE EXPERIMENTAL
-            variable, widget = create_button(_fetch, tag, label1, lambda tag=tag: tag.val(tag.facet))
+            variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: tag.val(tag.facet))
 
         # Replace with a callback button
         elif tag._is_a_callable():
-            variable, widget = create_button(_fetch, tag, label1, tag.val)
+            variable, widget = create_button(master, _fetch, tag, label1, tag.val)
 
         # Add event handler
         tag._last_ui_val = variable.get()
         for w in subwidgets + [widget]:
-            h = _hand(variable, tag)
+            h = on_change_handler(variable, tag)
             if isinstance(w, (Entry, Combobox)):
                 w.bind("<FocusOut>", h)
             elif isinstance(w, Checkbutton):
@@ -120,9 +138,9 @@ def replace_widgets(nested_widgets, form: TagDict):
             label1.config(text=tag.name)
 
 
-def create_button(_fetch, tag, label1, command=None):
+def create_button(master, _fetch, tag, label1, command=None):
     variable = AnyVariable(tag.val)
-    master, grid_info = _fetch(variable)
+    grid_info = _fetch(variable)
     widget2 = Button(master, text=tag.name, command=command)
     widget2.grid(row=grid_info['row'], column=grid_info['column'])
     label1.grid_forget()

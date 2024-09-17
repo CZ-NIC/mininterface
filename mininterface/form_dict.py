@@ -85,11 +85,11 @@ def dict_to_tagdict(data: dict, facet: "Facet" = None) -> TagDict:
         if isinstance(val, dict):  # nested config hierarchy
             fd[key] = dict_to_tagdict(val, facet)
         else:  # scalar or Tag value
-            d = {"facet": facet, "_src_dict": data, "_src_key": key}
+            d = {"facet": facet}
             if not isinstance(val, Tag):
-                tag = Tag(val, "", name=key, **d)
+                tag = Tag(val, "", name=key, _src_dict= data, _src_key= key, **d)
             else:
-                tag = Tag(**d)._fetch_from(val)
+                tag = val._fetch_from(Tag(**d))
             fd[key] = tag
     return fd
 
@@ -135,10 +135,10 @@ def dataclass_to_tagdict(env: EnvClass, descr: dict, facet: "Facet" = None, _pat
             # Why checking the isinstance? See Tag._is_a_callable.
             subdict[param] = dataclass_to_tagdict(val, descr, facet, _path=f"{_path}{param}.")
         else:  # scalar or Tag value
-            d = {"description": descr.get(f"{_path}{param}"), "facet": facet, "_src_key": param, "_src_obj": env}
+            d = {"description": descr.get(f"{_path}{param}"), "facet": facet}
             if not isinstance(val, Tag):
-                tag = Tag(val, **d)
+                tag = Tag(val, _src_key=param, _src_obj=env, **d)
             else:
-                tag = Tag(**d)._fetch_from(val)
+                tag = val._fetch_from(Tag(**d))
             (subdict if _path else main)[param] = tag
     return subdict

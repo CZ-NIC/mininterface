@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Type
 
-from .aliases import Validation, Choices
+from .types import Validation, Choices, PathTag
 from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable, Cancelled
 from .form_dict import EnvClass
@@ -182,6 +182,6 @@ def run(env_class: Type[EnvClass] | None = None,
 
 
 __all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
-           "Validation", "Choices",
+           "Validation", "Choices", "PathTag",
            "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
            ]

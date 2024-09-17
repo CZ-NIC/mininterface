@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated
 
 from mininterface import Tag
-from mininterface.aliases import Validation, Choices
+from mininterface.types import Validation, Choices
 from mininterface.validators import not_empty
 
 

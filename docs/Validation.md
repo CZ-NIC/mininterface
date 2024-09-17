@@ -1,4 +1,4 @@
-We recommend to use the dataclass and validate with the `Annotated` keyword.
+We recommend to use the dataclass and validate with the `Annotated` keyword. We use a [Validation][mininterface.types.Validation] type here.
 
 ```python3
 from typing import Annotated
@@ -29,9 +29,6 @@ m = run(Env)
 print(type(m.env.my_string))  # Tag
 print(m.env.my_string.val)  # hello
 ```
-
-## `Validation` alias
-::: mininterface.Validation
 
 ## validators
 ::: mininterface.validators

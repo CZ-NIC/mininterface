@@ -41,6 +41,7 @@ nav:
   - Mininterface: "Mininterface.md"
   - Tag: "Tag.md"
   - Facet: "Facet.md"
+  - Types: "Types.md"
   - Validation: "Validation.md"
   - Standalone: "Standalone.md"
   - Experimental: "Experimental.md"

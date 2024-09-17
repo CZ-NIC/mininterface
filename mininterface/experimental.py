@@ -38,6 +38,13 @@ class SubmitButton:
     # NOTE I would prefer this is a mere type, not a class.
 
 
+
+# class Foo:
+#     def test(self):
+#         if isinstance(self, Bar):
+
+# class Bar(Foo):
+
 # FunctionType is not acceptable base type
 class FacetCallback():
     """ This type denotes the Tag value is a function.

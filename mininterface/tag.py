@@ -346,6 +346,20 @@ class Tag:
                 origin, subtype = complex_
                 return isinstance(val, origin) and all(isinstance(item, subtype) for item in val)
 
+    def _is_subclass(self, class_type):
+        print("350: self.annotation", self.annotation)  # TODO
+        try:
+            return issubclass(self.annotation, class_type)
+        except TypeError:  # None, Union etc cast an error
+            return False
+
+    def _morph(self, class_type: "Self", morph_if: type):
+        """ To be overrided by the subclasses.
+        The user used a Path within a Tag and that will turn it into a PathTag when the UI needs it.
+        """
+        if self._is_subclass(morph_if):  # return a blank PathTag
+            return class_type(self.val)
+
     def _get_annotation_parametrized(self):
         if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
             if origin == UnionType:  # might be just `int | None`
