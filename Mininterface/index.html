@@ -476,6 +476,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../Types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Validation/" class="md-nav__link">
         
   
@@ -501,6 +521,26 @@
   
   <span class="md-ellipsis">
     Standalone
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Experimental/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Experimental
   </span>
   
 
@@ -684,9 +724,19 @@
 
 
         <p>The base interface.
-You get one through <a href="../run/"><code>mininterface.run</code></a> which fills CLI arguments and config file to <code>mininterface.env</code>
-or you can create <a href="../Overview/#all-possible-interfaces">one</a> directly (without benefiting from the CLI parsing).</p>
+    You get one through <a href="../run/"><code>mininterface.run</code></a> which fills CLI arguments and config file to <code>mininterface.env</code>
+    or you can create <a href="../Overview/#all-possible-interfaces">one</a> directly (without benefiting from the CLI parsing).</p>
 
+
+<details class="raise" open>
+  <summary>Raise</summary>
+  <p>Cancelled: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.</p>
+</details>
+
+<details class="raise" open>
+  <summary>Raise</summary>
+  <p>InterfaceNotAvailable: Interface failed to init, ex. display not available in GUI.</p>
+</details>
 
 
 
@@ -950,7 +1000,7 @@ Either put options in an iterable:</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | None</code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -960,11 +1010,11 @@ Either put options in an iterable:</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | None</code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If launch=True and the chosen value is a callback, we call it and return None.</p>
+                <p>If launch=True and the chosen value is a callback, we call it and return its result.</p>
               </div>
             </td>
           </tr>

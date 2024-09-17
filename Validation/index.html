@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../Facet/">
+        <link rel="prev" href="../Types/">
       
       
         <link rel="next" href="../Standalone/">
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#validation-alias" class="md-skip">
+        <a href="#validators" class="md-skip">
           Skip to content
         </a>
       
@@ -334,6 +334,26 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../Types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -377,24 +397,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#validation-alias" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation alias
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.Validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#validators" class="md-nav__link">
@@ -467,6 +469,26 @@
   
   
     <li class="md-nav__item">
+      <a href="../Experimental/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Experimental
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Changelog/" class="md-nav__link">
         
   
@@ -503,24 +525,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#validation-alias" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation alias
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.Validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#validators" class="md-nav__link">
@@ -578,7 +582,7 @@
 
   <h1>Validation</h1>
 
-<p>We recommend to use the dataclass and validate with the <code>Annotated</code> keyword.</p>
+<p>We recommend to use the dataclass and validate with the <code>Annotated</code> keyword. We use a <a class="autorefs autorefs-internal" href="../Types/#mininterface.types.Validation">Validation</a> type here.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface.validators</span> <span class="kn">import</span> <span class="n">not_empty</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">Validation</span>
@@ -601,58 +605,7 @@
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_string</span><span class="p">))</span>  <span class="c1"># Tag</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_string</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># hello</span>
 </code></pre></div>
-<h2 id="validation-alias"><code>Validation</code> alias</h2>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<a id="mininterface.Validation"></a>
-    <div class="doc doc-contents first">
-
-        <p>Alias to <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.validation"><code>Tag(validation=...)</code></a></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">Validation</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">my_text</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Validation</span><span class="p">(</span><span class="n">not_empty</span><span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;will not be emtpy&quot;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="c1"># which is an alias for:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="c1"># my_text: Annotated[str, Tag(validation=not_empty)] = &quot;will not be emtpy&quot;</span>
-</code></pre></div>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>check</code></td>
-            <td>
-                  <code><span title="typing.Callable">Callable</span>[[<a class="autorefs autorefs-internal" title="mininterface.tag.Tag" href="../Tag/#mininterface.Tag">Tag</a>], <a class="autorefs autorefs-internal" title="mininterface.tag.ValidationResult" href="../Tag/#mininterface.tag.ValidationResult">ValidationResult</a> | tuple[<a class="autorefs autorefs-internal" title="mininterface.tag.ValidationResult" href="../Tag/#mininterface.tag.ValidationResult">ValidationResult</a>, <a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Callback function.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div><h2 id="validators">validators</h2>
+<h2 id="validators">validators</h2>
 
 
 <div class="doc doc-object doc-module">
