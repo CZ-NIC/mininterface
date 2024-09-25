@@ -503,8 +503,16 @@ class TestAnnotated(TestAbstract):
         self.assertTrue(d[""]["test2"].update(" "))
 
 
-class TestAnnotation(TestAbstract):
+class TestTagAnnotation(TestAbstract):
     """ Tests tag annotation. """
+    # The class name could not be 'TestAnnotation', nor 'TestAnnotation2'. If so, another test on github failed with
+    # StopIteration / During handling of the above exception, another exception occurred:
+    # File "/opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/result.py", line 226, in _clean_tracebacks
+    #     value.__traceback__ = tb
+    # /opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/result.py", line 226
+    #   File "<string>", line 4, in __setattr__
+    # dataclasses.FrozenInstanceError: cannot assign to field '__traceback__'
+    # On local machine, all the tests went fine.
 
     def test_type_discovery(self):
         def _(compared, annotation):
