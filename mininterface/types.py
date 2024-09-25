@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, override
 from typing_extensions import Self
 from .tag import Tag, ValidationResult, TagValue
 
@@ -58,7 +58,7 @@ class PathTag(Tag):
     ![File picker](asset/file_picker.avif)
     """
     # NOTE turn SubmitButton into a Tag too and turn this into a types module.
-    # NOTE Missing in textual. Might implement file filter and be used for validation.
+    # NOTE Missing in textual. Might implement file filter and be used for validation. (ex: file_exist, is_dir)
     # NOTE Path multiple is not recognized: "File 4": Tag([], annotation=list[Path])
     multiple: str = False
     """ The user can select multiple files. """
@@ -67,5 +67,7 @@ class PathTag(Tag):
         super().__post_init__()
         self.annotation = list[Path] if self.multiple else Path
 
-    def _morph(self, *_):
-        return self
+    @override
+    def _morph(self, class_type: "Self", morph_if: type):
+        if class_type == PathTag:
+            return self

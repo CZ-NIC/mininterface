@@ -8,6 +8,7 @@ theme:
 
 plugins:
   - search
+  - mermaid2
   - mkdocstrings:
       handlers:
         python:
@@ -29,7 +30,11 @@ markdown_extensions:
   - pymdownx.snippets
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:  # make exceptions to highlighting of code:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - pymdownx.keys # keyboard keys
   - tables
   - footnotes

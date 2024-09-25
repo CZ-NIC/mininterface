@@ -15,19 +15,19 @@ from mininterface import run
 
 @dataclass
 class Env:
-    """Set of options."""
+    """ This calculates something. """
 
-    test: bool = False
-    """ My testing flag """
+    my_flag: bool = False
+    """ This switches the functionality """
 
-    important_number: int = 4
+    my_number: int = 4
     """ This number is very important """
 
 if __name__ == "__main__":
     env = run(Env, prog="My application").env
     # Attributes are suggested by the IDE
     # along with the hint text 'This number is very important'.
-    print(env.important_number)
+    print(env.my_number)
 ```
 
 # Contents
@@ -42,11 +42,14 @@ if __name__ == "__main__":
 ## You got CLI
 It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
 
+TODO regenerate output and all the images
+TODO it seems that input missing dataclass fields is broken, it just shows it must be set via cli
+
 ```bash
 $ ./hello.py
 usage: My application [-h] [--test | --no-test] [--important-number INT]
 
-Set of options.
+This calculates something.
 
 ╭─ options ──────────────────────────────────────────────────────────╮
 │ -h, --help              show this help message and exit            │
@@ -59,7 +62,7 @@ Set of options.
 Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. They are seamlessly taken as defaults.
 
 ```yaml
-important_number: 555
+my_number: 555
 ```
 
 ## You got dialogues
@@ -67,7 +70,7 @@ Check out several useful methods to handle user dialogues. Here we bound the int
 
 ```python
 with run(Env) as m:
-    print(f"Your important number is {m.env.important_number}")
+    print(f"Your important number is {m.env.my_number}")
     boolean = m.is_yes("Is that alright?")
 ```
 
@@ -82,7 +85,7 @@ Writing a small and useful program might be a task that takes fifteen minutes. A
 
 The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of [tyro](https://github.com/brentyi/tyro) does not require any overhead (as its `argparse` alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:
 * Call it as `program.py --help` to display full help.
-* Use any flag in CLI: `program.py --test`  causes `env.test` be set to `True`.
+* Use any flag in CLI: `program.py --my-flag`  causes `env.my_flag` be set to `True`.
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
 
@@ -160,6 +163,11 @@ m.form(my_dictionary)
 ```
 
 ![List of paths](asset/list_of_paths.avif)
+
+
+
+
+
 
 
 

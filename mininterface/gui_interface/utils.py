@@ -102,7 +102,6 @@ def replace_widgets(nested_widgets, form: TagDict):
         # File dialog
         if path_tag := tag._morph(PathTag, Path):
             grid_info = widget.grid_info()
-            master.grid(row=grid_info['row'], column=grid_info['column'])
 
             widget2 = Button(master, text='👓', command=choose_file_handler(variable, path_tag))
             widget2.grid(row=grid_info['row'], column=grid_info['column']+1)

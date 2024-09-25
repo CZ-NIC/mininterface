@@ -1,5 +1,19 @@
+Via the [run][mininterface.run] function you get access to the CLI, possibly enriched from the config file. Then, you receive all data as [`m.env`][mininterface.Mininterface.env] object and dialog methods in a proper UI.
+
+```mermaid
+graph LR
+    subgraph mininterface
+        run --> GUI
+        run --> TUI
+        run --> env
+        CLI --> run
+        id1[config file] --> CLI
+    end
+    program --> run
+```
+
 ## Basic usage
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] method that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
 
 To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its subclassed [types][mininterface.types]. Ex. for a validation only, use its [`Validation alias`](Validation.md/#validation-alias).
 
@@ -87,11 +101,12 @@ class FurtherConfig:
     host: str = "example.org"
 
 @dataclass
-class Config:
+class Env:
     further: FurtherConfig
 
 ...
-print(config.further.host)  # example.org
+m = run(Env)
+print(m.env.further.host)  # example.org
 ```
 
 The attributes can by defaulted by CLI:

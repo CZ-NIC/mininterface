@@ -121,18 +121,25 @@ def run_tyro_parser(env_class: Type[EnvClass],
                     # (with a graceful message from tyro)
                     pass
                 else:
+                    # get the original attribute name (argparse uses dash instead of underscores)
+                    field_name = argument.dest
+                    if field_name not in env_class.__annotations__:
+                        field_name = field_name.replace("-", "_")
+                    if field_name not in env_class.__annotations__:
+                        raise ValueError(f"Cannot find {field_name} in the configuration object")
+
                     # NOTE: We put '' to the UI to clearly state that the value is missing.
                     # However, the UI then is not able to use the number filtering capabilities.
-                    tag = wf[argument.dest] = Tag("",
-                                                       argument.help.replace("(required)", ""),
-                                                       validation=not_empty,
-                                                       _src_class=env_class,
-                                                       _src_key=argument.dest
-                                                       )
+                    tag = wf[field_name] = Tag("",
+                                               argument.help.replace("(required)", ""),
+                                               validation=not_empty,
+                                               _src_class=env_class,
+                                               _src_key=field_name
+                                               )
                     # Why `type_()`? We need to put a default value so that the parsing will not fail.
                     # A None would be enough because Mininterface will ask for the missing values
                     # promply, however, Pydantic model would fail.
-                    setattr(kwargs["default"], argument.dest, tag.annotation())
+                    setattr(kwargs["default"], field_name, tag.annotation())
 
             # Second attempt to parse CLI
             # Why catching warnings? All the meaningful warnings
@@ -185,7 +192,7 @@ def _parse_cli(env_class: Type[EnvClass],
             # Unfortunately, attrs needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
             static = {key: field.default
-                      for key,field in attr.fields_dict(env_class).items() if not key.startswith("__") and not key in disk}
+                      for key, field in attr.fields_dict(env_class).items() if not key.startswith("__") and not key in disk}
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.

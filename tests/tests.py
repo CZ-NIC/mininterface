@@ -9,7 +9,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ConstrainedEnv, FurtherEnv2, NestedDefaultedEnv,
+from configs import (ConstrainedEnv, FurtherEnv2, FurtherEnv3, MissingUnderscore, NestedDefaultedEnv,
                      NestedMissingEnv, OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
@@ -318,8 +318,19 @@ class TestRun(TestAbstract):
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, ask_for_missing=True, interface=Mininterface)
             self.assertEqual("", stdout.getvalue().strip())
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
+            self.assertEqual("", stdout.getvalue().strip())
+
+    def test_run_ask_for_missing_underscored(self):
+        # Treating underscores
+        form2 = """Asking the form {'token_underscore': Tag(val='', description='', annotation=<class 'str'>, name='token_underscore')}"""
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(MissingUnderscore, True, interface=Mininterface)
+            self.assertEqual(form2, stdout.getvalue().strip())
+        self.sys("--token-underscore", "1")  # dash used instead of an underscore
+
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            run(MissingUnderscore, True, ask_for_missing=True, interface=Mininterface)
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_config_file(self):

@@ -347,7 +347,6 @@ class Tag:
                 return isinstance(val, origin) and all(isinstance(item, subtype) for item in val)
 
     def _is_subclass(self, class_type):
-        print("350: self.annotation", self.annotation)  # TODO
         try:
             return issubclass(self.annotation, class_type)
         except TypeError:  # None, Union etc cast an error

@@ -32,6 +32,11 @@ class FurtherEnv2:
     token: str
     host: str = "example.org"
 
+@dataclass
+class MissingUnderscore:
+    token_underscore: str
+    host: str = "example.org"
+
 
 @dataclass
 class NestedMissingEnv:

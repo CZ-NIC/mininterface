@@ -93,7 +93,7 @@ def run(env_class: Type[EnvClass] | None = None,
             ```python
             @dataclass
             class Env:
-            required_number: int
+                required_number: int
             m = run(Env, ask_for_missing=True)
             ```
 

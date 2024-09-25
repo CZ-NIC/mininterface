@@ -96,7 +96,22 @@ class Mininterface(Generic[EnvClass]):
         raise Cancelled(".. cancelled")
 
     def ask_number(self, text: str) -> int:
-        """ Prompt the user to input a number. Empty input = 0. """
+        """ Prompt the user to input a number. Empty input = 0.
+
+        ```python
+        m = run()  # receives a Mininterface object
+        m.ask_number("What's your age?")
+        ```
+
+        ![Ask number dialog](asset/standalone_number.avif)
+
+        Args:
+            text: The question text.
+
+        Returns:
+            Number
+
+        """
         print("Asking number", text)
         return 0
 
@@ -110,7 +125,7 @@ class Mininterface(Generic[EnvClass]):
                 Either put options in an iterable:
 
                 ```python
-                from mininterface import run, Tag
+                from mininterface import run
                 m = run()
                 m.choice([1, 2])
                 ```
