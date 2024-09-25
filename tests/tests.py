@@ -9,8 +9,8 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ConstrainedEnv, FurtherEnv2, FurtherEnv3, MissingUnderscore, NestedDefaultedEnv,
-                     NestedMissingEnv, OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
+from configs import (ConstrainedEnv, FurtherEnv2, MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
+                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import Mininterface, TextInterface, run
@@ -136,11 +136,11 @@ class TestInteface(TestAbstract):
 
 class TestConversion(TestAbstract):
     def test_tagdict_resolve(self):
-        self.assertEqual({"one":1}, formdict_resolve({"one":1}))
-        self.assertEqual({"one":1}, formdict_resolve({"one":Tag(1)}))
-        self.assertEqual({"one":1}, formdict_resolve({"one":Tag(Tag(1))}))
-        self.assertEqual({"":{"one":1}}, formdict_resolve({"":{"one":Tag(Tag(1))}}))
-        self.assertEqual({"one":1}, formdict_resolve({"":{"one":Tag(Tag(1))}},extract_main=True))
+        self.assertEqual({"one": 1}, formdict_resolve({"one": 1}))
+        self.assertEqual({"one": 1}, formdict_resolve({"one": Tag(1)}))
+        self.assertEqual({"one": 1}, formdict_resolve({"one": Tag(Tag(1))}))
+        self.assertEqual({"": {"one": 1}}, formdict_resolve({"": {"one": Tag(Tag(1))}}))
+        self.assertEqual({"one": 1}, formdict_resolve({"": {"one": Tag(Tag(1))}}, extract_main=True))
 
     def test_normalize_types(self):
         """ Conversion str("") to None and back.
@@ -503,7 +503,23 @@ class TestAnnotated(TestAbstract):
         self.assertTrue(d[""]["test2"].update(" "))
 
 
-class TestParametrizedGeneric(TestAbstract):
+class TestAnnotation(TestAbstract):
+    """ Tests tag annotation. """
+
+    def test_type_discovery(self):
+        def _(compared, annotation):
+            self.assertListEqual(compared, Tag(annotation=annotation)._get_possible_types())
+
+        _([], None)
+        _([(None, str)], str)
+        _([(None, str)], None | str)
+        _([(None, str)], str | None)
+        _([(list, str)], list[str])
+        _([(list, str)], list[str] | None)
+        _([(list, str)], None | list[str])
+        _([(list, str), (tuple, int)], None | list[str] | tuple[int])
+        _([(list, int), (tuple, str), (None, str)], list[int] | tuple[str] | str | None)
+
     def test_generic(self):
         t = Tag("", annotation=list)
         t.update("")
@@ -521,6 +537,13 @@ class TestParametrizedGeneric(TestAbstract):
         t.update("[1,'2',3]")
         self.assertEqual(["1", "2", "3"], t.val)
 
+    def test_single_path_union(self):
+        t = Tag("", annotation=Path | None)
+        t.update("/tmp/")
+        self.assertEqual(Path("/tmp"), t.val)
+        t.update("")
+        self.assertIsNone(t.val)
+
     def test_path(self):
         t = Tag("", annotation=list[Path])
         t.update("['/tmp/','/usr']")
@@ -528,8 +551,18 @@ class TestParametrizedGeneric(TestAbstract):
         self.assertFalse(t.update("[1,2,3]"))
         self.assertFalse(t.update("[/home, /usr]"))  # missing parenthesis
 
+    def test_path_union(self):
+        t = Tag("", annotation=list[Path]|None)
+        t.update("['/tmp/','/usr']")
+        self.assertEqual([Path("/tmp"), Path("/usr")], t.val)
+        self.assertFalse(t.update("[1,2,3]"))
+        self.assertFalse(t.update("[/home, /usr]"))  # missing parenthesis
+        self.assertTrue(t.update("[]"))
+        self.assertEqual([],t.val)
+        self.assertTrue(t.update(""))
+        self.assertIsNone(t.val)
+
     def test_path_cli(self):
-        # self.sys("--paths")
         m = run(ParametrizedGeneric, interface=Mininterface)
         f = dataclass_to_tagdict(m.env, m._descriptions)[""]["paths"]
         self.assertEqual("", f.val)
@@ -546,13 +579,11 @@ class TestParametrizedGeneric(TestAbstract):
 
     def test_choice(self):
         m = run(interface=Mininterface)
-        self.assertIsNone(None, m.choice((1,2,3)))
-        self.assertEqual(2, m.choice((1,2,3), default=2))
-        self.assertEqual(2, m.choice((1,2,3), default=2))
+        self.assertIsNone(None, m.choice((1, 2, 3)))
+        self.assertEqual(2, m.choice((1, 2, 3), default=2))
+        self.assertEqual(2, m.choice((1, 2, 3), default=2))
         self.assertEqual(2, m.choice({"one": 1, "two": 2}, default=2))
-        self.assertEqual(2, m.choice([Tag(1, name="one"), Tag(2, name="two")],default=2))
-
-
+        self.assertEqual(2, m.choice([Tag(1, name="one"), Tag(2, name="two")], default=2))
 
 
 if __name__ == '__main__':

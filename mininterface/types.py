@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, override
-from typing_extensions import Self
-from .tag import Tag, ValidationResult, TagValue
+from typing import Callable
+from typing_extensions import Self, override
+from .tag import Tag, ValidationResult, TagValue, common_iterables
 
 
 def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
@@ -65,7 +65,13 @@ class PathTag(Tag):
 
     def __post_init__(self):
         super().__post_init__()
-        self.annotation = list[Path] if self.multiple else Path
+        if not self.annotation:
+            self.annotation = list[Path] if self.multiple else Path
+        else:
+            for origin, _ in self._get_possible_types():
+                if origin in common_iterables:
+                    self.multiple = True
+                    break
 
     @override
     def _morph(self, class_type: "Self", morph_if: type):

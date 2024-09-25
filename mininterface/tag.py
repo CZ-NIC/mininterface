@@ -1,7 +1,7 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
 from datetime import datetime
-from types import FunctionType, MethodType, UnionType
+from types import FunctionType, MethodType, NoneType, UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
 from warnings import warn
 
@@ -334,7 +334,7 @@ class Tag:
                   'TypeError: cannot be a parameterized generic'
 
         """
-        if self.annotation is None:
+        if self.annotation is None:  # no annotation check, everything is fine then
             return True
         elif self.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             return val is True or val is False
@@ -342,14 +342,20 @@ class Tag:
         try:
             return isinstance(val, self.annotation)
         except TypeError:
-            if complex_ := self._get_annotation_parametrized():
-                origin, subtype = complex_
-                return isinstance(val, origin) and all(isinstance(item, subtype) for item in val)
+            if val is None and NoneType in get_args(self.annotation):
+                return True
+            for origin, subtype in self._get_possible_types():
+                if isinstance(val, origin) and all(isinstance(item, subtype) for item in val):
+                    return True
+            return False
 
     def _is_subclass(self, class_type):
         try:
             return issubclass(self.annotation, class_type)
         except TypeError:  # None, Union etc cast an error
+            for _, subtype in self._get_possible_types():
+                if issubclass(class_type, subtype):
+                    return True
             return False
 
     def _morph(self, class_type: "Self", morph_if: type):
@@ -357,18 +363,32 @@ class Tag:
         The user used a Path within a Tag and that will turn it into a PathTag when the UI needs it.
         """
         if self._is_subclass(morph_if):  # return a blank PathTag
-            return class_type(self.val)
+            return class_type(self.val, annotation=self.annotation)
 
-    def _get_annotation_parametrized(self):
-        if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
-            if origin == UnionType:  # might be just `int | None`
-                return
-            subtype = get_args(self.annotation)  # list[str] -> (str,), list -> ()
-            if (len(subtype) == 1):
-                return origin, subtype[0]
-            else:
-                warn(f"This parametrized generic not implemented: {self.annotation}")
-        return None
+    def _get_possible_types(self) -> list[tuple]:
+        """ Possible types we can cast the value to.
+        For annotation `list[int] | tuple[str] | str | None`,
+        it returns `[(list,int), (tuple,str), (None,str)]`.
+
+        Filters out None.
+        """
+        def _(annot):
+            if origin := get_origin(annot):  # list[str] -> list, list -> None
+                subtype = get_args(annot)  # list[str] -> (str,), list -> ()
+                if origin == UnionType:  # ex: `int | None`, `list[int] | None``
+                    return [_(subt) for subt in subtype]
+                if (len(subtype) == 1):
+                    return origin, subtype[0]
+                else:
+                    warn(f"This parametrized generic not implemented: {annot}")
+            elif annot is not None and annot is not NoneType:
+                # from UnionType, we get a NoneType
+                return None, annot
+            return None    # to be filtered out
+        out = _(self.annotation)
+        return [x for x in (out if isinstance(out, list) else [out]) if x is not None]
+        # return out if isinstance(out, list) else [out]
+
 
     def set_error_text(self, s):
         self._original_desc = o = self.description
@@ -402,9 +422,9 @@ class Tag:
         Ex: [Path("/tmp"), Path("/usr")] -> ["/tmp", "/usr"].
         We need the latter in the UI because in the first case, ast_literal would not not reconstruct it later.
         """
-        if complex_ := self._get_annotation_parametrized():
-            origin, _ = complex_
-            return origin(str(v)for v in self.val)
+        for origin, _ in self._get_possible_types():
+            if origin:
+                return origin(str(v)for v in self.val)
         return self.val
 
     def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
@@ -505,7 +525,7 @@ class Tag:
         # Even though GuiInterface does some type conversion (str → int) independently,
         # other interfaces does not guarantee that. Hence, we need to do the type conversion too.
         if self.annotation:
-            if ui_value == "" and type(None) in get_args(self.annotation):
+            if ui_value == "" and NoneType in get_args(self.annotation):
                 # The user is not able to set the value to None, they left it empty.
                 # Cast back to None as None is one of the allowed types.
                 # Ex: `severity: int | None = None`
@@ -530,14 +550,17 @@ class Tag:
 
             if not self._is_right_instance(out_value) and isinstance(out_value, str):
                 try:
-                    if complex_ := self._get_annotation_parametrized():
-                        origin, cast_to = complex_
-                        # Textual ask_number -> user writes '123', this has to be converted to int 123
-                        # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
-                        # (Maybe that's better now.)
-                        candidate = origin(cast_to(v) for v in literal_eval(ui_value))
+                    for origin, cast_to in self._get_possible_types():
+                        if origin:
+                            # Textual ask_number -> user writes '123', this has to be converted to int 123
+                            # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
+                            # (Maybe that's better now.)
+                            candidate = origin(cast_to(v) for v in literal_eval(ui_value))
+                        else:
+                            candidate = cast_to(ui_value)
                         if self._is_right_instance(candidate):
                             out_value = candidate
+                            break
                     else:
                         out_value = self.annotation(ui_value)
                 except (TypeError, ValueError, SyntaxError):

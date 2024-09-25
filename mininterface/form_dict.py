@@ -3,7 +3,7 @@
 """
 import logging
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union, get_args, get_type_hints
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -116,7 +116,7 @@ def dataclass_to_tagdict(env: EnvClass, descr: dict, facet: "Facet" = None, _pat
     for param, val in vars(env).items():
         annotation = get_type_hints(env.__class__).get(param)
         if val is None:
-            if annotation in (Optional[int], Optional[str]):
+            if type(None) in get_args(annotation):
                 # Since tkinter_form does not handle None yet, we have help it.
                 # We need it to be able to write a number and if empty, return None.
                 # This would fail: `severity: int | None = None`
