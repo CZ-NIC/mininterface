@@ -486,19 +486,19 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Set of options.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; This calculates something. &quot;&quot;&quot;</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">test</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; My testing flag &quot;&quot;&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; This switches the functionality &quot;&quot;&quot;</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">important_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; This number is very important &quot;&quot;&quot;</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">env</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">prog</span><span class="o">=</span><span class="s2">&quot;My application&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">env</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># Attributes are suggested by the IDE</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="c1"># along with the hint text &#39;This number is very important&#39;.</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">important_number</span><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
 </code></pre></div>
 <h1 id="contents">Contents</h1>
 <ul>
@@ -512,10 +512,12 @@
 </ul>
 <h2 id="you-got-cli">You got CLI</h2>
 <p>It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.</p>
+<p>TODO regenerate output and all the images
+TODO it seems that input missing dataclass fields is broken, it just shows it must be set via cli</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$<span class="w"> </span>./hello.py
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>usage:<span class="w"> </span>My<span class="w"> </span>application<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--test<span class="w"> </span><span class="p">|</span><span class="w"> </span>--no-test<span class="o">]</span><span class="w"> </span><span class="o">[</span>--important-number<span class="w"> </span>INT<span class="o">]</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Set<span class="w"> </span>of<span class="w"> </span>options.
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>This<span class="w"> </span>calculates<span class="w"> </span>something.
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>╭─<span class="w"> </span>options<span class="w"> </span>──────────────────────────────────────────────────────────╮
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">              </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">            </span>│
@@ -525,12 +527,12 @@
 </code></pre></div>
 <h2 id="you-got-config-file-management">You got config file management</h2>
 <p>Loading config file is a piece of cake. Alongside <code>program.py</code>, put <code>program.yaml</code> and put there some of the arguments. They are seamlessly taken as defaults.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">important_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">555</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">my_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">555</span>
 </code></pre></div>
 <h2 id="you-got-dialogues">You got dialogues</h2>
 <p>Check out several useful methods to handle user dialogues. Here we bound the interface to a <code>with</code> statement that redirects stdout directly to the window.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Your important number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">important_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Your important number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">boolean</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">is_yes</span><span class="p">(</span><span class="s2">&quot;Is that alright?&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><img alt="Small window with the text 'Your important number'" src="asset/hello-with-statement.webp" title="With statement to redirect the output" />
@@ -540,7 +542,7 @@
 <p>Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. <code>Mininterface</code> is here to help.</p>
 <p>The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of <a href="https://github.com/brentyi/tyro">tyro</a> does not require any overhead (as its <code>argparse</code> alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:
 * Call it as <code>program.py --help</code> to display full help.
-* Use any flag in CLI: <code>program.py --test</code>  causes <code>env.test</code> be set to <code>True</code>.
+* Use any flag in CLI: <code>program.py --my-flag</code>  causes <code>env.my_flag</code> be set to <code>True</code>.
 * The main benefit: Launch it without parameters as <code>program.py</code> to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.</p>
 <h1 id="installation">Installation</h1>
