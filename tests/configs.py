@@ -1,10 +1,17 @@
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
 from mininterface import Tag
-from mininterface.types import Validation, Choices
+from mininterface.types import Choices, Validation
 from mininterface.validators import not_empty
+
+
+class ColorEnum(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
 
 
 @dataclass
@@ -31,6 +38,7 @@ class NestedDefaultedEnv:
 class FurtherEnv2:
     token: str
     host: str = "example.org"
+
 
 @dataclass
 class MissingUnderscore:
@@ -77,6 +85,7 @@ class ConstrainedEnv:
     test2: Annotated[str, Validation(not_empty)] = "hello"
 
     choices: Annotated[str, Choices("one", "two")] = "one"
+
 
 @dataclass
 class ParametrizedGeneric:

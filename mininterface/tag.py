@@ -1,8 +1,9 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
 from datetime import datetime
+from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, get_args, get_origin, get_type_hints
 from warnings import warn
 
 from .experimental import SubmitButton
@@ -46,10 +47,12 @@ PydanticFieldInfo = TypeVar("PydanticFieldInfo")
 AttrsFieldInfo = TypeVar("AttrsFieldInfo")
 common_iterables = list, tuple, set
 ChoiceLabel = str
-ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue]
+ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue] | list[Enum] | Type[Enum]
 """ You can denote the choices in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
 Values might be Tags as well.
+
+See [mininterface.choice][mininterface.Mininterface.choice] for examples.
 """
 
 
@@ -387,8 +390,6 @@ class Tag:
             return None    # to be filtered out
         out = _(self.annotation)
         return [x for x in (out if isinstance(out, list) else [out]) if x is not None]
-        # return out if isinstance(out, list) else [out]
-
 
     def set_error_text(self, s):
         self._original_desc = o = self.description
@@ -434,6 +435,8 @@ class Tag:
                 return v.__name__
             if isinstance(v, Tag):
                 return v.name
+            if isinstance(v, Enum):  # enum collection, ex: list(Color.RED, Color.BLUE)
+                return v.value
             return v
 
         if self.choices is None:
@@ -442,6 +445,9 @@ class Tag:
             return self.choices
         if isinstance(self.choices, common_iterables):
             return {_edit(v): v for v in self.choices}
+        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=Color(Enum)
+            return {v.value: v for v in list(self.choices)}
+
         warn(f"Not implemented choices: {self.choices}")
 
     def _validate(self, out_value) -> TagValue:

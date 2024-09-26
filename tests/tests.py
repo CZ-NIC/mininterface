@@ -9,7 +9,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ConstrainedEnv, FurtherEnv2, MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
+from configs import (ColorEnum, ConstrainedEnv, FurtherEnv2, MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
@@ -290,6 +290,17 @@ class TestConversion(TestAbstract):
 
         # self.assertEqual(m.choice(["one", "two"]), "two")
 
+    def test_choice_enum(self):
+        # Enum type supported
+        t1 = Tag(ColorEnum.GREEN, choices=ColorEnum)
+        t1.update(ColorEnum.BLUE.value)
+        self.assertEqual(ColorEnum.BLUE, t1.val)
+
+        # list of enums supported
+        t2 = Tag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
+        t2.update(ColorEnum.BLUE.value)
+        self.assertEqual(ColorEnum.BLUE, t2.val)
+
 
 class TestRun(TestAbstract):
     def test_run_ask_empty(self):
@@ -560,13 +571,13 @@ class TestTagAnnotation(TestAbstract):
         self.assertFalse(t.update("[/home, /usr]"))  # missing parenthesis
 
     def test_path_union(self):
-        t = Tag("", annotation=list[Path]|None)
+        t = Tag("", annotation=list[Path] | None)
         t.update("['/tmp/','/usr']")
         self.assertEqual([Path("/tmp"), Path("/usr")], t.val)
         self.assertFalse(t.update("[1,2,3]"))
         self.assertFalse(t.update("[/home, /usr]"))  # missing parenthesis
         self.assertTrue(t.update("[]"))
-        self.assertEqual([],t.val)
+        self.assertEqual([], t.val)
         self.assertTrue(t.update(""))
         self.assertIsNone(t.val)
 
@@ -585,13 +596,20 @@ class TestTagAnnotation(TestAbstract):
         self.assertEqual([Path("/var")], f.val)
         self.assertEqual(['/var'], f._get_ui_val())
 
-    def test_choice(self):
+    def test_choice_method(self):
         m = run(interface=Mininterface)
         self.assertIsNone(None, m.choice((1, 2, 3)))
         self.assertEqual(2, m.choice((1, 2, 3), default=2))
         self.assertEqual(2, m.choice((1, 2, 3), default=2))
         self.assertEqual(2, m.choice({"one": 1, "two": 2}, default=2))
         self.assertEqual(2, m.choice([Tag(1, name="one"), Tag(2, name="two")], default=2))
+
+        # Enum type
+        self.assertEqual(ColorEnum.GREEN, m.choice(ColorEnum, default=ColorEnum.GREEN))
+
+        # list of enums
+        self.assertEqual(ColorEnum.GREEN, m.choice([ColorEnum.BLUE, ColorEnum.GREEN], default=ColorEnum.GREEN))
+        self.assertEqual(ColorEnum.BLUE, m.choice([ColorEnum.BLUE]))
 
 
 if __name__ == '__main__':

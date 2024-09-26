@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic
@@ -145,6 +146,28 @@ class Mininterface(Generic[EnvClass]):
                 ```
 
                 ![Choices with labels](asset/choices_labels.avif)
+
+                Alternatively, you may use an Enum.
+
+                ```python
+                class Color(Enum):
+                    RED = "red"
+                    GREEN = "green"
+                    BLUE = "blue"
+
+                m.choice(Color)
+                ```
+
+                ![Choices from enum](asset/choice_enum_type.avif)
+
+                Alternatively, you may use an Enum instances list.
+
+                ```python
+                m.choice([Color.GREEN, Color.BLUE])
+                ```
+
+                ![Choices from enum list](asset/choice_enum_list.avif)
+
             title: Form title
             default: The value of the checked choice.
 
@@ -162,8 +185,8 @@ class Mininterface(Generic[EnvClass]):
         """
         # NOTE to build a nice menu, I need this
         # Args:
-            # guesses: Choices to be highlighted.
-            # multiple: Multiple choice.
+        # guesses: Choices to be highlighted.
+        # multiple: Multiple choice.
         # Returns: If multiple=True, list of the chosen values.
         #
         # * Check: When inputing choices as Tags, make sure the original Tag.val changes too.
@@ -173,7 +196,10 @@ class Mininterface(Generic[EnvClass]):
         # m = run(Env)
         # tag = Tag(x, choices=["one", "two", x])
         if skippable and len(choices) == 1:
-            out = choices[0]
+            if isinstance(choices, type) and issubclass(choices, Enum):
+                out = list(choices)[0]
+            else:
+                out = choices[0]
         else:
             tag = Tag(val=default, choices=choices)
             key = title or "Choose"
