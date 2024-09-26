@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from io import StringIO
-from pathlib import Path
+from pathlib import Path, PosixPath
 from types import SimpleNamespace
 from unittest import TestCase, main
 from unittest.mock import patch
@@ -298,8 +298,21 @@ class TestConversion(TestAbstract):
 
         # list of enums supported
         t2 = Tag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
+        self.assertEqual({v.value: v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._get_choices())
         t2.update(ColorEnum.BLUE.value)
         self.assertEqual(ColorEnum.BLUE, t2.val)
+
+        # Enum type supported even without explicit definition
+        t3 = Tag(ColorEnum.GREEN)
+        self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
+        self.assertEqual({v.value: v for v in list(ColorEnum)}, t3._get_choices())
+        t3.update(ColorEnum.BLUE.value)
+        self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
+        self.assertEqual(ColorEnum.BLUE, t3.val)
+
+        t4 = Tag(ColorEnum)
+        t4.update(ColorEnum.BLUE.value)
+        self.assertEqual(ColorEnum.BLUE, t4.val)
 
 
 class TestRun(TestAbstract):
@@ -525,6 +538,17 @@ class TestTagAnnotation(TestAbstract):
     # dataclasses.FrozenInstanceError: cannot assign to field '__traceback__'
     # On local machine, all the tests went fine.
 
+    def test_type_guess(self):
+        def _(type_, val):
+            self.assertEqual(type_, Tag(val).annotation)
+
+        _(int, 1)
+        _(str, "1")
+        _(list, [])
+        _(list[PosixPath], [PosixPath("/tmp")])
+        _(list, [PosixPath("/tmp"), 2])
+        _(set[PosixPath], set((PosixPath("/tmp"),)))
+
     def test_type_discovery(self):
         def _(compared, annotation):
             self.assertListEqual(compared, Tag(annotation=annotation)._get_possible_types())
@@ -538,6 +562,19 @@ class TestTagAnnotation(TestAbstract):
         _([(list, str)], None | list[str])
         _([(list, str), (tuple, int)], None | list[str] | tuple[int])
         _([(list, int), (tuple, str), (None, str)], list[int] | tuple[str] | str | None)
+
+    def test_subclass_check(self):
+        def _(compared, annotation, true=True):
+            getattr(self, "assertTrue" if true else "assertFalse")(Tag(annotation=annotation)._is_subclass(compared))
+
+        _(int, int)
+        _(list, list)
+        _(Path, Path)
+        _(Path, list[Path])
+        _(PosixPath, list[Path])
+        _(Path, list[PosixPath], False)
+        _(PosixPath, list[PosixPath])
+        _((Path, PosixPath), list[Path])
 
     def test_generic(self):
         t = Tag("", annotation=list)

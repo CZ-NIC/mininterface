@@ -117,7 +117,7 @@ class Mininterface(Generic[EnvClass]):
         return 0
 
     def choice(self, choices: ChoicesType, title: str = "", _guesses=None,
-               skippable: bool = True, launch: bool = True, _multiple=True, default: str | None = None
+               skippable: bool = True, launch: bool = True, _multiple=True, default: str | TagValue | None = None
                ) -> TagValue | list[TagValue] | Any:
         """ Prompt the user to select. Useful for a menu creation.
 
@@ -210,7 +210,32 @@ class Mininterface(Generic[EnvClass]):
         return out
 
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
-        """ Prompt the user to fill up whole form.
+        """ Prompt the user to fill up an arbitrary form.
+
+        Use scalars, enums, enum instances, objects like datetime, Paths or their list.
+
+        ```python
+        from enum import Enum
+        from mininterface import run, Tag
+
+        class Color(Enum):
+            RED = "red"
+            GREEN = "green"
+            BLUE = "blue"
+
+        m = run()
+        out = m.form({
+            "my_number": 1,
+            "my_boolean": True,
+            "my_enum": Color,
+            "my_tagged": Tag("", name='Tagged value', description='Long hint'),
+            "my_path": Path("/tmp"),
+            "my_paths": [Path("/tmp")],
+            "My enum with default": Color.BLUE
+        })
+        ```
+
+        ![Complex form dict](asset/complex_form_dict.avif)
 
         Args:
             form: Dict of `{labels: value}`. The form widget infers from the default value type.

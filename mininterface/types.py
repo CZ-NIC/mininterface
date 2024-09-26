@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 from typing_extensions import Self, override
-from .tag import Tag, ValidationResult, TagValue, common_iterables
+from .auxiliary import common_iterables
+from .tag import Tag, ValidationResult, TagValue
 
 
 def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
@@ -74,6 +75,6 @@ class PathTag(Tag):
                     break
 
     @override
-    def _morph(self, class_type: "Self", morph_if: type):
+    def _morph(self, class_type: "Self", morph_if: type | tuple[type]):
         if class_type == PathTag:
             return self

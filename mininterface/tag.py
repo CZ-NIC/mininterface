@@ -9,7 +9,7 @@ from warnings import warn
 from .experimental import SubmitButton
 
 
-from .auxiliary import flatten
+from .auxiliary import common_iterables, flatten, guess_type
 
 if TYPE_CHECKING:
     from .facet import Facet
@@ -45,7 +45,6 @@ ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo")
 AttrsFieldInfo = TypeVar("AttrsFieldInfo")
-common_iterables = list, tuple, set
 ChoiceLabel = str
 ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue] | list[Enum] | Type[Enum]
 """ You can denote the choices in many ways.
@@ -254,11 +253,17 @@ class Tag:
                 except attr.exceptions.NotAnAttrsClassError:
                     pass
         if not self.annotation and self.val is not None and not self.choices:
-            # When having choices with None default self.val, this would impose self.val be of a NoneType,
-            # preventing it to set a value.
-            # Why checking self.val is not None? We do not want to end up with
-            # annotated as a NoneType.
-            self.annotation = type(self.val)
+            if isinstance(self.val, Enum):  # Enum instance, ex: val=ColorEnum.RED
+                self.choices = self.val.__class__
+            elif isinstance(self.val, type) and issubclass(self.val, Enum):  # Enum type, ex: val=ColorEnum
+                self.choices = self.val
+                self.val = None
+            else:
+                # When having choices with None default self.val, this would impose self.val be of a NoneType,
+                # preventing it to set a value.
+                # Why checking self.val is not None? We do not want to end up with
+                # annotated as a NoneType.
+                self.annotation = guess_type(self.val)
 
         if self.annotation is SubmitButton:
             self.val = False
@@ -352,16 +357,22 @@ class Tag:
                     return True
             return False
 
-    def _is_subclass(self, class_type):
+    def _is_subclass(self, class_type: type | tuple[type]):
         try:
-            return issubclass(self.annotation, class_type)
+            if issubclass(self.annotation, class_type):
+                return True
         except TypeError:  # None, Union etc cast an error
-            for _, subtype in self._get_possible_types():
-                if issubclass(class_type, subtype):
+            pass
+        for _, subtype in self._get_possible_types():
+            # ex: checking that class_type=Path is subclass of annotation=list[Path] <=> subtype=Path
+            if isinstance(class_type, tuple):  # (PosixPath, Path)
+                if any(issubclass(ct, subtype) for ct in class_type):
                     return True
-            return False
+            elif issubclass(class_type, subtype):  # tuple woud
+                return True
+        return False
 
-    def _morph(self, class_type: "Self", morph_if: type):
+    def _morph(self, class_type: "Self", morph_if: type | tuple[type]):
         """ To be overrided by the subclasses.
         The user used a Path within a Tag and that will turn it into a PathTag when the UI needs it.
         """
@@ -426,6 +437,8 @@ class Tag:
         for origin, _ in self._get_possible_types():
             if origin:
                 return origin(str(v)for v in self.val)
+        if isinstance(self.val, Enum):
+            return self.val.value
         return self.val
 
     def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
@@ -435,7 +448,7 @@ class Tag:
                 return v.__name__
             if isinstance(v, Tag):
                 return v.name
-            if isinstance(v, Enum):  # enum collection, ex: list(Color.RED, Color.BLUE)
+            if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
                 return v.value
             return v
 
@@ -445,7 +458,7 @@ class Tag:
             return self.choices
         if isinstance(self.choices, common_iterables):
             return {_edit(v): v for v in self.choices}
-        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=Color(Enum)
+        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
             return {v.value: v for v in list(self.choices)}
 
         warn(f"Not implemented choices: {self.choices}")
@@ -545,7 +558,7 @@ class Tag:
                 # basic support for iterables, however, it will not work for custom subclasses of these built-ins
                 try:
                     out_value = literal_eval(ui_value)
-                except SyntaxError:
+                except (SyntaxError, ValueError):
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
             elif self.annotation is datetime:

@@ -1,10 +1,10 @@
-from pathlib import Path
+from pathlib import Path, PosixPath
 from tkinter import Button, Entry, Variable, Widget
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 
 from ..types import PathTag
-from ..auxiliary import flatten
+from ..auxiliary import flatten, flatten_keys
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
@@ -77,18 +77,17 @@ def replace_widgets(nested_widgets, form: TagDict):
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
-    for tag, (label1, widget) in zip(flatten(form), flatten(nested_widgets)):
+    for (var_name, tag), (label1, widget) in zip(flatten_keys(form), flatten(nested_widgets)):
         tag: Tag
         label1: Widget
         widget: Widget
-        var_name = tag._original_name or label1.cget("text")
         variable = widget.master._Form__vars[var_name]
         subwidgets = []
         master = widget.master
 
         # Replace with radio buttons
         if tag.choices:
-            variable = Variable(value=tag.val)
+            variable = Variable(value=tag._get_ui_val())
             grid_info = _fetch(variable)
 
             nested_frame = Frame(master)
@@ -100,7 +99,7 @@ def replace_widgets(nested_widgets, form: TagDict):
                 subwidgets.append(widget2)
 
         # File dialog
-        if path_tag := tag._morph(PathTag, Path):
+        if path_tag := tag._morph(PathTag, (PosixPath, Path)):
             grid_info = widget.grid_info()
 
             widget2 = Button(master, text='…', command=choose_file_handler(variable, path_tag))
