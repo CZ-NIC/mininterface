@@ -42,8 +42,6 @@ if __name__ == "__main__":
 ## You got CLI
 It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
 
-TODO regenerate output and all the images
-TODO it seems that input missing dataclass fields is broken, it just shows it must be set via cli
 
 ```bash
 $ ./hello.py
@@ -163,6 +161,13 @@ m.form(my_dictionary)
 ```
 
 ![List of paths](asset/list_of_paths.avif)
+
+
+
+
+
+
+
 
 
 

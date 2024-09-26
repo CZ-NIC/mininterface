@@ -196,11 +196,12 @@ class Mininterface(Generic[EnvClass]):
             title: Optional form title
 
         Returns:
-            dict or dataclass:
+            dataclass:
                 If the `form` is null, the output is [`self.env`][mininterface.Mininterface.env].
-
+            dict:
                 If the `form` is a dict, the output is another dict.
-                Whereas the original form stays intact (with the values update),
+
+                Whereas the original dict stays intact (with the values updated),
                 we return a new raw dict with all values resolved
                 (all [`Tag`][mininterface.Tag] objects are resolved to their value).
 
@@ -215,6 +216,7 @@ class Mininterface(Generic[EnvClass]):
                 print(output["my label"])  # False
                 ```
 
+                ---
                 Why this behaviour? You need to do some validation, hence you put
                 `Tag` objects in the input dict. Then, you just need to work with the values.
 
