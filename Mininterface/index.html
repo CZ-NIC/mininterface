@@ -1147,21 +1147,29 @@ A checkbox example: <code>{"my label": Tag(True, "my description")}</code></p>
     <table>
       <thead>
         <tr>
-          <th>Type</th>
+<th>Name</th>          <th>Type</th>
           <th>Description</th>
         </tr>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td>
+<td><code>dataclass</code></td>            <td>
                   <code><span title="mininterface.form_dict.FormDictOrEnv">FormDictOrEnv</span> | <span title="mininterface.form_dict.EnvClass">EnvClass</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>dict or dataclass:
-If the <code>form</code> is null, the output is <a class="autorefs autorefs-internal" href="#mininterface.Mininterface.env"><code>self.env</code></a>.</p>
-<p>If the <code>form</code> is a dict, the output is another dict.
-Whereas the original form stays intact (with the values update),
+                <p>If the <code>form</code> is null, the output is <a class="autorefs autorefs-internal" href="#mininterface.Mininterface.env"><code>self.env</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>dict</code></td>            <td>
+                  <code><span title="mininterface.form_dict.FormDictOrEnv">FormDictOrEnv</span> | <span title="mininterface.form_dict.EnvClass">EnvClass</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the <code>form</code> is a dict, the output is another dict.</p>
+<p>Whereas the original dict stays intact (with the values updated),
 we return a new raw dict with all values resolved
 (all <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> objects are resolved to their value).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">original</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;my label&quot;</span><span class="p">:</span> <span class="n">Tag</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;my description&quot;</span><span class="p">)}</span>
@@ -1173,6 +1181,7 @@ we return a new raw dict with all values resolved
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Output dict is resolved, contains only raw values</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;my label&quot;</span><span class="p">])</span>  <span class="c1"># False</span>
 </code></pre></div>
+<hr />
 <p>Why this behaviour? You need to do some validation, hence you put
 <code>Tag</code> objects in the input dict. Then, you just need to work with the values.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">original</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;my label&quot;</span><span class="p">:</span> <span class="n">Tag</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;my description&quot;</span><span class="p">)}</span>
