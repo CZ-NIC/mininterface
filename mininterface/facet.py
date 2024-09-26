@@ -40,8 +40,21 @@ class Facet:
 
     @abstractmethod
     def submit(self):
-        """ Submits the whole form """
-        # NOTE (ex. for checkbox on_change), docs
+        """ Submits the whole form.
+
+        ```python
+        from mininterface import run, Tag
+
+        def callback(tag: Tag):
+            tag.facet.submit()
+
+        m = run()
+        out = m.form({
+            "My choice": Tag(choices=["one", "two"], on_change=callback)
+        })
+        # continue here immediately after clicking on a radio button
+
+        """
         ...
 
     # NOTE we should get

@@ -87,7 +87,7 @@ def dict_to_tagdict(data: dict, facet: "Facet" = None) -> TagDict:
         else:  # scalar or Tag value
             d = {"facet": facet}
             if not isinstance(val, Tag):
-                tag = Tag(val, "", name=key, _src_dict= data, _src_key= key, **d)
+                tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
             else:
                 tag = val._fetch_from(Tag(**d))
             fd[key] = tag

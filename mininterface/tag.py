@@ -299,7 +299,7 @@ class Tag:
         """ Fetches public attributes from another instance.
         (Skips the attributes that are already set.)
         """
-        for attr in ['val', 'annotation', 'name', 'validation', 'choices', 'on_change']:
+        for attr in ['val', 'annotation', 'name', 'validation', 'choices', 'on_change', "facet"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, getattr(tag, attr))
         if self.description == "":

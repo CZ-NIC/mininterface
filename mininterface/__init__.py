@@ -28,6 +28,11 @@ except ImportError:
 class TuiInterface(TextualInterface or TextInterface):
     pass
 
+# NOTE:
+# ask_for_missing does not work with tyro Positional, stays missing.
+# @dataclass
+#class Env:
+#   files: Positional[list[Path]]
 
 def run(env_class: Type[EnvClass] | None = None,
         ask_on_empty_cli: bool = False,
