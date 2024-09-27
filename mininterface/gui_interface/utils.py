@@ -1,11 +1,13 @@
+from autocombobox import AutoCombobox
 from pathlib import Path, PosixPath
 from tkinter import Button, Entry, Variable, Widget
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 
+
 from ..types import PathTag
 from ..auxiliary import flatten, flatten_keys
-from ..experimental import FacetCallback, SubmitButton
+from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
 
@@ -93,10 +95,17 @@ def replace_widgets(nested_widgets, form: TagDict):
             nested_frame = Frame(master)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-            for i, choice_label in enumerate(tag._get_choices()):
-                widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
-                widget2.grid(row=i, column=1)
-                subwidgets.append(widget2)
+            if len(tag._get_choices()) > MININTERFACE_CONFIG["gui"]["combobox_since"]:
+                combobox = AutoCombobox(nested_frame, textvariable=variable)
+                combobox['values'] = list(tag._get_choices())
+                combobox.pack()
+                combobox.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+
+            else:
+                for i, choice_label in enumerate(tag._get_choices()):
+                    widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
+                    widget2.grid(row=i, column=1, sticky="w")
+                    subwidgets.append(widget2)
 
         # File dialog
         if path_tag := tag._morph(PathTag, (PosixPath, Path)):

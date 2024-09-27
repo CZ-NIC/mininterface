@@ -13,6 +13,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+autocombobox = "1.4.2"
 tyro = "*"
 pyyaml = "*"
 requests = "*"

@@ -38,7 +38,6 @@ class SubmitButton:
     # NOTE I would prefer this is a mere type, not a class.
 
 
-
 # class Foo:
 #     def test(self):
 #         if isinstance(self, Bar):
@@ -52,3 +51,7 @@ class FacetCallback():
     """
     pass
     # NOTE, just a stub
+
+
+# NOTE should we use the dataclasses, isn't that slow?
+MININTERFACE_CONFIG = {"gui": {"combobox_since": 5}}
