@@ -22,7 +22,7 @@ class TkWindow(Tk, BackendAdaptor):
 
     def __init__(self, interface: "GuiInterface"):
         super().__init__()
-        self.facet = interface.facet = TkFacet(self)
+        self.facet = interface.facet = TkFacet(self, interface.env)
         self.params = None
         self._result = None
         self._event_bindings = {}
@@ -59,6 +59,7 @@ class TkWindow(Tk, BackendAdaptor):
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
+        self.facet._fetch_from_adaptor(form)
         if title:
             self.facet.set_title(title)
 

@@ -39,9 +39,9 @@ class TextualApp(App[bool | None]):
 
     def __init__(self, interface: "TextualInterface"):
         super().__init__()
-        self.facet = interface.facet
-        self.facet.window = self
-        self.title = self.facet._title
+        TextualApp.facet = interface.facet
+        TextualApp.facet.window = self
+        self.title = TextualApp.facet._title
         self.widgets: WidgetList = None
         self.focused_i: int = 0
         self.interface = interface
@@ -79,6 +79,7 @@ class TextualApp(App[bool | None]):
     # Why class method? I do not know how to re-create the dialog if needed.
     @classmethod
     def run_dialog(cls, window: "TextualApp", form: TagDict, title: str = "") -> TagDict:
+        cls.facet._fetch_from_adaptor(form)
         if title:
             window.title = title
 

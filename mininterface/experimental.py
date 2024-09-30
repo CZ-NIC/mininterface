@@ -35,7 +35,9 @@ class SubmitButton:
     ![Submit button](asset/submitButton.avif)
     """
     pass
-    # NOTE I would prefer this is a mere type, not a class.
+    # NOTE I would prefer this is Xa mere type , not a class.
+    # a SubmitTag, inherited from the Tag.
+    # If the val is fn, launch it. The name is the button text. The description would work.
 
 
 # class Foo:

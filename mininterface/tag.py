@@ -318,7 +318,7 @@ class Tag:
     def _on_change_trigger(self, ui_val):
         """ Trigger on_change only if the value has changed and if the validation succeeds. """
         if self._last_ui_val != ui_val:
-            # NOTE we should refresh the Widget when update fails. However, facet does not allow method for that yet.
+            # NOTE we should refresh the Widget when update fails; see facet comment
             if self.update(ui_val) and self.on_change:
                 self.on_change(self)
             self._last_ui_val = ui_val
@@ -449,8 +449,8 @@ class Tag:
             if isinstance(v, Tag):
                 return v.name
             if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
-                return v.value
-            return v
+                return str(v.value)
+            return str(v)
 
         if self.choices is None:
             return {}
@@ -459,7 +459,7 @@ class Tag:
         if isinstance(self.choices, common_iterables):
             return {_edit(v): v for v in self.choices}
         if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
-            return {v.value: v for v in list(self.choices)}
+            return {str(v.value): v for v in list(self.choices)}
 
         warn(f"Not implemented choices: {self.choices}")
 

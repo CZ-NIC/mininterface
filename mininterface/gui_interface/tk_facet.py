@@ -4,9 +4,9 @@ from ..facet import Facet
 if TYPE_CHECKING:
     from .tk_window import TkWindow
 
+
 class TkFacet(Facet):
-    def __init__(self, window: "TkWindow"):
-        self.window = window
+    window: "TkWindow"
 
     def set_title(self, title: str):
         if not title:

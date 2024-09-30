@@ -293,25 +293,25 @@ class TestConversion(TestAbstract):
     def test_choice_enum(self):
         # Enum type supported
         t1 = Tag(ColorEnum.GREEN, choices=ColorEnum)
-        t1.update(ColorEnum.BLUE.value)
+        t1.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t1.val)
 
         # list of enums supported
         t2 = Tag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
-        self.assertEqual({v.value: v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._get_choices())
-        t2.update(ColorEnum.BLUE.value)
+        self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._get_choices())
+        t2.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t2.val)
 
         # Enum type supported even without explicit definition
         t3 = Tag(ColorEnum.GREEN)
         self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
-        self.assertEqual({v.value: v for v in list(ColorEnum)}, t3._get_choices())
-        t3.update(ColorEnum.BLUE.value)
+        self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._get_choices())
+        t3.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
         self.assertEqual(ColorEnum.BLUE, t3.val)
-
         t4 = Tag(ColorEnum)
-        t4.update(ColorEnum.BLUE.value)
+        self.assertIsNone(t4.val)
+        t4.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t4.val)
 
 

@@ -21,7 +21,7 @@ class TextualInterface(Redirectable, TextInterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.facet: TextualFacet = TextualFacet(self)  # since no app is running
+        self.facet: TextualFacet = TextualFacet(None, self.env)  # window=None, since no app is running
 
     def _get_app(self):
         return TextualApp(self)

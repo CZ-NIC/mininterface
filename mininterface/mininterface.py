@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic
 
 from .common import Cancelled
-from .facet import Facet, MinFacet
+from .facet import Facet
 from .form_dict import EnvClass, FormDictOrEnv, dict_to_tagdict, formdict_resolve
 from .tag import ChoicesType, Tag, TagValue
 
@@ -61,7 +61,7 @@ class Mininterface(Generic[EnvClass]):
 
         """
 
-        self.facet: Facet = MinFacet()
+        self.facet = Facet(None, self.env)
         """ Access to the UI [`facet`][mininterface.facet.Facet] from the back-end side.
         (Read [`Tag.facet`][mininterface.Tag.facet] to access from the front-end side.)
 
@@ -209,6 +209,7 @@ class Mininterface(Generic[EnvClass]):
             return out()
         return out
 
+    # NOTE: parameter submit_button = str (button text) or False to do not display the button
     def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
         """ Prompt the user to fill up an arbitrary form.
 

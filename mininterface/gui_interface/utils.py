@@ -1,6 +1,6 @@
 from autocombobox import AutoCombobox
 from pathlib import Path, PosixPath
-from tkinter import Button, Entry, Variable, Widget
+from tkinter import Button, Entry, TclError, Variable, Widget
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 
@@ -61,7 +61,16 @@ def choose_file_handler(variable: Variable, tag: PathTag):
 
 def on_change_handler(variable: Variable, tag: Tag):
     """ Closure handler """
-    return lambda *_: tag._on_change_trigger(variable.get())
+    def _(*_):
+        try:
+            return tag._on_change_trigger(variable.get())
+        except TclError:
+            # Ex: putting there an empty value to an input entry,
+            # self._tk.getdouble(value))
+            # _tkinter.TclError: expected floating-point number but got ""
+            # NOTE we should refresh the Widget; see facet comment
+            pass
+    return _
 
 
 def _set_true(variable: Variable, tag: Tag):
@@ -96,10 +105,10 @@ def replace_widgets(nested_widgets, form: TagDict):
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
             if len(tag._get_choices()) > MININTERFACE_CONFIG["gui"]["combobox_since"]:
-                combobox = AutoCombobox(nested_frame, textvariable=variable)
-                combobox['values'] = list(tag._get_choices())
-                combobox.pack()
-                combobox.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+                widget = AutoCombobox(nested_frame, textvariable=variable)
+                widget['values'] = list(tag._get_choices())
+                widget.pack()
+                widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
 
             else:
                 for i, choice_label in enumerate(tag._get_choices()):
@@ -131,7 +140,9 @@ def replace_widgets(nested_widgets, form: TagDict):
         tag._last_ui_val = variable.get()
         for w in subwidgets + [widget]:
             h = on_change_handler(variable, tag)
-            if isinstance(w, (Entry, Combobox)):
+            if isinstance(w, Combobox):
+                w.bind("<<ComboboxSelected>>", h)
+            elif isinstance(w, Entry):
                 w.bind("<FocusOut>", h)
             elif isinstance(w, Checkbutton):
                 w.configure(command=h)
