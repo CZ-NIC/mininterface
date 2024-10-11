@@ -16,7 +16,8 @@ from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
 from tyro.extras import get_parser
 
-from .auxiliary import get_descriptions
+from .tag_factory import tag_factory
+
 from .form_dict import EnvClass
 from .tag import Tag
 from .validators import not_empty
@@ -81,21 +82,25 @@ class Patches:
 
 def run_tyro_parser(env_class: Type[EnvClass],
                     kwargs: dict,
-                    parser: ArgumentParser,
                     add_verbosity: bool,
-                    ask_for_missing: bool) -> tuple[EnvClass, WrongFields]:
-    # Set env to determine whether to use sys.argv.
-    # Why settings env? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
-    # as sys.argv is non-related there.
-    try:
-        # Note wherease `"get_ipython" in globals()` returns True in Jupyter, it is still False
-        # in a script a Jupyter cell runs. Hence we must put here this lengthty statement.
-        global get_ipython
-        get_ipython()
-    except:
-        env = None
-    else:
-        env = []
+                    ask_for_missing: bool,
+                    args=None) -> tuple[EnvClass, WrongFields]:
+    parser: ArgumentParser = get_parser(env_class, **kwargs)
+
+    if args is None:
+        # Set env to determine whether to use sys.argv.
+        # Why settings env? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
+        # as sys.argv is non-related there.
+        try:
+            # Note wherease `"get_ipython" in globals()` returns True in Jupyter, it is still False
+            # in a script a Jupyter cell runs. Hence we must put here this lengthty statement.
+            global get_ipython
+            get_ipython()
+        except:
+            args = None  # Fetch from the CLI
+        else:
+            args = []
+
     try:
         # Mock parser
         patches = []
@@ -108,7 +113,7 @@ def run_tyro_parser(env_class: Type[EnvClass],
             ))
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
-            return cli(env_class, args=env, **kwargs), {}
+            return cli(env_class, args=args, **kwargs), {}
     except BaseException as e:
         if ask_for_missing and hasattr(e, "code") and e.code == 2 and eavesdrop:
             # Some arguments are missing. Determine which.
@@ -130,12 +135,12 @@ def run_tyro_parser(env_class: Type[EnvClass],
 
                     # NOTE: We put '' to the UI to clearly state that the value is missing.
                     # However, the UI then is not able to use the number filtering capabilities.
-                    tag = wf[field_name] = Tag("",
-                                               argument.help.replace("(required)", ""),
-                                               validation=not_empty,
-                                               _src_class=env_class,
-                                               _src_key=field_name
-                                               )
+                    tag = wf[field_name] = tag_factory("",
+                                                       argument.help.replace("(required)", ""),
+                                                       validation=not_empty,
+                                                       _src_class=env_class,
+                                                       _src_key=field_name
+                                                       )
                     # Why `type_()`? We need to put a default value so that the parsing will not fail.
                     # A None would be enough because Mininterface will ask for the missing values
                     # promply, however, Pydantic model would fail.
@@ -201,7 +206,5 @@ def _parse_cli(env_class: Type[EnvClass],
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI
-    parser: ArgumentParser = get_parser(env_class, **kwargs)
-    descriptions = get_descriptions(parser)
-    env, wrong_fields = run_tyro_parser(env_class, kwargs, parser, add_verbosity, ask_for_missing)
-    return env, descriptions, wrong_fields
+    env, wrong_fields = run_tyro_parser(env_class, kwargs, add_verbosity, ask_for_missing)
+    return env, wrong_fields

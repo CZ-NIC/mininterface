@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Type
 from .types import Validation, Choices, PathTag
 from .cli_parser import _parse_cli
 from .common import InterfaceNotAvailable, Cancelled
-from .form_dict import EnvClass
+from .form_dict import DataClass, EnvClass
 from .tag import Tag
 from .mininterface import EnvClass, Mininterface
 from .text_interface import ReplInterface, TextInterface
@@ -31,8 +31,9 @@ class TuiInterface(TextualInterface or TextInterface):
 # NOTE:
 # ask_for_missing does not work with tyro Positional, stays missing.
 # @dataclass
-#class Env:
+# class Env:
 #   files: Positional[list[Path]]
+
 
 def run(env_class: Type[EnvClass] | None = None,
         ask_on_empty_cli: bool = False,
@@ -156,9 +157,9 @@ def run(env_class: Type[EnvClass] | None = None,
         config_file = Path(config_file)
 
     # Load configuration from CLI and a config file
-    env, descriptions, wrong_fields = None, {}, {}
+    env, wrong_fields = None, {}
     if env_class:
-        env, descriptions, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, **kwargs)
+        env, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, **kwargs)
 
     # Build the interface
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
@@ -171,9 +172,9 @@ def run(env_class: Type[EnvClass] | None = None,
             interface = GuiInterface
         if interface is None:
             raise InterfaceNotAvailable  # GuiInterface might be None when import fails
-        interface = interface(title, env, descriptions)
+        interface = interface(title, env)
     except InterfaceNotAvailable:  # Fallback to a different interface
-        interface = TuiInterface(title, env, descriptions)
+        interface = TuiInterface(title, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:

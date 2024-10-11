@@ -15,79 +15,57 @@ graph LR
 ## Basic usage
 Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
 
-To do any advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its subclassed [types][mininterface.types]. Ex. for a validation only, use its [`Validation alias`](Validation.md/#validation-alias).
+There are a lot of supported [types](/Types) you can use, not only scalars and well-known objects (`Path`, `datetime`), but also functions, iterables (like `list[Path]`) and union types (like `int | None`). To do even more advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its subclasses. Ex. for a validation only, use its [`Validation alias`](Validation.md/#validation-alias).
 
 At last, use [`Facet`](Facet.md) to tackle the interface from the back-end (`m`) or the front-end (`Tag`) side.
 
+## IDE suggestions
 
-## Supported types
-
-Various types are supported:
-
-* scalars
-* functions
-* well-known objects (`Path`, `datetime`)
-* iterables (like `list[Path]`)
-* custom classes (somewhat)
-* union types (like `int | None`)
-
-Take a look how it works with the variables organized in a dataclass:
+The immediate benefit is the type suggestions you see in an IDE. Imagine following code:
 
 ```python
 from dataclasses import dataclass
-from pathlib import Path
-
 from mininterface import run
-
 
 @dataclass
 class Env:
-    my_number: int = 1
-    """ A dummy number """
-    my_boolean: bool = True
-    """ A dummy boolean """
-    my_conditional_number: int | None = None
-    """ A number that can be null if left empty """
-    my_path: Path = Path("/tmp")
-    """ A dummy path """
+    my_paths: list[Path]
+    """ The user is forced to input Paths. """
 
 
-m = run(Env)  # m.env contains an Env instance
-m.form()  # Prompt a dialog; m.form() without parameter edits m.env
-print(m.env)
-# Env(my_number=1, my_boolean=True, my_path=PosixPath('/tmp'),
-#  my_point=<__main__.Point object at 0x7ecb5427fdd0>)
+@dataclass
+class Dialog:
+    my_number: int = 2
+    """ A number """
 ```
 
-![GUI window](asset/supported_types_1.avif "A prompted dialog")
+Now, accessing the main [env][mininterface.Mininterface.env] will trigger the hint.
+![Suggestion run](asset/suggestion_run.avif)
 
-Variables organized in a dict:
+Calling the [form][mininterface.Mininterface.form] with an empty parameter will trigger editing the main [env][mininterface.Mininterface.env]
 
-Along scalar types, there is (basic) support for common iterables or custom classes.
+![Suggestion form](asset/suggestion_form_env.avif)
 
-```python
-from mininterface import run
+Putting there a dict will return the dict too.
 
-class Point:
-    def __init__(self, i: int):
-        self.i = i
+![Suggestion form](asset/suggestion_dict.avif)
 
-    def __str__(self):
-        return str(self.i)
+Putting there a dataclass type causes it to be resolved.
+
+![Suggestion dataclass type](asset/suggestion_dataclass_type.avif)
+
+Should you have a resolved dataclass instance, put it there.
+
+![Suggestion dataclass instance](asset/suggestion_dataclass_instance.avif)
+
+As you see, its attributes are hinted alongside their description.
+
+![Suggestion dataclass expanded](asset/suggestion_dataclass_expanded.avif)
 
 
-values = {"my_number": 1,
-          "my_list": [1, 2, 3],
-          "my_point": Point(10)
-          }
+Should the dataclass cannot be easily investigated by the IDE (i.e. a required field), just annotate the output.
 
-m = run()
-m.form(values)  # Prompt a dialog
-print(values)  # {'my_number': 2, 'my_list': [2, 3], 'my_point': <__main__.Point object...>}
-print(values["my_point"].i)  # 100
-```
-
-![GUI window](asset/supported_types_2.avif "A prompted dialog after editation")
+![Suggestion annotation possible](asset/suggestion_dataclass_annotated.avif)
 
 ## Nested configuration
 You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).

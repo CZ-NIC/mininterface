@@ -3,7 +3,12 @@
 """
 import logging
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union, get_args, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, Union, get_args, get_type_hints
+
+from tyro.extras import get_parser
+
+from .tag_factory import tag_factory
+from .auxiliary import get_description
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -16,7 +21,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-EnvClass = TypeVar("EnvClass")
+DataClass = TypeVar("DataClass")
+EnvClass = TypeVar("EnvClass", bound=DataClass)
 FormDict = dict[str, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
 """ Nested form that can have descriptions (through Tag) instead of plain values.
 
@@ -51,11 +57,11 @@ TagDict = dict[str, Union["Self", Tag]]
 
 # NOTE: In the future, allow `FormDict , EnvClass`, a dataclass (or its instance)
 # to be edited too
-# is_dataclass(v) -> dataclass or its instance
-# isinstance(v, type) -> class, not an instance
-# Then, we might get rid of ._descriptions because we will read from the model itself
 # TypeVar('FormDictOrEnv', FormDict, EnvClass)
-FormDictOrEnv = TypeVar('FormDictOrEnv', bound=FormDict)  # , EnvClass)
+# FormDictOrEnv = TypeVar('FormDictOrEnv', bound = FormDict | Type[EnvClass] | EnvClass)
+FormDictOrEnv = TypeVar('FormDictOrEnv', bound=FormDict | DataClass)
+# FormDictOrEnv = TypeVar('FormDictOrEnv', bound = FormDict | EnvClass)
+# FormDictOrEnv = TypeVar('FormDictOrEnv', FormDict, Type[EnvClass], EnvClass)
 
 
 def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
@@ -105,11 +111,12 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key
         return d
 
 
-def dataclass_to_tagdict(env: EnvClass, descr: dict, facet: "Facet" = None, _path="") -> TagDict:
+# TODO accept rather interface and fetch facet from within
+def dataclass_to_tagdict(env: EnvClass, facet: "Facet" = None, _nested=False) -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = {}
-    if not _path:  # root is nested under "" path
-        subdict = {"": main} if not _path else {}
+    if not _nested:  # root is nested under "" path
+        subdict = {"": main} if not _nested else {}
     else:
         subdict = {}
 
@@ -133,12 +140,12 @@ def dataclass_to_tagdict(env: EnvClass, descr: dict, facet: "Facet" = None, _pat
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
-            subdict[param] = dataclass_to_tagdict(val, descr, facet, _path=f"{_path}{param}.")
+            subdict[param] = dataclass_to_tagdict(val, facet, _nested=True)
         else:  # scalar or Tag value
-            d = {"description": descr.get(f"{_path}{param}"), "facet": facet}
+            d = {"description": get_description(env.__class__, param), "facet": facet}
             if not isinstance(val, Tag):
-                tag = Tag(val, _src_key=param, _src_obj=env, **d)
+                tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:
                 tag = val._fetch_from(Tag(**d))
-            (subdict if _path else main)[param] = tag
+            (subdict if _nested else main)[param] = tag
     return subdict

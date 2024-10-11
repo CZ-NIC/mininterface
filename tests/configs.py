@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Callable
 
 from mininterface import Tag
-from mininterface.types import Choices, Validation
+from mininterface.types import CallbackTag, Choices, Validation
 from mininterface.validators import not_empty
 
 
@@ -12,6 +12,27 @@ class ColorEnum(Enum):
     RED = 1
     GREEN = 2
     BLUE = 3
+
+
+class ColorEnumSingle(Enum):
+    ORANGE = 4
+
+
+def callback_tag(tag: Tag):
+    """ Receives a tag """
+    print("Printing", type(tag))
+    return 100
+
+
+def callback_tag2(tag: Tag):
+    """ Receives a tag """
+    print("Printing", type(tag))
+
+
+def callback_raw():
+    """ Dummy function """
+    print("Priting text")
+    return 50
 
 
 @dataclass
@@ -54,6 +75,7 @@ class NestedMissingEnv:
 @dataclass
 class FurtherEnv4:
     flag: bool = False
+    """ This is a deep flag """
 
 
 @dataclass
@@ -79,7 +101,7 @@ class OptionalFlagEnv:
 class ConstrainedEnv:
     """Set of options."""
 
-    test: Annotated[str, Tag(validation=not_empty)] = "hello"
+    test: Annotated[str, Tag(validation=not_empty, name="Better name")] = "hello"
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
@@ -90,3 +112,14 @@ class ConstrainedEnv:
 @dataclass
 class ParametrizedGeneric:
     paths: list[Path]
+
+
+@dataclass
+class ComplicatedTypes:
+    p1: Callable = callback_raw
+    p2: Annotated[Callable, CallbackTag(description="Foo")] = callback_tag
+    # Not supported: p3: CallbackTag = callback_tag
+    # Not supported: p4: CallbackTag = field(default_factory=CallbackTag(callback_tag))
+    # Not supported: p5: Annotated[Callable, Tag(description="Bar", annotation=CallbackTag)] = callback_tag
+    # NOTE add PathTag
+    # NOTE not used yet

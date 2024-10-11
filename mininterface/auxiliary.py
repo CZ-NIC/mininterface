@@ -1,10 +1,9 @@
 import os
 import re
 from argparse import ArgumentParser
-from tkinter import StringVar
-from types import SimpleNamespace
-from typing import TYPE_CHECKING, Iterable, TypeVar
+from typing import Iterable, TypeVar
 
+from tyro.extras import get_parser
 
 T = TypeVar("T")
 KT = str
@@ -53,5 +52,10 @@ def get_terminal_size():
 
 def get_descriptions(parser: ArgumentParser) -> dict:
     """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
-    return {action.dest.replace("-", "_"): re.sub(r"\(default.*\)", "", action.help or "")
+    # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
+    return {action.dest.replace("-", "_"): re.sub(r"\((default|fixed to).*\)", "", action.help or "")
             for action in parser._actions}
+
+
+def get_description(obj, param: str) -> str:
+    return get_descriptions(get_parser(obj))[param]

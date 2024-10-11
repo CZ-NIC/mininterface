@@ -35,7 +35,7 @@ class TextualInterface(Redirectable, TextInterface):
 
     def _ask_env(self) -> EnvClass:
         """ Display a window form with all parameters. """
-        form = dataclass_to_tagdict(self.env, self._descriptions, self.facet)
+        form = dataclass_to_tagdict(self.env, self.facet)
 
         # fetch the dict of dicts values from the form back to the namespace of the dataclasses
         return TextualApp.run_dialog(self._get_app(), form)

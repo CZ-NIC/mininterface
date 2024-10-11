@@ -52,7 +52,7 @@ class FacetCallback():
     A button should be created. When clicked, it gets the facet as the argument.
     """
     pass
-    # NOTE, just a stub
+    # NOTE, just a stub. Deprecated, use CallbackTag instead.
 
 
 # NOTE should we use the dataclasses, isn't that slow?

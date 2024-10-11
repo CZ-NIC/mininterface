@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from autocombobox import AutoCombobox
 from pathlib import Path, PosixPath
 from tkinter import Button, Entry, TclError, Variable, Widget
@@ -10,6 +11,9 @@ from ..auxiliary import flatten, flatten_keys
 from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
+
+if TYPE_CHECKING:
+    from tk_window import TkWindow
 
 
 def recursive_set_focus(widget: Widget):
@@ -80,7 +84,7 @@ def _set_true(variable: Variable, tag: Tag):
     return _
 
 
-def replace_widgets(nested_widgets, form: TagDict):
+def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
     def _fetch(variable):
         return ready_to_replace(widget, var_name, tag, variable)
 
@@ -98,7 +102,8 @@ def replace_widgets(nested_widgets, form: TagDict):
 
         # Replace with radio buttons
         if tag.choices:
-            variable = Variable(value=tag._get_ui_val())
+            chosen_val = tag._get_ui_val()
+            variable = Variable()
             grid_info = _fetch(variable)
 
             nested_frame = Frame(master)
@@ -109,15 +114,20 @@ def replace_widgets(nested_widgets, form: TagDict):
                 widget['values'] = list(tag._get_choices())
                 widget.pack()
                 widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+                variable.set(chosen_val)
 
             else:
-                for i, choice_label in enumerate(tag._get_choices()):
+                for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
                     widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
                     widget2.grid(row=i, column=1, sticky="w")
                     subwidgets.append(widget2)
+                    if choice_val is chosen_val:
+                        variable.set(choice_label)
+                        # TODO does this works in textual too?
 
         # File dialog
-        if path_tag := tag._morph(PathTag, (PosixPath, Path)):
+        elif path_tag := tag._morph(PathTag, (PosixPath, Path)):
+            # TODO this probably happens at ._factoryTime, get rid of _morph. I do not know, touch-timestamp uses nested Tag.
             grid_info = widget.grid_info()
 
             widget2 = Button(master, text='…', command=choose_file_handler(variable, path_tag))
@@ -134,7 +144,10 @@ def replace_widgets(nested_widgets, form: TagDict):
 
         # Replace with a callback button
         elif tag._is_a_callable():
-            variable, widget = create_button(master, _fetch, tag, label1, tag.val)
+            def inner(tag: Tag):
+                tk_app._post_submit_action = tag._run_callable
+                tag.facet.submit()
+            variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
 
         # Add event handler
         tag._last_ui_val = variable.get()

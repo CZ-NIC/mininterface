@@ -26,6 +26,7 @@ class TkWindow(Tk, BackendAdaptor):
         self.params = None
         self._result = None
         self._event_bindings = {}
+        self._post_submit_action: Callable | None = None  # TODO Migrate to the BackendAdaptor?
         self.interface = interface
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
@@ -71,7 +72,7 @@ class TkWindow(Tk, BackendAdaptor):
         self.form.pack()
 
         # Add radio etc.
-        replace_widgets(self.form.widgets, form)
+        replace_widgets(self, self.form.widgets, form)
 
         # Set the submit and exit options
         self.form.button.config(command=self._ok)
@@ -87,6 +88,8 @@ class TkWindow(Tk, BackendAdaptor):
     def validate(self, form: TagDict, title: str) -> TagDict:
         if not Tag._submit(form, self.form.get()):
             return self.run_dialog(form, title)
+        if self._post_submit_action:  # TODO, textual implementation
+            self._post_submit_action()
         return form
 
     def yes_no(self, text: str, focus_no=True):

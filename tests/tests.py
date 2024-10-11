@@ -1,24 +1,29 @@
-from datetime import datetime
+from contextlib import contextmanager
 import logging
 import os
 import sys
+from datetime import datetime
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import SimpleNamespace
+from typing import get_type_hints
 from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ColorEnum, ConstrainedEnv, FurtherEnv2, MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
-                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv)
+from configs import (ColorEnum, ColorEnumSingle, ConstrainedEnv, FurtherEnv2,
+                     MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
+                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv,
+                     callback_raw, callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import Mininterface, TextInterface, run
-from mininterface.validators import not_empty, limit
 from mininterface.auxiliary import flatten
-from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve
-from mininterface.tag import Tag
 from mininterface.common import Cancelled
+from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve, TagDict
+from mininterface.tag import Tag
+from mininterface.types import CallbackTag
+from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
 
@@ -36,6 +41,18 @@ class TestAbstract(TestCase):
     @classmethod
     def sys(cls, *args):
         sys.argv = ["running-tests", *args]
+
+    @contextmanager
+    def assertOutputs(self, expected_output):
+        original_stdout = sys.stdout
+        new_stdout = StringIO()
+        sys.stdout = new_stdout
+        try:
+            yield
+            actual_output = new_stdout.getvalue().strip()
+            self.assertEqual(expected_output, actual_output)
+        finally:
+            sys.stdout = original_stdout
 
 
 class TestCli(TestAbstract):
@@ -124,14 +141,54 @@ class TestInteface(TestAbstract):
         m = run(SimpleEnv, interface=Mininterface)
         d1 = {"test1": "str", "test2": Tag(True)}
         r1 = m.form(d1)
+        self.assertEqual(dict, type(r1))
         # the original dict is not changed in the form
         self.assertEqual(True, d1["test2"].val)
-        # and even, when it changes, the output dict is not altered
+        # and even, when it changes, the outputp dict is not altered
         d1["test2"].val = False
         self.assertEqual(True, r1["test2"])
 
         # when having empty form, it returns the env object
         self.assertIs(m.env, m.form())
+
+        # putting a dataclass type
+        self.assertIsInstance(m.form(SimpleEnv), SimpleEnv)
+
+        # putting a dataclass instance
+        self.assertIsInstance(m.form(SimpleEnv()), SimpleEnv)
+
+    def test_choice_single(self):
+        m = run(interface=Mininterface)
+        self.assertEqual(1, m.choice([1]))
+        self.assertEqual(1, m.choice({"label": 1}))
+        self.assertEqual(ColorEnumSingle.ORANGE, m.choice(ColorEnumSingle))
+
+    def test_choice_callback(self):
+        m = run(interface=Mininterface)
+
+        form = """Asking the form {'My choice': Tag(val=None, description='', annotation=None, name=None, choices=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
+        with self.assertOutputs(form):
+            m.form({"My choice": Tag(choices=[
+                callback_raw,
+                CallbackTag(callback_tag),
+                # This case works here but is not supported as such form cannot be submit in GUI:
+                Tag(callback_tag2, annotation=CallbackTag)
+            ])})
+
+        choices = {
+            "My choice1": callback_raw,
+            "My choice2": CallbackTag(callback_tag),
+            # Not supported: "My choice3": Tag(callback_tag, annotation=CallbackTag),
+        }
+
+        form = """Asking the form {'Choose': Tag(val=None, description='', annotation=None, name=None, choices=['My choice1', 'My choice2'])}"""
+        with self.assertOutputs(form):
+            m.choice(choices)
+
+        self.assertEqual(50, m.choice(choices, default=callback_raw))
+
+        # TODO This test does not work
+        # self.assertEqual(100, m.choice(choices, default=choices["My choice2"]))
 
 
 class TestConversion(TestAbstract):
@@ -229,7 +286,7 @@ class TestConversion(TestAbstract):
 
         self.assertIsNone(env1.severity)
 
-        fd = dataclass_to_tagdict(env1, m._descriptions)
+        fd = dataclass_to_tagdict(env1)
         ui = formdict_resolve(fd)
         self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
@@ -256,7 +313,7 @@ class TestConversion(TestAbstract):
         Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
 
-    def test_choice(self):
+    def test_choices_param(self):
         t = Tag("one", choices=["one", "two"])
         t.update("two")
         self.assertEqual(t.val, "two")
@@ -264,7 +321,7 @@ class TestConversion(TestAbstract):
         self.assertEqual(t.val, "two")
 
         m = run(ConstrainedEnv)
-        d = dataclass_to_tagdict(m.env, m._descriptions)
+        d = dataclass_to_tagdict(m.env)
         self.assertFalse(d[""]["choices"].update(""))
         self.assertTrue(d[""]["choices"].update("two"))
 
@@ -314,25 +371,81 @@ class TestConversion(TestAbstract):
         t4.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t4.val)
 
+    def test_tag_src_update(self):
+        m = run(ConstrainedEnv, interface=Mininterface)
+        d: TagDict = dataclass_to_tagdict(m.env)[""]
+
+        # tagdict uses the correct reference to the original object
+        # sharing a static annotation Tag is not desired:
+        # self.assertIs(ConstrainedEnv.__annotations__.get("test").__metadata__[0], d["test"])
+
+        # name is correctly determined from the dataclass attribute name
+        self.assertEqual("test2", d["test2"].name)
+        # but the tag in the annotation stays intact
+        self.assertIsNone(ConstrainedEnv.__annotations__.get("test2").__metadata__[0].name)
+        # name is correctly fetched from the dataclass annotation
+        self.assertEqual("Better name", d["test"].name)
+
+        # a change via set_val propagates
+        self.assertEqual("hello", d["test"].val)
+        self.assertEqual("hello", m.env.test)
+        d["test"].set_val("foo")
+        self.assertEqual("foo", d["test"].val)
+        self.assertEqual("foo", m.env.test)
+
+        # direct val change does not propagate
+        d["test"].val = "bar"
+        self.assertEqual("bar", d["test"].val)
+        self.assertEqual("foo", m.env.test)
+
+        # a change via update propagates
+        d["test"].update("moo")
+        self.assertEqual("moo", d["test"].val)
+        self.assertEqual("moo", m.env.test)
+
+    def test_nested_tag(self):
+        # TODO docs nested tags
+        t0 = Tag(5)
+        t1 = Tag(t0, name="Used name")
+        t2 = Tag(t1, name="Another name")
+        t3 = Tag(t1, name="Unused name")
+        t4 = Tag()._fetch_from(t2)
+        t5 = Tag(name="My name")._fetch_from(t2)
+
+        self.assertEqual("Used name", t1.name)
+        self.assertEqual("Another name", t2.name)
+        self.assertEqual("Another name", t4.name)
+        self.assertEqual("My name", t5.name)
+
+        self.assertEqual(5, t1.val)
+        self.assertEqual(5, t2.val)
+        self.assertEqual(5, t3.val)
+        self.assertEqual(5, t4.val)
+        self.assertEqual(5, t5.val)
+
+        t5.set_val(8)
+        self.assertEqual(8, t0.val)
+        self.assertEqual(8, t1.val)
+        self.assertEqual(5, t2.val)
+        self.assertEqual(5, t3.val)
+        self.assertEqual(5, t4.val)
+        self.assertEqual(8, t5.val)  # from t2, we iherited the hook to t1
+
 
 class TestRun(TestAbstract):
     def test_run_ask_empty(self):
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
+        with self.assertOutputs("Asking the form SimpleEnv(test=False, important_number=4)"):
             run(SimpleEnv, True, interface=Mininterface)
-            self.assertEqual("Asking the form SimpleEnv(test=False, important_number=4)", stdout.getvalue().strip())
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
+        with self.assertOutputs(""):
             run(SimpleEnv, interface=Mininterface)
-            self.assertEqual("", stdout.getvalue().strip())
 
     def test_run_ask_for_missing(self):
         form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token')}"""
         # Ask for missing, no interference with ask_on_empty_cli
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
+        with self.assertOutputs(form):
             run(FurtherEnv2, True, interface=Mininterface)
-            self.assertEqual(form, stdout.getvalue().strip())
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
+        with self.assertOutputs(form):
             run(FurtherEnv2, False, interface=Mininterface)
-            self.assertEqual(form, stdout.getvalue().strip())
         # Ask for missing does not happen, CLI fails
         with self.assertRaises(SystemExit):
             run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
@@ -470,7 +583,7 @@ class TestPydanticIntegration(TestAbstract):
         m = run(PydNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_tagdict(m.env, m._descriptions)["inner"]["name"]
+        f = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -508,7 +621,7 @@ class TestAttrsIntegration(TestAbstract):
         m = run(AttrsNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_tagdict(m.env, m._descriptions)["inner"]["name"]
+        f = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -520,7 +633,7 @@ class TestAttrsIntegration(TestAbstract):
 class TestAnnotated(TestAbstract):
     def test_annotated(self):
         m = run(ConstrainedEnv)
-        d = dataclass_to_tagdict(m.env, m._descriptions)
+        d = dataclass_to_tagdict(m.env)
         self.assertFalse(d[""]["test"].update(""))
         self.assertFalse(d[""]["test2"].update(""))
         self.assertTrue(d[""]["test"].update(" "))
@@ -620,13 +733,13 @@ class TestTagAnnotation(TestAbstract):
 
     def test_path_cli(self):
         m = run(ParametrizedGeneric, interface=Mininterface)
-        f = dataclass_to_tagdict(m.env, m._descriptions)[""]["paths"]
+        f = dataclass_to_tagdict(m.env)[""]["paths"]
         self.assertEqual("", f.val)
         self.assertTrue(f.update("[]"))
 
         self.sys("--paths", "/usr", "/tmp")
         m = run(ParametrizedGeneric, interface=Mininterface)
-        f = dataclass_to_tagdict(m.env, m._descriptions)[""]["paths"]
+        f = dataclass_to_tagdict(m.env)[""]["paths"]
         self.assertEqual([Path("/usr"), Path("/tmp")], f.val)
         self.assertEqual(['/usr', '/tmp'], f._get_ui_val())
         self.assertTrue(f.update("['/var']"))

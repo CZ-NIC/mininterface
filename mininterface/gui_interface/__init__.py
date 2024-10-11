@@ -1,15 +1,21 @@
+from dataclasses import is_dataclass
+from typing import Type, override
+
 try:
+    # It seems tkinter is installed either by default or not installable at all.
+    # Tkinter is not marked as a requirement as other libraries does that neither.
     from tkinter import TclError
 except ImportError:
     from ..common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
-
 from .tk_window import TkWindow
+from .redirect_text_tkinter import RedirectTextTkinter
 from ..common import InterfaceNotAvailable
-from ..form_dict import FormDictOrEnv, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
-from ..redirectable import RedirectTextTkinter, Redirectable
+from ..form_dict import DataClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
+from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface
+from ..cli_parser import run_tyro_parser
 
 
 class GuiInterface(Redirectable, Mininterface):
@@ -31,22 +37,11 @@ class GuiInterface(Redirectable, Mininterface):
     def ask(self, text: str) -> str:
         return self.form({text: ""})[text]
 
-    def _ask_env(self) -> EnvClass:
-        """ Display a window form with all parameters. """
-        form = dataclass_to_tagdict(self.env, self._descriptions, self.facet)
-
-        # formDict automatically fetches the edited values back to the EnvInstance
-        return self.window.run_dialog(form)
-
-    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
-        """ Prompt the user to fill up whole form.
-         See Mininterface.form
-        """
-        if form is None:
-            # NOTE should be integrated here when we integrate dataclass, see FormDictOrEnv
-            return self._ask_env()
-        else:
-            return formdict_resolve(self.window.run_dialog(dict_to_tagdict(form, self.facet), title=title), extract_main=True)
+    def form(self,
+             form: DataClass | Type[DataClass] | FormDict | None = None,
+             title: str = ""
+             ) -> FormDict | DataClass | EnvClass:
+        return self._form(form, title, self.window.run_dialog)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]

@@ -3,8 +3,10 @@ from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, get_args, get_origin
 from warnings import warn
+
+from .type_stubs import TagCallback
 
 from .experimental import SubmitButton
 
@@ -232,19 +234,18 @@ class Tag:
     _attrs_field: AttrsFieldInfo = None
 
     def __post_init__(self):
+        # Fetch information from the nested tag: `Tag(Tag(...))`
+        # TODO docs, test
+        if isinstance(self.val, Tag):
+            if self._src_obj or self._src_key:
+                raise ValueError("Wrong Tag inheritance, submit a bug report.")
+            self._src_obj = self.val
+            self._src_key = "val"
+            self._fetch_from(self.val)
+            self.val = self.val.val
+
         # Fetch information from the parent object
-        if self._src_obj and not self._src_class:
-            self._src_class = self._src_obj
         if self._src_class:
-            if not self.annotation:  # when we have _src_class, we must have _src_key too
-                self.annotation = get_type_hints(self._src_class).get(self._src_key)
-                field_type = self._src_class.__annotations__.get(self._src_key)
-                if field_type and hasattr(field_type, '__metadata__'):
-                    for metadata in field_type.__metadata__:
-                        if isinstance(metadata, Tag):
-                            # The type of the Tag is another Tag
-                            # Ex: `my_field: Validation(...) = 4`
-                            self._fetch_from(metadata)  # NOTE might fetch from a pydantic model too
             if pydantic:  # Pydantic integration
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
             if attr:  # Attrs integration
@@ -268,8 +269,17 @@ class Tag:
         if self.annotation is SubmitButton:
             self.val = False
 
-        if not self.name and self._src_key:
-            self.name = self._src_key
+        if not self.name:
+            if self._src_key:
+                self.name = self._src_key
+            # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
+            # We are using get_name() instead.
+            # if self._is_a_callable():
+                #     self.name = self.val.__name__
+        if not self.description and self._is_a_callable():
+            # TODO does not work, do a test, there is `(fixed to` instead
+            self.description = self.val.__doc__
+
         self._original_desc = self.description
         self._original_name = self.name
         self.original_val = self.val
@@ -283,23 +293,30 @@ class Tag:
             # clean-up protected members
             if field.name.startswith("_"):
                 continue
-            if field.name not in ("val", "description", "annotation", "name"):
+            if field.name not in ("val", "description", "annotation", "name", "choices"):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
             if field.name == 'validation' and (func_name := getattr(field_value, "__name__", "")):
-                v = f"{field.name}={func_name}"
+                v = func_name
+            elif field.name == "choices":
+                if not self._get_choices():
+                    continue
+                v = list(self._get_choices())
+            elif field.name == "val" and self._is_a_callable():
+                v = self.val.__name__
             else:
-                v = f"{field.name}={field_value!r}"
+                v = repr(field_value)
 
-            field_strings.append(v)
+            field_strings.append(f"{field.name}={v}")
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
     def _fetch_from(self, tag: "Self") -> "Self":
-        """ Fetches public attributes from another instance.
+        """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
         """
-        for attr in ['val', 'annotation', 'name', 'validation', 'choices', 'on_change', "facet"]:
+        for attr in ('val', 'annotation', 'name', 'validation', 'choices', 'on_change', "facet",
+                     "_src_obj", "_src_key", "_src_class"):
             if getattr(self, attr) is None:
                 setattr(self, attr, getattr(tag, attr))
         if self.description == "":
@@ -315,6 +332,9 @@ class Tag:
         """
         return self._is_a_callable_val(self.val, self.annotation)
 
+    def _run_callable(self):
+        return self.val()
+
     def _on_change_trigger(self, ui_val):
         """ Trigger on_change only if the value has changed and if the validation succeeds. """
         if self._last_ui_val != ui_val:
@@ -325,10 +345,11 @@ class Tag:
 
     @staticmethod
     def _is_a_callable_val(val: TagValue, annot: type = None) -> bool:
+        # Note _is_a_callable_val(CallableTag(...)) -> False, as CallableTag is not a FunctionType
+        detect = FunctionType, MethodType
         if annot is None:
-            return isinstance(val, (FunctionType, MethodType))
-        return isinstance(annot, (FunctionType, MethodType)) \
-            or isinstance(annot, Callable) and isinstance(val, (FunctionType, MethodType))
+            return isinstance(val, detect)
+        return isinstance(annot, detect) or isinstance(annot, Callable) and isinstance(val, detect)
 
     def _is_right_instance(self, val) -> bool:
         """ Check if the value conforms self.annotation.
@@ -419,6 +440,15 @@ class Tag:
         self.name = self._original_name
         self._error_text = None
 
+    def _get_name(self, make_effort=False):
+        """ It is not always wanted to set the callable name to the name.
+        When used as a form button, we prefer to use the dict key.
+        However, when used as a choice, this might be the only way to get the name.
+        """
+        if make_effort and not self.name and self._is_a_callable():
+            return self.val.__name__
+        return self.name
+
     def _repr_annotation(self):
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
             # ex: `list[str]`
@@ -441,23 +471,25 @@ class Tag:
             return self.val.value
         return self.val
 
+    @classmethod
+    def _repr_val(cls, v):
+        if cls._is_a_callable_val(v):
+            return v.__name__
+        if isinstance(v, Tag):
+            return v._get_name(True)
+        if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
+            return str(v.value)
+        return str(v)
+
     def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
         """ Wherease self.choices might have different format, this returns a canonic dict. """
-        def _edit(v):
-            if self._is_a_callable_val(v):
-                return v.__name__
-            if isinstance(v, Tag):
-                return v.name
-            if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
-                return str(v.value)
-            return str(v)
 
         if self.choices is None:
             return {}
         if isinstance(self.choices, dict):
             return self.choices
         if isinstance(self.choices, common_iterables):
-            return {_edit(v): v for v in self.choices}
+            return {self._repr_val(v): v for v in self.choices}
         if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
             return {str(v.value): v for v in list(self.choices)}
 
@@ -514,6 +546,12 @@ class Tag:
 
         return out_value
 
+    def set_val(self, val: TagValue) -> "Self":
+        """ Sets the value without any checks. """
+        self.val = val
+        self._update_source(val)
+        return self
+
     def update(self, ui_value: TagValue) -> bool:
         """ UI value → Tag value → original value. (With type conversion and checks.)
 
@@ -544,6 +582,8 @@ class Tag:
         # Even though GuiInterface does some type conversion (str → int) independently,
         # other interfaces does not guarantee that. Hence, we need to do the type conversion too.
         if self.annotation:
+            if self.annotation == TagCallback:
+                return True  # TODO
             if ui_value == "" and NoneType in get_args(self.annotation):
                 # The user is not able to set the value to None, they left it empty.
                 # Cast back to None as None is one of the allowed types.
@@ -591,16 +631,23 @@ class Tag:
             self.val = self._validate(out_value)   # checks succeeded, confirm the value
         except ValueError:
             return False
+        self._update_source(out_value)
+        return True
 
+    def _update_source(self, out_value):
         # Store to the source user data
         if self._src_dict:
             self._src_dict[self._src_key] = out_value
         elif self._src_obj:
-            setattr(self._src_obj, self._src_key, out_value)
+            if isinstance(self._src_obj, Tag):
+                # this helps to propagate the modification to possible other nested tags
+                self._src_obj.set_val(out_value)
+            else:
+                setattr(self._src_obj, self._src_key, out_value)
         else:
             # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass
-        return True
+
         # Fixing types:
         # This code would support tuple[int, int]:
         #

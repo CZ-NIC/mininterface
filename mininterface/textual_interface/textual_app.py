@@ -24,6 +24,7 @@ WidgetList = list[Widget | Changeable]
 
 class TextualApp(App[bool | None]):
     # NOTE: For a metaclass conflict I was not able to inherit from BackendAdaptor.
+    # TODO split classes so that it can inherit it?
 
     BINDINGS = [
         ("up", "go_up", "Go up"),
@@ -108,7 +109,8 @@ class TextualApp(App[bool | None]):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
                 yield fieldt
-                yield Label(fieldt._link.description)
+                if fieldt._link.description:
+                    yield Label(fieldt._link.description)
                 yield Label("")
 
     def on_mount(self):

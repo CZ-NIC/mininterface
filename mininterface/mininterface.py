@@ -1,12 +1,16 @@
 from enum import Enum
 import logging
+from dataclasses import is_dataclass
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, Type
 
 from .common import Cancelled
 from .facet import Facet
-from .form_dict import EnvClass, FormDictOrEnv, dict_to_tagdict, formdict_resolve
+from .form_dict import DataClass, EnvClass, FormDict, FormDictOrEnv, dict_to_tagdict, formdict_resolve
 from .tag import ChoicesType, Tag, TagValue
+from .form_dict import DataClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
+from .cli_parser import run_tyro_parser
+
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -28,8 +32,7 @@ class Mininterface(Generic[EnvClass]):
     # This base interface does not require any user input and hence is suitable for headless testing.
 
     def __init__(self, title: str = "",
-                 _env: EnvClass | SimpleNamespace | None = None,
-                 _descriptions: dict | None = None,
+                 _env: EnvClass | SimpleNamespace | None = None
                  ):
         self.title = title or "Mininterface"
         # Why `or SimpleNamespace()`?
@@ -74,9 +77,6 @@ class Mininterface(Generic[EnvClass]):
 
         ![Facet back-end](asset/facet_backend.avif)
         """
-
-        self._descriptions = _descriptions or {}
-        """ Field descriptions """
 
     def __enter__(self) -> "Self":
         """ When used in the with statement, the GUI window does not vanish between dialogs
@@ -176,7 +176,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
                 ![Default choice](asset/choices_default.avif)
             skippable: If there is a single option, choose it directly, without a dialog.
-            launch: If the chosen value is a callback, we directly call it. Then, the function returns None.
+            launch: If the chosen value is a callback, we directly call it and return its return value.
 
         Returns:
             The chosen value.
@@ -198,19 +198,38 @@ class Mininterface(Generic[EnvClass]):
         if skippable and len(choices) == 1:
             if isinstance(choices, type) and issubclass(choices, Enum):
                 out = list(choices)[0]
+            elif isinstance(choices, dict):
+                out = next(iter(choices.values()))
             else:
                 out = choices[0]
+            tag = Tag(out)
         else:
             tag = Tag(val=default, choices=choices)
             key = title or "Choose"
-            out = self.form({key: tag})[key]
+            self.form({key: tag})[key]
 
-        if launch and Tag._is_a_callable_val(out):
-            return out()
-        return out
+        if launch:
+            if tag._is_a_callable():
+                return tag._run_callable()
+            if isinstance(tag.val, Tag) and tag.val._is_a_callable():
+                # Nested Tag: `m.choice([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
+                return tag.val._run_callable()
+        return tag.val
+
+    @overload
+    def form(self, form: None = None, title: str = "") -> EnvClass: ...
+    @overload
+    def form(self, form: FormDict, title: str = "") -> FormDict: ...
+    @overload
+    def form(self, form: Type[DataClass], title: str = "") -> DataClass: ...
+    @overload
+    def form(self, form: DataClass, title: str = "") -> DataClass: ...
 
     # NOTE: parameter submit_button = str (button text) or False to do not display the button
-    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
+    def form(self,
+             form: DataClass | Type[DataClass] | FormDict | None = None,
+             title: str = ""
+             ) -> FormDict | DataClass | EnvClass:
         """ Prompt the user to fill up an arbitrary form.
 
         Use scalars, enums, enum instances, objects like datetime, Paths or their list.
@@ -289,19 +308,25 @@ class Mininterface(Generic[EnvClass]):
                     print("The result", original["my label"].val)
                 ```
         """
-        # NOTE in the future, support form=arbitrary dataclass too
-        if form is None:
-            print(f"Asking the form {title}".strip(), self.env)
-            # NOTE for testing, this might be converted to a tag_dict, see below
-            return self.env
-        f = form
-        print(f"Asking the form {title}".strip(), f)
+        print(f"Asking the form {title}".strip(), self.env if form is None else form)
+        return self._form(form, title, lambda tag_dict, title=None: tag_dict)
 
-        tag_dict = dict_to_tagdict(f, self.facet)
-        if True:  # NOTE for testing, this might validate the fields with Tag._submit(ddd, ddd)
-            return formdict_resolve(tag_dict, extract_main=True)
-        else:
-            raise ValueError
+    def _form(self,
+              form: DataClass | Type[DataClass] | FormDict | None = None,
+              title: str = "",
+              launch_callback=None) -> FormDict | DataClass | EnvClass:
+        _form = self.env if form is None else form
+        if isinstance(_form, dict):
+            # TODO integrate to TextualMininterface and others, test and docs
+            # TODO After launching a callback, a TextualInterface stays, the form re-appears.
+            return formdict_resolve(launch_callback(dict_to_tagdict(_form, self.facet), title=title), extract_main=True)
+        if isinstance(_form, type):  # form is a class, not an instance
+            _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # TODO what to do with wf
+        if is_dataclass(_form):  # -> dataclass or its instance
+            # the original dataclass is updated, hence we do not need to catch the output from launch_callback
+            launch_callback(dataclass_to_tagdict(_form, self.facet))
+            return _form
+        raise ValueError(f"Unknown form input {_form}")
 
     def is_yes(self, text: str) -> bool:
         """ Display confirm box, focusing yes.
