@@ -392,6 +392,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mininterface.types.CallbackTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      CallbackTag
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.types.PathTag" class="md-nav__link">
     <span class="md-ellipsis">
       PathTag
@@ -557,6 +566,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mininterface.types.CallbackTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      CallbackTag
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.types.PathTag" class="md-nav__link">
     <span class="md-ellipsis">
       PathTag
@@ -617,6 +635,64 @@
 
 
 <h1 id="types">Types</h1>
+<p>Various types are supported:</p>
+<ul>
+<li>scalars</li>
+<li>functions</li>
+<li>well-known objects (<code>Path</code>, <code>datetime</code>)</li>
+<li>iterables (like <code>list[Path]</code>)</li>
+<li>custom classes (somewhat)</li>
+<li>union types (like <code>int | None</code>)</li>
+</ul>
+<p>Take a look how it works with the variables organized in a dataclass:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy number &quot;&quot;&quot;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">my_boolean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy boolean &quot;&quot;&quot;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">my_conditional_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A number that can be null if left empty &quot;&quot;&quot;</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy path &quot;&quot;&quot;</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath(&#39;/tmp&#39;),</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
+</code></pre></div>
+<p><img alt="GUI window" src="../asset/supported_types_1.avif" title="A prompted dialog" /></p>
+<p>Variables organized in a dict:</p>
+<p>Along scalar types, there is (basic) support for common iterables or custom classes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="n">i</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;my_number&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>          <span class="s2">&quot;my_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>          <span class="s2">&quot;my_point&quot;</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>          <span class="p">}</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># Prompt a dialog</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># {&#39;my_number&#39;: 2, &#39;my_list&#39;: [2, 3], &#39;my_point&#39;: &lt;__main__.Point object...&gt;}</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;my_point&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># 100</span>
+</code></pre></div>
+<p><img alt="GUI window" src="../asset/supported_types_2.avif" title="A prompted dialog after editation" /></p>
 
 
 <div class="doc doc-object doc-module">
@@ -636,6 +712,92 @@
 
 
 
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.types.CallbackTag" class="doc doc-heading">
+            <code>CallbackTag</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Callback function is guaranteed to receives the <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag">Tag</a> as a parameter.</p>
+<p>For the following examples, we will use these custom callback functions:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">def</span> <span class="nf">callback_raw</span><span class="p">():</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; Dummy function &quot;&quot;&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Priting text&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="k">return</span> <span class="mi">50</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">def</span> <span class="nf">callback_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; Receives a tag &quot;&quot;&quot;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Printing&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="k">return</span> <span class="mi">100</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+</code></pre></div></p>
+<p>Use as buttons in a form:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>m.form({&quot;Button&quot;: callback_raw})
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>m.form({&quot;Button&quot;: CallbackTag(callback_tag)})
+</code></pre></div></p>
+<p><img alt="Callback button" src="../asset/callback_button.avif" /></p>
+<p>Via form, we receive the function handler:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s2">&quot;My choice&quot;</span><span class="p">:</span> <span class="n">Tag</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="n">callback_raw</span><span class="p">,</span> <span class="n">CallbackTag</span><span class="p">(</span><span class="n">callback_tag</span><span class="p">)])</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">})</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>  <span class="c1"># {&#39;My choice&#39;: &lt;function callback_raw at 0x7ae5b3e74ea0&gt;}</span>
+</code></pre></div></p>
+<p>Via choice, we receive the function output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">({</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="s2">&quot;My choice1&quot;</span><span class="p">:</span> <span class="n">callback_raw</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;My choice2&quot;</span><span class="p">:</span> <span class="n">CallbackTag</span><span class="p">(</span><span class="n">callback_tag</span><span class="p">),</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="c1"># Not supported: &quot;My choice3&quot;: Tag(callback_tag, annotation=CallbackTag),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">})</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>  <span class="c1"># output of callback0 or callback_tag, ex:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">#    Printing &lt;class &#39;mininterface.types.CallbackTag&#39;&gt;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1">#    100</span>
+</code></pre></div>
+<p><img alt="Callback choice" src="../asset/callback_choice.avif" /></p>
+<p>You may use callback in a dataclass.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">class</span> <span class="nc">Callbacks</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">p1</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">callback0</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">p2</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">CallbackTag</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Foo&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">callback_tag</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="c1"># Not supported: p3: CallbackTag = callback_tag</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="c1"># Not supported: p4: CallbackTag = field(default_factory=CallbackTag(callback_tag))</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="c1"># Not supported: p5: Annotated[Callable, Tag(description=&quot;Bar&quot;, annotation=CallbackTag)] = callback_tag</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Callbacks</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+</code></pre></div></p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-class">
 

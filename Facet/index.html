@@ -387,6 +387,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="submit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet.submit--continue-here-immediately-after-clicking-on-a-radio-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      continue here immediately after clicking on a radio button
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -548,6 +563,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="submit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.facet.Facet.submit--continue-here-immediately-after-clicking-on-a-radio-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      continue here immediately after clicking on a radio button
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -625,7 +655,16 @@ Read <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.M
 
     <div class="doc doc-contents ">
 
-        <p>Submits the whole form</p>
+        <p>Submits the whole form.</p>
+<p>```python
+from mininterface import run, Tag</p>
+<p>def callback(tag: Tag):
+    tag.facet.submit()</p>
+<p>m = run()
+out = m.form({
+    "My choice": Tag(choices=["one", "two"], on_change=callback)
+})</p>
+<h3 id="mininterface.facet.Facet.submit--continue-here-immediately-after-clicking-on-a-radio-button">continue here immediately after clicking on a radio button</h3>
 
     </div>
 

@@ -433,6 +433,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mininterface.Tag.set_val" class="md-nav__link">
+    <span class="md-ellipsis">
+      set_val
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.Tag.update" class="md-nav__link">
     <span class="md-ellipsis">
       update
@@ -481,6 +490,15 @@
   <a href="#mininterface.tag.TagValue" class="md-nav__link">
     <span class="md-ellipsis">
       TagValue
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.tag.ChoicesType" class="md-nav__link">
+    <span class="md-ellipsis">
+      ChoicesType
     </span>
   </a>
   
@@ -731,6 +749,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mininterface.Tag.set_val" class="md-nav__link">
+    <span class="md-ellipsis">
+      set_val
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.Tag.update" class="md-nav__link">
     <span class="md-ellipsis">
       update
@@ -779,6 +806,15 @@
   <a href="#mininterface.tag.TagValue" class="md-nav__link">
     <span class="md-ellipsis">
       TagValue
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.tag.ChoicesType" class="md-nav__link">
+    <span class="md-ellipsis">
+      ChoicesType
     </span>
   </a>
   
@@ -1069,6 +1105,23 @@ The return value of the callback is currently not used.</p>
 <div class="doc doc-object doc-function">
 
 
+<h2 id="mininterface.Tag.set_val" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">set_val</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Sets the value without any checks.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h2 id="mininterface.Tag.update" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">update</span></code>
 
@@ -1212,6 +1265,26 @@ the mininterface was invoked with.</p>
     <div class="doc doc-contents first">
 
         <p>Any value.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mininterface.tag.ChoicesType" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ChoicesType</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ChoiceLabel</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span> <span class="o">|</span> <span class="n">Type</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+        <p>You can denote the choices in many ways.
+Either put options in an iterable or to a dict <code>{labels: value}</code>.
+Values might be Tags as well.</p>
+<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> for examples.</p>
     </div>
 
 </div>

@@ -153,9 +153,9 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#supported-types">
+<a class="md-nav__link" href="#ide-suggestions">
 <span class="md-ellipsis">
-      Supported types
+      IDE suggestions
     </span>
 </a>
 </li>
@@ -261,9 +261,9 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#supported-types">
+<a class="md-nav__link" href="#ide-suggestions">
 <span class="md-ellipsis">
-      Supported types
+      IDE suggestions
     </span>
 </a>
 </li>
@@ -302,90 +302,61 @@
 </code></pre>
 <h2 id="basic-usage">Basic usage</h2>
 <p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.is_yes"><code>m.is_yes("Is that alright?")</code></a>.</p>
-<p>To do any advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its subclassed <a class="autorefs autorefs-internal" href="../Types/#mininterface.types">types</a>. Ex. for a validation only, use its <a href="../Validation/#validation-alias"><code>Validation alias</code></a>.</p>
+<p>There are a lot of supported <a href="/Types">types</a> you can use, not only scalars and well-known objects (<code>Path</code>, <code>datetime</code>), but also functions, iterables (like <code>list[Path]</code>) and union types (like <code>int | None</code>). To do even more advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its subclasses. Ex. for a validation only, use its <a href="../Validation/#validation-alias"><code>Validation alias</code></a>.</p>
 <p>At last, use <a href="../Facet/"><code>Facet</code></a> to tackle the interface from the back-end (<code>m</code>) or the front-end (<code>Tag</code>) side.</p>
-<h2 id="supported-types">Supported types</h2>
-<p>Various types are supported:</p>
-<ul>
-<li>scalars</li>
-<li>functions</li>
-<li>well-known objects (<code>Path</code>, <code>datetime</code>)</li>
-<li>iterables (like <code>list[Path]</code>)</li>
-<li>custom classes (somewhat)</li>
-<li>union types (like <code>int | None</code>)</li>
-</ul>
-<p>Take a look how it works with the variables organized in a dataclass:</p>
+<h2 id="ide-suggestions">IDE suggestions</h2>
+<p>The immediate benefit is the type suggestions you see in an IDE. Imagine following code:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">    </span><span class="sd">""" A dummy number """</span>
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="n">my_boolean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">    </span><span class="sd">""" A dummy boolean """</span>
-<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="n">my_conditional_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w">    </span><span class="sd">""" A number that can be null if left empty """</span>
-<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp"</span><span class="p">)</span>
-<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span><span class="sd">""" A dummy path """</span>
-<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a>
-<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a>
-<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
-<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
-<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
-<a href="#__codelineno-0-22" id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath('/tmp'),</span>
-<a href="#__codelineno-0-23" id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">""" The user is forced to input Paths. """</span>
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>
+<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="k">class</span> <span class="nc">Dialog</span><span class="p">:</span>
+<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">    </span><span class="sd">""" A number """</span>
 </code></pre></div>
-<p><img alt="GUI window" src="../asset/supported_types_1.avif" title="A prompted dialog"/></p>
-<p>Variables organized in a dict:</p>
-<p>Along scalar types, there is (basic) support for common iterables or custom classes.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>
-<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
-<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="n">i</span>
-<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
-<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
-<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>
-<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a>
-<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"my_number"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>          <span class="s2">"my_list"</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
-<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a>          <span class="s2">"my_point"</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a>          <span class="p">}</span>
-<a href="#__codelineno-1-15" id="__codelineno-1-15" name="__codelineno-1-15"></a>
-<a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># Prompt a dialog</span>
-<a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># {'my_number': 2, 'my_list': [2, 3], 'my_point': &lt;__main__.Point object...&gt;}</span>
-<a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">"my_point"</span><span class="p">]</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># 100</span>
-</code></pre></div>
-<p><img alt="GUI window" src="../asset/supported_types_2.avif" title="A prompted dialog after editation"/></p>
+<p>Now, accessing the main <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">env</a> will trigger the hint.
+<img alt="Suggestion run" src="../asset/suggestion_run.avif"/></p>
+<p>Calling the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.form">form</a> with an empty parameter will trigger editing the main <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">env</a></p>
+<p><img alt="Suggestion form" src="../asset/suggestion_form_env.avif"/></p>
+<p>Putting there a dict will return the dict too.</p>
+<p><img alt="Suggestion form" src="../asset/suggestion_dict.avif"/></p>
+<p>Putting there a dataclass type causes it to be resolved.</p>
+<p><img alt="Suggestion dataclass type" src="../asset/suggestion_dataclass_type.avif"/></p>
+<p>Should you have a resolved dataclass instance, put it there.</p>
+<p><img alt="Suggestion dataclass instance" src="../asset/suggestion_dataclass_instance.avif"/></p>
+<p>As you see, its attributes are hinted alongside their description.</p>
+<p><img alt="Suggestion dataclass expanded" src="../asset/suggestion_dataclass_expanded.avif"/></p>
+<p>Should the dataclass cannot be easily investigated by the IDE (i.e. a required field), just annotate the output.</p>
+<p><img alt="Suggestion annotation possible" src="../asset/suggestion_dataclass_annotated.avif"/></p>
 <h2 id="nested-configuration">Nested configuration</h2>
 <p>You can easily nest the configuration. (See also <a href="https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/">Tyro Hierarchical Configs</a>).</p>
 <p>Just put another dataclass inside the config file:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="k">class</span> <span class="nc">FurtherConfig</span><span class="p">:</span>
-<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
-<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>
-<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
-<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a>
-<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="o">...</span>
-<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span> <span class="nc">FurtherConfig</span><span class="p">:</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="o">...</span>
+<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
 </code></pre></div>
 <p>The attributes can by defaulted by CLI:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$./program.py --further.host example.net
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>$./program.py --further.host example.net
 </code></pre></div>
 <p>And in a YAML config file. Note that you are not obliged to define all the attributes, a subset will do.
 (Ex. you do not need to specify <code>token</code> too.)</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nt">further</span><span class="p">:</span>
-<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">further</span><span class="p">:</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
 </code></pre></div>
 <h2 id="all-possible-interfaces">All possible interfaces</h2>
 <p>Normally, you get an interface through <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a>
@@ -400,8 +371,8 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <li><code>ReplInterface</code> – A debug terminal. Invokes a breakpoint after every dialog.</li>
 </ul>
 <p>How to invoke a specific interface.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">with</span> <span class="n">TuiInterface</span><span class="p">(</span><span class="s2">"My program"</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="n">number</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">ask_number</span><span class="p">(</span><span class="s2">"Returns number"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">with</span> <span class="n">TuiInterface</span><span class="p">(</span><span class="s2">"My program"</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="n">number</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">ask_number</span><span class="p">(</span><span class="s2">"Returns number"</span><span class="p">)</span>
 </code></pre></div>
 </article>
 </div>
