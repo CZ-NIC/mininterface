@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 import logging
 import os
 import sys
@@ -11,7 +11,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ColorEnum, ColorEnumSingle, ConstrainedEnv, FurtherEnv2,
+from configs import (ColorEnum, ColorEnumSingle, ConflictingEnv, ConstrainedEnv, FurtherEnv2,
                      MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, SimpleEnv,
                      callback_raw, callback_tag, callback_tag2)
@@ -53,6 +53,16 @@ class TestAbstract(TestCase):
             self.assertEqual(expected_output, actual_output)
         finally:
             sys.stdout = original_stdout
+
+    @contextmanager
+    def assertStderr(self, expected_output=None, contains=None):
+        f = StringIO()
+        with redirect_stderr(f):
+            yield
+        if expected_output:
+            self.assertEqual(expected_output, f.getvalue().strip())
+        if contains:
+            self.assertIn(contains, f.getvalue().strip())
 
 
 class TestCli(TestAbstract):
@@ -520,8 +530,8 @@ class TestValidators(TestAbstract):
 
 class TestLog(TestAbstract):
     @staticmethod
-    def log():
-        run(SimpleEnv, interface=Mininterface)
+    def log(object=SimpleEnv):
+        run(object, interface=Mininterface)
         logger = logging.getLogger(__name__)
         logger.debug("debug level")
         logger.info("info level")
@@ -557,6 +567,17 @@ class TestLog(TestAbstract):
         self.sys("-vv")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
+
+    @patch('logging.basicConfig')
+    def test_custom_verbosity(self, mock_basicConfig):
+        """ We use an object, that has verbose attribute too. Which interferes with the one injected. """
+        self.log(ConflictingEnv)
+        mock_basicConfig.assert_not_called()
+
+        self.sys("-v")
+        with (self.assertStderr(contains="running-tests: error: unrecognized arguments: -v"), self.assertRaises(SystemExit)):
+            self.log(ConflictingEnv)
+        mock_basicConfig.assert_not_called()
 
 
 class TestPydanticIntegration(TestAbstract):

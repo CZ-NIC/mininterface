@@ -17,6 +17,8 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 logger = logging.getLogger(__name__)
 
+# TODO readme examples refresh imgs
+
 
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
@@ -160,6 +162,8 @@ class Mininterface(Generic[EnvClass]):
 
                 ![Choices from enum](asset/choice_enum_type.avif)
 
+                TODO Enum instance
+
                 Alternatively, you may use an Enum instances list.
 
                 ```python
@@ -269,6 +273,8 @@ class Mininterface(Generic[EnvClass]):
         Returns:
             dataclass:
                 If the `form` is null, the output is [`self.env`][mininterface.Mininterface.env].
+            dataclass:
+                If the `form` is a dataclass type or a dataclass instance, the output is the dataclass instance.
             dict:
                 If the `form` is a dict, the output is another dict.
 

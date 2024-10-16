@@ -45,6 +45,11 @@ class SimpleEnv:
 
 
 @dataclass
+class ConflictingEnv:
+    verbose: bool = True
+
+
+@dataclass
 class FurtherEnv1:
     token: str = "filled"
     host: str = "example.org"

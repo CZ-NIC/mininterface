@@ -159,7 +159,8 @@ def run(env_class: Type[EnvClass] | None = None,
     # Load configuration from CLI and a config file
     env, wrong_fields = None, {}
     if env_class:
-        env, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, **kwargs)
+        verb_ = add_verbosity and "verbose" not in env_class.__annotations__
+        env, wrong_fields = _parse_cli(env_class, config_file, verb_, ask_for_missing, **kwargs)
 
     # Build the interface
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
