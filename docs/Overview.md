@@ -110,7 +110,7 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 Several interfaces exist:
 
 * [`Mininterface`][mininterface.Mininterface] – The base interface the others are fully compatible with.
-* `GuiInterface` – A tkinter window.
+* `GuiInterface` = `TkInterface` – A tkinter window.
 * `TuiInterface` – An interactive terminal.
   * `TextualInterface` – If [textual](https://github.com/Textualize/textual) installed, rich interface is used.
   * `TextInterface` – Plain text only interface with no dependency as a fallback.

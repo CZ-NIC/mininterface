@@ -13,20 +13,19 @@ from . import validators
 
 # Import optional interfaces
 try:
-    from mininterface.gui_interface import GuiInterface
+    from mininterface.tk_interface import TkInterface
 except ImportError:
     if TYPE_CHECKING:
         pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
     else:
-        GuiInterface = None
+        TkInterface = None
 try:
     from mininterface.textual_interface import TextualInterface
 except ImportError:
     TextualInterface = None
 
-
-class TuiInterface(TextualInterface or TextInterface):
-    pass
+GuiInterface = TkInterface
+TuiInterface = TextualInterface or TextInterface
 
 # NOTE:
 # ask_for_missing does not work with tyro Positional, stays missing.
@@ -190,5 +189,5 @@ def run(env_class: Type[EnvClass] | None = None,
 
 __all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
            "Validation", "Choices", "PathTag",
-           "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface"
+           "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface", "TkInterface"
            ]

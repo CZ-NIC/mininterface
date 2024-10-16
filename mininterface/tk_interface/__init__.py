@@ -12,13 +12,12 @@ except ImportError:
 from .tk_window import TkWindow
 from .redirect_text_tkinter import RedirectTextTkinter
 from ..common import InterfaceNotAvailable
-from ..form_dict import DataClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
+from ..form_dict import DataClass, FormDict
 from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface
-from ..cli_parser import run_tyro_parser
 
 
-class GuiInterface(Redirectable, Mininterface):
+class TkInterface(Redirectable, Mininterface):
     """ When used in the with statement, the GUI window does not vanish between dialogues. """
 
     def __init__(self, *args, **kwargs):

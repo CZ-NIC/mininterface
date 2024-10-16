@@ -14,13 +14,13 @@ from .tk_facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
 if TYPE_CHECKING:
-    from . import GuiInterface
+    from . import TkInterface
 
 
 class TkWindow(Tk, BackendAdaptor):
     """ An editing window. """
 
-    def __init__(self, interface: "GuiInterface"):
+    def __init__(self, interface: "TkInterface"):
         super().__init__()
         self.facet = interface.facet = TkFacet(self, interface.env)
         self.params = None
