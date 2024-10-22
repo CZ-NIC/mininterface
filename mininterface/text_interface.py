@@ -1,8 +1,9 @@
 from pprint import pprint
+from typing import Type
 
 from .common import Cancelled
 
-from .form_dict import EnvClass, FormDict, FormDictOrEnv
+from .form_dict import EnvClass, FormDict, DataClass
 from .mininterface import Mininterface
 
 
@@ -22,7 +23,10 @@ class TextInterface(Mininterface):
             raise Cancelled(".. cancelled")
         return txt
 
-    def form(self, form: FormDictOrEnv | None = None, title: str = "") -> FormDictOrEnv | EnvClass:
+    def form(self,
+             form: DataClass | Type[DataClass] | FormDict | None = None,
+             title: str = ""
+             ) -> FormDict | DataClass | EnvClass:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         # NOTE: Concerning Dataclass form.
         # I might build some menu of changing dict through:

@@ -71,7 +71,13 @@ class TextualApp(App[bool | None]):
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
-            o = MyInput(str(v), placeholder=tag.name or "")
+            if issubclass(tag.annotation, int):
+                type_ = "integer"
+            elif issubclass(tag.annotation, float):
+                type_ = "number"
+            else:
+                type_ = "text"
+            o = MyInput(str(v), placeholder=tag.name or "", type=type_)
 
         o._link = tag  # The Textual widgets need to get back to this value
         tag._last_ui_val = o.get_ui_value()

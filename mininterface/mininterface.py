@@ -1,16 +1,15 @@
-from enum import Enum
 import logging
 from dataclasses import is_dataclass
+from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload, Type
+from typing import TYPE_CHECKING, Any, Generic, Type, TypeVar, overload
 
+from .cli_parser import run_tyro_parser
 from .common import Cancelled
 from .facet import Facet
-from .form_dict import DataClass, EnvClass, FormDict, FormDictOrEnv, dict_to_tagdict, formdict_resolve
+from .form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
+                        dict_to_tagdict, formdict_resolve)
 from .tag import ChoicesType, Tag, TagValue
-from .form_dict import DataClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
-from .cli_parser import run_tyro_parser
-
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -262,12 +261,17 @@ class Mininterface(Generic[EnvClass]):
         ![Complex form dict](asset/complex_form_dict.avif)
 
         Args:
-            form: Dict of `{labels: value}`. The form widget infers from the default value type.
+            form: We accept a dataclass type, a dataclass instance, a dict or None.
+
+                * If dict, we expect a dict of `{labels: value}`.
+                The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The value might be a [`Tag`][mininterface.Tag] that allows you to add descriptions.
-                If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
-                    (Previously fetched from CLI and config file.)
+
                 A checkbox example: `{"my label": Tag(True, "my description")}`
+
+                * If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
+                    (Previously fetched from CLI and config file.)
             title: Optional form title
 
         Returns:
@@ -323,14 +327,13 @@ class Mininterface(Generic[EnvClass]):
               launch_callback=None) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
         if isinstance(_form, dict):
-            # TODO integrate to TextualMininterface and others, test and docs
             # TODO After launching a callback, a TextualInterface stays, the form re-appears.
-            return formdict_resolve(launch_callback(dict_to_tagdict(_form, self.facet), title=title), extract_main=True)
+            return formdict_resolve(launch_callback(dict_to_tagdict(_form, self), title=title), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # TODO what to do with wf
         if is_dataclass(_form):  # -> dataclass or its instance
             # the original dataclass is updated, hence we do not need to catch the output from launch_callback
-            launch_callback(dataclass_to_tagdict(_form, self.facet))
+            launch_callback(dataclass_to_tagdict(_form, self), title=title)
             return _form
         raise ValueError(f"Unknown form input {_form}")
 

@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 from .tag import Tag, TagValue
 
 if TYPE_CHECKING:
-    from .facet import Facet
+    from . import Mininterface
 
 logger = logging.getLogger(__name__)
 
@@ -85,13 +85,13 @@ def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
     return out
 
 
-def dict_to_tagdict(data: dict, facet: "Facet" = None) -> TagDict:
+def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -> TagDict:
     fd = {}
     for key, val in data.items():
         if isinstance(val, dict):  # nested config hierarchy
-            fd[key] = dict_to_tagdict(val, facet)
+            fd[key] = dict_to_tagdict(val, mininterface)
         else:  # scalar or Tag value
-            d = {"facet": facet}
+            d = {"facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
                 tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
             else:
@@ -111,8 +111,7 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key
         return d
 
 
-# TODO accept rather interface and fetch facet from within
-def dataclass_to_tagdict(env: EnvClass, facet: "Facet" = None, _nested=False) -> TagDict:
+def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] = None, _nested=False) -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = {}
     if not _nested:  # root is nested under "" path
@@ -140,9 +139,9 @@ def dataclass_to_tagdict(env: EnvClass, facet: "Facet" = None, _nested=False) ->
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
-            subdict[param] = dataclass_to_tagdict(val, facet, _nested=True)
+            subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)
         else:  # scalar or Tag value
-            d = {"description": get_description(env.__class__, param), "facet": facet}
+            d = {"description": get_description(env.__class__, param), "facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
                 tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:

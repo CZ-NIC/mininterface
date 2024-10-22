@@ -147,6 +147,13 @@ class TestInteface(TestAbstract):
             self.assertEqual(m2.env, m2.form())
             self.assertTrue(m2.env.test)
 
+        # Form accepts a dataclass type
+        m3 = run(interface=Mininterface)
+        self.assertEqual(SimpleEnv(), m3.form(SimpleEnv))
+
+        # Form accepts a dataclass instance
+        self.assertEqual(SimpleEnv(), m3.form(SimpleEnv()))
+
     def test_form_output(self):
         m = run(SimpleEnv, interface=Mininterface)
         d1 = {"test1": "str", "test2": Tag(True)}
