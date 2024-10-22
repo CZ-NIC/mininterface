@@ -52,15 +52,12 @@ class MyRadioSet(RadioSet, Changeable):
 class MyButton(Button, Changeable):
     _val: TagValue
 
-    def __init__(self, *args, val=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._val = val
-
     def on_button_pressed(self, event):
-        return self._link.val()
+        self._link.facet.submit()
+        self._link.val()
 
     def get_ui_value(self):
-        return self._val
+        return self._link.val
 
 
 class MySubmitButton(MyButton):

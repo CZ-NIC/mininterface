@@ -66,7 +66,7 @@ class TextualApp(App[bool | None]):
 
         # Replace with a callback button
         elif tag._is_a_callable():
-            o = MyButton(tag.name, val=tag.val)
+            o = MyButton(tag.name)
 
         else:
             if not isinstance(v, (float, int, str, bool)):
