@@ -145,8 +145,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
         # Replace with a callback button
         elif tag._is_a_callable():
             def inner(tag: Tag):
-                tk_app._post_submit_action = tag._run_callable
-                tag.facet.submit()
+                tag.facet.submit(_post_submit=tag._run_callable)
             variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
 
         # Add event handler

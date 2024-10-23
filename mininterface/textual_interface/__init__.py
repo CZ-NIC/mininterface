@@ -1,30 +1,29 @@
-from dataclasses import dataclass
 from typing import Any, Type
-
-from mininterface.textual_interface.textual_app import TextualApp
-from mininterface.textual_interface.textual_button_app import TextualButtonApp
-from mininterface.textual_interface.textual_facet import TextualFacet
 
 try:
     from textual.app import App as _ImportCheck
 except ImportError:
-    from mininterface.common import InterfaceNotAvailable
+    from ..common import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
 from ..form_dict import DataClass, EnvClass, FormDict
 from ..redirectable import Redirectable
 from ..tag import Tag
 from ..text_interface import TextInterface
+from .textual_adaptor import TextualAdaptor
+from .textual_button_app import TextualButtonApp
+from .textual_facet import TextualFacet
 
 
 class TextualInterface(Redirectable, TextInterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.facet: TextualFacet = TextualFacet(None, self.env)  # window=None, since no app is running
+        self.adaptor = TextualAdaptor(self)
 
     def _get_app(self):
-        return TextualApp(self)
+        return self.adaptor
+        # return TextualAdaptor(self)
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -37,7 +36,7 @@ class TextualInterface(Redirectable, TextInterface):
              form: DataClass | Type[DataClass] | FormDict | None = None,
              title: str = ""
              ) -> FormDict | DataClass | EnvClass:
-        def clb(form, title, c=self): return TextualApp.run_dialog(c._get_app(), form, title)
+        def clb(form, title, c=self): return self.adaptor.run_dialog(form, title)
         return self._form(form, title, clb)
 
     def ask_number(self, text: str):

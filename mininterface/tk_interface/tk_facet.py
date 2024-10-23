@@ -6,15 +6,16 @@ if TYPE_CHECKING:
 
 
 class TkFacet(Facet):
-    window: "TkWindow"
+    adaptor: "TkWindow"
 
     def set_title(self, title: str):
         if not title:
-            self.window.label.pack_forget()
+            self.adaptor.label.pack_forget()
         else:
-            self.window.label.config(text=title)
-            self.window.label.pack(pady=10)
+            self.adaptor.label.config(text=title)
+            self.adaptor.label.pack(pady=10)
             pass
 
-    def submit(self):
-        self.window.form.button.invoke()
+    def submit(self, *args, **kwargs):
+        super().submit(*args, **kwargs)
+        self.adaptor.form.button.invoke()

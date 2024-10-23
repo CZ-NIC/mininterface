@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic
+from typing import Callable, Generic, Optional
 
 from .form_dict import EnvClass, TagDict
 from .tag import Tag
@@ -7,6 +7,7 @@ from .tag import Tag
 
 class BackendAdaptor(ABC):
     facet: "Facet"
+    post_submit_action: Optional[Callable] = None
 
     @staticmethod
     @abstractmethod
@@ -21,6 +22,10 @@ class BackendAdaptor(ABC):
         Setups the facet._fetch_from_adaptor.
         """
         pass
+
+    def submit_done(self):
+        if self.post_submit_action:
+            self.post_submit_action()
 
 
 class Facet(Generic[EnvClass]):
@@ -40,8 +45,8 @@ class Facet(Generic[EnvClass]):
     If you change something, it will not probably be shown in the form because there is no refresh mechanism.
     """
 
-    def __init__(self, window: BackendAdaptor, env: EnvClass):
-        self.window = window
+    def __init__(self, adaptor: BackendAdaptor, env: EnvClass):
+        self.adaptor = adaptor
         self._env = env
 
     def _fetch_from_adaptor(self, form: TagDict):
@@ -51,8 +56,7 @@ class Facet(Generic[EnvClass]):
         """ Set the main heading. """
         print("Title", text)
 
-    @abstractmethod
-    def submit(self):
+    def submit(self, _post_submit=None):
         """ Submits the whole form.
 
         ```python
@@ -68,7 +72,7 @@ class Facet(Generic[EnvClass]):
         # continue here immediately after clicking on a radio button
 
         """
-        ...
+        self.adaptor.post_submit_action = _post_submit
 
     # NOTE we should get
     # Access to the fields. What is a catch,

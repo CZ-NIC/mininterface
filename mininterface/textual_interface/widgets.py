@@ -53,8 +53,7 @@ class MyButton(Button, Changeable):
     _val: TagValue
 
     def on_button_pressed(self, event):
-        self._link.facet.submit()
-        self._link.val()
+        self._link.facet.submit(_post_submit=self._link._run_callable)
 
     def get_ui_value(self):
         return self._link.val

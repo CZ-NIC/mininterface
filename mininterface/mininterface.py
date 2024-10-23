@@ -327,7 +327,6 @@ class Mininterface(Generic[EnvClass]):
               launch_callback=None) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
         if isinstance(_form, dict):
-            # TODO After launching a callback, a TextualInterface stays, the form re-appears.
             return formdict_resolve(launch_callback(dict_to_tagdict(_form, self), title=title), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # TODO what to do with wf
