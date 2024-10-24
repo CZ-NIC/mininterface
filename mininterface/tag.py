@@ -321,6 +321,13 @@ class Tag:
             field_strings.append(f"{field.name}={v}")
         return f"{self.__class__.__name__}({', '.join(field_strings)})"
 
+    def __hash__(self):
+        # Once upon a time, github actions test stopped working with no hash function here.
+        # The tests for commit c108a6d passed on 2024-10-16. But strangely, the very same commit failed on 2024-10-24.
+        # Python patch version did not change. On the local machine, the tests work great with no obstacle.
+        # Hence, I add a hash function with no intention yet.
+        return hash(str(self))
+
     def _fetch_from(self, tag: "Self") -> "Self":
         """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
