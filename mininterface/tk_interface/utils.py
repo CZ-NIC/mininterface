@@ -114,16 +114,16 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                 widget['values'] = list(tag._get_choices())
                 widget.pack()
                 widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
-                variable.set(chosen_val)
+                if chosen_val is not None:
+                    variable.set(chosen_val)
 
             else:
                 for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
                     widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
                     widget2.grid(row=i, column=1, sticky="w")
                     subwidgets.append(widget2)
-                    if choice_val is chosen_val:
+                    if choice_val is tag.val:
                         variable.set(choice_label)
-                        # TODO does this works in textual too?
 
         # File dialog
         elif path_tag := tag._morph(PathTag, (PosixPath, Path)):

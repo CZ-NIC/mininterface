@@ -119,7 +119,7 @@ class Env:
   nested_config: NestedEnv
 
   mandatory_str: str
-  """ As there is not default value, you will be prompted automatically to fill up the field """
+  """ As there is no default value, you will be prompted automatically to fill up the field """
 
   my_number: int | None = None
   """ This is not just a dummy number, if left empty, it is None. """
@@ -142,6 +142,14 @@ print(m.env)
 # Edit values in a dialog
 m.form()
 ```
+
+As there is no default value at `mandatory_str`, you will be prompted automatically to fill up the field:
+
+![Complex example missing field](asset/complex_example_missing_field.avif)
+
+Then, full form appears:
+
+![Complex example](asset/complex_example.avif)
 
 ## Form with paths
 

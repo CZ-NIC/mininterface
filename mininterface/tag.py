@@ -53,7 +53,7 @@ ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabe
 Either put options in an iterable or to a dict `{labels: value}`.
 Values might be Tags as well.
 
-See [mininterface.choice][mininterface.Mininterface.choice] for examples.
+See [mininterface.choice][mininterface.Mininterface.choice] or [`Tag.choices`][mininterface.Tag.choices] for examples.
 """
 
 
@@ -67,7 +67,7 @@ class Tag:
         """
 
     val: TagValue = None
-    """ The value wrapped by Tag.
+    """ The value wrapped by Tag. It can be any value.
 
     ```python
     from mininterface import run, Tag
@@ -83,6 +83,14 @@ class Tag:
 
     The encapsulated value is `True`, `tag.description` is 'This is my boolean',
     `tag.annotation` is `bool` and 'My boolean' is used as `tag.name`.
+
+    !!! tip
+        If the Tag is nested, the info is fetched to the outer Tag.
+        When updated, the inner Tag value updates accordingly.
+
+        ```python
+        tag = Tag(Tag(True))
+        ```
     """
     description: str = ""
     """ The description displayed in the UI. """
@@ -133,7 +141,7 @@ class Tag:
     """
 
     choices: ChoicesType | None = None
-    """ Print the radio buttons. Constraint the value.
+    """ Print the radio buttons / select box. Constraint the value.
 
     ```python
     from dataclasses import dataclass
@@ -143,14 +151,17 @@ class Tag:
     @dataclass
     class Env:
         foo: Annotated["str", Choices("one", "two")] = "one"
-
         # `Choices` is an alias for `Tag(choices=)`
 
     m = run(Env)
     m.form()  # prompts a dialog
     ```
+    ![Form choice](asset/tag_choices.avif)
+
+    !!! info
+        When dealing with a simple use case, use the [mininterface.choice][mininterface.Mininterface.choice] dialog.
     """
-    # NOTE we should support
+    # NOTE we should support (maybe it is done)
     # * Enums: Tag(enum) # no `choice` param`
     # * more date types (now only str possible)
     # * mininterface.choice `def choice(choices=, guesses=)`
@@ -235,7 +246,6 @@ class Tag:
 
     def __post_init__(self):
         # Fetch information from the nested tag: `Tag(Tag(...))`
-        # TODO docs, test
         if isinstance(self.val, Tag):
             if self._src_obj or self._src_key:
                 raise ValueError("Wrong Tag inheritance, submit a bug report.")
@@ -583,7 +593,7 @@ class Tag:
         # other interfaces does not guarantee that. Hence, we need to do the type conversion too.
         if self.annotation:
             if self.annotation == TagCallback:
-                return True  # TODO
+                return True  # NOTE, EXPERIMENTAL
             if ui_value == "" and NoneType in get_args(self.annotation):
                 # The user is not able to set the value to None, they left it empty.
                 # Cast back to None as None is one of the allowed types.

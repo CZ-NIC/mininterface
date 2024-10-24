@@ -7,7 +7,8 @@ from .auxiliary import common_iterables
 from .tag import Tag, ValidationResult, TagValue
 
 
-from .type_stubs import TagCallback, TagType # Allow import from the module
+from .type_stubs import TagCallback, TagType  # Allow import from the module
+
 
 def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
     """ Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
@@ -36,6 +37,9 @@ def Choices(*choices: list[str]):
 @dataclass
 class CallbackTag(Tag):
     ''' Callback function is guaranteed to receives the [Tag][mininterface.Tag] as a parameter.
+
+    !!! warning
+        Experimental. May change.
 
     For the following examples, we will use these custom callback functions:
     ```python

@@ -204,11 +204,12 @@ class TestInteface(TestAbstract):
 
         self.assertEqual(50, m.choice(choices, default=callback_raw))
 
-        # TODO This test does not work
+        # TODO This test does not work. We have to formalize the callback.
         # self.assertEqual(100, m.choice(choices, default=choices["My choice2"]))
 
 
 class TestConversion(TestAbstract):
+
     def test_tagdict_resolve(self):
         self.assertEqual({"one": 1}, formdict_resolve({"one": 1}))
         self.assertEqual({"one": 1}, formdict_resolve({"one": Tag(1)}))
@@ -421,7 +422,6 @@ class TestConversion(TestAbstract):
         self.assertEqual("moo", m.env.test)
 
     def test_nested_tag(self):
-        # TODO docs nested tags
         t0 = Tag(5)
         t1 = Tag(t0, name="Used name")
         t2 = Tag(t1, name="Another name")
@@ -447,6 +447,12 @@ class TestConversion(TestAbstract):
         self.assertEqual(5, t3.val)
         self.assertEqual(5, t4.val)
         self.assertEqual(8, t5.val)  # from t2, we iherited the hook to t1
+
+        # update triggers the value propagation
+        inner = Tag(2)
+        outer = Tag(Tag(Tag(inner)))
+        outer.update(3)
+        self.assertEqual(3, inner.val)
 
 
 class TestRun(TestAbstract):
@@ -788,6 +794,11 @@ class TestTagAnnotation(TestAbstract):
         # list of enums
         self.assertEqual(ColorEnum.GREEN, m.choice([ColorEnum.BLUE, ColorEnum.GREEN], default=ColorEnum.GREEN))
         self.assertEqual(ColorEnum.BLUE, m.choice([ColorEnum.BLUE]))
+        # this works but I'm not sure whether it is good to guarantee None
+        self.assertEqual(None, m.choice([ColorEnum.RED, ColorEnum.GREEN]))
+
+        # Enum instance signify the default
+        self.assertEqual(ColorEnum.RED, m.choice(ColorEnum.RED))
 
 
 if __name__ == '__main__':

@@ -16,8 +16,6 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 logger = logging.getLogger(__name__)
 
-# TODO readme examples refresh imgs
-
 
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
@@ -161,7 +159,18 @@ class Mininterface(Generic[EnvClass]):
 
                 ![Choices from enum](asset/choice_enum_type.avif)
 
-                TODO Enum instance
+                Alternatively, you may use an Enum instance.
+
+                ```python
+                class Color(Enum):
+                    RED = "red"
+                    GREEN = "green"
+                    BLUE = "blue"
+
+                m.choice(Color.BLUE)
+                ```
+
+                ![Choices from enum](asset/choice_enum_instance.avif)
 
                 Alternatively, you may use an Enum instances list.
 
@@ -185,6 +194,8 @@ class Mininterface(Generic[EnvClass]):
             The chosen value.
             If launch=True and the chosen value is a callback, we call it and return its result.
 
+        !!! info
+            To tackle a more detailed form, see [`Tag.choices`][mininterface.Tag.choices].
         """
         # NOTE to build a nice menu, I need this
         # Args:
@@ -198,15 +209,19 @@ class Mininterface(Generic[EnvClass]):
         #   (possibly because the lambda hides a part of GUI)
         # m = run(Env)
         # tag = Tag(x, choices=["one", "two", x])
-        if skippable and len(choices) == 1:
-            if isinstance(choices, type) and issubclass(choices, Enum):
+        if skippable and isinstance(choices, Enum):  # Enum instance, ex: val=ColorEnum.RED
+            default = choices
+            choices = choices.__class__
+
+        if skippable and len(choices) == 1:  # Directly choose the answer
+            if isinstance(choices, type) and issubclass(choices, Enum):  # Enum type, ex: val=ColorEnum
                 out = list(choices)[0]
             elif isinstance(choices, dict):
                 out = next(iter(choices.values()))
             else:
                 out = choices[0]
             tag = Tag(out)
-        else:
+        else:  # Trigger the dialog
             tag = Tag(val=default, choices=choices)
             key = title or "Choose"
             self.form({key: tag})[key]
@@ -321,7 +336,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
         """
         print(f"Asking the form {title}".strip(), self.env if form is None else form)
-        return self._form(form, title, MinAdaptor(self))  # TODO does the adaptor works here?
+        return self._form(form, title, MinAdaptor(self))
 
     def _form(self,
               form: DataClass | Type[DataClass] | FormDict | None,
