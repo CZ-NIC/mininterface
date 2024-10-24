@@ -17,7 +17,7 @@ autocombobox = "1.4.2"
 tyro = "*"
 pyyaml = "*"
 requests = "*"
-textual = "*"
+textual = "~0.84"
 tkinter-tooltip = "*"
 tkinter_form = "0.1.5.2"
 

@@ -55,18 +55,19 @@ class TkWindow(Tk, BackendAdaptor):
             v = str(v)
         return Value(v, tag.description)
 
-    def run_dialog(self, form: TagDict, title: str = "") -> TagDict:
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
-        self.facet._fetch_from_adaptor(form)
+        super().run_dialog(form, title, submit)
         if title:
             self.facet.set_title(title)
 
         self.form = Form(self.frame,
                          name_form="",
                          form_dict=formdict_to_widgetdict(form, self.widgetize),
-                         name_config="Ok",
+                         name_config=submit if isinstance(submit, str) else "Ok",
+                         button=bool(submit)
                          )
         self.form.pack()
 
@@ -74,19 +75,20 @@ class TkWindow(Tk, BackendAdaptor):
         replace_widgets(self, self.form.widgets, form)
 
         # Set the submit and exit options
-        self.form.button.config(command=self._ok)
-        tip, keysym = ("Enter", "<Return>")
-        ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
-        self._bind_event(keysym, self._ok)
+        if self.form.button:
+            self.form.button.config(command=self._ok)
+            tip, keysym = ("Enter", "<Return>")
+            ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
+            self._bind_event(keysym, self._ok)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
         recursive_set_focus(self.form)
-        return self.mainloop(lambda: self.validate(form, title))
+        return self.mainloop(lambda: self.validate(form, title, submit))
 
-    def validate(self, form: TagDict, title: str) -> TagDict:
+    def validate(self, form: TagDict, title: str, submit) -> TagDict:
         if not Tag._submit(form, self.form.get()):
-            return self.run_dialog(form, title)
+            return self.run_dialog(form, title, submit)
         self.submit_done()
         return form
 

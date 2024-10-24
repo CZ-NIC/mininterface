@@ -28,7 +28,6 @@ class TextualAdaptor(BackendAdaptor):
     def __init__(self, interface: "TextualInterface"):
         self.interface = interface
         self.facet = interface.facet = TextualFacet(self, interface.env)
-        self.app = TextualApp(self)
 
     @staticmethod
     def widgetize(tag: Tag) -> Widget | Changeable:
@@ -72,14 +71,17 @@ class TextualAdaptor(BackendAdaptor):
         else:
             return []
 
-    def run_dialog(self, form: TagDict, title: str = "") -> TagDict:
-        self.facet._fetch_from_adaptor(form)
-        app = self.app
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        super().run_dialog(form, title, submit)
+        self.app = app = TextualApp(self, submit)
         if title:
             app.title = title
 
         widgets: WidgetList = [f for f in flatten(formdict_to_widgetdict(
             form, self.widgetize), include_keys=self.header)]
+        if len(widgets) and isinstance(widgets[0], Rule):
+            # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
+            widgets.pop(0)
         app.widgets = widgets
 
         if not app.run():
@@ -87,6 +89,6 @@ class TextualAdaptor(BackendAdaptor):
 
         # validate and store the UI value → Tag value → original value
         if not Tag._submit_values((field._link, field.get_ui_value()) for field in widgets if hasattr(field, "_link")):
-            return self.run_dialog(TextualApp(app.interface), form, title)
+            return self.run_dialog(form, title, submit)
         self.submit_done()
         return form

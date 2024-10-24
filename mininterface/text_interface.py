@@ -25,7 +25,9 @@ class TextInterface(Mininterface):
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = ""
+             title: str = "",
+             *,
+             submit: str | bool = True,
              ) -> FormDict | DataClass | EnvClass:
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         # NOTE: Concerning Dataclass form.

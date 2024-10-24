@@ -21,10 +21,6 @@ class TextualInterface(Redirectable, TextInterface):
         super().__init__(*args, **kwargs)
         self.adaptor = TextualAdaptor(self)
 
-    def _get_app(self):
-        return self.adaptor
-        # return TextualAdaptor(self)
-
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
         TextualButtonApp(self).buttons(text, [("Ok", None)]).run()
@@ -34,10 +30,11 @@ class TextualInterface(Redirectable, TextInterface):
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = ""
+             title: str = "",
+             *,
+             submit: str | bool = True,
              ) -> FormDict | DataClass | EnvClass:
-        def clb(form, title, c=self): return self.adaptor.run_dialog(form, title)
-        return self._form(form, title, clb)
+        return self._form(form, title, self.adaptor, submit=submit)
 
     def ask_number(self, text: str):
         return self.form({text: Tag("", "", int, text)})[text]

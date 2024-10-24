@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, Optional
+from typing import TYPE_CHECKING, Callable, Generic, Optional
+
 
 from .form_dict import EnvClass, TagDict
 from .tag import Tag
+
+if TYPE_CHECKING:
+    from . import Mininterface
 
 
 class BackendAdaptor(ABC):
@@ -15,17 +19,28 @@ class BackendAdaptor(ABC):
         """ Wrap Tag to a UI widget. """
         pass
 
-    @abstractmethod
-    def run_dialog(self, form: TagDict, title: str = "") -> TagDict:
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """ Let the user edit the dict values.
 
         Setups the facet._fetch_from_adaptor.
         """
-        pass
+        self.facet._fetch_from_adaptor(form)
 
     def submit_done(self):
         if self.post_submit_action:
             self.post_submit_action()
+
+
+class MinAdaptor(BackendAdaptor):
+    def __init__(self, interface: "Mininterface"):
+        super().__init__()
+        self.facet = Facet(self, interface.env)
+
+    def widgetize(tag: Tag):
+        pass
+
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        return form
 
 
 class Facet(Generic[EnvClass]):

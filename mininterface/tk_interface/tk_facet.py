@@ -18,4 +18,4 @@ class TkFacet(Facet):
 
     def submit(self, *args, **kwargs):
         super().submit(*args, **kwargs)
-        self.adaptor.form.button.invoke()
+        self.adaptor._ok()

@@ -23,30 +23,32 @@ class TkInterface(Redirectable, Mininterface):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
-            self.window = TkWindow(self)
+            self.adaptor = TkWindow(self)
         except TclError:
             # even when installed the libraries are installed, display might not be available, hence tkinter fails
             raise InterfaceNotAvailable
-        self._redirected = RedirectTextTkinter(self.window.text_widget, self.window)
+        self._redirected = RedirectTextTkinter(self.adaptor.text_widget, self.adaptor)
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
-        self.window.buttons(text, [("Ok", None)])
+        self.adaptor.buttons(text, [("Ok", None)])
 
     def ask(self, text: str) -> str:
         return self.form({text: ""})[text]
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = ""
+             title: str = "",
+             *,
+             submit: str | bool = True
              ) -> FormDict | DataClass | EnvClass:
-        return self._form(form, title, self.window.run_dialog)
+        return self._form(form, title, self.adaptor, submit=submit)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]
 
     def is_yes(self, text):
-        return self.window.yes_no(text, False)
+        return self.adaptor.yes_no(text, False)
 
     def is_no(self, text):
-        return self.window.yes_no(text, True)
+        return self.adaptor.yes_no(text, True)

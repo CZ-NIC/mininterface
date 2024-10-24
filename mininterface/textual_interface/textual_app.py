@@ -21,25 +21,27 @@ WidgetList = list[Widget | Changeable]
 
 
 class TextualApp(App[bool | None]):
-    BINDINGS = [
-        ("up", "go_up", "Go up"),
-        ("down", "go_up", "Go down"),
-        # Form confirmation
-        # * ctrl/alt+enter does not work
-        # * enter with priority is not shown in the footer:
-        #       Binding("enter", "confirm", "Ok", show=True, priority=True),
-        # * enter without priority is consumed by input fields (and recaught by on_key)
-        Binding("Enter", "confirm", "Ok"),
-        ("escape", "exit", "Cancel"),
-    ]
+    # BINDINGS = [ These are being ignored in the input fields, hence we use on_key
+    #     ("up", "go_up", "Go up"),
+    #     ("down", "go_up", "Go down"),
+    # ]
 
-    def __init__(self, adaptor: "TextualAdaptor"):
+    def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True):
         super().__init__()
         self.title = adaptor.facet._title
         self.widgets: WidgetList = []
+        self.focusable: WidgetList = []
+        """ A subset of self.widgets"""
         self.focused_i: int = 0
         self.adaptor = adaptor
         self.output = Static("")
+        self.submit = submit
+
+        # Form confirmation
+        # enter w/o priority is still consumed by input fields (and recaught by on_key)
+        if submit:
+            self.bind("Enter", "confirm", description=submit if isinstance(submit, str) else "Ok")
+        self.bind("escape", "exit", description="Cancel")
 
     def compose(self) -> ComposeResult:
         if self.title:
@@ -60,6 +62,7 @@ class TextualApp(App[bool | None]):
                         self.focused_i = i
                     yield Label(fieldt._link.description)
                 yield Label("")
+        self.focusable = [w for w in self.widgets if isinstance(w, (Input, Changeable))]
 
     def on_mount(self):
         self.widgets[self.focused_i].focus()
@@ -67,7 +70,7 @@ class TextualApp(App[bool | None]):
     def action_confirm(self):
         # next time, start on the same widget
         # NOTE the functionality is probably not used
-        self.focused_i = next((i for i, inp in enumerate(self.widgets) if inp == self.focused), None)
+        self.focused_i = next((i for i, inp in enumerate(self.focusable) if inp == self.focused), None)
         self.exit(True)
 
     def action_exit(self):
@@ -75,21 +78,28 @@ class TextualApp(App[bool | None]):
 
     def on_key(self, event: events.Key) -> None:
         try:
-            index = self.widgets.index(self.focused)
+            index = self.focusable.index(self.focused)
         except ValueError:  # probably some other element were focused
             return
         match event.key:
             case "down":
-                self.widgets[(index + 1) % len(self.widgets)].focus()
+                self.focusable[(index + 1) % len(self.focusable)].focus()
             case "up":
-                self.widgets[(index - 1) % len(self.widgets)].focus()
+                self.focusable[(index - 1) % len(self.focusable)].focus()
             case "enter":
                 # NOTE a multiline input might be
                 # isinstance(self.focused,
-                self.action_confirm()
+                if self.submit:
+                    self.action_confirm()
             case letter if len(letter) == 1:  # navigate by letters
-                for inp_ in self.widgets[index+1:] + self.widgets[:index]:
-                    label = inp_.label if isinstance(inp_, Checkbox) else inp_.placeholder
+                for inp_ in self.focusable[index+1:] + self.focusable[:index]:
+                    match inp_:
+                        case Checkbox():
+                            label = inp_.label
+                        case Changeable():
+                            label = inp_._link.name
+                        case _:
+                            label = ""
                     if str(label).casefold().startswith(letter):
                         inp_.focus()
                         break
