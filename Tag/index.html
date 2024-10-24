@@ -877,7 +877,7 @@ then transforms the value back (str to int conversion etc).</p>
 
     <div class="doc doc-contents ">
 
-        <p>The value wrapped by Tag.</p>
+        <p>The value wrapped by Tag. It can be any value.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Tag</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;This is my boolean&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
@@ -889,6 +889,13 @@ then transforms the value back (str to int conversion etc).</p>
 <p><img alt="Image title" src="../asset/tag_val.avif" /></p>
 <p>The encapsulated value is <code>True</code>, <code>tag.description</code> is 'This is my boolean',
 <code>tag.annotation</code> is <code>bool</code> and 'My boolean' is used as <code>tag.name</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If the Tag is nested, the info is fetched to the outer Tag.
+When updated, the inner Tag value updates accordingly.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+</code></pre></div>
+</div>
     </div>
 
 </div>
@@ -997,20 +1004,24 @@ If not set, will be determined automatically from the <a class="autorefs autoref
 
     <div class="doc doc-contents ">
 
-        <p>Print the radio buttons. Constraint the value.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+        <p>Print the radio buttons / select box. Constraint the value.</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Choices</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">foo</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="n">Choices</span><span class="p">(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;one&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="c1"># `Choices` is an alias for `Tag(choices=)`</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># prompts a dialog</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="c1"># `Choices` is an alias for `Tag(choices=)`</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># prompts a dialog</span>
 </code></pre></div>
+<img alt="Form choice" src="../asset/tag_choices.avif" /></p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>When dealing with a simple use case, use the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> dialog.</p>
+</div>
     </div>
 
 </div>
@@ -1284,7 +1295,7 @@ the mininterface was invoked with.</p>
         <p>You can denote the choices in many ways.
 Either put options in an iterable or to a dict <code>{labels: value}</code>.
 Values might be Tags as well.</p>
-<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> for examples.</p>
+<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> or <a class="autorefs autorefs-internal" href="#mininterface.Tag.choices"><code>Tag.choices</code></a> for examples.</p>
     </div>
 
 </div>
