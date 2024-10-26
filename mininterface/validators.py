@@ -88,7 +88,7 @@ def limit(maxOrMin: int | None = None, max_: int | None = None, lt: float | None
         minimum int: `limit(minimum, maximum)` – From minimum (including) to maximum (including)
         lt: lesser than
         gt: greater than
-        transform: If the value is not withing the limit, transform it to a boundary.
+        transform: If the value is not within the limit, transform it to a boundary.
             ```python
             from mininterface import run, Tag
             from mininterface.validators import limit
