@@ -96,10 +96,21 @@ Install with a single command from [PyPi](https://pypi.org/project/mininterface/
 pip install mininterface
 ```
 
+## Minimal installation
+
+Should you need just the CLI part and you are happy with basic text dialogs, use these commands instead:
+
+```bash
+pip install --no-dependencies mininterface
+pip install tyro typing_extensions pyyaml
+```
+
 # Docs
 See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic.github.io/mininterface/Overview/).
 
 # Examples
+
+A powerful `.form` dialog method accepts either a dataclass or a dict. Take a look on both.
 
 ## A complex dataclass.
 
@@ -143,7 +154,7 @@ print(m.env)
 m.form()
 ```
 
-As there is no default value at `mandatory_str`, you will be prompted automatically to fill up the field:
+As the attribute `mandatory_str` requires a value, a prompt appears automatically:
 
 ![Complex example missing field](asset/complex_example_missing_field.avif)
 

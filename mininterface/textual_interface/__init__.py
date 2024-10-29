@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Type
 
 try:
     from textual.app import App as _ImportCheck
@@ -12,7 +12,6 @@ from ..tag import Tag
 from ..text_interface import TextInterface
 from .textual_adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
-from .textual_facet import TextualFacet
 
 
 class TextualInterface(Redirectable, TextInterface):
