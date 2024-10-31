@@ -2,7 +2,7 @@ import logging
 from dataclasses import is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Generic, Type, overload
 
 from .cli_parser import run_tyro_parser
 from .common import Cancelled

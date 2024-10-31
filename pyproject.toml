@@ -12,11 +12,13 @@ homepage = "https://github.com/CZ-NIC/mininterface"
 readme = "README.md"
 
 [tool.poetry.dependencies]
+# Minimal requirements
 python = "^3.10"
-autocombobox = "1.4.2"
 tyro = "*"
 typing_extensions = "*"
 pyyaml = "*"
+# Standard requirements
+autocombobox = "1.4.2"
 textual = "~0.84"
 tkinter-tooltip = "*"
 tkinter_form = "0.1.5.2"

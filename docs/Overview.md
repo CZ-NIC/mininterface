@@ -67,6 +67,12 @@ Should the dataclass cannot be easily investigated by the IDE (i.e. a required f
 
 ![Suggestion annotation possible](asset/suggestion_dataclass_annotated.avif)
 
+## Bash completion
+
+Run your program with a hidden `--integrate-to-system` flag and a tutorial will install bash completion.
+
+![Bash completion](asset/bash_completion_tutorial.avif)
+
 ## Nested configuration
 You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).
 
@@ -112,8 +118,8 @@ Several interfaces exist:
 * [`Mininterface`][mininterface.Mininterface] – The base interface the others are fully compatible with.
 * `GuiInterface` = `TkInterface` – A tkinter window.
 * `TuiInterface` – An interactive terminal.
-  * `TextualInterface` – If [textual](https://github.com/Textualize/textual) installed, rich interface is used.
-  * `TextInterface` – Plain text only interface with no dependency as a fallback.
+    * `TextualInterface` – If [textual](https://github.com/Textualize/textual) installed, rich interface is used.
+    * `TextInterface` – Plain text only interface with no dependency as a fallback.
 * `ReplInterface` – A debug terminal. Invokes a breakpoint after every dialog.
 
 

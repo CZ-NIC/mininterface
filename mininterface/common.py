@@ -1,3 +1,5 @@
+# Common objects that makes sense to be used outside the library.
+
 class InterfaceNotAvailable(ImportError):
     pass
 

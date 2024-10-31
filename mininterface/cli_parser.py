@@ -2,13 +2,14 @@
 # CLI and config file parsing.
 #
 import logging
+import sys
 import warnings
 from argparse import Action, ArgumentParser
 from contextlib import ExitStack
 from dataclasses import MISSING
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Type
+from typing import Optional, Sequence, Type
 from unittest.mock import patch
 
 import yaml
@@ -16,10 +17,9 @@ from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
 from tyro.extras import get_parser
 
-from .tag_factory import tag_factory
-
 from .form_dict import EnvClass
 from .tag import Tag
+from .tag_factory import tag_factory
 from .validators import not_empty
 
 # Pydantic is not a project dependency, that is just an optional integration
@@ -80,13 +80,7 @@ class Patches:
         return namespace, args
 
 
-def run_tyro_parser(env_class: Type[EnvClass],
-                    kwargs: dict,
-                    add_verbosity: bool,
-                    ask_for_missing: bool,
-                    args=None) -> tuple[EnvClass, WrongFields]:
-    parser: ArgumentParser = get_parser(env_class, **kwargs)
-
+def assure_args(args: Optional[Sequence[str]] = None):
     if args is None:
         # Set env to determine whether to use sys.argv.
         # Why settings env? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
@@ -97,26 +91,37 @@ def run_tyro_parser(env_class: Type[EnvClass],
             global get_ipython
             get_ipython()
         except:
-            args = None  # Fetch from the CLI
+            args = sys.argv[1:]  # Fetch from the CLI
         else:
             args = []
+    return args
 
+
+def run_tyro_parser(env_class: Type[EnvClass],
+                    kwargs: dict,
+                    add_verbosity: bool,
+                    ask_for_missing: bool,
+                    args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
+    parser: ArgumentParser = get_parser(env_class, **kwargs)
+
+    # Mock parser, inject special options into
+    patches = []
+    if ask_for_missing:  # Get the missing flags from the parser
+        patches.append(patch.object(TyroArgumentParser, 'error', Patches.custom_error))
+    if add_verbosity:  # Mock parser to add verbosity
+        patches.extend((
+            patch.object(TyroArgumentParser, '__init__', Patches.custom_init),
+            patch.object(TyroArgumentParser, 'parse_known_args', Patches.custom_parse_known_args)
+        ))
+
+    # Run the parser, with the mocks
     try:
-        # Mock parser
-        patches = []
-        if ask_for_missing:  # Get the missing flags from the parser
-            patches.append(patch.object(TyroArgumentParser, 'error', Patches.custom_error))
-        if add_verbosity:  # Mock parser to add verbosity
-            patches.extend((
-                patch.object(TyroArgumentParser, '__init__', Patches.custom_init),
-                patch.object(TyroArgumentParser, 'parse_known_args', Patches.custom_parse_known_args)
-            ))
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
             return cli(env_class, args=args, **kwargs), {}
     except BaseException as e:
-        if ask_for_missing and hasattr(e, "code") and e.code == 2 and eavesdrop:
-            # Some arguments are missing. Determine which.
+        if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
+            # Some required arguments are missing. Determine which.
             wf = {}
             for arg in eavesdrop.partition(":")[2].strip().split(", "):
                 argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
@@ -163,6 +168,7 @@ def _parse_cli(env_class: Type[EnvClass],
                config_file: Path | None = None,
                add_verbosity=True,
                ask_for_missing=True,
+               args=None,
                **kwargs) -> tuple[EnvClass | None, dict, WrongFields]:
     """ Parse CLI arguments, possibly merged from a config file.
 
@@ -206,5 +212,5 @@ def _parse_cli(env_class: Type[EnvClass],
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI
-    env, wrong_fields = run_tyro_parser(env_class, kwargs, add_verbosity, ask_for_missing)
+    env, wrong_fields = run_tyro_parser(env_class, kwargs, add_verbosity, ask_for_missing, args)
     return env, wrong_fields

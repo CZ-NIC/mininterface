@@ -1,37 +1,28 @@
 import sys
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Optional, Sequence, Type
 
-from .types import Validation, Choices, PathTag
-from .cli_parser import _parse_cli
-from .common import InterfaceNotAvailable, Cancelled
-from .form_dict import DataClass, EnvClass
-from .tag import Tag
-from .mininterface import EnvClass, Mininterface
-from .text_interface import ReplInterface, TextInterface
 from . import validators
-
-# Import optional interfaces
-try:
-    from mininterface.tk_interface import TkInterface
-except ImportError:
-    if TYPE_CHECKING:
-        pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
-    else:
-        TkInterface = None
-try:
-    from mininterface.textual_interface import TextualInterface
-except ImportError:
-    TextualInterface = None
-
-GuiInterface = TkInterface
-TuiInterface = TextualInterface or TextInterface
+from .cli_parser import _parse_cli, assure_args
+from .common import Cancelled, InterfaceNotAvailable
+from .form_dict import DataClass, EnvClass
+from .mininterface import EnvClass, Mininterface
+from .start import GuiInterface, TuiInterface, get_interface, integrate
+from .tag import Tag
+from .text_interface import ReplInterface, TextInterface
+from .types import Choices, PathTag, Validation
 
 # NOTE:
 # ask_for_missing does not work with tyro Positional, stays missing.
 # @dataclass
 # class Env:
 #   files: Positional[list[Path]]
+
+
+@dataclass
+class _Empty:
+    pass
 
 
 def run(env_class: Type[EnvClass] | None = None,
@@ -41,6 +32,7 @@ def run(env_class: Type[EnvClass] | None = None,
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
         interface: Type[Mininterface] = GuiInterface or TuiInterface,
+        args: Optional[Sequence[str]] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
@@ -107,7 +99,7 @@ def run(env_class: Type[EnvClass] | None = None,
             # Dialog for `required_number` appears
             ```
         interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full [list](Overview.md#all-possible-interfaces) of possible interfaces.
-
+        args: Parse arguments from a sequence instead of the command line.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
 
@@ -155,26 +147,25 @@ def run(env_class: Type[EnvClass] | None = None,
     elif isinstance(config_file, str):
         config_file = Path(config_file)
 
+    # Determine title
+    title = title or kwargs.get("prog") or Path(sys.argv[0]).name
+
+    # Hidden meta-commands in args
+    args = assure_args(args)
+    if len(args) == 1 and args[0] == "--integrate-to-system":
+        integrate(title, interface, env_class or _Empty)
+        quit()
+
     # Load configuration from CLI and a config file
     env, wrong_fields = None, {}
     if env_class:
         verb_ = add_verbosity and "verbose" not in env_class.__annotations__
-        env, wrong_fields = _parse_cli(env_class, config_file, verb_, ask_for_missing, **kwargs)
+        env, wrong_fields = _parse_cli(env_class, config_file, verb_, ask_for_missing, args, **kwargs)
+    else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
+        _parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 
     # Build the interface
-    title = title or kwargs.get("prog") or Path(sys.argv[0]).name
-    if "prog" not in kwargs:
-        kwargs["prog"] = title
-    try:
-        if interface == "tui":  # undocumented feature
-            interface = TuiInterface
-        elif interface == "gui":  # undocumented feature
-            interface = GuiInterface
-        if interface is None:
-            raise InterfaceNotAvailable  # GuiInterface might be None when import fails
-        interface = interface(title, env)
-    except InterfaceNotAvailable:  # Fallback to a different interface
-        interface = TuiInterface(title, env)
+    interface = get_interface(title, interface, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:
