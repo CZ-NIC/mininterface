@@ -23,6 +23,10 @@ textual = "~0.84"
 tkinter-tooltip = "*"
 tkinter_form = "0.1.5.2"
 
+[tool.poetry.extras]
+web = ["textual-serve"]
+all = ["textual-serve"]
+
 [tool.poetry.scripts]
 mininterface = "mininterface.__main__:main"
 

@@ -11,14 +11,14 @@ from .text_interface import TextInterface
 
 # Import optional interfaces
 try:
-    from mininterface.tk_interface import TkInterface
+    from .tk_interface import TkInterface
 except ImportError:
     if TYPE_CHECKING:
         pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
     else:
         TkInterface = None
 try:
-    from mininterface.textual_interface import TextualInterface
+    from .textual_interface import TextualInterface
 except ImportError:
     TextualInterface = None
 

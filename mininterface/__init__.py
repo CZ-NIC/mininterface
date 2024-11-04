@@ -8,7 +8,7 @@ from .cli_parser import _parse_cli, assure_args
 from .common import Cancelled, InterfaceNotAvailable
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
-from .start import GuiInterface, TuiInterface, get_interface, integrate
+from .start import GuiInterface, TuiInterface, TextualInterface, get_interface, integrate
 from .tag import Tag
 from .text_interface import ReplInterface, TextInterface
 from .types import Choices, PathTag, Validation
