@@ -8,8 +8,8 @@ from argparse import Action, ArgumentParser
 from contextlib import ExitStack
 from dataclasses import MISSING
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Optional, Sequence, Type
+from types import SimpleNamespace, UnionType
+from typing import Optional, Sequence, Type, Union, get_origin
 from unittest.mock import patch
 
 import yaml
@@ -97,59 +97,48 @@ def assure_args(args: Optional[Sequence[str]] = None):
     return args
 
 
-def run_tyro_parser(env_class: Type[EnvClass],
+def run_tyro_parser(env_class: Type[EnvClass] | list[Type[EnvClass]],
                     kwargs: dict,
                     add_verbosity: bool,
                     ask_for_missing: bool,
                     args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
-    parser: ArgumentParser = get_parser(env_class, **kwargs)
+    type_form = env_class
+    if isinstance(type_form, list):
+        # We have to convert the list of possible classes (subcommands) to union for tyro.
+        # We have to accept the list and not an union directly because we are not able
+        # to type hint a union type, only a union instance.
+        # def sugg(a: UnionType[EnvClass]) -> EnvClass: ...
+        # sugg(Subcommand1 | Subcommand2). -> IDE will not suggest anything
+        type_form = Union[tuple(type_form)]  # Union[*type_form] not supported in Python3.10
+        env_classes = env_class
+    else:
+        env_classes = [env_class]
+
+    parser: ArgumentParser = get_parser(type_form, **kwargs)
 
     # Mock parser, inject special options into
     patches = []
     if ask_for_missing:  # Get the missing flags from the parser
         patches.append(patch.object(TyroArgumentParser, 'error', Patches.custom_error))
     if add_verbosity:  # Mock parser to add verbosity
-        patches.extend((
-            patch.object(TyroArgumentParser, '__init__', Patches.custom_init),
-            patch.object(TyroArgumentParser, 'parse_known_args', Patches.custom_parse_known_args)
-        ))
+        # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
+        if all("verbose" not in cl.__annotations__ for cl in env_classes):
+            patches.extend((
+                patch.object(TyroArgumentParser, '__init__', Patches.custom_init),
+                patch.object(TyroArgumentParser, 'parse_known_args', Patches.custom_parse_known_args)
+            ))
 
     # Run the parser, with the mocks
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
-            return cli(env_class, args=args, **kwargs), {}
+            return cli(type_form, args=args, **kwargs), {}
     except BaseException as e:
         if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
             wf = {}
             for arg in eavesdrop.partition(":")[2].strip().split(", "):
-                argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
-                argument.default = "DEFAULT"  # NOTE I do not know whether used
-                if "." in argument.dest:
-                    # missing nested required argument handler not implemented, we let the CLI fail
-                    # (with a graceful message from tyro)
-                    pass
-                else:
-                    # get the original attribute name (argparse uses dash instead of underscores)
-                    field_name = argument.dest
-                    if field_name not in env_class.__annotations__:
-                        field_name = field_name.replace("-", "_")
-                    if field_name not in env_class.__annotations__:
-                        raise ValueError(f"Cannot find {field_name} in the configuration object")
-
-                    # NOTE: We put '' to the UI to clearly state that the value is missing.
-                    # However, the UI then is not able to use the number filtering capabilities.
-                    tag = wf[field_name] = tag_factory("",
-                                                       argument.help.replace("(required)", ""),
-                                                       validation=not_empty,
-                                                       _src_class=env_class,
-                                                       _src_key=field_name
-                                                       )
-                    # Why `type_()`? We need to put a default value so that the parsing will not fail.
-                    # A None would be enough because Mininterface will ask for the missing values
-                    # promply, however, Pydantic model would fail.
-                    setattr(kwargs["default"], field_name, tag.annotation())
+                treat_missing(type_form, kwargs, parser, wf, arg)
 
             # Second attempt to parse CLI
             # Why catching warnings? All the meaningful warnings
@@ -160,11 +149,60 @@ def run_tyro_parser(env_class: Type[EnvClass],
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                return cli(env_class, **kwargs), wf
+                return cli(type_form, args=args, **kwargs), wf
         raise
 
 
-def _parse_cli(env_class: Type[EnvClass],
+# NOTE We should implement
+# ./program.py -> fails with tyro now
+# ./program.py subcommand1 -> fails with tyro now
+# @dataclass
+# class SharedArgs:
+#     foo: int
+# @dataclass
+# class Subcommand1(SharedArgs):
+#     a: int = 1
+# @dataclass
+# class Subcommand2(SharedArgs):
+#     b: int
+# subcommand = run(Subcommand1 | Subcommand2)
+def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
+    if arg.startswith("{"):
+        # missing subcommand not implemented
+        return
+    try:
+        argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
+    except:
+        # missing subcommand flag not implemented
+        return
+    argument.default = "DEFAULT"  # NOTE I do not know whether used
+    if "." in argument.dest:
+        # missing nested required argument handler not implemented, we let the CLI fail
+        # (with a graceful message from tyro)
+        return
+    else:
+        # get the original attribute name (argparse uses dash instead of underscores)
+        field_name = argument.dest
+        if field_name not in env_class.__annotations__:
+            field_name = field_name.replace("-", "_")
+        if field_name not in env_class.__annotations__:
+            raise ValueError(f"Cannot find {field_name} in the configuration object")
+
+            # NOTE: We put '' to the UI to clearly state that the value is missing.
+            # However, the UI then is not able to use the number filtering capabilities.
+        tag = wf[field_name] = tag_factory("",
+                                           argument.help.replace("(required)", ""),
+                                           validation=not_empty,
+                                           _src_class=env_class,
+                                           _src_key=field_name
+                                           )
+        # Why `type_()`? We need to put a default value so that the parsing will not fail.
+        # A None would be enough because Mininterface will ask for the missing values
+        # promply, however, Pydantic model would fail.
+        setattr(kwargs["default"], field_name, tag.annotation())
+
+
+def _parse_cli(env_class: Type[EnvClass] | list[Type[EnvClass]],
                config_file: Path | None = None,
                add_verbosity=True,
                ask_for_missing=True,
@@ -183,7 +221,14 @@ def _parse_cli(env_class: Type[EnvClass],
         Configuration namespace.
     """
     # Load config file
-    if "default" not in kwargs:
+    if config_file and isinstance(env_class, list):
+        # NOTE. Reading config files when using subcommands is not implemented.
+        static = {}
+        kwargs["default"] = None
+        warnings.warn(f"Config file {config_file} is ignored because subcommands are used."
+                      "It is not easy to set who this should work. "
+                      "Describe the developer your usecase so that they might implement this.")
+    if "default" not in kwargs and not isinstance(env_class, list):
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = {}

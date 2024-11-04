@@ -1,7 +1,8 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Sequence, Type
+from types import UnionType
+from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
 
 from . import validators
 from .cli_parser import _parse_cli, assure_args
@@ -25,7 +26,8 @@ class _Empty:
     pass
 
 
-def run(env_class: Type[EnvClass] | None = None,
+# TODO docs; type can be a list to produce subcommand
+def run(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None,
         ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
@@ -159,8 +161,7 @@ def run(env_class: Type[EnvClass] | None = None,
     # Load configuration from CLI and a config file
     env, wrong_fields = None, {}
     if env_class:
-        verb_ = add_verbosity and "verbose" not in env_class.__annotations__
-        env, wrong_fields = _parse_cli(env_class, config_file, verb_, ask_for_missing, args, **kwargs)
+        env, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, args, **kwargs)
     else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
         _parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 

@@ -1,1 +1,4 @@
-Due to an early stage of development, changes are tracked in commit messages only.
+# Changelog
+
+## 0.6.3 (unreleased)
+* hidden [`--integrate-to-system`](Overview.md#bash-completion) argument

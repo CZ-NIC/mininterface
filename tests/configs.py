@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, Callable
 
 from mininterface import Tag
+from mininterface.common import Autorun
 from mininterface.types import CallbackTag, Choices, Validation
 from mininterface.validators import not_empty
 
@@ -128,3 +129,18 @@ class ComplicatedTypes:
     # Not supported: p5: Annotated[Callable, Tag(description="Bar", annotation=CallbackTag)] = callback_tag
     # NOTE add PathTag
     # NOTE not used yet
+
+
+@dataclass
+class SharedArgs(Autorun):
+    foo: int
+
+
+@dataclass
+class Subcommand1(SharedArgs):
+    a: int = 1
+
+
+@dataclass
+class Subcommand2(SharedArgs):
+    b: int

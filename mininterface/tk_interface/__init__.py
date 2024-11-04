@@ -29,6 +29,11 @@ class TkInterface(Redirectable, Mininterface):
             raise InterfaceNotAvailable
         self._redirected = RedirectTextTkinter(self.adaptor.text_widget, self.adaptor)
 
+    def __exit__(self, *_):
+        super().__exit__(self)
+        # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
+        self.adaptor.destroy()
+
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
         self.adaptor.buttons(text, [("Ok", None)])
