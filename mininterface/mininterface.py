@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic, Type, overload
 
 from .cli_parser import run_tyro_parser
-from .common import Cancelled
+from .common import Autorun, Cancelled
 from .facet import BackendAdaptor, Facet, MinAdaptor
 from .form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                         dict_to_tagdict, formdict_resolve)
@@ -76,6 +76,9 @@ class Mininterface(Generic[EnvClass]):
 
         ![Facet back-end](asset/facet_backend.avif)
         """
+
+        if isinstance(self.env, Autorun):
+            self.env.run()
 
     def __enter__(self) -> "Self":
         """ When used in the with statement, the GUI window does not vanish between dialogs
@@ -348,7 +351,7 @@ class Mininterface(Generic[EnvClass]):
         if isinstance(_form, dict):
             return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
-            _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # TODO what to do with wf
+            _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance
             # the original dataclass is updated, hence we do not need to catch the output from launch_callback
             adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)

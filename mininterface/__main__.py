@@ -1,8 +1,12 @@
 from dataclasses import dataclass
+import sys
+from typing import Literal
+from tyro.conf import FlagConversionOff
 
 from .common import DependencyRequired
 
 from . import run, Mininterface
+from .showcase import showcase
 
 __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
 
@@ -11,7 +15,7 @@ __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
 class Web:
     """ Experimenal undocumented feature. """
 
-    cmd: str
+    cmd: str = ""
     """ Launch a miniterface program, while the TextualInterface will be exposed to the web."""
     # NOTE: The textual app ends after the first submit. We have to correct that before the web makes sense.
     # with run(interface=TextualInterface) as m:
@@ -35,6 +39,9 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing 'no'. """
 
+    showcase: Literal["gui"] | Literal["tui"] | Literal["all"] = None
+    """ Prints various form just to show what's possible. """
+
 
 def web(m: Mininterface):
     try:
@@ -51,7 +58,7 @@ def main():
     # NOTE TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
     with run(CliInteface, prog="Mininterface", description=__doc__) as m:
         for method, label in vars(m.env).items():
-            if method == "web":  # processed later
+            if method in ["web", "showcase"]:  # processed later
                 continue
             if label:
                 result.append(getattr(m, method)(label))
@@ -61,8 +68,10 @@ def main():
     # to ask two numbers or determine a dialog order etc.
     [print(val) for val in result]
 
-    if m.env.web:
+    if m.env.web.cmd:
         web(m)
+    if m.env.showcase:
+        showcase(m.env.showcase)
 
 
 if __name__ == "__main__":

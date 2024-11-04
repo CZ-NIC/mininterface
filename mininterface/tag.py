@@ -287,7 +287,7 @@ class Tag:
             # if self._is_a_callable():
                 #     self.name = self.val.__name__
         if not self.description and self._is_a_callable():
-            # TODO does not work, do a test, there is `(fixed to` instead
+            # NOTE does not work, do a test, there is `(fixed to` instead
             self.description = self.val.__doc__
 
         self._original_desc = self.description
@@ -427,7 +427,7 @@ class Tag:
         def _(annot):
             if origin := get_origin(annot):  # list[str] -> list, list -> None
                 subtype = get_args(annot)  # list[str] -> (str,), list -> ()
-                if origin == UnionType:  # ex: `int | None`, `list[int] | None``
+                if origin is UnionType:  # ex: `int | None`, `list[int] | None``
                     return [_(subt) for subt in subtype]
                 if (len(subtype) == 1):
                     return origin, subtype[0]

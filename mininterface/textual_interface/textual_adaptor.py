@@ -52,9 +52,9 @@ class TextualAdaptor(BackendAdaptor):
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
-            if issubclass(tag.annotation, int):
+            if tag._is_subclass(int):
                 type_ = "integer"
-            elif issubclass(tag.annotation, float):
+            elif tag._is_subclass(float):
                 type_ = "number"
             else:
                 type_ = "text"

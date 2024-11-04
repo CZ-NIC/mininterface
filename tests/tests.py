@@ -1,4 +1,4 @@
-from contextlib import contextmanager, redirect_stderr
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import logging
 import os
 import sys
@@ -6,18 +6,18 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import SimpleNamespace
-from typing import get_type_hints
+from typing import Type, get_type_hints
 from unittest import TestCase, main
 from unittest.mock import patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (ColorEnum, ColorEnumSingle, ConflictingEnv, ConstrainedEnv, FurtherEnv2,
                      MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
-                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv,
+                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
                      callback_raw, callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
-from mininterface import Mininterface, TextInterface, run
+from mininterface import Mininterface, TextInterface, run, EnvClass
 from mininterface.auxiliary import flatten
 from mininterface.common import Cancelled
 from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve, TagDict
@@ -26,6 +26,10 @@ from mininterface.types import CallbackTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
+
+
+def runm(env_class: Type[EnvClass] | list[Type[EnvClass]], args=None, **kwargs) -> Mininterface[EnvClass]:
+    return run(env_class, interface=Mininterface, args=args, **kwargs)
 
 
 class TestAbstract(TestCase):
@@ -799,6 +803,42 @@ class TestTagAnnotation(TestAbstract):
 
         # Enum instance signify the default
         self.assertEqual(ColorEnum.RED, m.choice(ColorEnum.RED))
+
+
+class TestSubcommands(TestAbstract):
+
+    def test_subcommands(self):
+        def r(args):
+            return runm([Subcommand1, Subcommand2], args=args)
+
+        # NOTE we should implement this better, see treat_missing comment
+        # missing subcommand
+        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+            r([])
+
+        # NOTE we should implement this better, see treat_missing comment
+        # missing subcommand params (inherited --foo and proper --b)
+        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+            r(["subcommand2"])
+
+        # calling a subcommand works
+        m = r(["subcommand1", "--foo", "1"])
+        self.assertEqual(1, m.env.foo)
+
+        # missing subcommand param
+        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+            r(["subcommand2", "--foo", "1"])
+
+        # calling a subcommand with all the params works
+        m = r(["subcommand2", "--foo", "1", "--b", "5"])
+        self.assertEqual(5, m.env.b)
+
+        # Guaranteed support for pydantic and attrs
+        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+            runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=[])
+
+        m = runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
+        self.assertEqual("me", m.env.name)
 
 
 if __name__ == '__main__':

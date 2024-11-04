@@ -1,4 +1,1 @@
-# Changelog
-
-## 0.6.3 (unreleased)
-* hidden `--integrate-to-system` argument
+/home/edvard/edvard/www/mininterfaceX/docs/Changelog.md
