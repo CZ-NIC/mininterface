@@ -5,10 +5,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 
-# TODO docs
-# NOTE Experimental. Should it receive facet? (It cannot be called from the Mininterface init then, but after the adaptor init.)
 @dataclass
-class Autorun():
+class Command:
+    """ The Command is automatically run while instantanied.
+    TODO Example
+    docs
+    Experimental. Should it receive facet? (It cannot be called from the Mininterface init then, but after the adaptor init.)
+    """
+
     @abstractmethod
     def run(self):
         """ This method is run automatically. """

@@ -1,26 +1,29 @@
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import logging
 import os
 import sys
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import SimpleNamespace
 from typing import Type, get_type_hints
 from unittest import TestCase, main
-from unittest.mock import patch
+from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ColorEnum, ColorEnumSingle, ConflictingEnv, ConstrainedEnv, FurtherEnv2,
-                     MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
-                     OptionalFlagEnv, ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
+from configs import (ColorEnum, ColorEnumSingle, ConflictingEnv,
+                     ConstrainedEnv, FurtherEnv2, MissingUnderscore,
+                     NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
+                     ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
                      callback_raw, callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
-from mininterface import Mininterface, TextInterface, run, EnvClass
+from mininterface import EnvClass, Mininterface, TextInterface, run
 from mininterface.auxiliary import flatten
 from mininterface.common import Cancelled
-from mininterface.form_dict import dataclass_to_tagdict, formdict_resolve, TagDict
+from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
+                                    formdict_resolve)
+from mininterface.start import Start
 from mininterface.tag import Tag
 from mininterface.types import CallbackTag
 from mininterface.validators import limit, not_empty
@@ -811,9 +814,13 @@ class TestSubcommands(TestAbstract):
         def r(args):
             return runm([Subcommand1, Subcommand2], args=args)
 
-        # NOTE we should implement this better, see treat_missing comment
         # missing subcommand
-        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+        form1 = "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), "\
+                "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), "\
+                "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, "\
+                "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
+                "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
+        with self.assertOutputs(form1):
             r([])
 
         # NOTE we should implement this better, see treat_missing comment
@@ -834,11 +841,28 @@ class TestSubcommands(TestAbstract):
         self.assertEqual(5, m.env.b)
 
         # Guaranteed support for pydantic and attrs
-        with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
+        form2 = "Asking the form {'Subcommand1': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), 'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'Subcommand2': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), 'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'PydModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}, 'AttrsModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}}"
+        warn2 = """UserWarning: Subcommand dataclass PydModel does not inherit from the Command."""
+        with self.assertOutputs(form2), self.assertStderr(contains=warn2):
             runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=[])
 
         m = runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
         self.assertEqual("me", m.env.name)
+
+    def test_choose_subcommands(self, mocked: Mock = None):
+        values = ["{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a')}}",
+                  "{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b')}}"]
+
+        def check_output(*args):
+            ret = dataclass_to_tagdict(*args)
+            self.assertEqual(values.pop(0), str(ret))
+            return ret
+
+        s = Start("", Mininterface)
+        with patch('mininterface.start.dataclass_to_tagdict', side_effect=check_output) as mocked, \
+                redirect_stdout(StringIO()), redirect_stderr(StringIO()):
+            s.choose_subcommand([Subcommand1, Subcommand2])
+            self.assertEqual(2, mocked.call_count)
 
 
 if __name__ == '__main__':

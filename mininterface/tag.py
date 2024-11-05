@@ -193,9 +193,11 @@ class Tag:
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
 
-    _src_obj: TD | None = None
-    """ The original object to be updated when UI ends.
+    _src_obj: TD | list[TD] | None = None
+    """ The original object (or their list) to be updated when UI ends.
         If not set earlier, fetches name, annotation, _pydantic_field from this class.
+        How come there might be multiple original objects? When dealing with subcommands,
+        they can share the common ancester fields (like `--output-filename`).
     """
     _src_key: str | None = None
     """ Key in the src object / src dict """
@@ -440,6 +442,14 @@ class Tag:
         out = _(self.annotation)
         return [x for x in (out if isinstance(out, list) else [out]) if x is not None]
 
+    def _src_obj_add(self, src):
+        if self._src_obj is None:
+            self._src_obj = [src]
+        elif not isinstance(self._src_obj, list):
+            self._src_obj = [self._src_obj, src]
+        else:
+            self._src_obj.append(src)
+
     def set_error_text(self, s):
         self._original_desc = o = self.description
         self._original_name = n = self.name
@@ -656,11 +666,13 @@ class Tag:
         if self._src_dict:
             self._src_dict[self._src_key] = out_value
         elif self._src_obj:
-            if isinstance(self._src_obj, Tag):
-                # this helps to propagate the modification to possible other nested tags
-                self._src_obj.set_val(out_value)
-            else:
-                setattr(self._src_obj, self._src_key, out_value)
+            _src_objs = [self._src_obj] if not isinstance(self._src_obj, list) else self._src_obj
+            for src in _src_objs:
+                if isinstance(src, Tag):
+                    # this helps to propagate the modification to possible other nested tags
+                    src.set_val(out_value)
+                else:
+                    setattr(src, self._src_key, out_value)
         else:
             # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass
