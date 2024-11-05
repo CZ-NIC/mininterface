@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic, Type, overload
 
 from .cli_parser import run_tyro_parser
-from .common import Autorun, Cancelled
+from .common import Command, Cancelled
 from .facet import BackendAdaptor, Facet, MinAdaptor
 from .form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                         dict_to_tagdict, formdict_resolve)
@@ -77,7 +77,7 @@ class Mininterface(Generic[EnvClass]):
         ![Facet back-end](asset/facet_backend.avif)
         """
 
-        if isinstance(self.env, Autorun):
+        if isinstance(self.env, Command):
             self.env.run()
 
     def __enter__(self) -> "Self":
@@ -338,7 +338,11 @@ class Mininterface(Generic[EnvClass]):
                     print("The result", original["my label"].val)
                 ```
         """
-        print(f"Asking the form {title}".strip(), self.env if form is None else form)
+        f = self.env if form is None else form
+        if isinstance(f, dict) and type(f) is not dict:
+            # The form dict might be a default dict but we want output just the dict (it's shorter).
+            f = dict(f)
+        print(f"Asking the form {title}".strip(), f)
         return self._form(form, title, MinAdaptor(self))
 
     def _form(self,

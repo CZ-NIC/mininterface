@@ -9,7 +9,7 @@ from .cli_parser import _parse_cli, assure_args
 from .common import Cancelled, InterfaceNotAvailable
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
-from .start import GuiInterface, TuiInterface, TextualInterface, get_interface, integrate
+from .start import GuiInterface, Start, TuiInterface, TextualInterface
 from .tag import Tag
 from .text_interface import ReplInterface, TextInterface
 from .types import Choices, PathTag, Validation
@@ -27,7 +27,7 @@ class _Empty:
 
 
 # TODO docs; type can be a list to produce subcommand
-def run(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None,
+def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
         ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
@@ -133,7 +133,7 @@ def run(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None,
     # Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
 
     # Prepare the config file
-    if config_file is True and not kwargs.get("default") and env_class:
+    if config_file is True and not kwargs.get("default") and env_or_list:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         try:
@@ -151,22 +151,25 @@ def run(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None,
 
     # Determine title
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
+    start = Start(title, interface)
 
     # Hidden meta-commands in args
     args = assure_args(args)
     if len(args) == 1 and args[0] == "--integrate-to-system":
-        integrate(title, interface, env_class or _Empty)
+        start.integrate(env_or_list or _Empty)
         quit()
 
-    # Load configuration from CLI and a config file
     env, wrong_fields = None, {}
-    if env_class:
-        env, wrong_fields = _parse_cli(env_class, config_file, add_verbosity, ask_for_missing, args, **kwargs)
+    if isinstance(env_or_list, list) and not args:
+        start.choose_subcommand(env_or_list)
+    elif env_or_list:
+        # Load configuration from CLI and a config file
+        env, wrong_fields = _parse_cli(env_or_list, config_file, add_verbosity, ask_for_missing, args, **kwargs)
     else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
         _parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 
     # Build the interface
-    interface = get_interface(title, interface, env)
+    interface = start.get_interface(env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:

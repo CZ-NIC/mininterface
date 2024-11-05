@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated, Callable
 
 from mininterface import Tag
-from mininterface.common import Autorun
+from mininterface.common import Command
 from mininterface.types import CallbackTag, Choices, Validation
 from mininterface.validators import not_empty
 
@@ -132,7 +132,7 @@ class ComplicatedTypes:
 
 
 @dataclass
-class SharedArgs(Autorun):
+class SharedArgs(Command):
     foo: int
 
 

@@ -6,7 +6,7 @@ import sys
 import warnings
 from argparse import Action, ArgumentParser
 from contextlib import ExitStack
-from dataclasses import MISSING
+from dataclasses import MISSING, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace, UnionType
 from typing import Optional, Sequence, Type, Union, get_origin
@@ -97,12 +97,12 @@ def assure_args(args: Optional[Sequence[str]] = None):
     return args
 
 
-def run_tyro_parser(env_class: Type[EnvClass] | list[Type[EnvClass]],
+def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                     kwargs: dict,
                     add_verbosity: bool,
                     ask_for_missing: bool,
                     args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
-    type_form = env_class
+    type_form = env_or_list
     if isinstance(type_form, list):
         # We have to convert the list of possible classes (subcommands) to union for tyro.
         # We have to accept the list and not an union directly because we are not able
@@ -110,9 +110,9 @@ def run_tyro_parser(env_class: Type[EnvClass] | list[Type[EnvClass]],
         # def sugg(a: UnionType[EnvClass]) -> EnvClass: ...
         # sugg(Subcommand1 | Subcommand2). -> IDE will not suggest anything
         type_form = Union[tuple(type_form)]  # Union[*type_form] not supported in Python3.10
-        env_classes = env_class
+        env_classes = env_or_list
     else:
-        env_classes = [env_class]
+        env_classes = [env_or_list]
 
     parser: ArgumentParser = get_parser(type_form, **kwargs)
 
@@ -154,7 +154,6 @@ def run_tyro_parser(env_class: Type[EnvClass] | list[Type[EnvClass]],
 
 
 # NOTE We should implement
-# ./program.py -> fails with tyro now
 # ./program.py subcommand1 -> fails with tyro now
 # @dataclass
 # class SharedArgs:
@@ -168,7 +167,7 @@ def run_tyro_parser(env_class: Type[EnvClass] | list[Type[EnvClass]],
 # subcommand = run(Subcommand1 | Subcommand2)
 def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
     if arg.startswith("{"):
-        # missing subcommand not implemented
+        # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
         return
     try:
         argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
@@ -182,14 +181,16 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         return
     else:
         # get the original attribute name (argparse uses dash instead of underscores)
+        # Why using mro? Find the field in the dataclass and all of its parents.
+        # Useful when handling subcommands, they share a common field.
         field_name = argument.dest
-        if field_name not in env_class.__annotations__:
+        if not any(field_name in cl.__annotations__ for cl in env_class.__mro__ if is_dataclass(cl)):
             field_name = field_name.replace("-", "_")
-        if field_name not in env_class.__annotations__:
+        if not any(field_name in cl.__annotations__ for cl in env_class.__mro__ if is_dataclass(cl)):
             raise ValueError(f"Cannot find {field_name} in the configuration object")
 
-            # NOTE: We put '' to the UI to clearly state that the value is missing.
-            # However, the UI then is not able to use the number filtering capabilities.
+        # NOTE: We put '' to the UI to clearly state that the value is missing.
+        # However, the UI then is not able to use the number filtering capabilities.
         tag = wf[field_name] = tag_factory("",
                                            argument.help.replace("(required)", ""),
                                            validation=not_empty,
@@ -199,10 +200,12 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         # Why `type_()`? We need to put a default value so that the parsing will not fail.
         # A None would be enough because Mininterface will ask for the missing values
         # promply, however, Pydantic model would fail.
+        if "default" not in kwargs:
+            kwargs["default"] = SimpleNamespace()
         setattr(kwargs["default"], field_name, tag.annotation())
 
 
-def _parse_cli(env_class: Type[EnvClass] | list[Type[EnvClass]],
+def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                config_file: Path | None = None,
                add_verbosity=True,
                ask_for_missing=True,
@@ -221,14 +224,14 @@ def _parse_cli(env_class: Type[EnvClass] | list[Type[EnvClass]],
         Configuration namespace.
     """
     # Load config file
-    if config_file and isinstance(env_class, list):
+    if config_file and isinstance(env_or_list, list):
         # NOTE. Reading config files when using subcommands is not implemented.
         static = {}
         kwargs["default"] = None
         warnings.warn(f"Config file {config_file} is ignored because subcommands are used."
                       "It is not easy to set who this should work. "
                       "Describe the developer your usecase so that they might implement this.")
-    if "default" not in kwargs and not isinstance(env_class, list):
+    if "default" not in kwargs and not isinstance(env_or_list, list):
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = {}
@@ -236,26 +239,26 @@ def _parse_cli(env_class: Type[EnvClass] | list[Type[EnvClass]],
             disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
             # Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
             for key in (key for key, val in disk.items() if isinstance(val, dict)):
-                disk[key] = env_class.__annotations__[key](**disk[key])
+                disk[key] = env_or_list.__annotations__[key](**disk[key])
 
         # Fill default fields
-        if pydantic and issubclass(env_class, BaseModel):
+        if pydantic and issubclass(env_or_list, BaseModel):
             # Unfortunately, pydantic needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
-            static = {key: env_class.model_fields.get(key).default
-                      for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
-        elif attr and attr.has(env_class):
+            static = {key: env_or_list.model_fields.get(key).default
+                      for key in env_or_list.__annotations__ if not key.startswith("__") and not key in disk}
+        elif attr and attr.has(env_or_list):
             # Unfortunately, attrs needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
             static = {key: field.default
-                      for key, field in attr.fields_dict(env_class).items() if not key.startswith("__") and not key in disk}
+                      for key, field in attr.fields_dict(env_or_list).items() if not key.startswith("__") and not key in disk}
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.
-            static = {key: getattr(env_class, key, MISSING)
-                      for key in env_class.__annotations__ if not key.startswith("__") and not key in disk}
+            static = {key: getattr(env_or_list, key, MISSING)
+                      for key in env_or_list.__annotations__ if not key.startswith("__") and not key in disk}
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI
-    env, wrong_fields = run_tyro_parser(env_class, kwargs, add_verbosity, ask_for_missing, args)
+    env, wrong_fields = run_tyro_parser(env_or_list, kwargs, add_verbosity, ask_for_missing, args)
     return env, wrong_fields

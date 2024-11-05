@@ -55,7 +55,7 @@ def get_terminal_size():
 def get_descriptions(parser: ArgumentParser) -> dict:
     """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
     # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
-    return {action.dest.replace("-", "_"): re.sub(r"\((default|fixed to).*\)", "", action.help or "")
+    return {action.dest.replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
             for action in parser._actions}
 
 
