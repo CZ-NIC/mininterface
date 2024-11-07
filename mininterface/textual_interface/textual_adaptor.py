@@ -10,7 +10,7 @@ from textual.widgets import Rule, Label, RadioButton
 from .textual_facet import TextualFacet
 
 from ..auxiliary import flatten
-from ..common import Cancelled
+from ..exceptions import Cancelled
 from ..experimental import SubmitButton
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict

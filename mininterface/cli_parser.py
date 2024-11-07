@@ -165,7 +165,7 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
 
 
 def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
-    """ See the [mininterface.common.Subcommand] for CLI expectation """
+    """ See the [mininterface.subcommands.SubcommandPlaceholder] for CLI expectation """
     if arg.startswith("{"):
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
         return

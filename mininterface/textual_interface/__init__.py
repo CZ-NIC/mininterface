@@ -3,7 +3,7 @@ from typing import Type
 try:
     from textual.app import App as _ImportCheck
 except ImportError:
-    from ..common import InterfaceNotAvailable
+    from ..exceptions import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
 from ..form_dict import DataClass, EnvClass, FormDict

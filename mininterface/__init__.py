@@ -4,11 +4,13 @@ from pathlib import Path
 from types import UnionType
 from typing import TYPE_CHECKING, Literal, Optional, Sequence, Type, Union
 
+from .exceptions import Cancelled, InterfaceNotAvailable
+
 from .interfaces import get_interface
 
 from . import validators
 from .cli_parser import _parse_cli, assure_args
-from .common import Cancelled, InterfaceNotAvailable, Command, SubcommandPlaceholder
+from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
 from .start import Start
@@ -48,7 +50,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     Args:
         env_or_list:
             * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
-            * `list` of [Commands][mininterface.common.Command] let you create multiple commands within a single program, each with unique options.
+            * `list` of [Commands][mininterface.subcommands.Command] let you create multiple commands within a single program, each with unique options.
             * `None` You need just the dialogs, no CLI/config file parsing.
 
 
@@ -199,6 +201,6 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     return interface
 
 
-__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled", "Command",
+__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
            "Validation", "Choices", "PathTag",
            "Mininterface"]

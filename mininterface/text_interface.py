@@ -1,7 +1,7 @@
 from pprint import pprint
 from typing import Type
 
-from .common import Cancelled
+from .exceptions import Cancelled
 
 from .form_dict import EnvClass, FormDict, DataClass
 from .mininterface import Mininterface

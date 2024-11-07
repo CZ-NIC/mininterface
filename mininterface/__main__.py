@@ -3,7 +3,7 @@ import sys
 from typing import Literal
 from tyro.conf import FlagConversionOff
 
-from .common import DependencyRequired
+from .exceptions import DependencyRequired
 
 from . import run, Mininterface
 from .showcase import showcase

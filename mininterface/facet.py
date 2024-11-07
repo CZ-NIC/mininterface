@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional
 
-from .common import ValidationFail
+from .ValidationFail import ValidationFail
 
 
 from .form_dict import EnvClass, TagDict

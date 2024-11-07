@@ -16,11 +16,12 @@ from configs import (AnnotatedClass, NestedAnnotatedClass, ColorEnum, ColorEnumS
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
                      callback_raw, callback_tag, callback_tag2)
+from mininterface.exceptions import Cancelled
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, TextInterface, run
 from mininterface.auxiliary import flatten
-from mininterface.common import Cancelled, SubcommandPlaceholder
+from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     formdict_resolve)
 from mininterface.start import Start

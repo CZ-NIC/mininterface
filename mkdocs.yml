@@ -48,11 +48,12 @@ nav:
       - Mininterface.md
       - Tag.md
       - Facet.md
+      - Subcommands.md
       - Helper-types.md
   - Extras:
       - Types.md
       - Validation.md
-      - Common.md
+      - Exceptions.md
       - Interfaces.md
       - Standalone.md
       - Experimental.md

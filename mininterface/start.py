@@ -10,7 +10,7 @@ from warnings import warn
 from .auxiliary import flatten
 
 from .cli_parser import run_tyro_parser
-from .common import Command, SubcommandPlaceholder
+from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import EnvClass, DataClass, TagDict, dataclass_to_tagdict
 from .interfaces import get_interface
 from .mininterface import Mininterface
@@ -70,8 +70,9 @@ class Start:
         for env_class in env_classes:
             form, wf = run_tyro_parser(env_class, {}, False, True, args=args)  # NOTE what to do with wf?
             name = form.__class__.__name__
-            form._facet = m.facet
-            form.init()
+            if isinstance(form, Command):  # even though we officially support only Command here, we tolerate other
+                form._facet = m.facet
+                form.init()
             tags = dataclass_to_tagdict(form)
 
             # Pull out common fields to the common level

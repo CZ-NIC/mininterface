@@ -1,0 +1,2 @@
+# Exceptions
+::: mininterface.exceptions

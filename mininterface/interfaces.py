@@ -1,6 +1,6 @@
 # Access to interfaces via this module assures lazy loading
 from importlib import import_module
-from .common import InterfaceNotAvailable
+from .exceptions import InterfaceNotAvailable
 from .text_interface import TextInterface
 
 
