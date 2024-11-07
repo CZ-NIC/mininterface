@@ -8,7 +8,7 @@ from tkinter_form import Form, Value
 
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
-from ..common import Cancelled
+from ..common import Cancelled, ValidationFail
 from ..tag import Tag
 from .tk_facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
@@ -21,6 +21,7 @@ class TkWindow(Tk, BackendAdaptor):
     """ An editing window. """
 
     def __init__(self, interface: "TkInterface"):
+        # TODO scrollbar if content is long
         super().__init__()
         self.facet = interface.facet = TkFacet(self, interface.env)
         self.params = None
@@ -87,9 +88,8 @@ class TkWindow(Tk, BackendAdaptor):
         return self.mainloop(lambda: self.validate(form, title, submit))
 
     def validate(self, form: TagDict, title: str, submit) -> TagDict:
-        if not Tag._submit(form, self.form.get()):
+        if not Tag._submit(form, self.form.get()) or not self.submit_done():
             return self.run_dialog(form, title, submit)
-        self.submit_done()
         return form
 
     def yes_no(self, text: str, focus_no=True):

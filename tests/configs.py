@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Callable
+
+from tyro.conf import Positional
 
 from mininterface import Tag
 from mininterface.common import Command
@@ -132,12 +134,50 @@ class ComplicatedTypes:
 
 
 @dataclass
+class AnnotatedClass:
+    # NOTE some of the entries are not well supported
+    files1: list[Path]
+    # files2: Positional[list[Path]]  # raises error
+    # files7: Annotated[list[Path], None]
+    # files8: Annotated[list[Path], Tag(annotation=str)]
+    files3: list[Path] = field(default_factory=list)
+    # files4: Positional[list[Path]] = field(default_factory=list) # raises error
+    files5: Annotated[list[Path], None] = field(default_factory=list)
+    files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
+    """ Files """
+
+
+@dataclass
+class AnnotatedClassInner:
+    # NOTE some of the entries are not well supported
+    files1: list[Path]
+    # files2: Positional[list[Path]]
+    # files7: Annotated[list[Path], None]
+    # files8: Annotated[list[Path], Tag(annotation=str)]
+    files3: list[Path] = field(default_factory=list)
+    files4: Positional[list[Path]] = field(default_factory=list)
+    files5: Annotated[list[Path], None] = field(default_factory=list)
+    files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
+    """ Files """
+
+
+@dataclass
+class NestedAnnotatedClass(AnnotatedClassInner):
+    pass
+
+
+@dataclass
 class SharedArgs(Command):
+    """ Class with a shared argument. """
     foo: int
+
+    def run(self):
+        pass
 
 
 @dataclass
 class Subcommand1(SharedArgs):
+    """ Class inheriting from SharedArgs. """
     a: int = 1
 
 

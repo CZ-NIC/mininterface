@@ -2,27 +2,36 @@
     FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
 import logging
+from dataclasses import fields, is_dataclass
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, Union, get_args, get_type_hints
+from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
+                    Union, get_args, get_type_hints)
 
-from tyro.extras import get_parser
-
-from .tag_factory import tag_factory
 from .auxiliary import get_description
+from .tag import Tag, TagValue
+from .tag_factory import tag_factory
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
 
-
-from .tag import Tag, TagValue
-
-if TYPE_CHECKING:
     from . import Mininterface
+
+try:
+    import attr
+except ImportError:
+    attr = None
+try:
+    from pydantic import BaseModel
+except ImportError:
+    BaseModel = None
+
 
 logger = logging.getLogger(__name__)
 
 DataClass = TypeVar("DataClass")
+""" Any dataclass. Or a pydantic model or attrs. """
 EnvClass = TypeVar("EnvClass", bound=DataClass)
+""" Any dataclass. Its instance will be available through [miniterface.env] after CLI parsing. """
 FormDict = dict[str, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
 """ Nested form that can have descriptions (through Tag) instead of plain values.
 
@@ -111,7 +120,27 @@ def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key
         return d
 
 
-def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] = None, _nested=False) -> TagDict:
+def iterate_attributes(env: DataClass):
+    """ Iterate public attributes of a model, including its parents. """
+    if is_dataclass(env):
+        # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
+        for f in fields(env):
+            yield f.name, getattr(env, f.name)
+    elif BaseModel and isinstance(env, BaseModel):
+        for param, val in vars(env).items():
+            yield param, val
+        # NOTE private pydantic attributes might be printed to forms, because this makes test fail for nested models
+        # for param, val in env.model_dump().items():
+        #     yield param, val
+    elif attr and attr.has(env):
+        for f in attr.fields(env.__class__):
+            yield f.name, getattr(env, f.name)
+    else:  # might be a normal class; which is unsupported but mostly might work
+        for param, val in vars(env).items():
+            yield param, val
+
+
+def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional["Mininterface"] = None, _nested=False) -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = {}
     if not _nested:  # root is nested under "" path
@@ -119,7 +148,7 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
     else:
         subdict = {}
 
-    for param, val in vars(env).items():
+    for param, val in iterate_attributes(env):
         annotation = get_type_hints(env.__class__).get(param)
         if val is None:
             if type(None) in get_args(annotation):

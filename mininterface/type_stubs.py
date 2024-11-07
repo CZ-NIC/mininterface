@@ -8,6 +8,7 @@ class TagCallback(Callable):
 
 class TagType:
     """ TODO a mere Tag should work for a type too but Tyro interpretes it as a nested conf
+        Correct, Tag cannot be an annotation as it is not frozen.
 
     @dataclass
         class SpecificTime:

@@ -88,7 +88,8 @@ class TextualAdaptor(BackendAdaptor):
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        if not Tag._submit_values((field._link, field.get_ui_value()) for field in widgets if hasattr(field, "_link")):
+        vals = ((field._link, field.get_ui_value()) for field in widgets if hasattr(field, "_link"))
+        if not Tag._submit_values(vals) or not self.submit_done():
             return self.run_dialog(form, title, submit)
-        self.submit_done()
+
         return form

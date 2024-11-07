@@ -16,6 +16,7 @@ import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
 from tyro.extras import get_parser
+from tyro._fields import NonpropagatingMissingType
 
 from .form_dict import EnvClass
 from .tag import Tag
@@ -132,7 +133,16 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
-            return cli(type_form, args=args, **kwargs), {}
+            match = cli(type_form, args=args, **kwargs)
+            if isinstance(match, NonpropagatingMissingType):
+                # NOTE tyro does not work if a required positional is missing tyro.cli() returns just NonpropagatingMissingType.
+                # If this is supported, I might set other attributes like required (date, time).
+                # Fail if missing:
+                #   files: Positional[list[Path]]
+                # Works if missing but imposes following attributes are non-required (have default values):
+                #   files: Positional[list[Path]] = field(default_factory=list)
+                pass
+            return match, {}
     except BaseException as e:
         if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
@@ -149,26 +159,15 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
+                # spot the warning here? see tests TODO
                 return cli(type_form, args=args, **kwargs), wf
         raise
 
 
-# NOTE We should implement
-# ./program.py subcommand1 -> fails with tyro now
-# @dataclass
-# class SharedArgs:
-#     foo: int
-# @dataclass
-# class Subcommand1(SharedArgs):
-#     a: int = 1
-# @dataclass
-# class Subcommand2(SharedArgs):
-#     b: int
-# subcommand = run(Subcommand1 | Subcommand2)
 def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
+    """ See the [mininterface.common.Subcommand] for CLI expectation """
     if arg.startswith("{"):
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
-        # TODO not true
         return
     try:
         argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
