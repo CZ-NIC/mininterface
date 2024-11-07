@@ -1,5 +1,4 @@
-from dataclasses import is_dataclass
-from typing import Type, override
+from typing import Type
 
 try:
     # It seems tkinter is installed either by default or not installable at all.
@@ -15,6 +14,8 @@ from ..common import InterfaceNotAvailable
 from ..form_dict import DataClass, FormDict
 from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface
+
+print("LOADING TK")
 
 
 class TkInterface(Redirectable, Mininterface):

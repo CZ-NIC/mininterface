@@ -168,6 +168,7 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
 def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
     if arg.startswith("{"):
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
+        # TODO not true
         return
     try:
         argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))

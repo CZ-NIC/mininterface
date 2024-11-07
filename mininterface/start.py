@@ -4,53 +4,21 @@ from collections import defaultdict
 from dataclasses import is_dataclass
 from pathlib import Path
 from subprocess import run
-from typing import TYPE_CHECKING, Type
+from typing import Type
 from warnings import warn
 
 from .cli_parser import run_tyro_parser
-from .common import Command, InterfaceNotAvailable
-from .experimental import SubmitButton
+from .common import Command
 from .form_dict import EnvClass, TagDict, dataclass_to_tagdict
+from .interfaces import get_interface
 from .mininterface import Mininterface
 from .tag import Tag
-from .text_interface import TextInterface
-
-# Import optional interfaces
-try:
-    from .tk_interface import TkInterface
-except ImportError:
-    if TYPE_CHECKING:
-        pass  # Replace TYPE_CHECKING with `type GuiInterface = None` since Python 3.12
-    else:
-        TkInterface = None
-try:
-    from .textual_interface import TextualInterface
-except ImportError:
-    TextualInterface = None
-
-GuiInterface = TkInterface
-TuiInterface = TextualInterface or TextInterface
 
 
 class Start:
     def __init__(self, title="", interface: Type[Mininterface] | str | None = None):
         self.title = title
         self.interface = interface
-
-    def get_interface(self, env=None):
-        interface = self.interface
-        try:
-            if interface == "tui":  # undocumented feature
-                interface = TuiInterface
-            elif interface == "gui":  # undocumented feature
-                interface = GuiInterface
-            if interface is None:
-                raise InterfaceNotAvailable  # GuiInterface might be None when import fails
-            else:
-                interface = interface(self.title, env)
-        except InterfaceNotAvailable:  # Fallback to a different interface
-            interface = TuiInterface(self.title, env)
-        return interface
 
     def integrate(self, env=None):
         """ Integrate to the system
@@ -59,7 +27,7 @@ class Start:
 
         NOTE: This is a basic and bash only integration. It might be easily expanded.
         """
-        m = self.get_interface()
+        m = get_interface(self.title, self.interface)
         comp_dir = Path("/etc/bash_completion.d/")
         prog = Path(sys.argv[0]).name
         target = comp_dir/prog
@@ -76,7 +44,7 @@ class Start:
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
     def choose_subcommand(self, env_classes: list[Type[EnvClass]]):
-        m = self.get_interface()
+        m = get_interface(self.title, self.interface)
         forms: TagDict = defaultdict(Tag)
 
         # Subcommands might be inherited from the same base class, they might have some common fields

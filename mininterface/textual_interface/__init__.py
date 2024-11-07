@@ -13,6 +13,8 @@ from ..text_interface import TextInterface
 from .textual_adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
 
+print("TEXTUAL LOAD")
+
 
 class TextualInterface(Redirectable, TextInterface):
 

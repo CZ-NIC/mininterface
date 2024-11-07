@@ -111,7 +111,7 @@ further:
 ## All possible interfaces
 
 Normally, you get an interface through [mininterface.run][]
-but if you do not wish to parse CLI and config file, you can invoke one directly.
+but if you do not wish to parse CLI and config file, you can invoke one directly `from mininterface.interfaces import *`.
 
 Several interfaces exist:
 
