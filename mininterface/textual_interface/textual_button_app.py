@@ -4,17 +4,17 @@ from typing import TYPE_CHECKING, Any
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Footer, Label
 
-from ..common import Cancelled
+from ..exceptions import Cancelled
 
 if TYPE_CHECKING:
     from . import TextualInterface
+
 
 @dataclass
 class DummyWrapper:
     """ Value wrapped, since I do not know how to get it from textual app.
     False would mean direct exit. """
     val: Any
-
 
 
 class TextualButtonApp(App):

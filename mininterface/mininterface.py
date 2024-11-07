@@ -4,8 +4,10 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic, Type, overload
 
+from .exceptions import Cancelled
+
 from .cli_parser import run_tyro_parser
-from .common import Command, Cancelled
+from .subcommands import Command
 from .facet import BackendAdaptor, Facet, MinAdaptor
 from .form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                         dict_to_tagdict, formdict_resolve)
@@ -23,10 +25,10 @@ class Mininterface(Generic[EnvClass]):
         or you can create [one](Interfaces.md) directly (without benefiting from the CLI parsing).
 
     Raise:
-        [Cancelled][mininterface.common.Cancelled]: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
+        [Cancelled][mininterface.exceptions.Cancelled]: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
 
     Raise:
-        [InterfaceNotAvailable][mininterface.common.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI.
+        [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI.
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 

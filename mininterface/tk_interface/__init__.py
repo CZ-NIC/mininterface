@@ -5,12 +5,12 @@ try:
     # Tkinter is not marked as a requirement as other libraries does that neither.
     from tkinter import TclError
 except ImportError:
-    from ..common import InterfaceNotAvailable
+    from ..exceptions import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
 from .tk_window import TkWindow
 from .redirect_text_tkinter import RedirectTextTkinter
-from ..common import InterfaceNotAvailable
+from ..exceptions import InterfaceNotAvailable
 from ..form_dict import DataClass, FormDict
 from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface

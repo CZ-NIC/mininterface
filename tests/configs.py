@@ -6,7 +6,7 @@ from typing import Annotated, Callable
 from tyro.conf import Positional
 
 from mininterface import Tag
-from mininterface.common import Command
+from mininterface.subcommands import Command
 from mininterface.types import CallbackTag, Choices, Validation
 from mininterface.validators import not_empty
 
