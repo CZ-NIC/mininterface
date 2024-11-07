@@ -4,12 +4,14 @@ from pathlib import Path
 from types import UnionType
 from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
 
+from .interfaces import get_interface
+
 from . import validators
 from .cli_parser import _parse_cli, assure_args
-from .common import Cancelled, InterfaceNotAvailable
+from .common import Cancelled, InterfaceNotAvailable, Command
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
-from .start import GuiInterface, Start, TuiInterface, TextualInterface
+from .start import Start
 from .tag import Tag
 from .text_interface import ReplInterface, TextInterface
 from .types import Choices, PathTag, Validation
@@ -33,7 +35,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
         config_file: Path | str | bool = True,
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
-        interface: Type[Mininterface] = GuiInterface or TuiInterface,
+        interface: Type[Mininterface] = None,
         args: Optional[Sequence[str]] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
@@ -169,7 +171,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
         _parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 
     # Build the interface
-    interface = start.get_interface(env)
+    interface = get_interface(title, interface, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:
@@ -182,7 +184,6 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
     return interface
 
 
-__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
+__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled", "Command",
            "Validation", "Choices", "PathTag",
-           "Mininterface", "GuiInterface", "TuiInterface", "TextInterface", "TextualInterface", "TkInterface"
-           ]
+           "Mininterface"]
