@@ -17,19 +17,23 @@ if TYPE_CHECKING:
     from .facet import Facet
     from .form_dict import TagDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+else:
+    # NOTE this is needed for tyro dataclass serialization (which still does not work
+    # as Tag is not a frozen object, you cannot use it as an annotation)
+    Facet = object
 
 # Pydantic is not a project dependency, that is just an optional integration
 try:  # Pydantic is not a dependency but integration
     from pydantic import ValidationError as PydanticValidationError
     from pydantic import create_model
     pydantic = True
-except:
+except ImportError:
     pydantic = False
     PydanticValidationError = None
     create_model = None
 try:   # Attrs is not a dependency but integration
     import attr
-except:
+except ImportError:
     attr = None
 
 
@@ -39,14 +43,15 @@ TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
 """ dict key """
-TagValue = TypeVar("TagValue")
-""" Any value. """
+# Why TagValue bounded to Any? This might help in the future to allow a dataclass to have a Tag as the attribute value. (It is not frozen now.)
+TagValue = TypeVar("TagValue", bound=Any)
+""" Any value. It is being wrapped by a [Tag][mininterface.Tag]. """
 ErrorMessage = TypeVar("ErrorMessage")
 """ A string, callback validation error message. """
 ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
-PydanticFieldInfo = TypeVar("PydanticFieldInfo")
-AttrsFieldInfo = TypeVar("AttrsFieldInfo")
+PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
+AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 ChoiceLabel = str
 ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue] | list[Enum] | Type[Enum]
 """ You can denote the choices in many ways.
@@ -262,7 +267,7 @@ class Tag:
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
             if attr:  # Attrs integration
                 try:
-                    self._attrs_field: dict | None = attr.fields_dict(self._src_class.__class__).get(self._src_key)
+                    self._attrs_field: dict | None = attr.fields_dict(self._src_class).get(self._src_key)
                 except attr.exceptions.NotAnAttrsClassError:
                     pass
         if not self.annotation and self.val is not None and not self.choices:

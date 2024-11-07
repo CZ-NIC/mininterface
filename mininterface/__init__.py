@@ -2,13 +2,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import UnionType
-from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Literal, Optional, Sequence, Type, Union
 
 from .interfaces import get_interface
 
 from . import validators
 from .cli_parser import _parse_cli, assure_args
-from .common import Cancelled, InterfaceNotAvailable, Command
+from .common import Cancelled, InterfaceNotAvailable, Command, SubcommandPlaceholder
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
 from .start import Start
@@ -28,14 +28,13 @@ class _Empty:
     pass
 
 
-# TODO docs; type can be a list to produce subcommand
-def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
+def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
-        interface: Type[Mininterface] = None,
+        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] = None,
         args: Optional[Sequence[str]] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
@@ -47,7 +46,12 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
     with the program name ending on *.yaml*, ex: `program.py` will fetch `./program.yaml`.
 
     Args:
-        env_class: Dataclass with the configuration. Their values will be modified with the CLI arguments.
+        env_or_list:
+            * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
+            * `list` of [Commands][mininterface.common.Command] let you create multiple commands within a single program, each with unique options.
+            * `None` You need just the dialogs, no CLI/config file parsing.
+
+
         ask_on_empty_cli: If program was launched with no arguments (empty CLI), invokes self.form() to edit the fields.
             (Withdrawn when `ask_for_missing` happens.)
             ```python
@@ -102,7 +106,9 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
             $ program.py  # omitting --required-number
             # Dialog for `required_number` appears
             ```
-        interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI. See the full [list](Overview.md#all-possible-interfaces) of possible interfaces.
+        interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
+            You may write "gui" or "tui" literal or pass a specific Mininterface type,
+            see the full [list](Interfaces.md) of possible interfaces.
         args: Parse arguments from a sequence instead of the command line.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
@@ -115,8 +121,15 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
     The stdout will be redirected to the interface (ex. a GUI window).
 
     ```python
+    from dataclasses import dataclass
+    from mininterface import run
+
+    @dataclass
+    class Env:
+        my_number: int = 4
+
     with run(Env) as m:
-        print(f"Your important number is {m.env.important_number}")
+        print(f"Your important number is {m.env.my_number}")
         boolean = m.is_yes("Is that alright?")
     ```
 
@@ -162,7 +175,9 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | None = None,
         quit()
 
     env, wrong_fields = None, {}
-    if isinstance(env_or_list, list) and not args:
+    if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
+        start.choose_subcommand(env_or_list, args=args[1:])
+    elif isinstance(env_or_list, list) and not args:
         start.choose_subcommand(env_or_list)
     elif env_or_list:
         # Load configuration from CLI and a config file

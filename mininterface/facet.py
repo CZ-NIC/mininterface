@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Generic, Optional
+from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional
+
+from .common import ValidationFail
 
 
 from .form_dict import EnvClass, TagDict
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
 class BackendAdaptor(ABC):
     facet: "Facet"
     post_submit_action: Optional[Callable] = None
+    interface: "Mininterface"
 
     @staticmethod
     @abstractmethod
@@ -26,15 +29,21 @@ class BackendAdaptor(ABC):
         """
         self.facet._fetch_from_adaptor(form)
 
-    def submit_done(self):
+    def submit_done(self) -> str | Literal[True]:
         if self.post_submit_action:
-            self.post_submit_action()
+            try:
+                self.post_submit_action()
+            except ValidationFail as e:
+                self.interface.alert(str(e))
+                return False
+        return True
 
 
 class MinAdaptor(BackendAdaptor):
     def __init__(self, interface: "Mininterface"):
         super().__init__()
         self.facet = Facet(self, interface.env)
+        self.interface = interface
 
     def widgetize(tag: Tag):
         pass

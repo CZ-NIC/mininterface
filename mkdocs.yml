@@ -5,6 +5,7 @@ docs_dir: docs
 
 theme:
   name: "material"
+  features: navigation.expand
 
 plugins:
   - search
@@ -40,14 +41,19 @@ markdown_extensions:
   - footnotes
 
 nav:
-  - Introduction: "index.md"
-  - Overview: "Overview.md"
-  - Run: "run.md"
-  - Mininterface: "Mininterface.md"
-  - Tag: "Tag.md"
-  - Facet: "Facet.md"
-  - Types: "Types.md"
-  - Validation: "Validation.md"
-  - Standalone: "Standalone.md"
-  - Experimental: "Experimental.md"
-  - Changelog: "Changelog.md"
+  - Introduction: index.md
+  - Overview.md
+  - API:
+      - run.md
+      - Mininterface.md
+      - Tag.md
+      - Facet.md
+      - Helper-types.md
+  - Extras:
+      - Types.md
+      - Validation.md
+      - Common.md
+      - Interfaces.md
+      - Standalone.md
+      - Experimental.md
+  - Changelog.md

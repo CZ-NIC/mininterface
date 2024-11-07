@@ -15,8 +15,6 @@ from ..form_dict import DataClass, FormDict
 from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface
 
-print("LOADING TK")
-
 
 class TkInterface(Redirectable, Mininterface):
     """ When used in the with statement, the GUI window does not vanish between dialogues. """

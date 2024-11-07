@@ -11,7 +11,7 @@ from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (ColorEnum, ColorEnumSingle, ConflictingEnv,
+from configs import (AnnotatedClass, NestedAnnotatedClass, ColorEnum, ColorEnumSingle, ConflictingEnv,
                      ConstrainedEnv, FurtherEnv2, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
@@ -20,7 +20,7 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, TextInterface, run
 from mininterface.auxiliary import flatten
-from mininterface.common import Cancelled
+from mininterface.common import Cancelled, SubcommandPlaceholder
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     formdict_resolve)
 from mininterface.start import Start
@@ -50,26 +50,22 @@ class TestAbstract(TestCase):
         sys.argv = ["running-tests", *args]
 
     @contextmanager
-    def assertOutputs(self, expected_output):
-        original_stdout = sys.stdout
-        new_stdout = StringIO()
-        sys.stdout = new_stdout
-        try:
-            yield
-            actual_output = new_stdout.getvalue().strip()
-            self.assertEqual(expected_output, actual_output)
-        finally:
-            sys.stdout = original_stdout
-
-    @contextmanager
-    def assertStderr(self, expected_output=None, contains=None):
+    def _assertRedirect(self, redirect, expected_output=None, contains: str | list[str] = None):
         f = StringIO()
-        with redirect_stderr(f):
+        with redirect(f):
             yield
+        actual_output = f.getvalue().strip()
         if expected_output:
-            self.assertEqual(expected_output, f.getvalue().strip())
+            self.assertEqual(expected_output, actual_output)
         if contains:
-            self.assertIn(contains, f.getvalue().strip())
+            for comp in (contains if isinstance(contains, list) else [contains]):
+                self.assertIn(comp, actual_output)
+
+    def assertOutputs(self, expected_output=None, contains: str | list[str] = None):
+        return self._assertRedirect(redirect_stdout, expected_output, contains)
+
+    def assertStderr(self, expected_output=None, contains=None):
+        return self._assertRedirect(redirect_stderr, expected_output, contains)
 
 
 class TestCli(TestAbstract):
@@ -672,6 +668,7 @@ class TestAttrsIntegration(TestAbstract):
 
 
 class TestAnnotated(TestAbstract):
+    # NOTE some of the entries are not well supported
     def test_annotated(self):
         m = run(ConstrainedEnv)
         d = dataclass_to_tagdict(m.env)
@@ -679,6 +676,33 @@ class TestAnnotated(TestAbstract):
         self.assertFalse(d[""]["test2"].update(""))
         self.assertTrue(d[""]["test"].update(" "))
         self.assertTrue(d[""]["test2"].update(" "))
+
+    def test_class(self):
+        m = run(AnnotatedClass, interface=Mininterface)
+        d = dataclass_to_tagdict(m.env)[""]
+        self.assertEqual(list[Path], d["files1"].annotation)
+        # self.assertEqual(list[Path], d["files2"].annotation) does not work
+        self.assertEqual(list[Path], d["files3"].annotation)
+        # self.assertEqual(list[Path], d["files4"].annotation) does not work
+        self.assertEqual(list[Path], d["files5"].annotation)
+        # This does not work, however I do not know what should be the result
+        # self.assertEqual(list[Path], d["files6"].annotation)
+        # self.assertEqual(list[Path], d["files7"].annotation)
+        # self.assertEqual(list[Path], d["files8"].annotation)
+
+    def test_nested_class(self):
+        # TODO since an old "ask for missing" commit, nesting this issues a UserWarning.
+        m = run(NestedAnnotatedClass, interface=Mininterface)
+        d = dataclass_to_tagdict(m.env)[""]
+        self.assertEqual(list[Path], d["files1"].annotation)
+        # self.assertEqual(list[Path], d["files2"].annotation) does not work
+        self.assertEqual(list[Path], d["files3"].annotation)
+        # self.assertEqual(list[Path], d["files4"].annotation) does not work
+        self.assertEqual(list[Path], d["files5"].annotation)
+        # This does not work, however I do not know what should be the result
+        # self.assertEqual(list[Path], d["files6"].annotation)
+        # self.assertEqual(list[Path], d["files7"].annotation)
+        # self.assertEqual(list[Path], d["files8"].annotation)
 
 
 class TestTagAnnotation(TestAbstract):
@@ -810,20 +834,20 @@ class TestTagAnnotation(TestAbstract):
 
 class TestSubcommands(TestAbstract):
 
-    def test_subcommands(self):
-        def r(args):
-            return runm([Subcommand1, Subcommand2], args=args)
+    form1 = "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), "\
+            "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), "\
+            "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, "\
+            "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
+            "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
 
+    def subcommands(self, subcommands: list):
+        def r(args):
+            return runm(subcommands, args=args)
         # missing subcommand
-        form1 = "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), "\
-                "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), "\
-                "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, "\
-                "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
-                "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
-        with self.assertOutputs(form1):
+        with self.assertOutputs(self.form1):
             r([])
 
-        # NOTE we should implement this better, see treat_missing comment
+        # NOTE we should implement this better, see treat_missing comment TODO done?
         # missing subcommand params (inherited --foo and proper --b)
         with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
             r(["subcommand2"])
@@ -840,7 +864,9 @@ class TestSubcommands(TestAbstract):
         m = r(["subcommand2", "--foo", "1", "--b", "5"])
         self.assertEqual(5, m.env.b)
 
+    def test_integrations(self):
         # Guaranteed support for pydantic and attrs
+        self.maxDiff = None
         form2 = "Asking the form {'Subcommand1': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), 'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'Subcommand2': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), 'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'PydModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}, 'AttrsModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}}"
         warn2 = """UserWarning: Subcommand dataclass PydModel does not inherit from the Command."""
         with self.assertOutputs(form2), self.assertStderr(contains=warn2):
@@ -849,7 +875,7 @@ class TestSubcommands(TestAbstract):
         m = runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
         self.assertEqual("me", m.env.name)
 
-    def test_choose_subcommands(self, mocked: Mock = None):
+    def test_choose_subcommands(self):
         values = ["{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a')}}",
                   "{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b')}}"]
 
@@ -863,6 +889,34 @@ class TestSubcommands(TestAbstract):
                 redirect_stdout(StringIO()), redirect_stderr(StringIO()):
             s.choose_subcommand([Subcommand1, Subcommand2])
             self.assertEqual(2, mocked.call_count)
+
+    def test_subcommands(self):
+        self.subcommands([Subcommand1, Subcommand2])
+
+    def test_placeholder(self):
+        subcommands = [Subcommand1, Subcommand2, SubcommandPlaceholder]
+
+        def r(args):
+            return runm(subcommands, args=args)
+
+        self.subcommands(subcommands)
+
+        # with the placeholder, the form is raised
+        with self.assertOutputs(self.form1):
+            r(["subcommand"])
+
+        # calling a placeholder works for shared arguments of all subcommands
+        with self.assertOutputs(self.form1.replace("'foo': Tag(val=0", "'foo': Tag(val=999")):
+            r(["subcommand", "--foo", "999"])
+
+        # main help works
+        # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
+        with (self.assertOutputs(contains="Use this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
+            r(["--help"])
+
+        # placeholder help works and shows shared arguments of other subcommands
+        with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
+            r(["subcommand", "--help"])
 
 
 if __name__ == '__main__':

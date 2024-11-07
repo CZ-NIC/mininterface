@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 class Mininterface(Generic[EnvClass]):
     """ The base interface.
         You get one through [`mininterface.run`](run.md) which fills CLI arguments and config file to `mininterface.env`
-        or you can create [one](Overview.md#all-possible-interfaces) directly (without benefiting from the CLI parsing).
+        or you can create [one](Interfaces.md) directly (without benefiting from the CLI parsing).
 
     Raise:
-        Cancelled: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
+        [Cancelled][mininterface.common.Cancelled]: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
 
     Raise:
-        InterfaceNotAvailable: Interface failed to init, ex. display not available in GUI.
+        [InterfaceNotAvailable][mininterface.common.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI.
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 

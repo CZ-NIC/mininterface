@@ -13,8 +13,6 @@ from ..text_interface import TextInterface
 from .textual_adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
 
-print("TEXTUAL LOAD")
-
 
 class TextualInterface(Redirectable, TextInterface):
 
@@ -24,7 +22,7 @@ class TextualInterface(Redirectable, TextInterface):
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
-        TextualButtonApp(self).buttons(text, [("Ok", None)]).run()
+        TextualButtonApp(self).buttons(text, [("Ok", None)])
 
     def ask(self, text: str = None):
         return self.form({text: ""})[text]

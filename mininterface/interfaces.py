@@ -25,7 +25,7 @@ def __getattr__(name):
             return globals()[name]
         except InterfaceNotAvailable:
             return None
-
+    return None  # such attribute does not exist
     raise AttributeError(f"Module {__name__} has no attribute {name}")
 
 
