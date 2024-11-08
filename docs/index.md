@@ -1,12 +1,12 @@
 # Mininterface – access to GUI, TUI, CLI and config files
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg)](https://github.com/CZ-NIC/mininterface/actions)
-[![Downloads](https://pepy.tech/badge/mininterface)](https://pepy.tech/project/mininterface)
+[![Downloads](https://static.pepy.tech/badge/mininterface)](https://pepy.tech/project/mininterface)
 
 Write the program core, do not bother with the input/output.
 
-![Hello world example: GUI window](asset/hello-world.png "A minimal use case – GUI")
-![Hello world example: TUI fallback](asset/hello-tui.webp "A minimal use case – TUI fallback")
+![Hello world example: GUI window](asset/hello-gui.avif "A minimal use case – GUI")
+![Hello world example: TUI fallback](asset/hello-tui.avif "A minimal use case – TUI fallback")
 
 Check out the code, which is surprisingly short, that displays such a window or its textual fallback.
 
@@ -25,10 +25,11 @@ class Env:
     """ This number is very important """
 
 if __name__ == "__main__":
-    env = run(Env, prog="My application").env
+    m = run(Env, prog="My application")
+    m.form()
     # Attributes are suggested by the IDE
     # along with the hint text 'This number is very important'.
-    print(env.my_number)
+    print(m.env.my_number)
 ```
 
 # Contents
@@ -45,16 +46,18 @@ It was all the code you need. No lengthy blocks of code imposed by an external d
 
 
 ```bash
-$ ./hello.py
-usage: My application [-h] [--test | --no-test] [--important-number INT]
+$ ./hello.py    --help
+usage: My application [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
 
 This calculates something.
 
-╭─ options ──────────────────────────────────────────────────────────╮
-│ -h, --help              show this help message and exit            │
-│ --test, --no-test       My testing flag (default: False)           │
-│ --important-number INT  This number is very important (default: 4) │
-╰────────────────────────────────────────────────────────────────────╯
+╭─ options ───────────────────────────────────────────────────────────────╮
+│ -h, --help             show this help message and exit                  │
+│ -v, --verbose          Verbosity level. Can be used twice to increase.  │
+│ --my-flag, --no-my-flag                                                 │
+│                        This switches the functionality (default: False) │
+│ --my-number INT        This number is very important (default: 4)       │
+╰─────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## You got config file management
@@ -110,7 +113,7 @@ See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic
 
 # Examples
 
-A powerful `.form` dialog method accepts either a dataclass or a dict. Take a look on both.
+A powerful [`m.form`][mininterface.Mininterface.form] dialog method accepts either a dataclass or a dict. Take a look on both.
 
 ## A complex dataclass.
 
