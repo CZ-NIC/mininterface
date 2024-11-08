@@ -14,8 +14,6 @@ with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
-TODO imgs
-
 # `GuiInterface` = `TkInterface`
 
 A tkinter window.
@@ -28,11 +26,9 @@ An interactive terminal.
 
 If [textual](https://github.com/Textualize/textual) installed, rich and mouse clickable interface is used.
 
-
 ## `TextInterface`
 
 Plain text only interface with no dependency as a fallback.
-
 
 # `ReplInterface`
 

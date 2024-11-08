@@ -358,7 +358,7 @@ class Mininterface(Generic[EnvClass]):
             return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # NOTE what to do with wf?
-        if is_dataclass(_form):  # -> dataclass or its instance
+        if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)
             # the original dataclass is updated, hence we do not need to catch the output from launch_callback
             adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)
             return _form

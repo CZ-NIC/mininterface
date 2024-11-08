@@ -23,7 +23,7 @@ class TkWindow(Tk, BackendAdaptor):
     """ An editing window. """
 
     def __init__(self, interface: "TkInterface"):
-        # TODO scrollbar if content is long
+        # NOTE I really need scrollbar if content is long
         super().__init__()
         self.facet = interface.facet = TkFacet(self, interface.env)
         self.params = None

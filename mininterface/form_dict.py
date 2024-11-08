@@ -2,8 +2,9 @@
     FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
 import logging
+from warnings import warn
 from dataclasses import fields, is_dataclass
-from types import FunctionType, MethodType
+from types import FunctionType, MethodType, SimpleNamespace
 from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
                     Union, get_args, get_type_hints)
 
@@ -140,6 +141,26 @@ def iterate_attributes(env: DataClass):
             yield param, val
 
 
+def iterate_attributes_keys(env: DataClass):
+    """ Iterate public attributes of a model, including its parents. """
+    if is_dataclass(env):
+        # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
+        for f in fields(env):
+            yield f.name
+    elif BaseModel and isinstance(env, BaseModel):
+        for param, val in vars(env).items():
+            yield param
+        # NOTE private pydantic attributes might be printed to forms, because this makes test fail for nested models
+        # for param, val in env.model_dump().items():
+        #     yield param, val
+    elif attr and attr.has(env):
+        for f in attr.fields(env.__class__):
+            yield f.name
+    else:  # might be a normal class; which is unsupported but mostly might work
+        for param, val in vars(env).items():
+            yield param
+
+
 def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional["Mininterface"] = None, _nested=False) -> TagDict:
     """ Convert the dataclass produced by tyro into dict of dicts. """
     main = {}
@@ -147,6 +168,9 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
         subdict = {"": main} if not _nested else {}
     else:
         subdict = {}
+
+    if isinstance(env, SimpleNamespace):
+        raise ValueError(f"We got a namespace instead of class, CLI probably failed: {env}")
 
     for param, val in iterate_attributes(env):
         annotation = get_type_hints(env.__class__).get(param)

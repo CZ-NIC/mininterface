@@ -11,7 +11,7 @@ from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (AnnotatedClass, NestedAnnotatedClass, ColorEnum, ColorEnumSingle, ConflictingEnv,
+from configs import (AnnotatedClass, MissingPositional, InheritedAnnotatedClass, ColorEnum, ColorEnumSingle, ConflictingEnv,
                      ConstrainedEnv, FurtherEnv2, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
@@ -51,22 +51,25 @@ class TestAbstract(TestCase):
         sys.argv = ["running-tests", *args]
 
     @contextmanager
-    def _assertRedirect(self, redirect, expected_output=None, contains: str | list[str] = None):
+    def _assertRedirect(self, redirect, expected_output=None, contains: str | list[str] = None, not_contains: str | list[str] = None):
         f = StringIO()
         with redirect(f):
             yield
         actual_output = f.getvalue().strip()
-        if expected_output:
+        if expected_output is not None:
             self.assertEqual(expected_output, actual_output)
-        if contains:
+        if contains is not None:
             for comp in (contains if isinstance(contains, list) else [contains]):
                 self.assertIn(comp, actual_output)
+        if not_contains is not None:
+            for comp in (not_contains if isinstance(not_contains, list) else [not_contains]):
+                self.assertNotIn(comp, actual_output)
 
-    def assertOutputs(self, expected_output=None, contains: str | list[str] = None):
-        return self._assertRedirect(redirect_stdout, expected_output, contains)
+    def assertOutputs(self, expected_output=None, contains: str | list[str] = None, not_contains=None):
+        return self._assertRedirect(redirect_stdout, expected_output, contains, not_contains)
 
-    def assertStderr(self, expected_output=None, contains=None):
-        return self._assertRedirect(redirect_stderr, expected_output, contains)
+    def assertStderr(self, expected_output=None, contains=None, not_contains=None):
+        return self._assertRedirect(redirect_stderr, expected_output, contains, not_contains)
 
 
 class TestCli(TestAbstract):
@@ -670,6 +673,9 @@ class TestAttrsIntegration(TestAbstract):
 
 class TestAnnotated(TestAbstract):
     # NOTE some of the entries are not well supported
+    # NOTE Positional are not well supported.
+    # NOTE The same should be for pydantic and attrs.
+
     def test_annotated(self):
         m = run(ConstrainedEnv)
         d = dataclass_to_tagdict(m.env)
@@ -691,9 +697,11 @@ class TestAnnotated(TestAbstract):
         # self.assertEqual(list[Path], d["files7"].annotation)
         # self.assertEqual(list[Path], d["files8"].annotation)
 
-    def test_nested_class(self):
-        # TODO since an old "ask for missing" commit, nesting this issues a UserWarning.
-        m = run(NestedAnnotatedClass, interface=Mininterface)
+    def test_inherited_class(self):
+        # Without _parse_cli / yield_annotations on inherited members, it produced
+        # UserWarning: Could not find field files6 in default instance namespace()
+        with self.assertStderr(not_contains="Could not find field"):
+            m = run(InheritedAnnotatedClass, interface=Mininterface)
         d = dataclass_to_tagdict(m.env)[""]
         self.assertEqual(list[Path], d["files1"].annotation)
         # self.assertEqual(list[Path], d["files2"].annotation) does not work
@@ -704,6 +712,11 @@ class TestAnnotated(TestAbstract):
         # self.assertEqual(list[Path], d["files6"].annotation)
         # self.assertEqual(list[Path], d["files7"].annotation)
         # self.assertEqual(list[Path], d["files8"].annotation)
+
+    def test_missing_positional(self):
+        # m = run(MissingPositional, interface=Mininterface)
+        # d = dataclass_to_tagdict(m.env)[""]
+        ...
 
 
 class TestTagAnnotation(TestAbstract):
@@ -848,7 +861,7 @@ class TestSubcommands(TestAbstract):
         with self.assertOutputs(self.form1):
             r([])
 
-        # NOTE we should implement this better, see treat_missing comment TODO done?
+        # NOTE we should implement this better, see Command comment
         # missing subcommand params (inherited --foo and proper --b)
         with self.assertRaises(SystemExit), redirect_stderr(StringIO()):
             r(["subcommand2"])
