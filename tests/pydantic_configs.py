@@ -19,5 +19,6 @@ class PydNested(BaseModel):
     number: int = -100
     inner: PydInner = PydInner()
 
+
 class PydNestedRestraint(BaseModel):
     inner: PydModel = PydModel()

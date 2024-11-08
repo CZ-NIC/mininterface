@@ -2,12 +2,12 @@ from typing import Callable
 
 
 class TagCallback(Callable):
-    """ TODO docs submit button """
+    """ NOTE docs submit button """
     pass
 
 
 class TagType:
-    """ TODO a mere Tag should work for a type too but Tyro interpretes it as a nested conf
+    """ NOTE a mere Tag should work for a type too but Tyro interpretes it as a nested conf
         Correct, Tag cannot be an annotation as it is not frozen.
 
     @dataclass

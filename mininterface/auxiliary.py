@@ -1,3 +1,4 @@
+from dataclasses import is_dataclass
 import os
 import re
 from argparse import ArgumentParser
@@ -61,3 +62,7 @@ def get_descriptions(parser: ArgumentParser) -> dict:
 
 def get_description(obj, param: str) -> str:
     return get_descriptions(get_parser(obj))[param]
+
+
+def yield_annotations(dataclass):
+    yield from (cl.__annotations__ for cl in dataclass.__mro__ if is_dataclass(cl))

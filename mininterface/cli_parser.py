@@ -6,18 +6,19 @@ import sys
 import warnings
 from argparse import Action, ArgumentParser
 from contextlib import ExitStack
-from dataclasses import MISSING, is_dataclass
+from dataclasses import MISSING
 from pathlib import Path
-from types import SimpleNamespace, UnionType
-from typing import Optional, Sequence, Type, Union, get_origin
+from types import SimpleNamespace
+from typing import Optional, Sequence, Type, Union
 from unittest.mock import patch
 
 import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-from tyro.extras import get_parser
 from tyro._fields import NonpropagatingMissingType
+from tyro.extras import get_parser
 
+from .auxiliary import yield_annotations
 from .form_dict import EnvClass
 from .tag import Tag
 from .tag_factory import tag_factory
@@ -27,12 +28,12 @@ from .validators import not_empty
 try:  # Pydantic is not a dependency but integration
     from pydantic import BaseModel
     pydantic = True
-except:
+except ImportError:
     pydantic = False
     BaseModel = False
 try:   # Attrs is not a dependency but integration
     import attr
-except:
+except ImportError:
     attr = None
 
 
@@ -133,8 +134,8 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
-            match = cli(type_form, args=args, **kwargs)
-            if isinstance(match, NonpropagatingMissingType):
+            res = cli(type_form, args=args, **kwargs)
+            if isinstance(res, NonpropagatingMissingType):
                 # NOTE tyro does not work if a required positional is missing tyro.cli() returns just NonpropagatingMissingType.
                 # If this is supported, I might set other attributes like required (date, time).
                 # Fail if missing:
@@ -142,7 +143,7 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                 # Works if missing but imposes following attributes are non-required (have default values):
                 #   files: Positional[list[Path]] = field(default_factory=list)
                 pass
-            return match, {}
+            return res, {}
     except BaseException as e:
         if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
@@ -159,7 +160,6 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                # spot the warning here? see tests TODO
                 return cli(type_form, args=args, **kwargs), wf
         raise
 
@@ -184,9 +184,9 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         # Why using mro? Find the field in the dataclass and all of its parents.
         # Useful when handling subcommands, they share a common field.
         field_name = argument.dest
-        if not any(field_name in cl.__annotations__ for cl in env_class.__mro__ if is_dataclass(cl)):
+        if not any(field_name in ann for ann in yield_annotations(env_class)):
             field_name = field_name.replace("-", "_")
-        if not any(field_name in cl.__annotations__ for cl in env_class.__mro__ if is_dataclass(cl)):
+        if not any(field_name in ann for ann in yield_annotations(env_class)):
             raise ValueError(f"Cannot find {field_name} in the configuration object")
 
         # NOTE: We put '' to the UI to clearly state that the value is missing.
@@ -246,17 +246,20 @@ def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # Unfortunately, pydantic needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
             static = {key: env_or_list.model_fields.get(key).default
-                      for key in env_or_list.__annotations__ if not key.startswith("__") and not key in disk}
+                      for ann in yield_annotations(env_or_list) for key in ann if not key.startswith("__") and not key in disk}
+            # static = {key: env_or_list.model_fields.get(key).default
+            #           for key, _ in iterate_attributes(env_or_list) if not key in disk}
         elif attr and attr.has(env_or_list):
             # Unfortunately, attrs needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
+            # NOTE Might not work for inherited models.
             static = {key: field.default
                       for key, field in attr.fields_dict(env_or_list).items() if not key.startswith("__") and not key in disk}
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.
             static = {key: getattr(env_or_list, key, MISSING)
-                      for key in env_or_list.__annotations__ if not key.startswith("__") and not key in disk}
+                      for ann in yield_annotations(env_or_list) for key in ann if not key.startswith("__") and not key in disk}
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI

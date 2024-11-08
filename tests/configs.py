@@ -134,6 +134,11 @@ class ComplicatedTypes:
 
 
 @dataclass
+class MissingPositional:
+    files: Positional[list[Path]]
+
+
+@dataclass
 class AnnotatedClass:
     # NOTE some of the entries are not well supported
     files1: list[Path]
@@ -155,14 +160,14 @@ class AnnotatedClassInner:
     # files7: Annotated[list[Path], None]
     # files8: Annotated[list[Path], Tag(annotation=str)]
     files3: list[Path] = field(default_factory=list)
-    files4: Positional[list[Path]] = field(default_factory=list)
+    # files4: Positional[list[Path]] = field(default_factory=list)
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
 
 
 @dataclass
-class NestedAnnotatedClass(AnnotatedClassInner):
+class InheritedAnnotatedClass(AnnotatedClassInner):
     pass
 
 
