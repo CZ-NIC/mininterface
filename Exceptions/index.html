@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../Interfaces/">
+        <link rel="prev" href="../Validation/">
       
       
-        <link rel="next" href="../Experimental/">
+        <link rel="next" href="../Interfaces/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Standalone - Mininterface</title>
+        <title>Exceptions - Mininterface</title>
       
     
     
@@ -63,6 +63,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#exceptions" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -95,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Standalone
+              Exceptions
             
           </span>
         </div>
@@ -498,10 +503,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Exceptions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Exceptions
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -510,6 +535,62 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      exceptions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.Cancelled" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cancelled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.ValidationFail" class="md-nav__link">
+    <span class="md-ellipsis">
+      ValidationFail
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.InterfaceNotAvailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      InterfaceNotAvailable
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -540,17 +621,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Standalone/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -559,7 +633,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -630,6 +703,52 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      exceptions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.Cancelled" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cancelled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.ValidationFail" class="md-nav__link">
+    <span class="md-ellipsis">
+      ValidationFail
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.exceptions.InterfaceNotAvailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      InterfaceNotAvailable
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -647,29 +766,102 @@
   
 
 
-  <h1>Standalone</h1>
+<h1 id="exceptions">Exceptions</h1>
 
-<p>When invoked directly, it creates simple GUI dialogs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>mininterface<span class="w">  </span>--help
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>usage:<span class="w"> </span>Mininterface<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Simple<span class="w"> </span>GUI<span class="w"> </span>dialog.<span class="w"> </span>Outputs<span class="w"> </span>the<span class="w"> </span>value<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>entered.
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>╭─<span class="w"> </span>options<span class="w"> </span>─────────────────────────────────────────────────────────────────────────────────╮
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">              </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                                   </span>│
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│<span class="w"> </span>--alert<span class="w"> </span>STR<span class="w">             </span>Display<span class="w"> </span>the<span class="w"> </span>OK<span class="w"> </span>dialog<span class="w"> </span>with<span class="w"> </span>text.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="o">)</span><span class="w">                    </span>│
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│<span class="w"> </span>--ask<span class="w"> </span>STR<span class="w">               </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span>input<span class="w"> </span>a<span class="w"> </span>text.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="o">)</span><span class="w">                    </span>│
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│<span class="w"> </span>--ask-number<span class="w"> </span>STR<span class="w">        </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span>input<span class="w"> </span>a<span class="w"> </span>number.<span class="w"> </span>Empty<span class="w"> </span><span class="nv">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="o">)</span><span class="w"> </span>│
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│<span class="w"> </span>--is-yes<span class="w"> </span>STR<span class="w">            </span>Display<span class="w"> </span>confirm<span class="w"> </span>box,<span class="w"> </span>focusing<span class="w"> </span>yes.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="o">)</span><span class="w">                  </span>│
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│<span class="w"> </span>--is-no<span class="w"> </span>STR<span class="w">             </span>Display<span class="w"> </span>confirm<span class="w"> </span>box,<span class="w"> </span>focusing<span class="w"> </span>no.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="o">)</span><span class="w">                   </span>│
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>╰───────────────────────────────────────────────────────────────────────────────────────────╯
-</code></pre></div>
-<p>You can fetch a value to i.e. a bash script.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$<span class="w"> </span>mininterface<span class="w">  </span>--ask-number<span class="w"> </span><span class="s2">&quot;What&#39;s your age?&quot;</span><span class="w">  </span><span class="c1"># GUI or TUI window invoked</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="m">18</span>
-</code></pre></div>
-<p><img alt="Standalone number" src="../asset/standalone_number.avif" />
-<img alt="Standalone number in terminal" src="../asset/standalone_number_textual.avif" /></p>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="mininterface.exceptions"></a>
+    <div class="doc doc-contents first">
+
+        <p>Exceptions that might make sense to be used outside the library.</p>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.exceptions.Cancelled" class="doc doc-heading">
+            <code>Cancelled</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>User has cancelled.
+A SystemExit based exception noting that the program exits without a traceback,
+ex. if user hits the escape or closes the window.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.exceptions.ValidationFail" class="doc doc-heading">
+            <code>ValidationFail</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Signal to the form that submit failed and we want to restore it.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.exceptions.InterfaceNotAvailable" class="doc doc-heading">
+            <code>InterfaceNotAvailable</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Interface failed to init, ex. display not available in GUI. Or the underlying dependency was uninstalled.</p>
+
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 

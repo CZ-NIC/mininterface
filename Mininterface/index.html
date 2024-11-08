@@ -254,6 +254,43 @@
       
   
   
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -269,9 +306,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
     
@@ -428,9 +466,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -448,9 +487,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -468,9 +508,96 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Subcommands/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Subcommands
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Helper-types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helper types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Extras
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Extras
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
   
   
   
@@ -488,9 +615,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -508,9 +636,52 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Exceptions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exceptions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Interfaces/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interfaces
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
   
   
   
@@ -528,9 +699,10 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -545,6 +717,14 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -725,17 +905,17 @@
 
         <p>The base interface.
     You get one through <a href="../run/"><code>mininterface.run</code></a> which fills CLI arguments and config file to <code>mininterface.env</code>
-    or you can create <a href="../Overview/#all-possible-interfaces">one</a> directly (without benefiting from the CLI parsing).</p>
+    or you can create <a href="../Interfaces/">one</a> directly (without benefiting from the CLI parsing).</p>
 
 
 <details class="raise" open>
   <summary>Raise</summary>
-  <p>Cancelled: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.</p>
+  <p><a class="autorefs autorefs-internal" href="../Exceptions/#mininterface.exceptions.Cancelled">Cancelled</a>: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.</p>
 </details>
 
 <details class="raise" open>
   <summary>Raise</summary>
-  <p>InterfaceNotAvailable: Interface failed to init, ex. display not available in GUI.</p>
+  <p><a class="autorefs autorefs-internal" href="../Exceptions/#mininterface.exceptions.InterfaceNotAvailable">InterfaceNotAvailable</a>: Interface failed to init, ex. display not available in GUI.</p>
 </details>
 
 
@@ -958,7 +1138,7 @@ and it redirects the stdout to a text area.</p>
           <tr class="doc-section-item">
             <td><code>choices</code></td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.ChoicesType" href="../Tag/#mininterface.tag.ChoicesType">ChoicesType</a></code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.ChoicesType" href="../Helper-types/#mininterface.tag.ChoicesType">ChoicesType</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1021,7 +1201,7 @@ Either put options in an iterable:</p>
           <tr class="doc-section-item">
             <td><code>default</code></td>
             <td>
-                  <code>str | <a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | None</code>
+                  <code>str | <a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Helper-types/#mininterface.tag.TagValue">TagValue</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1078,7 +1258,7 @@ Either put options in an iterable:</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Helper-types/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Helper-types/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1088,7 +1268,7 @@ Either put options in an iterable:</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Tag/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Helper-types/#mininterface.tag.TagValue">TagValue</a> | list[<a class="autorefs autorefs-internal" title="mininterface.tag.TagValue" href="../Helper-types/#mininterface.tag.TagValue">TagValue</a>] | <span title="typing.Any">Any</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1156,7 +1336,7 @@ Either put options in an iterable:</p>
           <tr class="doc-section-item">
             <td><code>form</code></td>
             <td>
-                  <code><span title="mininterface.form_dict.DataClass">DataClass</span> | <span title="typing.Type">Type</span>[<span title="mininterface.form_dict.DataClass">DataClass</span>] | <span title="mininterface.form_dict.FormDict">FormDict</span> | None</code>
+                  <code><a class="autorefs autorefs-internal" title="mininterface.form_dict.DataClass" href="../Helper-types/#mininterface.form_dict.DataClass">DataClass</a> | <span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="mininterface.form_dict.DataClass" href="../Helper-types/#mininterface.form_dict.DataClass">DataClass</a>] | <span title="mininterface.form_dict.FormDict">FormDict</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1221,7 +1401,7 @@ The value might be a <a class="autorefs autorefs-internal" href="../Tag/#mininte
       <tbody>
           <tr class="doc-section-item">
 <td><code>dataclass</code></td>            <td>
-                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <span title="mininterface.form_dict.DataClass">DataClass</span> | <span title="mininterface.form_dict.EnvClass">EnvClass</span></code>
+                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.DataClass" href="../Helper-types/#mininterface.form_dict.DataClass">DataClass</a> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.EnvClass" href="../Helper-types/#mininterface.form_dict.EnvClass">EnvClass</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1231,7 +1411,7 @@ The value might be a <a class="autorefs autorefs-internal" href="../Tag/#mininte
           </tr>
           <tr class="doc-section-item">
 <td><code>dataclass</code></td>            <td>
-                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <span title="mininterface.form_dict.DataClass">DataClass</span> | <span title="mininterface.form_dict.EnvClass">EnvClass</span></code>
+                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.DataClass" href="../Helper-types/#mininterface.form_dict.DataClass">DataClass</a> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.EnvClass" href="../Helper-types/#mininterface.form_dict.EnvClass">EnvClass</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1241,7 +1421,7 @@ The value might be a <a class="autorefs autorefs-internal" href="../Tag/#mininte
           </tr>
           <tr class="doc-section-item">
 <td><code>dict</code></td>            <td>
-                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <span title="mininterface.form_dict.DataClass">DataClass</span> | <span title="mininterface.form_dict.EnvClass">EnvClass</span></code>
+                  <code><span title="mininterface.form_dict.FormDict">FormDict</span> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.DataClass" href="../Helper-types/#mininterface.form_dict.DataClass">DataClass</a> | <a class="autorefs autorefs-internal" title="mininterface.form_dict.EnvClass" href="../Helper-types/#mininterface.form_dict.EnvClass">EnvClass</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1374,7 +1554,7 @@ hence you end up with accessing via the <code>.val</code>.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": "navigation.expand", "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
