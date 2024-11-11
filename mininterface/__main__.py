@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import sys
-from typing import Literal
+from typing import Literal, Optional
 from tyro.conf import FlagConversionOff
 
 from .exceptions import DependencyRequired
@@ -25,6 +25,10 @@ class Web:
     port: int = 64646
 
 
+InterfaceType = Literal["gui"] | Literal["tui"] | Literal["all"]
+Showcase = Literal[1] | Literal[2]
+
+
 @dataclass
 class CliInteface:
     web: Web
@@ -39,8 +43,8 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing 'no'. """
 
-    showcase: Literal["gui"] | Literal["tui"] | Literal["all"] = None
-    """ Prints various form just to show what's possible. """
+    showcase: Optional[tuple[InterfaceType, Showcase]] = None
+    """ Prints various form just to show what's possible."""
 
 
 def web(m: Mininterface):
@@ -71,7 +75,7 @@ def main():
     if m.env.web.cmd:
         web(m)
     if m.env.showcase:
-        showcase(m.env.showcase)
+        showcase(*m.env.showcase)
 
 
 if __name__ == "__main__":
