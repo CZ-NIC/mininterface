@@ -2,15 +2,14 @@ import sys
 from tkinter import LEFT, Button, Frame, Label, Text, Tk
 from typing import TYPE_CHECKING, Any, Callable
 
+from tkscrollableframe import ScrolledFrame
 from tktooltip import ToolTip
 
 from tkinter_form import Form, Value
 
 from ..exceptions import Cancelled
-
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
-from ..ValidationFail import ValidationFail
 from ..tag import Tag
 from .tk_facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
@@ -23,7 +22,6 @@ class TkWindow(Tk, BackendAdaptor):
     """ An editing window. """
 
     def __init__(self, interface: "TkInterface"):
-        # NOTE I really need scrollbar if content is long
         super().__init__()
         self.facet = interface.facet = TkFacet(self, interface.env)
         self.params = None
@@ -33,7 +31,12 @@ class TkWindow(Tk, BackendAdaptor):
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
 
-        self.frame = Frame(self)
+        # NOTE it would be nice to auto-hide the scrollbars if not needed
+        self.sf = ScrolledFrame(self, use_ttk=True)
+        """ scrollable superframe """
+        self.sf.pack(side="top", expand=1, fill="both")
+
+        self.frame = self.sf.display_widget(Frame)
         """ dialog frame """
 
         self.label = Label(self, text="")
@@ -72,7 +75,7 @@ class TkWindow(Tk, BackendAdaptor):
                          name_config=submit if isinstance(submit, str) else "Ok",
                          button=bool(submit)
                          )
-        self.form.pack()
+        self.form.grid()
 
         # Add radio etc.
         replace_widgets(self, self.form.widgets, form)
@@ -114,10 +117,30 @@ class TkWindow(Tk, BackendAdaptor):
         self._event_bindings[event] = handler
         self.bind(event, handler)
 
+    def _refresh_size(self):
+        """ Autoshow scrollbars."""
+        self.update_idletasks()  # finish drawing
+        width = self.frame.winfo_width()
+        height = self.frame.winfo_height()
+
+        if width < self.winfo_screenwidth():
+            self.sf._x_scrollbar.grid_forget()
+        else:
+            self.sf._x_scrollbar.grid(row=1, column=0, sticky="we")
+
+        if height < self.winfo_screenheight():
+            self.sf._y_scrollbar.grid_forget()
+        else:
+            self.sf._y_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # The widgets do not know their size at the begginning, they must be drawn.
+        # Hence we recommend the window size here and not in the constructor.
+        self.geometry(f"{width}x{height}")
+
     def mainloop(self, callback: Callable = None):
-        self.frame.pack(pady=5)
         self.deiconify()  # show if hidden
         self.pending_buffer.clear()
+        self.after(1, self._refresh_size)
         super().mainloop()
         if not self.interface._always_shown:
             self.withdraw()  # hide

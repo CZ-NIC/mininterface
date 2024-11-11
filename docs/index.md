@@ -46,7 +46,7 @@ It was all the code you need. No lengthy blocks of code imposed by an external d
 
 
 ```bash
-$ ./hello.py    --help
+$ ./program.py --help
 usage: My application [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
 
 This calculates something.
@@ -65,6 +65,12 @@ Loading config file is a piece of cake. Alongside `program.py`, put `program.yam
 
 ```yaml
 my_number: 555
+```
+
+```bash
+$ program.py --help
+...
+│ --my-number INT        This number is very important (default: 555)     │
 ```
 
 ## You got dialogues
@@ -113,7 +119,7 @@ See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic
 
 # Examples
 
-A powerful [`m.form`][mininterface.Mininterface.form] dialog method accepts either a dataclass or a dict. Take a look on both.
+A powerful [`m.form`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form) dialog method accepts either a dataclass or a dict. Take a look on both.
 
 ## A complex dataclass.
 

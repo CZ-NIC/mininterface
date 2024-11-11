@@ -22,6 +22,7 @@ autocombobox = "1.4.2"
 textual = "~0.84"
 tkinter-tooltip = "*"
 tkinter_form = "0.1.5.2"
+tkscrollableframe = "*"
 
 [tool.poetry.extras]
 web = ["textual-serve"]
