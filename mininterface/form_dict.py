@@ -10,7 +10,7 @@ from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
 
 from .auxiliary import get_description
 from .tag import Tag, TagValue
-from .tag_factory import tag_factory
+from .tag_factory import tag_assure_type, tag_fetch, tag_factory
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -105,7 +105,8 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
             if not isinstance(val, Tag):
                 tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
             else:
-                tag = val._fetch_from(Tag(**d))
+                tag = tag_fetch(val, d)
+            tag = tag_assure_type(tag)
             fd[key] = tag
     return fd
 
@@ -198,6 +199,7 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
             if not isinstance(val, Tag):
                 tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:
-                tag = val._fetch_from(Tag(**d))
+                tag = tag_fetch(val, d)
+                tag = tag_assure_type(tag)
             (subdict if _nested else main)[param] = tag
     return subdict

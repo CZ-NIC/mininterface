@@ -345,7 +345,7 @@ class Mininterface(Generic[EnvClass]):
             # The form dict might be a default dict but we want output just the dict (it's shorter).
             f = dict(f)
         print(f"Asking the form {title}".strip(), f)
-        return self._form(form, title, MinAdaptor(self))
+        return self._form(form, title, MinAdaptor(self), submit)
 
     def _form(self,
               form: DataClass | Type[DataClass] | FormDict | None,

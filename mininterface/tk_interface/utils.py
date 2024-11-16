@@ -126,11 +126,10 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                         variable.set(choice_label)
 
         # File dialog
-        elif path_tag := tag._morph(PathTag, (PosixPath, Path)):
-            # TODO this probably happens at ._factoryTime, get rid of _morph. I do not know, touch-timestamp uses nested Tag.
+        elif isinstance(tag, PathTag):
             grid_info = widget.grid_info()
 
-            widget2 = Button(master, text='…', command=choose_file_handler(variable, path_tag))
+            widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
             widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
 
         # Special type: Submit button
