@@ -153,3 +153,10 @@ class PathTag(Tag):
                 if origin in common_iterables:
                     self.multiple = True
                     break
+
+
+# TODO
+# @dataclass
+# class DateTag(Tag):
+#     """ TODO """
+#     pass

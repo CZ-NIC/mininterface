@@ -1,10 +1,11 @@
 from copy import copy
+from datetime import datetime
 from pathlib import Path
 from typing import Type, get_type_hints
 
 from .tag import Tag
 from .type_stubs import TagCallback
-from .types import CallbackTag, PathTag
+from .types import CallbackTag, DateTag, PathTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):
@@ -25,6 +26,8 @@ def get_type_hint_from_class_hierarchy(cls, key):
 def _get_tag_type(tag: Tag) -> Type[Tag]:
     if tag._is_subclass(Path):
         return PathTag
+    if tag._is_subclass(datetime):
+        return DateTag
     return Tag
 
 
