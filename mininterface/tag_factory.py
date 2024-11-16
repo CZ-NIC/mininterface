@@ -1,9 +1,10 @@
+from copy import copy
+from pathlib import Path
+from typing import Type, get_type_hints
+
 from .tag import Tag
 from .type_stubs import TagCallback
-from .types import CallbackTag
-
-
-from typing import get_type_hints
+from .types import CallbackTag, PathTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):
@@ -19,6 +20,23 @@ def get_type_hint_from_class_hierarchy(cls, key):
         if key in hints:
             return hints[key]
     return None
+
+
+def _get_tag_type(tag: Tag) -> Type[Tag]:
+    if tag._is_subclass(Path):
+        return PathTag
+    return Tag
+
+
+def tag_fetch(tag: Tag, ref: dict | None):
+    return tag._fetch_from(Tag(**ref))
+
+
+def tag_assure_type(tag: Tag):
+    # morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)`
+    if (type_ := _get_tag_type(tag)) is not Tag:
+        return type_(annotation=tag.annotation)._fetch_from(tag)
+    return tag
 
 
 def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=None, _src_key=None, _src_class=None, **kwargs):
@@ -45,7 +63,13 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                             if isinstance(metadata, Tag):  # NOTE might fetch from a pydantic model too
                                 # The type of the Tag is another Tag
                                 # Ex: `my_field: Validation(...) = 4`
-                                # Why fetching metadata name? The name would be taken from _src_obj.
-                                # But the user defined in metadata is better.
-                                return Tag(val, description, name=metadata.name, *args, **kwargs)._fetch_from(metadata)
-    return Tag(val, description, annotation, *args, **kwargs)
+
+                                new = copy(metadata)
+                                new.val = val if val is not None else new.val
+                                new.description = description or new.description
+                                return new._fetch_from(Tag(*args, **kwargs))
+                                # NOTE The mechanism is not perfect. When done, we may test configs.PathTagClass.
+                                # * fetch_from will not transfer PathTag.multiple
+                                # * copy will not transfer list[Path] from `Annotated[list[Path], Tag(...)]`
+                                return type(metadata)(val, description, name=metadata.name, annotation=annotation, *args, **kwargs)._fetch_from(metadata)
+    return tag_assure_type(Tag(val, description, annotation, *args, **kwargs))

@@ -113,7 +113,7 @@ class CallbackTag(Tag):
 @dataclass
 class PathTag(Tag):
     """
-    Use this helper object to select files.
+    Contains a Path or their list. Use this helper object to select files.
 
     In the following example, we see that it is not always needed to use this object.
 
@@ -141,7 +141,7 @@ class PathTag(Tag):
     # NOTE turn SubmitButton into a Tag too and turn this into a types module.
     # NOTE Missing in textual. Might implement file filter and be used for validation. (ex: file_exist, is_dir)
     # NOTE Path multiple is not recognized: "File 4": Tag([], annotation=list[Path])
-    multiple: str = False
+    multiple: bool = False
     """ The user can select multiple files. """
 
     def __post_init__(self):
@@ -153,8 +153,3 @@ class PathTag(Tag):
                 if origin in common_iterables:
                     self.multiple = True
                     break
-
-    @override
-    def _morph(self, class_type: "Self", morph_if: type | tuple[type]):
-        if class_type == PathTag:
-            return self

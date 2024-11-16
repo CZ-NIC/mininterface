@@ -14,7 +14,7 @@ from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, MissingPositional, InheritedAnnotatedClass, ColorEnum, ColorEnumSingle, ConflictingEnv,
                      ConstrainedEnv, FurtherEnv2, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
-                     ParametrizedGeneric, SimpleEnv, Subcommand1, Subcommand2,
+                     ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1, Subcommand2,
                      callback_raw, callback_tag, callback_tag2)
 from mininterface.exceptions import Cancelled
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
@@ -22,17 +22,17 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from mininterface import EnvClass, Mininterface, TextInterface, run
 from mininterface.auxiliary import flatten
 from mininterface.subcommands import SubcommandPlaceholder
-from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
+from mininterface.form_dict import (TagDict, dataclass_to_tagdict, dict_to_tagdict,
                                     formdict_resolve)
 from mininterface.start import Start
 from mininterface.tag import Tag
-from mininterface.types import CallbackTag
+from mininterface.types import CallbackTag, PathTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
 
 
-def runm(env_class: Type[EnvClass] | list[Type[EnvClass]], args=None, **kwargs) -> Mininterface[EnvClass]:
+def runm(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None, args=None, **kwargs) -> Mininterface[EnvClass]:
     return run(env_class, interface=Mininterface, args=args, **kwargs)
 
 
@@ -211,7 +211,7 @@ class TestInteface(TestAbstract):
 
         self.assertEqual(50, m.choice(choices, default=callback_raw))
 
-        # TODO This test does not work. We have to formalize the callback.
+        # NOTE This test does not work. We have to formalize the callback.
         # self.assertEqual(100, m.choice(choices, default=choices["My choice2"]))
 
 
@@ -460,6 +460,44 @@ class TestConversion(TestAbstract):
         outer = Tag(Tag(Tag(inner)))
         outer.update(3)
         self.assertEqual(3, inner.val)
+
+
+class TestInheritedTag(TestAbstract):
+    def test_inherited_path(self):
+        PathType = type(Path(""))  # PosixPath on Linux
+        m = runm()
+        d = dict_to_tagdict({
+            "1": Path("/tmp"),
+            "2": Tag("", annotation=Path),
+            "3": PathTag([Path("/tmp")], multiple=True),
+            "4": PathTag([Path("/tmp")]),
+            "5": PathTag(Path("/tmp")),
+        }, m)
+
+        # every item became PathTag
+        [self.assertEqual(type(v), PathTag) for v in d.values()]
+        # val stayed the same
+        self.assertEqual(d["1"].val, Path('/tmp'))
+        # correct annotation
+        self.assertEqual(d["1"].annotation, PathType)
+        self.assertEqual(d["2"].annotation, Path)
+        self.assertEqual(d["3"].annotation, list[PathType])
+        self.assertEqual(d["3"].annotation, list[PathType])
+        self.assertEqual(d["4"].annotation, list[PathType])
+        # PathTag specific attribute
+        [self.assertTrue(v.multiple) for k, v in d.items() if k in ("3", "4")]
+        [self.assertFalse(v.multiple) for k, v in d.items() if k in ("1", "2", "5")]
+
+    def test_path_class(self):
+        m = runm(PathTagClass, ["/tmp"])  # , "--files2", "/usr"])
+        d = dataclass_to_tagdict(m.env)[""]
+
+        [self.assertEqual(type(v), PathTag) for v in d.values()]
+        self.assertEqual(d["files"].name, "files")
+        self.assertEqual(d["files"].multiple, True)
+
+        # self.assertEqual(d["files2"].name, "Custom name")
+        # self.assertEqual(d["files2"].multiple, True)
 
 
 class TestRun(TestAbstract):

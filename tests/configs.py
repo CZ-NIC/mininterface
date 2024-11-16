@@ -7,7 +7,7 @@ from tyro.conf import Positional
 
 from mininterface import Tag
 from mininterface.subcommands import Command
-from mininterface.types import CallbackTag, Choices, Validation
+from mininterface.types import CallbackTag, Choices, PathTag, Validation
 from mininterface.validators import not_empty
 
 
@@ -124,13 +124,21 @@ class ParametrizedGeneric:
 
 @dataclass
 class ComplicatedTypes:
+    # NOTE not used yet
     p1: Callable = callback_raw
     p2: Annotated[Callable, CallbackTag(description="Foo")] = callback_tag
     # Not supported: p3: CallbackTag = callback_tag
     # Not supported: p4: CallbackTag = field(default_factory=CallbackTag(callback_tag))
     # Not supported: p5: Annotated[Callable, Tag(description="Bar", annotation=CallbackTag)] = callback_tag
-    # NOTE add PathTag
-    # NOTE not used yet
+
+
+@dataclass
+class PathTagClass:
+    files: Positional[list[Path]] = field(default_factory=list)
+    # NOTE this should become PathTag(multiple=True)
+    # files2: Annotated[list, Tag(name="Custom name")] = field(default_factory=list)
+    # NOTE this should become PathTag(multiple=True)
+    # files2: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
 
 
 @dataclass

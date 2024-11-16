@@ -417,13 +417,6 @@ class Tag:
                 return True
         return False
 
-    def _morph(self, class_type: "Self", morph_if: type | tuple[type]):
-        """ To be overrided by the subclasses.
-        The user used a Path within a Tag and that will turn it into a PathTag when the UI needs it.
-        """
-        if self._is_subclass(morph_if):  # return a blank PathTag
-            return class_type(self.val, annotation=self.annotation)
-
     def _get_possible_types(self) -> list[tuple]:
         """ Possible types we can cast the value to.
         For annotation `list[int] | tuple[str] | str | None`,
@@ -443,7 +436,7 @@ class Tag:
             elif annot is not None and annot is not NoneType:
                 # from UnionType, we get a NoneType
                 return None, annot
-            return None    # to be filtered out
+            return None  # to be filtered out
         out = _(self.annotation)
         return [x for x in (out if isinstance(out, list) else [out]) if x is not None]
 
@@ -498,7 +491,7 @@ class Tag:
         """
         for origin, _ in self._get_possible_types():
             if origin:
-                return origin(str(v)for v in self.val)
+                return origin(str(v) for v in self.val)
         if isinstance(self.val, Enum):
             return self.val.value
         return self.val
