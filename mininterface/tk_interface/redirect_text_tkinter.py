@@ -18,6 +18,11 @@ class RedirectTextTkinter(RedirectText):
         self.trim()
         self.window.update_idletasks()
         super().write(text)
+        # NOTE: Since we do not call .join, the text is not only displayed in the GUI but also printed out after the program ends.
+        # which is a bug. Deal with the special case when the text is written here but not displayed in the GUI.
+        # with run...:
+        #   print("Nothing happens")
+        # quit() -> should be printed here
 
     def trim(self):
         lines = int(self.widget.index('end-1c').split('.')[0])

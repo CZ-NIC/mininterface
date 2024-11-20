@@ -1,5 +1,6 @@
 import sys
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self, Type
 else:
@@ -26,6 +27,7 @@ class RedirectText:
 
 
 class Redirectable:
+    """ When enwraped in a with statement, the prints go to the UI instead of a stdout."""
     # NOTE When used in the with statement, the TUI window should not vanish between dialogues.
     # The same way the GUI does not vanish.
     # NOTE: Current implementation will show only after a dialog submit, not continuously.

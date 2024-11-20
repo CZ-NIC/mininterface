@@ -11,21 +11,24 @@ from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (AnnotatedClass, MissingPositional, InheritedAnnotatedClass, ColorEnum, ColorEnumSingle, ConflictingEnv,
-                     ConstrainedEnv, FurtherEnv2, MissingUnderscore,
-                     NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
-                     ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1, Subcommand2,
-                     callback_raw, callback_tag, callback_tag2)
-from mininterface.exceptions import Cancelled
+from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
+                     ConflictingEnv, ConstrainedEnv, FurtherEnv2,
+                     InheritedAnnotatedClass, MissingPositional,
+                     MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
+                     OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
+                     SimpleEnv, Subcommand1, Subcommand2, callback_raw,
+                     callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, TextInterface, run
 from mininterface.auxiliary import flatten
-from mininterface.subcommands import SubcommandPlaceholder
-from mininterface.form_dict import (TagDict, dataclass_to_tagdict, dict_to_tagdict,
-                                    formdict_resolve)
+from mininterface.exceptions import Cancelled
+from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
+                                    dict_to_tagdict, formdict_resolve)
 from mininterface.start import Start
+from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
+from mininterface.text_interface import AssureInteractiveTerminal
 from mininterface.types import CallbackTag, PathTag
 from mininterface.validators import limit, not_empty
 
@@ -108,7 +111,18 @@ class TestCli(TestAbstract):
         self.assertRaises(SystemExit, lambda: run(SimpleEnv, interface=Mininterface, prog="My application"))
 
 
+def mock_interactive_terminal(func):
+    # mock the session could be made interactive
+    @patch("sys.stdin.isatty", new=lambda: True)
+    @patch("sys.stdout.isatty", new=lambda: True)
+    def _(*args, **kwargs):
+        return func(*args, **kwargs)
+    return _
+
+
 class TestInteface(TestAbstract):
+
+    @mock_interactive_terminal
     def test_ask(self):
         m0 = run(NestedDefaultedEnv, interface=Mininterface, prog="My application")
         self.assertEqual(0, m0.ask_number("Test input"))
@@ -136,6 +150,7 @@ class TestInteface(TestAbstract):
 
             self.assertEqual("hello", m1.ask(""))
 
+    @mock_interactive_terminal
     def test_ask_form(self):
         m = TextInterface()
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}

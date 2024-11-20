@@ -1,3 +1,4 @@
+import sys
 from typing import Type
 
 try:
@@ -6,15 +7,19 @@ except ImportError:
     from ..exceptions import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
+from ..exceptions import InterfaceNotAvailable
 from ..form_dict import DataClass, EnvClass, FormDict
 from ..redirectable import Redirectable
 from ..tag import Tag
-from ..text_interface import TextInterface
+from ..mininterface import Mininterface
 from .textual_adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
 
+if not sys.stdin.isatty():
+    raise InterfaceNotAvailable
 
-class TextualInterface(Redirectable, TextInterface):
+
+class TextualInterface(Redirectable, Mininterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
