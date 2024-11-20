@@ -83,8 +83,72 @@ class Mininterface(Generic[EnvClass]):
             self.env.run()
 
     def __enter__(self) -> "Self":
-        """ When used in the with statement, the GUI window does not vanish between dialogs
-            and it redirects the stdout to a text area. """
+        """ Usage within the with statement makes the program to attempt for the following benefits:
+
+        # Continual window
+
+        Do not vanish between dialogs (the GUI window stays the same)
+
+        # Stdout redirection
+
+        Redirects the stdout to a text area instead of a terminal.
+
+        ```python3
+        from mininterface import run
+
+        with run() as m:
+            print("This is a printed text")
+            m.alert("Alert text")
+        ```
+
+        ![With statement print redirect](asset/with-print-redirect.avif)
+
+        # Make the session interactive
+
+        If run from an interactive terminal or if a GUI is used, nothing special happens.
+
+        ```python3
+        # $ ./program.py
+        with run() as m:
+            m.ask_number("What number")
+        ```
+
+        ![Asking number](asset/ask-number.avif)
+
+        However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#TextInterface)
+        is used which is able to turn it into an interactive one.
+
+        ```python3
+        piped_in = int(sys.stdin.read())
+
+        with run(interface="tui") as m:
+            result = m.ask_number("What number") + piped_in
+        print(result)
+        ```
+
+        ```bash
+        $ echo 2 | ./program.py
+        What number: 3
+        5
+        ```
+
+        If the `with` statement is not used, the result is the same as if an interactive session is not available, like in a cron job.
+        In that case, plain Mininterface is used.
+
+        ```python3
+        piped_in = int(sys.stdin.read())
+
+        m = run(interface="tui")
+        result = m.ask_number("What number") + piped_in
+        print(result)
+        ```
+
+        ```bash
+        echo 2 | ./program.py
+        Asking: What number
+        3
+        ```
+        """
         return self
 
     def __exit__(self, *_):
@@ -97,8 +161,8 @@ class Mininterface(Generic[EnvClass]):
 
     def ask(self, text: str) -> str:
         """ Prompt the user to input a text. """
-        print("Asking", text)
-        raise Cancelled(".. cancelled")
+        print("Asking:", text)
+        return ""
 
     def ask_number(self, text: str) -> int:
         """ Prompt the user to input a number. Empty input = 0.
@@ -117,7 +181,7 @@ class Mininterface(Generic[EnvClass]):
             Number
 
         """
-        print("Asking number", text)
+        print("Asking number:", text)
         return 0
 
     def choice(self, choices: ChoicesType, title: str = "", _guesses=None,

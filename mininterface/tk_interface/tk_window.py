@@ -39,10 +39,10 @@ class TkWindow(Tk, BackendAdaptor):
         self.frame = self.sf.display_widget(Frame)
         """ dialog frame """
 
-        self.label = Label(self, text="")
+        self.label = Label(self.frame, text="")
         self.label.pack_forget()
 
-        self.text_widget = Text(self, wrap='word', height=20, width=80)
+        self.text_widget = Text(self.frame, wrap='word', height=20, width=80)
         self.text_widget.pack_forget()
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user.
@@ -106,11 +106,11 @@ class TkWindow(Tk, BackendAdaptor):
 
         for i, (text, value) in enumerate(buttons):
             button = Button(self.frame, text=text, command=lambda v=value: self._ok(v))
+            button.pack(side=LEFT, padx=10)
             if i == focused-1:
+                button.focus_set()
                 b = button
                 button.bind("<Return>", lambda _: b.invoke())
-            button.pack(side=LEFT, padx=10)
-        self.frame.winfo_children()[focused].focus_set()
         return self.mainloop()
 
     def _bind_event(self, event, handler):
@@ -161,7 +161,8 @@ class TkWindow(Tk, BackendAdaptor):
     def _clear_dialog(self):
         self.frame.pack_forget()
         for widget in self.frame.winfo_children():
-            widget.destroy()
+            if widget not in [self.text_widget, self.label]:
+                widget.destroy()
         for key in self._event_bindings:
             self.unbind(key)
         self._event_bindings.clear()

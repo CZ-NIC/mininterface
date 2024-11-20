@@ -30,6 +30,8 @@ If [textual](https://github.com/Textualize/textual) installed, rich and mouse cl
 
 Plain text only interface with no dependency as a fallback.
 
+When used in a with statement, the non-interactive session becomes interactive if possible, see the Mininterface [enter][mininterface.Mininterface.__enter__] method.
+
 # `ReplInterface`
 
 A debug terminal. Invokes a breakpoint after every dialog.

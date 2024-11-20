@@ -1,13 +1,59 @@
 from pprint import pprint
-from typing import Type
+from typing import TYPE_CHECKING, Type
+import sys
 
-from .exceptions import Cancelled
-
-from .form_dict import EnvClass, FormDict, DataClass
+from .exceptions import Cancelled, InterfaceNotAvailable
+from .form_dict import DataClass, EnvClass, FormDict
 from .mininterface import Mininterface
 
+if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from typing import Self, Type
 
-class TextInterface(Mininterface):
+
+def w(text):
+    from pathlib import Path
+    f = Path("/tmp/ram/log").open("a")
+    f.write(str(text) + "\n")
+    f.close()
+
+
+class AssureInteractiveTerminal:
+    """ Try to make the non-interactive terminal interactive. """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._entered = False
+        self._stdin = sys.stdin
+        self._stdout = sys.stdout
+        self._reserve_stdin = self._reserve_stdout = None
+        try:
+            if not sys.stdin.isatty() or not sys.stdout.isatty():
+                self._reserve_stdin = open('/dev/tty', 'r')
+                self._reserve_stdout = open('/dev/tty', 'w')
+                if not self._reserve_stdin.isatty() or not self._reserve_stdout.isatty():
+                    raise RuntimeError
+        except Exception:
+            raise InterfaceNotAvailable
+
+    def __enter__(self) -> "Self":
+        self._entered = True
+        if self._reserve_stdin or self._reserve_stdout:
+            sys.stdin = self._reserve_stdin
+            sys.stdout = self._reserve_stdout
+        return self
+
+    def __exit__(self, *_):
+        self._entered = False
+        sys.stdout = self._stdout
+        sys.stdin = self._stdin
+
+    @property
+    def interactive(self):
+        return self._entered or sys.stdin.isatty() and sys.stdout.isatty()
+
+
+class TextInterface(AssureInteractiveTerminal, Mininterface):
     """ Plain text fallback interface. No dependencies. """
 
     def alert(self, text: str):
@@ -15,6 +61,8 @@ class TextInterface(Mininterface):
         input(text + " Hit any key.")
 
     def ask(self, text: str = None):
+        if not self.interactive:
+            return super().ask(text)
         try:
             txt = input(text + ": ") if text else input()
         except EOFError:
@@ -29,6 +77,8 @@ class TextInterface(Mininterface):
              *,
              submit: str | bool = True,
              ) -> FormDict | DataClass | EnvClass:
+        if not self.interactive:
+            return super().form(form=form, title=title, submit=submit)
         # NOTE: This is minimal implementation that should rather go the ReplInterface.
         # NOTE: Concerning Dataclass form.
         # I might build some menu of changing dict through:
@@ -47,8 +97,6 @@ class TextInterface(Mininterface):
         except ImportError:
             import pdb
             pdb.set_trace()
-        print("*Continuing*")
-        print(form)
         return form
 
     def ask_number(self, text):
