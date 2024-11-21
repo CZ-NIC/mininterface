@@ -1,8 +1,7 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from types import UnionType
-from typing import TYPE_CHECKING, Literal, Optional, Sequence, Type, Union
+from typing import Literal, Optional, Sequence, Type
 
 from .exceptions import Cancelled, InterfaceNotAvailable
 
@@ -15,7 +14,6 @@ from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
 from .start import Start
 from .tag import Tag
-from .text_interface import ReplInterface, TextInterface
 from .types import Choices, PathTag, Validation
 
 # NOTE:

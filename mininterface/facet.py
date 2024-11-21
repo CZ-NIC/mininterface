@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional, TypeVar
+from warnings import warn
 
 from .exceptions import ValidationFail
 
@@ -9,6 +12,16 @@ from .tag import Tag
 
 if TYPE_CHECKING:
     from . import Mininterface
+    from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+
+
+@dataclass
+class Image:
+    """ NOTE. Experimental. Undocumented. """
+    src: str | Path
+
+
+LayoutElement = TypeVar("LayoutElement", str, Image, "Self")
 
 
 class BackendAdaptor(ABC):
@@ -79,6 +92,11 @@ class Facet(Generic[EnvClass]):
     def set_title(self, text):
         """ Set the main heading. """
         print("Title", text)
+
+    def _layout(self, elements: list[LayoutElement]):
+        """ Experimental. """
+        # NOTE remove warn when working in textual
+        warn("Facet layout not implemented for this interface.")
 
     def submit(self, _post_submit=None):
         """ Submits the whole form.
