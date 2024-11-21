@@ -38,7 +38,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         config_file: Path | str | bool = True,
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
-        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] = None,
+        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | None = None,
         args: Optional[Sequence[str]] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
