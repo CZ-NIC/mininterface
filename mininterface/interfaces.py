@@ -1,10 +1,14 @@
 # Access to interfaces via this module assures lazy loading
 from importlib import import_module
 import sys
+from typing import Literal, Type
 
 from .mininterface import Mininterface
 from .exceptions import InterfaceNotAvailable
 from .text_interface import TextInterface
+
+# We do not use InterfaceType as a type in run because we want the documentation to show full alias.
+InterfaceType = Type[Mininterface] | Literal["gui"] | Literal["tui"] | None
 
 
 def __getattr__(name):
@@ -30,30 +34,25 @@ def __getattr__(name):
         except InterfaceNotAvailable:
             return None
     return None  # such attribute does not exist
-    raise AttributeError(f"Module {__name__} has no attribute {name}")
 
 
-def get_interface(title="", interface=None, env=None):
-    tried_tui = False
-    try:
-        if interface == "tui":
-            interface = __getattr__("TuiInterface")
-            tried_tui = True
-        elif interface == "gui":
-            interface = __getattr__("GuiInterface")
-        if interface is None:
-            interface = __getattr__("GuiInterface") or __getattr__("TuiInterface")
-        return interface(title, env)
-    except InterfaceNotAvailable:  # Fallback to a different interface
-        pass
-    if not tried_tui:
+def get_interface(title="", interface: InterfaceType = None, env=None):
+    args = title, env
+    if isinstance(interface, type) and issubclass(interface, Mininterface):
+        # the user gave a specific interface, let them catch InterfaceNotAvailable then
+        return interface(*args)
+    if interface == "gui" or interface is None:
         try:
-            return __getattr__("TuiInterface")(title, env)
+            return __getattr__("GuiInterface")(*args)
         except InterfaceNotAvailable:
-            # Even though TUI is able to claim a non-interactive terminal,
-            # ex. when doing a cron job, a terminal cannot be made interactive.
             pass
-    return Mininterface(title, env)
+    try:
+        return __getattr__("TuiInterface")(*args)
+    except InterfaceNotAvailable:
+        # Even though TUI is able to claim a non-interactive terminal,
+        # ex. when doing a cron job, a terminal cannot be made interactive.
+        pass
+    return Mininterface(*args)
 
 
 __all__ = ["GuiInterface", "TuiInterface", "TextInterface", "TextualInterface", "TkInterface"]

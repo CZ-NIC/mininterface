@@ -321,7 +321,7 @@ class TestConversion(TestAbstract):
         self.assertEqual(30, tag.val)
 
     def test_env_instance_dict_conversion(self):
-        m: TextInterface = run(OptionalFlagEnv, interface=TextInterface, prog="My application")
+        m = run(OptionalFlagEnv, interface=Mininterface, prog="My application")
         env1: OptionalFlagEnv = m.env
 
         self.assertIsNone(env1.severity)

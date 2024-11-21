@@ -1,3 +1,4 @@
+""" Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
 import sys
 from typing import Type
 
