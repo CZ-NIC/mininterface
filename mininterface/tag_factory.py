@@ -2,6 +2,8 @@ from copy import copy
 from pathlib import Path
 from typing import Type, get_type_hints
 
+from .auxiliary import matches_annotation
+
 from .tag import Tag
 from .type_stubs import TagCallback
 from .types import CallbackTag, PathTag
@@ -33,7 +35,7 @@ def tag_fetch(tag: Tag, ref: dict | None):
 
 
 def tag_assure_type(tag: Tag):
-    # morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)`
+    """ morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)` """
     if (type_ := _get_tag_type(tag)) is not Tag:
         return type_(annotation=tag.annotation)._fetch_from(tag)
     return tag

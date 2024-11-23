@@ -18,7 +18,9 @@ from tyro._argparse_formatter import TyroArgumentParser
 from tyro._fields import NonpropagatingMissingType
 from tyro.extras import get_parser
 
-from .auxiliary import yield_annotations
+from .form_dict import MissingTagValue
+
+from .auxiliary import yield_annotations, yield_defaults
 from .form_dict import EnvClass
 from .tag import Tag
 from .tag_factory import tag_factory
@@ -189,20 +191,23 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         if not any(field_name in ann for ann in yield_annotations(env_class)):
             raise ValueError(f"Cannot find {field_name} in the configuration object")
 
-        # NOTE: We put '' to the UI to clearly state that the value is missing.
-        # However, the UI then is not able to use the number filtering capabilities.
-        tag = wf[field_name] = tag_factory("",
+        # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
+        # However, the UI then is not able to use ex. the number filtering capabilities.
+        # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
+        tag = wf[field_name] = tag_factory(MissingTagValue(),
+                                           # tag = wf[field_name] = tag_factory(MISSING,
                                            argument.help.replace("(required)", ""),
                                            validation=not_empty,
                                            _src_class=env_class,
                                            _src_key=field_name
                                            )
-        # Why `type_()`? We need to put a default value so that the parsing will not fail.
+        # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
         # A None would be enough because Mininterface will ask for the missing values
         # promply, however, Pydantic model would fail.
+        # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
         if "default" not in kwargs:
             kwargs["default"] = SimpleNamespace()
-        setattr(kwargs["default"], field_name, tag.annotation())
+        setattr(kwargs["default"], field_name, tag._make_default_value())
 
 
 def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
@@ -258,8 +263,8 @@ def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.
-            static = {key: getattr(env_or_list, key, MISSING)
-                      for ann in yield_annotations(env_or_list) for key in ann if not key.startswith("__") and not key in disk}
+            static = {key: val
+                      for key, val in yield_defaults(env_or_list) if not key.startswith("__") and not key in disk}
         kwargs["default"] = SimpleNamespace(**(disk | static))
 
     # Load configuration from CLI

@@ -64,6 +64,9 @@ class Env:
     my_validated: Annotated[str, Validation(not_empty)] = "hello"
     """ A validated field """
 
+    my_complex: list[tuple[int, str]] = field(default_factory=lambda: [(1, 'foo')])
+    """ List of tuples. """
+
 
 def showcase(interface: Literal["gui"] | Literal["tui"] | Literal["all"], case: int):
     if interface == "all":

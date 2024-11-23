@@ -8,8 +8,9 @@ from types import FunctionType, MethodType, SimpleNamespace
 from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
                     Union, get_args, get_type_hints)
 
+
 from .auxiliary import get_description
-from .tag import Tag, TagValue
+from .tag import MissingTagValue, Tag, TagValue
 from .tag_factory import tag_assure_type, tag_fetch, tag_factory
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
@@ -174,22 +175,8 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
         raise ValueError(f"We got a namespace instead of class, CLI probably failed: {env}")
 
     for param, val in iterate_attributes(env):
-        annotation = get_type_hints(env.__class__).get(param)
-        if val is None:
-            if type(None) in get_args(annotation):
-                # Since tkinter_form does not handle None yet, we have help it.
-                # We need it to be able to write a number and if empty, return None.
-                # This would fail: `severity: int | None = None`
-                # Here, we convert None to str(""), in normalize_types we convert it back.
-                val = ""
-            else:
-                # An unknown type annotation encountered.
-                # Since tkinter_form does not handle None yet, this will display as checkbox.
-                # Which is not probably wanted.
-                val = False
-                logger.warning(f"Annotation {annotation} of `{param}` not supported by Mininterface."
-                               "None converted to False.")
-
+        if isinstance(val, MissingTagValue):
+            val = None  # need to convert as MissingTagValue has .__dict__ too
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.

@@ -3,7 +3,7 @@ from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, Union, get_args, get_origin
 from warnings import warn
 
 from .type_stubs import TagCallback
@@ -11,7 +11,7 @@ from .type_stubs import TagCallback
 from .experimental import SubmitButton
 
 
-from .auxiliary import common_iterables, flatten, guess_type
+from .auxiliary import common_iterables, flatten, guess_type, matches_annotation, serialize_structure, subclass_matches_annotation
 
 if TYPE_CHECKING:
     from .facet import Facet
@@ -60,6 +60,15 @@ Values might be Tags as well.
 
 See [mininterface.choice][mininterface.Mininterface.choice] or [`Tag.choices`][mininterface.Tag.choices] for examples.
 """
+
+
+class MissingTagValue:
+    """ The dataclass field has not received a value from the CLI.
+    Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
+    """
+
+    def __repr__(self):
+        return "MISSING"
 
 
 @dataclass
@@ -340,8 +349,9 @@ class Tag:
         (Skips the attributes that are already set.)
         """
         for attr in ('val', 'annotation', 'name', 'validation', 'choices', 'on_change', "facet",
-                     "_src_obj", "_src_key", "_src_class"):
-            if getattr(self, attr) is None:
+                     "_src_obj", "_src_key", "_src_class",
+                     "_original_desc", "_original_name", "original_val"):
+            if getattr(self, attr, None) is None:
                 setattr(self, attr, getattr(tag, attr))
         if self.description == "":
             self.description = tag.description
@@ -392,32 +402,51 @@ class Tag:
         elif self.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             return val is True or val is False
 
+        return matches_annotation(val, self.annotation)
+        # NOTE remove
         try:
             return isinstance(val, self.annotation)
         except TypeError:
             if val is None and NoneType in get_args(self.annotation):
                 return True
             for origin, subtype in self._get_possible_types():
-                if isinstance(val, origin) and all(isinstance(item, subtype) for item in val):
-                    return True
+                if origin:
+                    if isinstance(val, origin) and all(isinstance(item, subtype) for item in val):
+                        return True
+                else:
+                    if isinstance(val, subtype):
+                        return True
             return False
 
     def _is_subclass(self, class_type: type | tuple[type]):
+        # if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
+        #     subtype = get_args(self.annotation)  # list[str] -> (str,), list -> ()
+        #     if origin in [UnionType, Union]:  # ex: `int | None`, `list[int] | None`, `Optional[list[int]]`
+        #         return any(subclass_matches_annotation(subt, class_type) for subt in subtype)
+        # return subclass_matches_annotation(self.annotation, class_type)
         try:
             if issubclass(self.annotation, class_type):
                 return True
         except TypeError:  # None, Union etc cast an error
             pass
-        for _, subtype in self._get_possible_types():
+        for origin, subtype in self._get_possible_types():
             # ex: checking that class_type=Path is subclass of annotation=list[Path] <=> subtype=Path
-            if isinstance(class_type, tuple):  # (PosixPath, Path)
-                if any(issubclass(ct, subtype) for ct in class_type):
+            if origin is tuple and isinstance(subtype, list):
+                # ex. tuple[int, int] -> origin = tuple, subtype = [int, int]
+                if get_origin(class_type) is tuple \
+                        and all(subt1 is subt2 for subt1, subt2 in zip(get_args(class_type), subtype)):
                     return True
-            elif issubclass(class_type, subtype):  # tuple woud
+                continue
+            elif get_origin(subtype):
+                pass  # ex. tuple in `list[tuple[str, str]]`, not implemented
+            elif isinstance(class_type, tuple):  # (PosixPath, Path)
+                if any(subclass_matches_annotation(ct, subtype) for ct in class_type):
+                    return True
+            elif subclass_matches_annotation(class_type, subtype):  # tuple
                 return True
         return False
 
-    def _get_possible_types(self) -> list[tuple]:
+    def _get_possible_types(self) -> list[tuple[type | None, type | list[type]]]:
         """ Possible types we can cast the value to.
         For annotation `list[int] | tuple[str] | str | None`,
         it returns `[(list,int), (tuple,str), (None,str)]`.
@@ -427,18 +456,20 @@ class Tag:
         def _(annot):
             if origin := get_origin(annot):  # list[str] -> list, list -> None
                 subtype = get_args(annot)  # list[str] -> (str,), list -> ()
-                if origin is UnionType:  # ex: `int | None`, `list[int] | None``
+                if origin in [UnionType, Union]:  # ex: `int | None`, `list[int] | None`, `Optional[list[int]]`
                     return [_(subt) for subt in subtype]
-                if (len(subtype) == 1):
+                if origin is tuple:
+                    return origin, list(subtype)
+                elif (len(subtype) == 1):
                     return origin, subtype[0]
                 else:
                     warn(f"This parametrized generic not implemented: {annot}")
             elif annot is not None and annot is not NoneType:
                 # from UnionType, we get a NoneType
                 return None, annot
-            return None  # to be filtered out
+            return False  # to be filtered out
         out = _(self.annotation)
-        return [x for x in (out if isinstance(out, list) else [out]) if x is not None]
+        return [x for x in (out if isinstance(out, list) else [out]) if x is not False]
 
     def _src_obj_add(self, src):
         if self._src_obj is None:
@@ -478,8 +509,24 @@ class Tag:
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
             # ex: `list[str]`
             return repr(self.annotation)
-        # ex: `list`` (without name it would be <class list>)
+        # ex: `list` (without name it would be <class list>)
         return self.annotation.__name__
+
+    def _make_default_value(self):
+        # NOTE: Works bad for var: tuple[str]
+        if get_origin(self.annotation) in (UnionType, Union):
+            # for cases `int|None` and `Optional[int]``
+            if NoneType in get_args(self.annotation):
+                return None
+            return get_args(self.annotation)[0]()
+        elif origin := get_origin(self.annotation):  # list[Path]
+            if isinstance(origin, type) and issubclass(origin, tuple):
+                # tuple of scalars, ex. tuple[str, str]
+                # Whereas `[]` is a valid list[str], an empty `()` is not a valid tuple[str].
+                return tuple(subt() for subt in get_args(self.annotation))
+            return self.annotation()
+        else:
+            return self.annotation()
 
     def _get_ui_val(self):
         """ Get values as suitable for UI.
@@ -489,11 +536,21 @@ class Tag:
         Ex: [Path("/tmp"), Path("/usr")] -> ["/tmp", "/usr"].
         We need the latter in the UI because in the first case, ast_literal would not not reconstruct it later.
         """
-        for origin, _ in self._get_possible_types():
-            if origin:
-                return origin(str(v) for v in self.val)
+        if self.val is None:
+            return ""
+        if isinstance(self.val, MissingTagValue):
+            # this is a missing wrong field, the user has to decide about the value
+            return ""
         if isinstance(self.val, Enum):
             return self.val.value
+        return serialize_structure(self.val)
+        for origin, _ in self._get_possible_types():
+            try:
+                if origin:
+                    return origin(str(v) for v in self.val)
+            except (TypeError, ValueError):
+                # Ex. tolerate_hour: int | tuple[int, int] | bool = False
+                continue
         return self.val
 
     @classmethod
@@ -617,7 +674,7 @@ class Tag:
             elif self.annotation == Optional[int]:
                 try:
                     out_value = int(ui_value)
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
             elif self.annotation in common_iterables:
                 # basic support for iterables, however, it will not work for custom subclasses of these built-ins
@@ -635,13 +692,21 @@ class Tag:
             if not self._is_right_instance(out_value) and isinstance(out_value, str):
                 try:
                     for origin, cast_to in self._get_possible_types():
-                        if origin:
-                            # Textual ask_number -> user writes '123', this has to be converted to int 123
-                            # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
-                            # (Maybe that's better now.)
-                            candidate = origin(cast_to(v) for v in literal_eval(ui_value))
-                        else:
-                            candidate = cast_to(ui_value)
+                        try:
+                            if origin:
+                                # Textual ask_number -> user writes '123', this has to be converted to int 123
+                                # NOTE: Unfortunately, type(list) looks awful here. @see TextualInterface.form comment.
+                                # (Maybe that's better now.)
+                                if isinstance(cast_to, list):
+                                    # this is a tuple, tuple returns a list, each value is converted to another type
+                                    candidate = origin(cast_to_(v)
+                                                       for cast_to_, v in zip(cast_to, literal_eval(ui_value)))
+                                else:
+                                    candidate = origin(cast_to(v) for v in literal_eval(ui_value))
+                            else:
+                                candidate = cast_to(ui_value)
+                        except (TypeError, ValueError, SyntaxError):
+                            continue
                         if self._is_right_instance(candidate):
                             out_value = candidate
                             break

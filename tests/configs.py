@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Callable
+from typing import Annotated, Callable, Optional
 
 from tyro.conf import Positional
 
@@ -73,6 +73,36 @@ class FurtherEnv2:
 class MissingUnderscore:
     token_underscore: str
     host: str = "example.org"
+
+
+@dataclass
+class MissingNonscalar:
+    # Missing union and generics.
+    # NOTE Put into the showcase.
+
+    path: str | Path
+    combined: int | tuple[int, int] | None
+
+    # tolerate_hour: tuple[int, int]
+
+    # number: int | None
+    # combined: list[tuple[str, str]] | None
+
+    # NOTE the str works bad. When the form re-appears, the str get splitted into list elements.
+    # combined: list[tuple[str, str]]
+
+    # gen1: Optional[list[str]]
+    # gen2: list[str] | None
+    # gen3: list[str]
+
+    simple_tuple: tuple[int, int]
+
+    # NOTE the str works bad. When the form re-appears, the str get splitted into list elements.
+    # gen4: list[int] | str | None
+
+    # NOTE: these work bad, Tag._make_default_value cannot be empty ()
+    # suffixes4: tuple[str] | None
+    # suffixes5: tuple[str]
 
 
 @dataclass

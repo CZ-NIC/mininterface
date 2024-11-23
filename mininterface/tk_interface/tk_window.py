@@ -75,7 +75,7 @@ class TkWindow(Tk, BackendAdaptor):
                          name_config=submit if isinstance(submit, str) else "Ok",
                          button=bool(submit)
                          )
-        self.form.grid()
+        self.form.pack()
 
         # Add radio etc.
         replace_widgets(self, self.form.widgets, form)
@@ -167,3 +167,4 @@ class TkWindow(Tk, BackendAdaptor):
             self.unbind(key)
         self._event_bindings.clear()
         self._result = None
+        self.geometry("")  # resize the window so that it does not end up large

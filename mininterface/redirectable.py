@@ -25,6 +25,9 @@ class RedirectText:
         self.pending_buffer.clear()
         return t
 
+    def isatty(self):
+        return False
+
 
 class Redirectable:
     """ When enwraped in a with statement, the prints go to the UI instead of a stdout."""

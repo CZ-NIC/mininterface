@@ -5,8 +5,8 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from io import StringIO
 from pathlib import Path, PosixPath
-from types import SimpleNamespace
-from typing import Type, get_type_hints
+from types import NoneType, SimpleNamespace
+from typing import Optional, Type, get_type_hints
 from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
@@ -14,14 +14,16 @@ from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, FurtherEnv2,
                      InheritedAnnotatedClass, MissingPositional,
-                     MissingUnderscore, NestedDefaultedEnv, NestedMissingEnv,
+                     MissingUnderscore, MissingNonscalar, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
                      SimpleEnv, Subcommand1, Subcommand2, callback_raw,
                      callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
-from mininterface import EnvClass, Mininterface, TextInterface, run
-from mininterface.auxiliary import flatten
+from mininterface import EnvClass, Mininterface, run
+from mininterface.interfaces import TextInterface
+from mininterface.auxiliary import flatten, matches_annotation, subclass_matches_annotation
+from mininterface.cli_parser import _parse_cli
 from mininterface.exceptions import Cancelled
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
@@ -328,7 +330,7 @@ class TestConversion(TestAbstract):
 
         fd = dataclass_to_tagdict(env1)
         ui = formdict_resolve(fd)
-        self.assertEqual({'': {'severity': '', 'msg': '', 'msg2': 'Default text'},
+        self.assertEqual({'': {'severity': None, 'msg': None, 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
         self.assertIsNone(env1.severity)
 
@@ -477,6 +479,36 @@ class TestConversion(TestAbstract):
         self.assertEqual(3, inner.val)
 
 
+class TestTag(TestAbstract):
+    def test_get_ui_val(self):
+        self.assertEqual([1, 2], Tag([1, 2])._get_ui_val())
+        self.assertEqual(["/tmp"], Tag([Path("/tmp")])._get_ui_val())
+        self.assertEqual([(1, "a")], Tag([(1, 'a')])._get_ui_val())
+
+
+class TestAuxiliary(TestAbstract):
+    def test_matches_annotation(self):
+        annotation = Optional[list[int] | str | tuple[int, str]]
+        self.assertTrue(matches_annotation(None, annotation))
+        self.assertTrue(matches_annotation([1, 2], annotation))
+        self.assertTrue(matches_annotation("hello", annotation))
+        self.assertTrue(matches_annotation((42, "world"), annotation))
+        self.assertFalse(matches_annotation(42, annotation))
+        self.assertTrue(matches_annotation([(1, "a"), (2, "b")], list[tuple[int, str]]))
+        self.assertFalse(matches_annotation([(1, 2)], list[tuple[int, str]]))
+
+    def test_subclass_matches_annotation(self):
+        annotation = Optional[list[int] | str | tuple[int, str]]
+        self.assertTrue(subclass_matches_annotation(NoneType, annotation))
+        self.assertTrue(subclass_matches_annotation(str, annotation))
+        self.assertFalse(subclass_matches_annotation(int, annotation))
+
+        # The subclass_matches_annotation is not almighty. Tag behaves better:
+        self.assertTrue(Tag(annotation=annotation)._is_subclass(tuple[int, str]))
+        # NOTE but this should work too
+        # self.assertTrue(Tag(annotation=annotation)._is_subclass(list[int]))
+
+
 class TestInheritedTag(TestAbstract):
     def test_inherited_path(self):
         PathType = type(Path(""))  # PosixPath on Linux
@@ -523,7 +555,7 @@ class TestRun(TestAbstract):
             run(SimpleEnv, interface=Mininterface)
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': Tag(val='', description='', annotation=<class 'str'>, name='token')}"""
+        form = """Asking the form {'token': Tag(val=MISSING, description='', annotation=<class 'str'>, name='token')}"""
         # Ask for missing, no interference with ask_on_empty_cli
         with self.assertOutputs(form):
             run(FurtherEnv2, True, interface=Mininterface)
@@ -543,7 +575,7 @@ class TestRun(TestAbstract):
 
     def test_run_ask_for_missing_underscored(self):
         # Treating underscores
-        form2 = """Asking the form {'token_underscore': Tag(val='', description='', annotation=<class 'str'>, name='token_underscore')}"""
+        form2 = """Asking the form {'token_underscore': Tag(val=MISSING, description='', annotation=<class 'str'>, name='token_underscore')}"""
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(MissingUnderscore, True, interface=Mininterface)
             self.assertEqual(form2, stdout.getvalue().strip())
@@ -552,6 +584,18 @@ class TestRun(TestAbstract):
         with patch('sys.stdout', new_callable=StringIO) as stdout:
             run(MissingUnderscore, True, ask_for_missing=True, interface=Mininterface)
             self.assertEqual("", stdout.getvalue().strip())
+
+    def test_wrong_fields(self):
+        _, wf = _parse_cli(AnnotatedClass, args=[])
+        # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
+        # too to support default_factory,
+        # ex: `my_complex: tuple[int, str] = field(default_factory=lambda: [(1, 'foo')])`
+        self.assertEqual(["files1"], list(wf))
+
+    def test_run_ask_for_missing_union(self):
+        form = """Asking the form {'path': PathTag(val=MISSING, description='', annotation=str | pathlib.Path, name='path'), 'combined': Tag(val=MISSING, description='', annotation=int | tuple[int, int] | None, name='combined'), 'simple_tuple': Tag(val=MISSING, description='', annotation=tuple[int, int], name='simple_tuple')}"""
+        with self.assertOutputs(form):
+            runm(MissingNonscalar)
 
     def test_run_config_file(self):
         os.chdir("tests")
@@ -602,7 +646,7 @@ class TestValidators(TestAbstract):
 
 
 class TestLog(TestAbstract):
-    @staticmethod
+    @ staticmethod
     def log(object=SimpleEnv):
         run(object, interface=Mininterface)
         logger = logging.getLogger(__name__)
@@ -611,37 +655,37 @@ class TestLog(TestAbstract):
         logger.warning("warning level")
         logger.error("error level")
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_run_verbosity0(self, mock_basicConfig):
         self.sys("-v")
         with self.assertRaises(SystemExit):
             run(SimpleEnv, add_verbosity=False, interface=Mininterface)
         mock_basicConfig.assert_not_called()
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_run_verbosity1(self, mock_basicConfig):
         self.log()
         mock_basicConfig.assert_not_called()
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
-    @patch('logging.basicConfig')
+    @ patch('logging.basicConfig')
     def test_custom_verbosity(self, mock_basicConfig):
         """ We use an object, that has verbose attribute too. Which interferes with the one injected. """
         self.log(ConflictingEnv)
@@ -805,8 +849,8 @@ class TestTagAnnotation(TestAbstract):
         _([(list, str)], list[str])
         _([(list, str)], list[str] | None)
         _([(list, str)], None | list[str])
-        _([(list, str), (tuple, int)], None | list[str] | tuple[int])
-        _([(list, int), (tuple, str), (None, str)], list[int] | tuple[str] | str | None)
+        _([(list, str), (tuple, [int])], None | list[str] | tuple[int])
+        _([(list, int), (tuple, [str]), (None, str)], list[int] | tuple[str] | str | None)
 
     def test_subclass_check(self):
         def _(compared, annotation, true=True):
@@ -820,6 +864,8 @@ class TestTagAnnotation(TestAbstract):
         _(Path, list[PosixPath], False)
         _(PosixPath, list[PosixPath])
         _((Path, PosixPath), list[Path])
+        _(tuple[int, int], tuple[int, int])
+        _(Path, tuple[int, int], true=False)
 
     def test_generic(self):
         t = Tag("", annotation=list)
@@ -832,7 +878,7 @@ class TestTagAnnotation(TestAbstract):
 
     def test_parametrized_generic(self):
         t = Tag("", annotation=list[str])
-        self.assertFalse(t.update(""))  # NOTE we should consider this as an empty list instead and return True
+        self.assertTrue(t.update(""))  # an empty input gets converted to an empty list
         t.update("[1,2,3]")
         self.assertEqual(["1", "2", "3"], t.val)
         t.update("[1,'2',3]")
@@ -866,7 +912,7 @@ class TestTagAnnotation(TestAbstract):
     def test_path_cli(self):
         m = run(ParametrizedGeneric, interface=Mininterface)
         f = dataclass_to_tagdict(m.env)[""]["paths"]
-        self.assertEqual("", f.val)
+        self.assertEqual(None, f.val)
         self.assertTrue(f.update("[]"))
 
         self.sys("--paths", "/usr", "/tmp")
@@ -902,10 +948,10 @@ class TestTagAnnotation(TestAbstract):
 class TestSubcommands(TestAbstract):
 
     form1 = "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), "\
-            "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), "\
-            "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, "\
-            "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
-            "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
+        "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), "\
+        "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, "\
+        "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
+        "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
 
     def subcommands(self, subcommands: list):
         def r(args):
