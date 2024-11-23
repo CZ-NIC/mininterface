@@ -110,7 +110,7 @@ class CallbackTag(Tag):
         return self.val(self)
 
 
-@dataclass
+@dataclass(repr=False)
 class PathTag(Tag):
     """
     Contains a Path or their list. Use this helper object to select files.
