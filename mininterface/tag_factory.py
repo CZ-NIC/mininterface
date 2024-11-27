@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Type, get_type_hints
 
@@ -7,7 +7,7 @@ from .auxiliary import matches_annotation
 
 from .tag import Tag
 from .type_stubs import TagCallback
-from .types import CallbackTag, DateTag, PathTag
+from .types import CallbackTag, DatetimeTag, PathTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):
@@ -28,8 +28,8 @@ def get_type_hint_from_class_hierarchy(cls, key):
 def _get_tag_type(tag: Tag) -> Type[Tag]:
     if tag._is_subclass(Path):
         return PathTag
-    if tag._is_subclass(datetime):
-        return DateTag
+    if tag._is_subclass(date) or tag._is_subclass(time):
+        return DatetimeTag
     return Tag
 
 
@@ -39,7 +39,7 @@ def tag_fetch(tag: Tag, ref: dict | None):
 
 def tag_assure_type(tag: Tag):
     """ morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)` """
-    if (type_ := _get_tag_type(tag)) is not Tag:
+    if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
         return type_(annotation=tag.annotation)._fetch_from(tag)
     return tag
 

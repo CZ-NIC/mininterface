@@ -12,7 +12,7 @@ from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
-                     ConflictingEnv, ConstrainedEnv, FurtherEnv2,
+                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, FurtherEnv2,
                      InheritedAnnotatedClass, MissingPositional,
                      MissingUnderscore, MissingNonscalar, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
@@ -31,7 +31,7 @@ from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
 from mininterface.text_interface import AssureInteractiveTerminal
-from mininterface.types import CallbackTag, PathTag
+from mininterface.types import CallbackTag, DatetimeTag, PathTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
@@ -545,6 +545,17 @@ class TestInheritedTag(TestAbstract):
 
         # self.assertEqual(d["files2"].name, "Custom name")
         # self.assertEqual(d["files2"].multiple, True)
+
+
+class TestTypes(TestAbstract):
+    def test_datetime_tag(self):
+        m = runm(DatetimeTagClass)
+        d = dataclass_to_tagdict(m.env)[""]
+        for key, expected_date, expected_time in [("p1", True, True), ("p2", False, True), ("p3", True, False)]:
+            tag = d[key]
+            self.assertIsInstance(tag, DatetimeTag)
+            self.assertEqual(expected_date, tag.date)
+            self.assertEqual(expected_time, tag.time)
 
 
 class TestRun(TestAbstract):
