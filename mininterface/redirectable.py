@@ -22,11 +22,14 @@ class RedirectText:
 
     def join(self):
         t = "".join(self.pending_buffer)
-        self.pending_buffer.clear()
+        self.clear()
         return t
 
-    def isatty(self):
+    def isatty(self):  # required by an interface
         return False
+
+    def clear(self):
+        self.pending_buffer.clear()
 
 
 class Redirectable:
