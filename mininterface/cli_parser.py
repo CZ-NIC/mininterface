@@ -15,7 +15,7 @@ from unittest.mock import patch
 import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-from tyro._fields import NonpropagatingMissingType
+from tyro._singleton import NonpropagatingMissingType
 from tyro.extras import get_parser
 
 from .form_dict import MissingTagValue
