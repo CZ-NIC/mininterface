@@ -552,6 +552,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatetimeTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DatetimeTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.date" class="md-nav__link">
+    <span class="md-ellipsis">
+      date
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.time" class="md-nav__link">
+    <span class="md-ellipsis">
+      time
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.full_precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      full_precision
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mininterface.types.Validation" class="md-nav__link">
     <span class="md-ellipsis">
       Validation
@@ -768,6 +810,48 @@
   <a href="#mininterface.types.PathTag.multiple" class="md-nav__link">
     <span class="md-ellipsis">
       multiple
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatetimeTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DatetimeTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.date" class="md-nav__link">
+    <span class="md-ellipsis">
+      date
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.time" class="md-nav__link">
+    <span class="md-ellipsis">
+      time
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.DatetimeTag.full_precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      full_precision
     </span>
   </a>
   
@@ -997,7 +1081,7 @@
     <div class="doc doc-contents ">
 
 
-        <p>Use this helper object to select files.</p>
+        <p>Contains a Path or their list. Use this helper object to select files.</p>
 <p>In the following example, we see that it is not always needed to use this object.</p>
 <ul>
 <li>File 1 – plain detection, button to a file picker appeared.</li>
@@ -1035,7 +1119,7 @@
 
 
 <h3 id="mininterface.types.PathTag.multiple" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">multiple</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">False</span></code>
+            <code class="highlight language-python"><span class="n">multiple</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 
 </h3>
 
@@ -1043,6 +1127,123 @@
     <div class="doc doc-contents ">
 
         <p>The user can select multiple files.</p>
+    </div>
+
+</div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.types.DatetimeTag" class="doc doc-heading">
+            <code>DatetimeTag</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Experimental. Still in development.</p>
+</div>
+<p>Datetime is supported.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">my_date</span><span class="p">:</span> <span class="n">datetime</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<p>The arrows change the day (or the datetime part the keyboard caret is currently editing).</p>
+<p><img alt="Datetime" src="../asset/datetimetag_datetime.avif" /></p>
+<p>In this code, we want only the date part.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">my_date</span><span class="p">:</span> <span class="n">date</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<p>After clicking the button (or hitting <code>Ctrl+Shift+C</code>), a calendar appear.</p>
+<p><img alt="Date with calendar" src="../asset/datetimetag_date_calendar.avif" /></p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.DatetimeTag.date" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">date</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The date part is active</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.DatetimeTag.time" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The time part is active</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.DatetimeTag.full_precision" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">full_precision</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Include full time precison, seconds, microseconds.</p>
     </div>
 
 </div>
