@@ -15,13 +15,13 @@ from unittest.mock import patch
 import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
-from tyro._singleton import NonpropagatingMissingType
+from tyro._fields import NonpropagatingMissingType
+# NOTE in the future versions of tyro, include that way:
+# from tyro._singleton import NonpropagatingMissingType
 from tyro.extras import get_parser
 
-from .form_dict import MissingTagValue
-
 from .auxiliary import yield_annotations, yield_defaults
-from .form_dict import EnvClass
+from .form_dict import EnvClass, MissingTagValue
 from .tag import Tag
 from .tag_factory import tag_factory
 from .validators import not_empty

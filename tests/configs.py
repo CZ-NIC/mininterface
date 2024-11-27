@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import date, datetime, time
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Callable, Optional
@@ -169,6 +170,13 @@ class PathTagClass:
     # files2: Annotated[list, Tag(name="Custom name")] = field(default_factory=list)
     # NOTE this should become PathTag(multiple=True)
     # files2: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
+
+
+@dataclass
+class DatetimeTagClass:
+    p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
+    p2: time = time.fromisoformat("17:35:39.922044")
+    p3: date = date.fromisoformat("2024-09-10")
 
 
 @dataclass

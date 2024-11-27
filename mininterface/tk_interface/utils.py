@@ -1,16 +1,17 @@
-from typing import TYPE_CHECKING
-from autocombobox import AutoCombobox
 from pathlib import Path, PosixPath
-from tkinter import Button, Entry, Label, TclError, Variable, Widget
+from tkinter import Button, Entry, Label, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
+from typing import TYPE_CHECKING
 
+from autocombobox import AutoCombobox
 
-from ..types import DateTag, PathTag
 from ..auxiliary import flatten, flatten_keys
 from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
+from ..types import DatetimeTag, PathTag
+from .date_entry import DateEntryFrame
 
 if TYPE_CHECKING:
     from tk_window import TkWindow
@@ -132,14 +133,12 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
             widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
             widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
 
-        # TODO
         # Calendar
-        # elif isinstance(tag, DateTag):
-        #     grid_info = widget.grid_info()
-        #     nested_frame = Frame(master)
-        #     nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
-        #     widget = DateEntry(nested_frame)
-        #     widget.pack()
+        elif isinstance(tag, DatetimeTag):
+            grid_info = widget.grid_info()
+            nested_frame = DateEntryFrame(master, tk_app, tag, variable)
+            nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+            widget = nested_frame.spinbox
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
@@ -162,7 +161,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
             h = on_change_handler(variable, tag)
             if isinstance(w, Combobox):
                 w.bind("<<ComboboxSelected>>", h)
-            elif isinstance(w, Entry):
+            elif isinstance(w, (Entry, Spinbox)):
                 w.bind("<FocusOut>", h)
             elif isinstance(w, Checkbutton):
                 w.configure(command=h)
