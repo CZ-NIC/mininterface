@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 from autocombobox import AutoCombobox
 from pathlib import Path, PosixPath
-from tkinter import Button, Entry, TclError, Variable, Widget
+from tkinter import Button, Entry, Label, TclError, Variable, Widget
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 
 
-from ..types import PathTag
+from ..types import DateTag, PathTag
 from ..auxiliary import flatten, flatten_keys
 from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
 from ..form_dict import TagDict
@@ -131,6 +131,15 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
 
             widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
             widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+
+        # TODO
+        # Calendar
+        # elif isinstance(tag, DateTag):
+        #     grid_info = widget.grid_info()
+        #     nested_frame = Frame(master)
+        #     nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+        #     widget = DateEntry(nested_frame)
+        #     widget.pack()
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
