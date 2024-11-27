@@ -19,6 +19,7 @@ typing_extensions = "*"
 pyyaml = "*"
 # Standard requirements
 autocombobox = "1.4.2"
+humanize = "*"           # used only in the TkInterface, hence it is not a minimal requirement
 textual = "~0.84"
 tkinter-tooltip = "*"
 tkinter_form = "0.1.5.2"

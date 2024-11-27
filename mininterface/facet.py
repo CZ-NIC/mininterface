@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional, TypeVar
 from warnings import warn
 
+from .redirectable import Redirectable
+
 from .exceptions import ValidationFail
 
 
@@ -21,7 +23,7 @@ class Image:
     src: str | Path
 
 
-LayoutElement = TypeVar("LayoutElement", str, Image, "Self")
+LayoutElement = TypeVar("LayoutElement", str, Image, Path, "Self")
 
 
 class BackendAdaptor(ABC):
@@ -88,6 +90,12 @@ class Facet(Generic[EnvClass]):
 
     def _fetch_from_adaptor(self, form: TagDict):
         self._form = form
+
+    def _clear(self):
+        """ Experimental.
+        Clear redirected text. """
+        if isinstance(self.adaptor.interface, Redirectable):
+            self.adaptor.interface._redirected.clear()
 
     def set_title(self, text):
         """ Set the main heading. """

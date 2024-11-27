@@ -28,3 +28,7 @@ class RedirectTextTkinter(RedirectText):
         lines = int(self.widget.index('end-1c').split('.')[0])
         if lines > self.max_lines:
             self.widget.delete(1.0, f"{lines - self.max_lines}.0")
+
+    def clear(self):
+        self.widget.delete('1.0', END)
+        super().clear()
