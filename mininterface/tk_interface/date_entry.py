@@ -19,6 +19,11 @@ class DateEntryFrame(tk.Frame):
 
         self.tk_app = tk_app
         self.tag = tag
+        if tag.date and tag.time:
+            self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
+        else:
+            self.datetimeformat = '%Y-%m-%d'
+
 
         # Date entry
         self.spinbox = self.create_spinbox(variable)
@@ -37,17 +42,17 @@ class DateEntryFrame(tk.Frame):
             self.calendar.bind("<<CalendarSelected>>", self.on_date_select)
             self.calendar.grid()
             # Initialize calendar with the current date
-            self.update_calendar(self.spinbox.get(), '%Y-%m-%d %H:%M:%S.%f')
+            self.update_calendar(self.spinbox.get(), self.datetimeformat)
         else:
             self.calendar = None
 
         self.bind_all_events()
 
     def create_spinbox(self, variable: tk.Variable):
-        spinbox = tk.Spinbox(self, font=("Arial", 16), width=30, wrap=True, textvariable=variable)
+        spinbox = tk.Spinbox(self,  width=30, wrap=True, textvariable=variable)
         spinbox.grid()
         if not variable.get():
-            spinbox.insert(0, datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-4])
+            spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
         spinbox.focus_set()
         spinbox.icursor(8)
 
@@ -169,8 +174,10 @@ class DateEntryFrame(tk.Frame):
 
     def on_date_select(self, event):
         selected_date = self.calendar.selection_get()
+        current_time = self.round_time(datetime.now().strftime('%H:%M:%S.%f'))
+        selected_date += f" {current_time}"
         self.spinbox.delete(0, tk.END)
-        self.spinbox.insert(0, selected_date.strftime('%Y-%m-%d'))
+        self.spinbox.insert(0, selected_date)
         self.spinbox.icursor(len(self.spinbox.get()))
 
     def on_spinbox_change(self, event):
@@ -194,7 +201,7 @@ class DateEntryFrame(tk.Frame):
         popup = tk.Toplevel(self)
         popup.wm_title("")
 
-        label = tk.Label(popup, text=message, font=("Arial", 12))
+        label = tk.Label(popup, text=message)
         label.pack(side="top", fill="x", pady=10, padx=10)
 
         # Position the popup window in the top-left corner of the widget
@@ -219,3 +226,8 @@ class DateEntryFrame(tk.Frame):
     def paste_from_clipboard(self, event=None):
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, self.clipboard_get())
+
+    def round_time(self, dt):
+        if self.tag.full_precision:
+            return dt
+        return dt[:-4]
