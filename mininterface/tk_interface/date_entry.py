@@ -20,7 +20,15 @@ class DateEntryFrame(tk.Frame):
         self.tk_app = tk_app
         self.tag = tag
         if tag.date and tag.time:
-            self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
+            if tag.full_precision:
+                self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
+            else:
+                self.datetimeformat = '%Y-%m-%d %H:%M:%S'
+        elif tag.time and not tag.date:
+            if tag.full_precision:
+                self.datetimeformat = '%H:%M:%S.%f'
+            else:
+                self.datetimeformat = '%H:%M:%S'
         else:
             self.datetimeformat = '%Y-%m-%d'
 
@@ -32,7 +40,7 @@ class DateEntryFrame(tk.Frame):
         self.frame = tk.Frame(self)
 
         # The calendar widget
-        if Calendar:
+        if Calendar and tag.date:
             # Toggle calendar button
             tk.Button(self, text="…", command=self.toggle_calendar).grid(row=0, column=1)
 
@@ -107,7 +115,10 @@ class DateEntryFrame(tk.Frame):
     def find_valid_time(self):
         input = self.spinbox.get()
         # use regex to find the time part
-        time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
+        if self.tag.full_precision:
+            time_part = re.search(r'\d{2}:\d{2}:\d{2}.\d{6}', input)
+        else:
+            time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
         if time_part:
             return time_part.group()
         return False
@@ -119,43 +130,67 @@ class DateEntryFrame(tk.Frame):
         date = self.find_valid_date()
         time = self.find_valid_time()
 
-        if date:
-            split_input = re.split(r'[- :.]', date_str)
-            part_index = self.get_part_index(caret_pos, len(split_input))
+        if date and not time:
+            split_input = re.split(r'[-]', date)
+            part_index = self.get_part_index(caret_pos)
 
             # Increment or decrement the relevant part
             number = int(split_input[part_index])
             new_number = number + delta
             split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
 
-            if time:
+            new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]}"
+
+        elif date and time:
+            split_input = re.split(r'[- :.]', date_str)
+            part_index = self.get_part_index(caret_pos)
+
+            # Increment or decrement the relevant part
+            number = int(split_input[part_index])
+            new_number = number + delta
+            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
+
+            if self.tag.full_precision:
                 new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6][:2]}"
-                string_format = '%Y-%m-%d %H:%M:%S.%f'
+                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
             else:
-                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]}"
-                string_format = '%Y-%m-%d'
+                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
+                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
 
-            # Validate the new date
-            try:
-                datetime.strptime(new_value_str, string_format)
-                self.spinbox.delete(0, tk.END)
-                self.spinbox.insert(0, new_value_str)
-                self.spinbox.icursor(caret_pos)
-                if Calendar:
-                    self.update_calendar(new_value_str, string_format)
-            except ValueError:
-                pass
+        elif not date and time:
+            split_input = re.split(r'[:.]', time)
+            part_index = self.get_part_index(caret_pos)
+            
+            # Increment or decrement the relevant part
+            number = int(split_input[part_index])
+            new_number = number + delta
+            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
 
-    def get_part_index(self, caret_pos, split_length):
-        if caret_pos < 5:       # year
-            return 0
-        elif caret_pos < 8:     # month
-            return 1
-        elif caret_pos < 11:    # day
-            return 2
-        elif split_length > 3:
-            if caret_pos < 14:  # hour
+            if self.tag.full_precision:
+                new_value_str = f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
+            else:
+                new_value_str = f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+
+        # Validate the new date
+        try:
+            datetime.strptime(new_value_str, self.datetimeformat)
+            self.spinbox.delete(0, tk.END)
+            self.spinbox.insert(0, new_value_str)
+            self.spinbox.icursor(caret_pos)
+            if Calendar:
+                self.update_calendar(new_value_str, self.datetimeformat)
+        except ValueError as e:
+            pass
+
+    def get_part_index(self, caret_pos):
+        if self.tag.date and self.tag.time:
+            if caret_pos < 5:       # year
+                return 0
+            elif caret_pos < 8:     # month
+                return 1
+            elif caret_pos < 11:    # day
+                return 2
+            elif caret_pos < 14:  # hour
                 return 3
             elif caret_pos < 17:  # minute
                 return 4
@@ -163,7 +198,23 @@ class DateEntryFrame(tk.Frame):
                 return 5
             else:               # millisecond
                 return 6
-        return 2
+        elif self.tag.date:
+            if caret_pos < 5:       # year
+                return 0
+            elif caret_pos < 8:     # month
+                return 1
+            elif caret_pos < 11:    # day
+                return 2
+        elif self.tag.time:
+            if caret_pos < 3:       # hour
+                return 0
+            elif caret_pos < 6:     # minute
+                return 1
+            elif caret_pos < 9:     # second
+                return 2
+            else:                   # millisecond
+                return 3
+        return 0
 
     def on_spinbox_click(self, event):
         # Check if the click was on the spinbox arrows
@@ -173,9 +224,15 @@ class DateEntryFrame(tk.Frame):
             self.decrement_value()
 
     def on_date_select(self, event):
-        selected_date = self.calendar.selection_get()
-        current_time = self.round_time(datetime.now().strftime('%H:%M:%S.%f'))
-        selected_date += f" {current_time}"
+
+        selected_date = self.calendar.selection_get().strftime('%Y-%m-%d')
+        if self.tag.time:
+            if self.tag.full_precision:
+                current_time = datetime.now().strftime('%H:%M:%S.%f')
+            else:
+                current_time = datetime.now().strftime('%H:%M:%S')
+            selected_date += f" {current_time}"
+
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, selected_date)
         self.spinbox.icursor(len(self.spinbox.get()))
@@ -185,11 +242,12 @@ class DateEntryFrame(tk.Frame):
             self.update_calendar(self.spinbox.get())
 
     def update_calendar(self, date_str, string_format='%Y-%m-%d'):
-        try:
-            date = datetime.strptime(date_str, string_format)
-            self.calendar.selection_set(date)
-        except ValueError:
-            pass
+        if self.tag.date:
+            try:
+                date = datetime.strptime(date_str, string_format)
+                self.calendar.selection_set(date)
+            except ValueError:
+                pass
 
     def copy_to_clipboard(self, event=None):
         self.clipboard_clear()
