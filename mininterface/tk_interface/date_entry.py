@@ -132,44 +132,15 @@ class DateEntryFrame(tk.Frame):
 
         if date and not time:
             split_input = re.split(r'[-]', date)
-            part_index = self.get_part_index(caret_pos)
-
-            # Increment or decrement the relevant part
-            number = int(split_input[part_index])
-            new_number = number + delta
-            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
-
-            new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]}"
-
+            new_value_str = self.increment_part(split_input, caret_pos, delta, '-')
         elif date and time:
             split_input = re.split(r'[- :.]', date_str)
-            part_index = self.get_part_index(caret_pos)
-
-            # Increment or decrement the relevant part
-            number = int(split_input[part_index])
-            new_number = number + delta
-            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
-
-            if self.tag.full_precision:
-                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
-            else:
-                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
-
+            new_value_str = self.increment_part(split_input, caret_pos, delta, ' ')
         elif not date and time:
             split_input = re.split(r'[:.]', time)
-            part_index = self.get_part_index(caret_pos)
-            
-            # Increment or decrement the relevant part
-            number = int(split_input[part_index])
-            new_number = number + delta
-            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
-
-            if self.tag.full_precision:
-                new_value_str = f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
-            else:
-                new_value_str = f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+            new_value_str = self.increment_part(split_input, caret_pos, delta, ':')
+        else:
+            return
 
         # Validate the new date
         try:
@@ -181,6 +152,30 @@ class DateEntryFrame(tk.Frame):
                 self.update_calendar(new_value_str, self.datetimeformat)
         except ValueError as e:
             pass
+
+    def increment_part(self, split_input, caret_pos, delta, separator):
+        part_index = self.get_part_index(caret_pos)
+        if part_index > len(split_input) - 1:
+            return separator.join(split_input)
+
+        # Increment or decrement the relevant part
+        number = int(split_input[part_index])
+        new_number = number + delta
+        split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
+
+        if self.tag.full_precision and separator == ' ':
+            return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
+        elif separator == ' ':
+            return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+        elif separator == ':':
+            if self.tag.full_precision:
+                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
+            else:
+                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+        else:
+            return separator.join(split_input)
 
     def get_part_index(self, caret_pos):
         if self.tag.date and self.tag.time:
