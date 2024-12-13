@@ -62,7 +62,10 @@ class DateEntryFrame(tk.Frame):
         if not variable.get():
             spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
         spinbox.focus_set()
-        spinbox.icursor(8)
+        if (not self.tag.date and self.tag.time):
+            spinbox.icursor(0)
+        else:
+            spinbox.icursor(8)
 
         # Bind up/down arrow keys
         spinbox.bind("<Up>", self.increment_value)
