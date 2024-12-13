@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class DateEntryFrame(tk.Frame):
+    last_date_entry_frame = None
+
     def __init__(self, master, tk_app: "TkWindow", tag: DatetimeTag, variable: tk.Variable, **kwargs):
         super().__init__(master, **kwargs)
 
@@ -42,7 +44,7 @@ class DateEntryFrame(tk.Frame):
         # The calendar widget
         if Calendar and tag.date:
             # Toggle calendar button
-            tk.Button(self, text="…", command=self.toggle_calendar).grid(row=0, column=1)
+            tk.Button(self, text="…", command=self.find_calendar_to_toggle).grid(row=0, column=1)
 
             # Add a calendar widget
             self.calendar = Calendar(self.frame, selectmode='day', date_pattern='yyyy-mm-dd')
@@ -51,6 +53,7 @@ class DateEntryFrame(tk.Frame):
             self.calendar.grid()
             # Initialize calendar with the current date
             self.update_calendar(self.spinbox.get(), self.datetimeformat)
+            DateEntryFrame.last_date_entry_frame = self
         else:
             self.calendar = None
 
@@ -76,7 +79,15 @@ class DateEntryFrame(tk.Frame):
 
         # Bind key release event to update calendar when user changes the input field
         spinbox.bind("<KeyRelease>", self.on_spinbox_change)
+
+        # Bind focus in event to update the last focused spinbox
+        spinbox.bind("<FocusIn>", self.on_spinbox_focus)
+
         return spinbox
+
+    def on_spinbox_focus(self, event):
+        if self.tag.date:
+            DateEntryFrame.last_date_entry_frame = self
 
     def bind_all_events(self):
         # Copy to clipboard with ctrl+c
@@ -89,7 +100,17 @@ class DateEntryFrame(tk.Frame):
         self.bind_all("<Control-v>", lambda event: self.paste_from_clipboard())
 
         # Toggle calendar widget with ctrl+shift+c
-        self.bind_all("<Control-Shift-C>", lambda event: self.toggle_calendar())
+        self.bind_all("<Control-Shift-C>", lambda event: DateEntryFrame.find_calendar_to_toggle(self.spinbox))
+
+    @staticmethod
+    def find_calendar_to_toggle(target_spinbox):
+        parent_frame = target_spinbox.master
+        if isinstance(parent_frame, DateEntryFrame):
+            if parent_frame.tag.date:
+                parent_frame.toggle_calendar()
+            else:
+                if DateEntryFrame.last_date_entry_frame:
+                    DateEntryFrame.last_date_entry_frame.toggle_calendar()
 
     def toggle_calendar(self, event=None):
         if not self.calendar:
