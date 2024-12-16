@@ -222,7 +222,7 @@ class DatetimeTag(Tag):
     time: bool = False
     """ The time part is active """
 
-    full_precision: Optional[bool] = None
+    full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
     def __post_init__(self):
@@ -230,9 +230,9 @@ class DatetimeTag(Tag):
         if self.annotation:
             self.date = issubclass(self.annotation, date)
             self.time = issubclass(self.annotation, time) or issubclass(self.annotation, datetime)
-        if not self.time and self.full_precision:
-            self.full_precision = False
-        # NOTE: self.full_precision ...
+        # NOTE: remove
+        # if not self.time and self.full_precision:
+        #     self.full_precision = False
 
     def _make_default_value(self):
         return datetime.now()

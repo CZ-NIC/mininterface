@@ -72,7 +72,11 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                                 new = copy(metadata)
                                 new.val = val if val is not None else new.val
                                 new.description = description or new.description
-                                return new._fetch_from(Tag(*args, **kwargs))
+                                if new.annotation is None:
+                                    # pAnnot: Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...)
+                                    # -> DatetimeTag(date=True)
+                                    new.annotation = annotation
+                                return tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
                                 # NOTE The mechanism is not perfect. When done, we may test configs.PathTagClass.
                                 # * fetch_from will not transfer PathTag.multiple
                                 # * copy will not transfer list[Path] from `Annotated[list[Path], Tag(...)]`

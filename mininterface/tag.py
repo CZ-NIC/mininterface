@@ -1,6 +1,6 @@
 from ast import literal_eval
 from dataclasses import dataclass, fields
-from datetime import datetime
+from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, Union, get_args, get_origin
@@ -683,7 +683,7 @@ class Tag:
                 except (SyntaxError, ValueError):
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
-            elif self.annotation is datetime:
+            elif self._is_subclass((time, date)):
                 try:
                     out_value = self.annotation.fromisoformat(ui_value)
                 except ValueError:

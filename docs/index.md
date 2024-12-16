@@ -102,7 +102,7 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 Install with a single command from [PyPi](https://pypi.org/project/mininterface/).
 
 ```bash
-pip install mininterface
+pip install mininterface[all]  # GPLv3 and compatible
 ```
 
 ## Minimal installation
