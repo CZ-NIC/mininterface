@@ -14,11 +14,26 @@ if TYPE_CHECKING:
 
 
 class DateEntryFrame(tk.Frame):
+    last_date_entry_frame = None
+
     def __init__(self, master, tk_app: "TkWindow", tag: DatetimeTag, variable: tk.Variable, **kwargs):
         super().__init__(master, **kwargs)
 
         self.tk_app = tk_app
         self.tag = tag
+        if tag.date and tag.time:
+            if tag.full_precision:
+                self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
+            else:
+                self.datetimeformat = '%Y-%m-%d %H:%M:%S'
+        elif tag.time and not tag.date:
+            if tag.full_precision:
+                self.datetimeformat = '%H:%M:%S.%f'
+            else:
+                self.datetimeformat = '%H:%M:%S'
+        else:
+            self.datetimeformat = '%Y-%m-%d'
+
 
         # Date entry
         self.spinbox = self.create_spinbox(variable)
@@ -27,7 +42,7 @@ class DateEntryFrame(tk.Frame):
         self.frame = tk.Frame(self)
 
         # The calendar widget
-        if Calendar:
+        if Calendar and tag.date:
             # Toggle calendar button
             tk.Button(self, text="…", command=self.toggle_calendar).grid(row=0, column=1)
 
@@ -37,19 +52,23 @@ class DateEntryFrame(tk.Frame):
             self.calendar.bind("<<CalendarSelected>>", self.on_date_select)
             self.calendar.grid()
             # Initialize calendar with the current date
-            self.update_calendar(self.spinbox.get(), '%Y-%m-%d %H:%M:%S.%f')
+            self.update_calendar(self.spinbox.get(), self.datetimeformat)
+            DateEntryFrame.last_date_entry_frame = self
         else:
             self.calendar = None
 
         self.bind_all_events()
 
     def create_spinbox(self, variable: tk.Variable):
-        spinbox = tk.Spinbox(self, font=("Arial", 16), width=30, wrap=True, textvariable=variable)
+        spinbox = tk.Spinbox(self, wrap=True, textvariable=variable)
         spinbox.grid()
         if not variable.get():
-            spinbox.insert(0, datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-4])
+            spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
         spinbox.focus_set()
-        spinbox.icursor(8)
+        if (not self.tag.date and self.tag.time):
+            spinbox.icursor(0)
+        else:
+            spinbox.icursor(8)
 
         # Bind up/down arrow keys
         spinbox.bind("<Up>", self.increment_value)
@@ -60,6 +79,10 @@ class DateEntryFrame(tk.Frame):
 
         # Bind key release event to update calendar when user changes the input field
         spinbox.bind("<KeyRelease>", self.on_spinbox_change)
+
+        # Toggle calendar widget with ctrl+shift+c
+        spinbox.bind("<Control-Shift-C>", self.toggle_calendar)
+
         return spinbox
 
     def bind_all_events(self):
@@ -71,9 +94,6 @@ class DateEntryFrame(tk.Frame):
 
         # Paste from clipboard with ctrl+v
         self.bind_all("<Control-v>", lambda event: self.paste_from_clipboard())
-
-        # Toggle calendar widget with ctrl+shift+c
-        self.bind_all("<Control-Shift-C>", lambda event: self.toggle_calendar())
 
     def toggle_calendar(self, event=None):
         if not self.calendar:
@@ -102,7 +122,10 @@ class DateEntryFrame(tk.Frame):
     def find_valid_time(self):
         input = self.spinbox.get()
         # use regex to find the time part
-        time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
+        if self.tag.full_precision:
+            time_part = re.search(r'\d{2}:\d{2}:\d{2}.\d{6}', input)
+        else:
+            time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
         if time_part:
             return time_part.group()
         return False
@@ -114,43 +137,62 @@ class DateEntryFrame(tk.Frame):
         date = self.find_valid_date()
         time = self.find_valid_time()
 
-        if date:
+        if date and not time:
+            split_input = re.split(r'[-]', date)
+            new_value_str = self.increment_part(split_input, caret_pos, delta, '-')
+        elif date and time:
             split_input = re.split(r'[- :.]', date_str)
-            part_index = self.get_part_index(caret_pos, len(split_input))
+            new_value_str = self.increment_part(split_input, caret_pos, delta, ' ')
+        elif not date and time:
+            split_input = re.split(r'[:.]', time)
+            new_value_str = self.increment_part(split_input, caret_pos, delta, ':')
+        else:
+            return
 
-            # Increment or decrement the relevant part
-            number = int(split_input[part_index])
-            new_number = number + delta
-            split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
+        # Validate the new date
+        try:
+            datetime.strptime(new_value_str, self.datetimeformat)
+            self.spinbox.delete(0, tk.END)
+            self.spinbox.insert(0, new_value_str)
+            self.spinbox.icursor(caret_pos)
+            if Calendar:
+                self.update_calendar(new_value_str, self.datetimeformat)
+        except ValueError as e:
+            pass
 
-            if time:
-                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                    f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6][:2]}"
-                string_format = '%Y-%m-%d %H:%M:%S.%f'
+    def increment_part(self, split_input, caret_pos, delta, separator):
+        part_index = self.get_part_index(caret_pos)
+        if part_index > len(split_input) - 1:
+            return separator.join(split_input)
+
+        # Increment or decrement the relevant part
+        number = int(split_input[part_index])
+        new_number = number + delta
+        split_input[part_index] = str(new_number).zfill(len(split_input[part_index]))
+
+        if self.tag.full_precision and separator == ' ':
+            return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
+        elif separator == ' ':
+            return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+        elif separator == ':':
+            if self.tag.full_precision:
+                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
             else:
-                new_value_str = f"{split_input[0]}-{split_input[1]}-{split_input[2]}"
-                string_format = '%Y-%m-%d'
+                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+        else:
+            return separator.join(split_input)
 
-            # Validate the new date
-            try:
-                datetime.strptime(new_value_str, string_format)
-                self.spinbox.delete(0, tk.END)
-                self.spinbox.insert(0, new_value_str)
-                self.spinbox.icursor(caret_pos)
-                if Calendar:
-                    self.update_calendar(new_value_str, string_format)
-            except ValueError:
-                pass
-
-    def get_part_index(self, caret_pos, split_length):
-        if caret_pos < 5:       # year
-            return 0
-        elif caret_pos < 8:     # month
-            return 1
-        elif caret_pos < 11:    # day
-            return 2
-        elif split_length > 3:
-            if caret_pos < 14:  # hour
+    def get_part_index(self, caret_pos):
+        if self.tag.date and self.tag.time:
+            if caret_pos < 5:       # year
+                return 0
+            elif caret_pos < 8:     # month
+                return 1
+            elif caret_pos < 11:    # day
+                return 2
+            elif caret_pos < 14:  # hour
                 return 3
             elif caret_pos < 17:  # minute
                 return 4
@@ -158,7 +200,23 @@ class DateEntryFrame(tk.Frame):
                 return 5
             else:               # millisecond
                 return 6
-        return 2
+        elif self.tag.date:
+            if caret_pos < 5:       # year
+                return 0
+            elif caret_pos < 8:     # month
+                return 1
+            elif caret_pos < 11:    # day
+                return 2
+        elif self.tag.time:
+            if caret_pos < 3:       # hour
+                return 0
+            elif caret_pos < 6:     # minute
+                return 1
+            elif caret_pos < 9:     # second
+                return 2
+            else:                   # millisecond
+                return 3
+        return 0
 
     def on_spinbox_click(self, event):
         # Check if the click was on the spinbox arrows
@@ -168,9 +226,17 @@ class DateEntryFrame(tk.Frame):
             self.decrement_value()
 
     def on_date_select(self, event):
-        selected_date = self.calendar.selection_get()
+
+        selected_date = self.calendar.selection_get().strftime('%Y-%m-%d')
+        if self.tag.time:
+            if self.tag.full_precision:
+                current_time = datetime.now().strftime('%H:%M:%S.%f')
+            else:
+                current_time = datetime.now().strftime('%H:%M:%S')
+            selected_date += f" {current_time}"
+
         self.spinbox.delete(0, tk.END)
-        self.spinbox.insert(0, selected_date.strftime('%Y-%m-%d'))
+        self.spinbox.insert(0, selected_date)
         self.spinbox.icursor(len(self.spinbox.get()))
 
     def on_spinbox_change(self, event):
@@ -178,11 +244,12 @@ class DateEntryFrame(tk.Frame):
             self.update_calendar(self.spinbox.get())
 
     def update_calendar(self, date_str, string_format='%Y-%m-%d'):
-        try:
-            date = datetime.strptime(date_str, string_format)
-            self.calendar.selection_set(date)
-        except ValueError:
-            pass
+        if self.tag.date:
+            try:
+                date = datetime.strptime(date_str, string_format)
+                self.calendar.selection_set(date)
+            except ValueError:
+                pass
 
     def copy_to_clipboard(self, event=None):
         self.clipboard_clear()
@@ -194,7 +261,7 @@ class DateEntryFrame(tk.Frame):
         popup = tk.Toplevel(self)
         popup.wm_title("")
 
-        label = tk.Label(popup, text=message, font=("Arial", 12))
+        label = tk.Label(popup, text=message)
         label.pack(side="top", fill="x", pady=10, padx=10)
 
         # Position the popup window in the top-left corner of the widget
@@ -219,3 +286,8 @@ class DateEntryFrame(tk.Frame):
     def paste_from_clipboard(self, event=None):
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, self.clipboard_get())
+
+    def round_time(self, dt):
+        if self.tag.full_precision:
+            return dt
+        return dt[:-4]
