@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 
 class DateEntryFrame(tk.Frame):
-    last_date_entry_frame = None
 
     def __init__(self, master, tk_app: "TkWindow", tag: DatetimeTag, variable: tk.Variable, **kwargs):
         super().__init__(master, **kwargs)
@@ -34,7 +33,6 @@ class DateEntryFrame(tk.Frame):
         else:
             self.datetimeformat = '%Y-%m-%d'
 
-
         # Date entry
         self.spinbox = self.create_spinbox(variable)
 
@@ -53,7 +51,6 @@ class DateEntryFrame(tk.Frame):
             self.calendar.grid()
             # Initialize calendar with the current date
             self.update_calendar(self.spinbox.get(), self.datetimeformat)
-            DateEntryFrame.last_date_entry_frame = self
         else:
             self.calendar = None
 
@@ -172,10 +169,10 @@ class DateEntryFrame(tk.Frame):
 
         if self.tag.full_precision and separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
+                f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
         elif separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+                f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
         elif separator == ':':
             if self.tag.full_precision:
                 return f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
