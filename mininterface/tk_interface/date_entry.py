@@ -23,14 +23,14 @@ class DateEntryFrame(tk.Frame):
         self.tag = tag
         if tag.date and tag.time:
             if tag.full_precision:
-                self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
-            else:
                 self.datetimeformat = '%Y-%m-%d %H:%M:%S'
+            else:
+                self.datetimeformat = '%Y-%m-%d %H:%M'
         elif tag.time and not tag.date:
             if tag.full_precision:
-                self.datetimeformat = '%H:%M:%S.%f'
-            else:
                 self.datetimeformat = '%H:%M:%S'
+            else:
+                self.datetimeformat = '%H:%M'
         else:
             self.datetimeformat = '%Y-%m-%d'
 
@@ -120,9 +120,9 @@ class DateEntryFrame(tk.Frame):
         input = self.spinbox.get()
         # use regex to find the time part
         if self.tag.full_precision:
-            time_part = re.search(r'\d{2}:\d{2}:\d{2}(.\d{1,6})?', input)
-        else:
             time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
+        else:
+            time_part = re.search(r'\d{2}:\d{2}', input)
         if time_part:
             return time_part.group()
         return False
@@ -138,10 +138,10 @@ class DateEntryFrame(tk.Frame):
             split_input = re.split(r'[-]', date)
             new_value_str = self.increment_part(split_input, caret_pos, delta, '-')
         elif date and time:
-            split_input = re.split(r'[- :.]', date_str)
+            split_input = re.split(r'[- :]', date_str)
             new_value_str = self.increment_part(split_input, caret_pos, delta, ' ')
         elif not date and time:
-            split_input = re.split(r'[:.]', time)
+            split_input = re.split(r'[:]', time)
             new_value_str = self.increment_part(split_input, caret_pos, delta, ':')
         else:
             return
@@ -169,15 +169,15 @@ class DateEntryFrame(tk.Frame):
 
         if self.tag.full_precision and separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
         elif separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+                   f"{split_input[3]}:{split_input[4]}"
         elif separator == ':':
             if self.tag.full_precision:
-                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
-            else:
                 return f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+            else:
+                return f"{split_input[0]}:{split_input[1]}"
         else:
             return separator.join(split_input)
 
@@ -193,10 +193,8 @@ class DateEntryFrame(tk.Frame):
                 return 3
             elif caret_pos < 17:  # minute
                 return 4
-            elif caret_pos < 20:  # second
+            else:  # second
                 return 5
-            else:               # millisecond
-                return 6
         elif self.tag.date:
             if caret_pos < 5:       # year
                 return 0
@@ -209,10 +207,8 @@ class DateEntryFrame(tk.Frame):
                 return 0
             elif caret_pos < 6:     # minute
                 return 1
-            elif caret_pos < 9:     # second
+            else:     # second
                 return 2
-            else:                   # millisecond
-                return 3
         return 0
 
     def on_spinbox_click(self, event):
@@ -234,9 +230,9 @@ class DateEntryFrame(tk.Frame):
                 selected_date += f" {time}"
             else:
                 if self.tag.full_precision:
-                    selected_date += " 00:00:00.000000"
-                else:
                     selected_date += " 00:00:00"
+                else:
+                    selected_date += " 00:00"
 
 
         self.spinbox.delete(0, tk.END)
