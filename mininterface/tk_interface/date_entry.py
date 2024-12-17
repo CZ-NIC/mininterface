@@ -120,7 +120,7 @@ class DateEntryFrame(tk.Frame):
         input = self.spinbox.get()
         # use regex to find the time part
         if self.tag.full_precision:
-            time_part = re.search(r'\d{2}:\d{2}:\d{2}.\d{6}', input)
+            time_part = re.search(r'\d{2}:\d{2}:\d{2}(.\d{1,6})?', input)
         else:
             time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
         if time_part:
@@ -230,7 +230,14 @@ class DateEntryFrame(tk.Frame):
         selected_date = self.calendar.selection_get().strftime('%Y-%m-%d')
         if self.tag.time:
             time = self.find_valid_time()
-            selected_date += f" {time}"
+            if time:
+                selected_date += f" {time}"
+            else:
+                if self.tag.full_precision:
+                    selected_date += " 00:00:00.000000"
+                else:
+                    selected_date += " 00:00:00"
+
 
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, selected_date)
