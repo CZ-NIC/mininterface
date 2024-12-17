@@ -224,17 +224,19 @@ class DateEntryFrame(tk.Frame):
 
     def on_date_select(self, event):
 
+        # find caret position to keep it in the same place
+        caret_pos = self.spinbox.index(tk.INSERT)
+
         selected_date = self.calendar.selection_get().strftime('%Y-%m-%d')
         if self.tag.time:
-            if self.tag.full_precision:
-                current_time = datetime.now().strftime('%H:%M:%S.%f')
-            else:
-                current_time = datetime.now().strftime('%H:%M:%S')
-            selected_date += f" {current_time}"
+            time = self.find_valid_time()
+            selected_date += f" {time}"
 
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, selected_date)
-        self.spinbox.icursor(len(self.spinbox.get()))
+
+        # Keep the caret position
+        self.spinbox.icursor(caret_pos)
 
     def on_spinbox_change(self, event):
         if Calendar:
