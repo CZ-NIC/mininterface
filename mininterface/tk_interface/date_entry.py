@@ -82,13 +82,13 @@ class DateEntryFrame(tk.Frame):
         spinbox.bind("<Control-Shift-C>", self.toggle_calendar)
 
         # Select all in the spinbox with ctrl+a
-        spinbox.bind("<Control-a>", lambda event: self.select_all())
+        spinbox.bind("<Control-a>", self.select_all)
 
         # Copy to clipboard with ctrl+c
         spinbox.bind("<Control-c>", self.copy_to_clipboard)
 
         # Paste from clipboard with ctrl+v
-        spinbox.bind("<Control-v>", lambda event: self.paste_from_clipboard())
+        spinbox.bind("<Control-v>", self.paste_from_clipboard)
 
         return spinbox
 
@@ -282,7 +282,6 @@ class DateEntryFrame(tk.Frame):
 
     def paste_from_clipboard(self, event=None):
         self.spinbox.delete(0, tk.END)
-        self.spinbox.insert(0, self.clipboard_get())
 
     def round_time(self, dt):
         if self.tag.full_precision:
