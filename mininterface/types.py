@@ -230,9 +230,9 @@ class DatetimeTag(Tag):
         if self.annotation:
             self.date = issubclass(self.annotation, date)
             self.time = issubclass(self.annotation, time) or issubclass(self.annotation, datetime)
-        # NOTE: remove
-        # if not self.time and self.full_precision:
-        #     self.full_precision = False
+        if not self.time and self.full_precision:
+            self.full_precision = False
+        # NOTE: self.full_precision ...
 
     def _make_default_value(self):
         return datetime.now()
