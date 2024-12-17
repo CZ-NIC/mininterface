@@ -57,8 +57,6 @@ class DateEntryFrame(tk.Frame):
         else:
             self.calendar = None
 
-        self.bind_all_events()
-
     def create_spinbox(self, variable: tk.Variable):
         spinbox = tk.Spinbox(self, wrap=True, textvariable=variable)
         spinbox.grid()
@@ -83,17 +81,16 @@ class DateEntryFrame(tk.Frame):
         # Toggle calendar widget with ctrl+shift+c
         spinbox.bind("<Control-Shift-C>", self.toggle_calendar)
 
-        return spinbox
-
-    def bind_all_events(self):
-        # Copy to clipboard with ctrl+c
-        self.bind_all("<Control-c>", self.copy_to_clipboard)
-
         # Select all in the spinbox with ctrl+a
-        self.bind_all("<Control-a>", lambda event: self.select_all())
+        spinbox.bind("<Control-a>", lambda event: self.select_all())
+
+        # Copy to clipboard with ctrl+c
+        spinbox.bind("<Control-c>", self.copy_to_clipboard)
 
         # Paste from clipboard with ctrl+v
-        self.bind_all("<Control-v>", lambda event: self.paste_from_clipboard())
+        spinbox.bind("<Control-v>", lambda event: self.paste_from_clipboard())
+
+        return spinbox
 
     def toggle_calendar(self, event=None):
         if not self.calendar:
