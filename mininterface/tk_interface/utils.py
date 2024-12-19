@@ -136,7 +136,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
         # Calendar
         elif isinstance(tag, DatetimeTag):
             grid_info = widget.grid_info()
-            widget.grid_forget()
+            widget.grid_forget()  # HERE
             nested_frame = DateEntryFrame(master, tk_app, tag, variable)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
             widget = nested_frame.spinbox
