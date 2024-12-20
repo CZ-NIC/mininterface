@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
-from datetime import datetime
+from datetime import datetime, date
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import NoneType, SimpleNamespace
@@ -551,11 +551,16 @@ class TestTypes(TestAbstract):
     def test_datetime_tag(self):
         m = runm(DatetimeTagClass)
         d = dataclass_to_tagdict(m.env)[""]
-        for key, expected_date, expected_time in [("p1", True, True), ("p2", False, True), ("p3", True, False)]:
+        d["extern"] = dict_to_tagdict({"extern": date.fromisoformat("2024-09-10")})["extern"]
+
+        for key, expected_date, expected_time in [("p1", True, True), ("p2", False, True), ("p3", True, False),
+                                                  ("pAnnot", True, False),
+                                                  ("extern", True, False)]:
             tag = d[key]
             self.assertIsInstance(tag, DatetimeTag)
             self.assertEqual(expected_date, tag.date)
             self.assertEqual(expected_time, tag.time)
+
 
 
 class TestRun(TestAbstract):
