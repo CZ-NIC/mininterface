@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.2
+* GUI calendar
+
 ## 0.7.1 (2024-11-27)
 * GUI scrollbars if window is bigger than the screen
 * [non-interactive][mininterface.Mininterface.__enter__] session support

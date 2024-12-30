@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from autocombobox import AutoCombobox
 
+from tkinter_form.tkinter_form import Form, FieldForm
+
 from ..auxiliary import flatten, flatten_keys
 from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
 from ..form_dict import TagDict
@@ -42,13 +44,12 @@ class AnyVariable(Variable):
 
 
 def ready_to_replace(widget: Widget,
-                     name,
-                     tag: "Tag",
-                     variable: Variable) -> tuple[Widget, dict]:
+                     variable: Variable,
+                     field_form: FieldForm) -> tuple[Widget, dict]:
     if widget.winfo_manager() == 'grid':
         grid_info = widget.grid_info()
         widget.grid_forget()
-        widget.master._Form__vars[name] = variable
+        field_form.variable = variable
         return grid_info
     else:
         raise ValueError(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")
@@ -87,17 +88,18 @@ def _set_true(variable: Variable, tag: Tag):
 
 def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
     def _fetch(variable):
-        return ready_to_replace(widget, var_name, tag, variable)
+        return ready_to_replace(widget, variable, field_form)
 
     # NOTE tab order broken, injected to another position
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
-    for (var_name, tag), (label1, widget) in zip(flatten_keys(form), flatten(nested_widgets)):
+    for tag, field_form in zip(flatten(form), flatten(nested_widgets)):
         tag: Tag
-        label1: Widget
-        widget: Widget
-        variable = widget.master._Form__vars[var_name]
+        field_form: FieldForm
+        label1: Widget = field_form.label
+        widget: Widget = field_form.widget
+        variable = field_form.variable
         subwidgets = []
         master = widget.master
 
@@ -185,15 +187,15 @@ def create_button(master, _fetch, tag, label1, command=None):
     return variable, widget2
 
 
-def widgets_to_dict(widgets_dict) -> dict:
+def widgets_to_dict(widgets_dict) -> dict[str, dict | FieldForm]:
     """ Convert tkinter_form.widgets to a dict """
     result = {}
     for key, value in widgets_dict.items():
         if isinstance(value, dict):
             result[key] = widgets_to_dict(value)
-        elif hasattr(value, 'widgets'):
+        elif isinstance(value, Form):
             # this is another tkinter_form.Form, recursively parse
-            result[key] = widgets_to_dict(value.widgets)
+            result[key] = widgets_to_dict(value.fields)
         else:  # value is a tuple of (Label, Widget (like Entry))
             result[key] = value
     return result
