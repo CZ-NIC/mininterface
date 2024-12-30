@@ -22,14 +22,14 @@ class DateEntryFrame(tk.Frame):
         self.tag = tag
         if tag.date and tag.time:
             if tag.full_precision:
-                self.datetimeformat = '%Y-%m-%d %H:%M:%S.%f'
-            else:
                 self.datetimeformat = '%Y-%m-%d %H:%M:%S'
+            else:
+                self.datetimeformat = '%Y-%m-%d %H:%M'
         elif tag.time and not tag.date:
             if tag.full_precision:
-                self.datetimeformat = '%H:%M:%S.%f'
-            else:
                 self.datetimeformat = '%H:%M:%S'
+            else:
+                self.datetimeformat = '%H:%M'
         else:
             self.datetimeformat = '%Y-%m-%d'
 
@@ -53,8 +53,6 @@ class DateEntryFrame(tk.Frame):
             self.update_calendar(self.spinbox.get(), self.datetimeformat)
         else:
             self.calendar = None
-
-        self.bind_all_events()
 
     def create_spinbox(self, variable: tk.Variable):
         spinbox = tk.Spinbox(self, wrap=True, textvariable=variable)
@@ -80,17 +78,16 @@ class DateEntryFrame(tk.Frame):
         # Toggle calendar widget with ctrl+shift+c
         spinbox.bind("<Control-Shift-C>", self.toggle_calendar)
 
-        return spinbox
-
-    def bind_all_events(self):
-        # Copy to clipboard with ctrl+c
-        self.bind_all("<Control-c>", self.copy_to_clipboard)
-
         # Select all in the spinbox with ctrl+a
-        self.bind_all("<Control-a>", lambda event: self.select_all())
+        spinbox.bind("<Control-a>", self.select_all)
+
+        # Copy to clipboard with ctrl+c
+        spinbox.bind("<Control-c>", self.copy_to_clipboard)
 
         # Paste from clipboard with ctrl+v
-        self.bind_all("<Control-v>", lambda event: self.paste_from_clipboard())
+        spinbox.bind("<Control-v>", self.paste_from_clipboard)
+
+        return spinbox
 
     def toggle_calendar(self, event=None):
         if not self.calendar:
@@ -120,9 +117,9 @@ class DateEntryFrame(tk.Frame):
         input = self.spinbox.get()
         # use regex to find the time part
         if self.tag.full_precision:
-            time_part = re.search(r'\d{2}:\d{2}:\d{2}.\d{6}', input)
-        else:
             time_part = re.search(r'\d{2}:\d{2}:\d{2}', input)
+        else:
+            time_part = re.search(r'\d{2}:\d{2}', input)
         if time_part:
             return time_part.group()
         return False
@@ -138,10 +135,10 @@ class DateEntryFrame(tk.Frame):
             split_input = re.split(r'[-]', date)
             new_value_str = self.increment_part(split_input, caret_pos, delta, '-')
         elif date and time:
-            split_input = re.split(r'[- :.]', date_str)
+            split_input = re.split(r'[- :]', date_str)
             new_value_str = self.increment_part(split_input, caret_pos, delta, ' ')
         elif not date and time:
-            split_input = re.split(r'[:.]', time)
+            split_input = re.split(r'[:]', time)
             new_value_str = self.increment_part(split_input, caret_pos, delta, ':')
         else:
             return
@@ -169,15 +166,15 @@ class DateEntryFrame(tk.Frame):
 
         if self.tag.full_precision and separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                f"{split_input[3]}:{split_input[4]}:{split_input[5]}.{split_input[6]}"
+                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
         elif separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+                   f"{split_input[3]}:{split_input[4]}"
         elif separator == ':':
             if self.tag.full_precision:
-                return f"{split_input[0]}:{split_input[1]}:{split_input[2]}.{split_input[3]}"
-            else:
                 return f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
+            else:
+                return f"{split_input[0]}:{split_input[1]}"
         else:
             return separator.join(split_input)
 
@@ -193,10 +190,8 @@ class DateEntryFrame(tk.Frame):
                 return 3
             elif caret_pos < 17:  # minute
                 return 4
-            elif caret_pos < 20:  # second
+            else:  # second
                 return 5
-            else:               # millisecond
-                return 6
         elif self.tag.date:
             if caret_pos < 5:       # year
                 return 0
@@ -209,10 +204,8 @@ class DateEntryFrame(tk.Frame):
                 return 0
             elif caret_pos < 6:     # minute
                 return 1
-            elif caret_pos < 9:     # second
+            else:     # second
                 return 2
-            else:                   # millisecond
-                return 3
         return 0
 
     def on_spinbox_click(self, event):
@@ -224,17 +217,26 @@ class DateEntryFrame(tk.Frame):
 
     def on_date_select(self, event):
 
+        # find caret position to keep it in the same place
+        caret_pos = self.spinbox.index(tk.INSERT)
+
         selected_date = self.calendar.selection_get().strftime('%Y-%m-%d')
         if self.tag.time:
-            if self.tag.full_precision:
-                current_time = datetime.now().strftime('%H:%M:%S.%f')
+            time = self.find_valid_time()
+            if time:
+                selected_date += f" {time}"
             else:
-                current_time = datetime.now().strftime('%H:%M:%S')
-            selected_date += f" {current_time}"
+                if self.tag.full_precision:
+                    selected_date += " 00:00:00"
+                else:
+                    selected_date += " 00:00"
+
 
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, selected_date)
-        self.spinbox.icursor(len(self.spinbox.get()))
+
+        # Keep the caret position
+        self.spinbox.icursor(caret_pos)
 
     def on_spinbox_change(self, event):
         if Calendar:
@@ -282,7 +284,6 @@ class DateEntryFrame(tk.Frame):
 
     def paste_from_clipboard(self, event=None):
         self.spinbox.delete(0, tk.END)
-        self.spinbox.insert(0, self.clipboard_get())
 
     def round_time(self, dt):
         if self.tag.full_precision:
