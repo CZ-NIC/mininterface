@@ -72,17 +72,16 @@ class TkWindow(Tk, BackendAdaptor):
         self.form = Form(self.frame,
                          name_form="",
                          form_dict=formdict_to_widgetdict(form, self.widgetize),
-                         name_config=submit if isinstance(submit, str) else "Ok",
-                         button=bool(submit)
+                         name_button=submit if isinstance(submit, str) else "Ok",
+                         button_command=self._ok if submit else None
                          )
         self.form.pack()
 
         # Add radio etc.
-        replace_widgets(self, self.form.widgets, form)
+        replace_widgets(self, self.form.fields, form)
 
         # Set the submit and exit options
         if self.form.button:
-            self.form.button.config(command=self._ok)
             tip, keysym = ("Enter", "<Return>")
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
             self._bind_event(keysym, self._ok)

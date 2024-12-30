@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.7.1"
+version = "0.7.2"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
@@ -19,17 +19,16 @@ typing_extensions = "*"
 pyyaml = "*"
 # Standard requirements
 autocombobox = "1.4.2"
-humanize = "*"           # used only in the TkInterface, hence it is not a minimal requirement
+humanize = "*"          # used only in the TkInterface, hence it is not a minimal requirement
 textual = "~0.84"
 tkinter-tooltip = "*"
-tkinter_form = "0.1.5.2"
+tkinter_form = "0.2.1"
 tkscrollableframe = "*"
-tkcalendar = "*"         # TODO put into extras?
 
 [tool.poetry.extras]
 web = ["textual-serve"]
-img = ["pillow"]
-all = ["textual-serve", "pillow"]
+gui = ["pillow", "tkcalendar"]
+all = ["textual-serve", "pillow", "tkcalendar"]
 
 [tool.poetry.scripts]
 mininterface = "mininterface.__main__:main"
