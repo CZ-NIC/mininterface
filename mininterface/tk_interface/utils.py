@@ -14,6 +14,7 @@ from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag
 from .date_entry import DateEntryFrame
+from .external_fix import __create_widgets_monkeypatched
 
 if TYPE_CHECKING:
     from tk_window import TkWindow

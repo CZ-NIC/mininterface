@@ -150,7 +150,7 @@ def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
             wf = {}
-            for arg in eavesdrop.partition(":")[2].strip().split(", "):
+            for arg in _fetch_eavesdrop_args():
                 treat_missing(type_form, kwargs, parser, wf, arg)
 
             # Second attempt to parse CLI
@@ -195,7 +195,6 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         # However, the UI then is not able to use ex. the number filtering capabilities.
         # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
         tag = wf[field_name] = tag_factory(MissingTagValue(),
-                                           # tag = wf[field_name] = tag_factory(MISSING,
                                            argument.help.replace("(required)", ""),
                                            validation=not_empty,
                                            _src_class=env_class,
@@ -205,9 +204,17 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         # A None would be enough because Mininterface will ask for the missing values
         # promply, however, Pydantic model would fail.
         # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
-        if "default" not in kwargs:
-            kwargs["default"] = SimpleNamespace()
-        setattr(kwargs["default"], field_name, tag._make_default_value())
+        set_default(kwargs, field_name, tag._make_default_value())
+
+
+def _fetch_eavesdrop_args():
+    return eavesdrop.partition(":")[2].strip().split(", ")
+
+
+def set_default(kwargs, field_name, val):
+    if "default" not in kwargs:
+        kwargs["default"] = SimpleNamespace()
+    setattr(kwargs["default"], field_name, val)
 
 
 def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
@@ -228,15 +235,20 @@ def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     Returns:
         Configuration namespace.
     """
+    if isinstance(env_or_list, list):
+        subcommands, env = env_or_list, None
+    else:
+        subcommands, env = None, env_or_list
+
     # Load config file
-    if config_file and isinstance(env_or_list, list):
-        # NOTE. Reading config files when using subcommands is not implemented.
+    if config_file and subcommands:
+        # Reading config files when using subcommands is not implemented.
         static = {}
         kwargs["default"] = None
         warnings.warn(f"Config file {config_file} is ignored because subcommands are used."
-                      "It is not easy to set who this should work. "
-                      "Describe the developer your usecase so that they might implement this.")
-    if "default" not in kwargs and not isinstance(env_or_list, list):
+                      " It is not easy to set how this should work."
+                      " Describe the developer your usecase so that they might implement this.")
+    if "default" not in kwargs and not subcommands:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = {}
@@ -244,29 +256,28 @@ def _parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
             # Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
             for key in (key for key, val in disk.items() if isinstance(val, dict)):
-                disk[key] = env_or_list.__annotations__[key](**disk[key])
+                disk[key] = env.__annotations__[key](**disk[key])
 
         # Fill default fields
-        if pydantic and issubclass(env_or_list, BaseModel):
+        if pydantic and issubclass(env, BaseModel):
             # Unfortunately, pydantic needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
-            static = {key: env_or_list.model_fields.get(key).default
-                      for ann in yield_annotations(env_or_list) for key in ann if not key.startswith("__") and not key in disk}
-            # static = {key: env_or_list.model_fields.get(key).default
-            #           for key, _ in iterate_attributes(env_or_list) if not key in disk}
-        elif attr and attr.has(env_or_list):
+            static = {key: env.model_fields.get(key).default
+                      for ann in yield_annotations(env) for key in ann if not key.startswith("__") and not key in disk}
+            # static = {key: env_.model_fields.get(key).default
+            #           for key, _ in iterate_attributes(env_) if not key in disk}
+        elif attr and attr.has(env):
             # Unfortunately, attrs needs to fill the default with the actual values,
             # the default value takes the precedence over the hard coded one, even if missing.
             # NOTE Might not work for inherited models.
             static = {key: field.default
-                      for key, field in attr.fields_dict(env_or_list).items() if not key.startswith("__") and not key in disk}
+                      for key, field in attr.fields_dict(env).items() if not key.startswith("__") and not key in disk}
         else:
             # To ensure the configuration file does not need to contain all keys, we have to fill in the missing ones.
             # Otherwise, tyro will spawn warnings about missing fields.
             static = {key: val
-                      for key, val in yield_defaults(env_or_list) if not key.startswith("__") and not key in disk}
-        kwargs["default"] = SimpleNamespace(**(disk | static))
+                      for key, val in yield_defaults(env) if not key.startswith("__") and not key in disk}
+        kwargs["default"] = SimpleNamespace(**(static | disk))
 
     # Load configuration from CLI
-    env, wrong_fields = run_tyro_parser(env_or_list, kwargs, add_verbosity, ask_for_missing, args)
-    return env, wrong_fields
+    return run_tyro_parser(subcommands or env, kwargs, add_verbosity, ask_for_missing, args)

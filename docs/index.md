@@ -114,6 +114,10 @@ pip install --no-dependencies mininterface
 pip install tyro typing_extensions pyyaml
 ```
 
+## MacOS GUI
+
+If the GUI does not work on MacOS, you might need to launch: `brew install python-tk`
+
 # Docs
 See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic.github.io/mininterface/Overview/).
 
