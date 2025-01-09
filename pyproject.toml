@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.7.2"
+version = "0.7.3"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
@@ -27,8 +27,10 @@ tkscrollableframe = "*"
 
 [tool.poetry.extras]
 web = ["textual-serve"]
+img = ["pillow", "textual_imageview"]
+tui = ["textual_imageview"]
 gui = ["pillow", "tkcalendar"]
-all = ["textual-serve", "pillow", "tkcalendar"]
+all = ["textual-serve", "pillow", "tkcalendar", "textual_imageview"]
 
 [tool.poetry.scripts]
 mininterface = "mininterface.__main__:main"

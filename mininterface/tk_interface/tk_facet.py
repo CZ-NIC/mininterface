@@ -36,10 +36,13 @@ class TkFacet(Facet):
                         raise DependencyRequired("img")
                     filename = el.src
                     img = ImagePIL.open(filename)
-                    img = img.resize((250, 250))
-                    img = ImageTk.PhotoImage(img)
-                    panel = Label(self.adaptor.frame, image=img)
-                    panel.image = img
+                    max_width, max_height = 250, 250
+                    w_o, h_o = img.size
+                    scale = min(max_width / w_o, max_height / h_o)
+                    img = img.resize((int(w_o * scale), int(h_o * scale)), ImagePIL.LANCZOS)
+                    img_p = ImageTk.PhotoImage(img)
+                    panel = Label(self.adaptor.frame, image=img_p)
+                    panel.image = img_p
                     panel.pack()
                 case Path():
                     size = naturalsize(el.stat().st_size)
