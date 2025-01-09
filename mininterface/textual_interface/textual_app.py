@@ -26,6 +26,14 @@ class TextualApp(App[bool | None]):
     #     ("down", "go_up", "Go down"),
     # ]
 
+    DEFAULT_CSS = """
+    ImageViewer{
+
+        height: 20;
+    }
+    """
+    """ Limit layout image size """
+
     def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True):
         super().__init__()
         self.title = adaptor.facet._title
@@ -52,6 +60,7 @@ class TextualApp(App[bool | None]):
             yield Label(text, id="buffered_text")
         focus_set = False
         with VerticalScroll():
+            yield from self.adaptor.layout_elements
             for i, fieldt in enumerate(self.widgets):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)

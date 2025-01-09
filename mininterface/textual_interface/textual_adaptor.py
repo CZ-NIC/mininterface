@@ -28,6 +28,8 @@ class TextualAdaptor(BackendAdaptor):
     def __init__(self, interface: "TextualInterface"):
         self.interface = interface
         self.facet = interface.facet = TextualFacet(self, interface.env)
+        self.app: TextualApp | None = None
+        self.layout_elements = []
 
     @staticmethod
     def widgetize(tag: Tag) -> Widget | Changeable:
@@ -73,6 +75,9 @@ class TextualAdaptor(BackendAdaptor):
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         super().run_dialog(form, title, submit)
+        # Unfortunately, there seems to be no way to reuse the app.
+        # Which blocks using multiple form external .form() calls from the web interface.
+        # Textual cannot run in a thread, it seems it cannot run in another process, self.suspend() is of no use.
         self.app = app = TextualApp(self, submit)
         if title:
             app.title = title

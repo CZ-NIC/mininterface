@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.7.2
+## 0.7.3 (2025-01-09)
+* fix: put GUI descriptions back to the bottom
+
+## 0.7.2 (2024-12-30)
 * GUI calendar
 
 ## 0.7.1 (2024-11-27)

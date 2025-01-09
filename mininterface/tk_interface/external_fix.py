@@ -1,4 +1,5 @@
-# The purpose of the file is to put the descriptions to the bottom of the widgets as it was in the former version of the tkinter_form.
+# The purpose of the file is to put the descriptions to the bottom of the widgets
+# as it was in the former version of the tkinter_form and to limit their width.
 from tkinter import ttk
 
 from tkinter_form import Form, Value, FieldForm
@@ -48,7 +49,7 @@ def __create_widgets_monkeypatched(
         description_label = None
         if not description is None:
             index += 1
-            description_label = ttk.Label(self, text=description)
+            description_label = ttk.Label(self, text=description, wraplength=1000)
             description_label.grid(row=index, column=1, columnspan=2, sticky="nesw", padx=2, pady=2)
 
         self.fields[name_key] = FieldForm(
