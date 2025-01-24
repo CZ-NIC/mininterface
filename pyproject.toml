@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.7.3"
+version = "0.7.4"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
@@ -14,7 +14,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 # Minimal requirements
 python = "^3.10"
-tyro = "0.8.14"         # NOTE: 0.9 brings some test breaking changes
+tyro = "^0.9"
 typing_extensions = "*"
 pyyaml = "*"
 # Standard requirements
@@ -25,7 +25,7 @@ tkinter-tooltip = "*"
 tkinter_form = "0.2.1"
 tkscrollableframe = "*"
 
-[tool.poetry.extras]
+[tool.poetry.project.optional-dependencies]
 web = ["textual-serve"]
 img = ["pillow", "textual_imageview"]
 tui = ["textual_imageview"]

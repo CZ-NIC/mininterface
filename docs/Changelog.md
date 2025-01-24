@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4
+* Python 3.13 compatible
+* emits a warning when for config file fields, unknown to the model
+
 ## 0.7.3 (2025-01-09)
 * fix: put GUI descriptions back to the bottom
 

@@ -8,7 +8,7 @@ from .exceptions import Cancelled, InterfaceNotAvailable
 from .interfaces import get_interface
 
 from . import validators
-from .cli_parser import _parse_cli, assure_args
+from .cli_parser import parse_cli, assure_args
 from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
@@ -183,9 +183,9 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         start.choose_subcommand(env_or_list)
     elif env_or_list:
         # Load configuration from CLI and a config file
-        env, wrong_fields = _parse_cli(env_or_list, config_file, add_verbosity, ask_for_missing, args, **kwargs)
+        env, wrong_fields = parse_cli(env_or_list, config_file, add_verbosity, ask_for_missing, args, **kwargs)
     else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-        _parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
+        parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 
     # Build the interface
     interface = get_interface(title, interface, env)

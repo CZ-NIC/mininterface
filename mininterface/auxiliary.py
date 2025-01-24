@@ -70,15 +70,6 @@ def yield_annotations(dataclass):
     yield from (cl.__annotations__ for cl in dataclass.__mro__ if is_dataclass(cl))
 
 
-def yield_defaults(dataclass):
-    """ Return tuple(name, type, default value or MISSING).
-    (Default factory is automatically resolved.)
-    """
-    return ((f.name,
-             f.default_factory() if f.default_factory is not MISSING else f.default)
-            for f in fields(dataclass))
-
-
 def matches_annotation(value, annotation) -> bool:
     """ Check whether the value type corresponds to the annotation.
     Because built-in isinstance is not enough, it cannot determine parametrized generics.

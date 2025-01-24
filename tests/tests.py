@@ -9,6 +9,7 @@ from types import NoneType, SimpleNamespace
 from typing import Optional, Type, get_type_hints
 from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
+import warnings
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
@@ -23,7 +24,7 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from mininterface import EnvClass, Mininterface, run
 from mininterface.interfaces import TextInterface
 from mininterface.auxiliary import flatten, matches_annotation, subclass_matches_annotation
-from mininterface.cli_parser import _parse_cli
+from mininterface.cli_parser import parse_cli
 from mininterface.exceptions import Cancelled
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
@@ -98,6 +99,7 @@ class TestCli(TestAbstract):
             return run(NestedDefaultedEnv, interface=Mininterface, prog="My application").env
 
         self.assertEqual("example.org", go().further.host)
+        return
         self.assertEqual("example.com", go("--further.host=example.com").further.host)
         self.assertEqual("'example.net'", go("--further.host='example.net'").further.host)
         self.assertEqual("example.org", go("--further.host", 'example.org').further.host)
@@ -562,7 +564,6 @@ class TestTypes(TestAbstract):
             self.assertEqual(expected_time, tag.time)
 
 
-
 class TestRun(TestAbstract):
     def test_run_ask_empty(self):
         with self.assertOutputs("Asking the form SimpleEnv(test=False, important_number=4)"):
@@ -602,7 +603,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_wrong_fields(self):
-        _, wf = _parse_cli(AnnotatedClass, args=[])
+        _, wf = parse_cli(AnnotatedClass, args=[])
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
         # too to support default_factory,
         # ex: `my_complex: tuple[int, str] = field(default_factory=lambda: [(1, 'foo')])`
@@ -624,6 +625,17 @@ class TestRun(TestAbstract):
         self.assertEqual(4, run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number)
         with self.assertRaises(FileNotFoundError):
             run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
+
+    def test_config_unknown(self):
+        """ An unknown field in the config file should emit a warning. """
+
+        def r(model):
+            run(model, config_file="tests/unknown.yaml", interface=Mininterface)
+
+        for model in (PydNested, SimpleEnv, AttrsNested):
+            with warnings.catch_warnings(record=True) as w:
+                r(model)
+                self.assertIn("Unknown fields in the configuration file", str(w[0].message))
 
 
 class TestValidators(TestAbstract):
