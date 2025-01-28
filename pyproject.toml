@@ -20,7 +20,7 @@ pyyaml = "*"
 # Standard requirements
 autocombobox = "1.4.2"
 humanize = "*"          # used only in the TkInterface, hence it is not a minimal requirement
-textual = "~0.84"
+textual = "<2.0.0"
 tkinter-tooltip = "*"
 tkinter_form = "0.2.1"
 tkscrollableframe = "*"

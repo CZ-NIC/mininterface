@@ -5,12 +5,15 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget
 from textual.widgets import (Checkbox, Footer, Header, Input, Label,
-                             RadioButton, Static)
+                             RadioButton, Static, Rule)
 
 
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
                       MySubmitButton)
 
+from ..form_dict import formdict_to_widgetdict
+
+from ..auxiliary import flatten
 from ..facet import BackendAdaptor
 
 if TYPE_CHECKING:
@@ -52,6 +55,16 @@ class TextualApp(App[bool | None]):
         self.bind("escape", "exit", description="Cancel")
 
     def compose(self) -> ComposeResult:
+        # prepare widgets
+        # since textual 1.0.0 we have to build widgets not earlier than the context app is ready
+        self.widgets = list(flatten(formdict_to_widgetdict(
+            self.adaptor.facet._form, self.adaptor.widgetize), include_keys=self.adaptor.header))
+
+        # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
+        if len(self.widgets) and isinstance(self.widgets[0], Rule):
+            self.widgets.pop(0)
+
+        # start yielding widgets
         if self.title:
             yield Header()
         yield self.output  # NOTE not used

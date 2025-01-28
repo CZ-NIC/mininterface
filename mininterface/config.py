@@ -21,7 +21,7 @@ class MininterfaceConfig:
     gui: Gui
     tui: Tui
     interface: Literal["gui"] | Literal["tui"] | None = None
-    """ Choose the interface """
+    """ Enforce an interface. By default, we choose automatically. """
 
 
 Config = MininterfaceConfig(Gui(), Tui())
