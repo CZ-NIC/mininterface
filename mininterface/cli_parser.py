@@ -18,7 +18,9 @@ from tyro._argparse_formatter import TyroArgumentParser
 from tyro._singleton import MISSING_NONPROP
 from tyro.extras import get_parser
 
+
 from .auxiliary import yield_annotations
+from .config import MininterfaceConfig, Config
 from .form_dict import EnvClass, MissingTagValue
 from .tag import Tag
 from .tag_factory import tag_factory
@@ -251,6 +253,10 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
+        if mininterface := disk.pop("mininterface", None):
+            # Section 'mininterface' in the config file changes the global configuration.
+            for key, value in vars(_create_with_missing(MininterfaceConfig, mininterface)).items():
+                setattr(Config, key, value)
         kwargs["default"] = _create_with_missing(env, disk)
 
     # Load configuration from CLI

@@ -25,6 +25,7 @@ def flatten(d: dict[str, T | dict], include_keys: Optional[Callable[[str], list]
             yield v
 
 
+# NOTE: Not used.
 def flatten_keys(d: dict[KT, T | dict]) -> Iterable[tuple[KT, T]]:
     """ Recursively traverse whole dict """
     for k, v in d.items():
@@ -129,7 +130,10 @@ def subclass_matches_annotation(cls, annotation) -> bool:
             return True
 
     # simple types like scalars
-    return issubclass(cls, annotation)
+    try:
+        return issubclass(cls, annotation)  # cls=tuple[int, str] raises an error since Python 3.13
+    except TypeError:
+        return False
 
 
 def serialize_structure(obj):

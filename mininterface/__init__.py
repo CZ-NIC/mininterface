@@ -188,17 +188,17 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
 
     # Build the interface
-    interface = get_interface(title, interface, env)
+    m = get_interface(title, interface, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:
         # Some fields must be set.
-        interface.form(wrong_fields)
-        {setattr(interface.env, k, v.val) for k, v in wrong_fields.items()}
+        m.form(wrong_fields)
+        {setattr(m.env, k, v.val) for k, v in wrong_fields.items()}
     elif ask_on_empty_cli and len(sys.argv) <= 1:
-        interface.form()
+        m.form()
 
-    return interface
+    return m
 
 
 __all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",

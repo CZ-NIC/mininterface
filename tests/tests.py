@@ -610,7 +610,9 @@ class TestRun(TestAbstract):
         self.assertEqual(["files1"], list(wf))
 
     def test_run_ask_for_missing_union(self):
-        form = """Asking the form {'path': PathTag(val=MISSING, description='', annotation=str | pathlib.Path, name='path'), 'combined': Tag(val=MISSING, description='', annotation=int | tuple[int, int] | None, name='combined'), 'simple_tuple': Tag(val=MISSING, description='', annotation=tuple[int, int], name='simple_tuple')}"""
+        form = """Asking the form {'path': PathTag(val=MISSING, description='', annotation=str | pathlib._local.Path, name='path'), 'combined': Tag(val=MISSING, description='', annotation=int | tuple[int, int] | None, name='combined'), 'simple_tuple': Tag(val=MISSING, description='', annotation=tuple[int, int], name='simple_tuple')}"""
+        if sys.version_info[:2] <= (3, 12):  # NOTE remove with Python 3.12
+            form = form.replace("pathlib._local.Path", "pathlib.Path")
         with self.assertOutputs(form):
             runm(MissingNonscalar)
 

@@ -51,10 +51,11 @@ nav:
       - Subcommands.md
       - Helper-types.md
   - Extras:
-      - Types.md
-      - Validation.md
+      - Configuration.md
       - Exceptions.md
       - Interfaces.md
       - Standalone.md
+      - Types.md
+      - Validation.md
       - Experimental.md
   - Changelog.md

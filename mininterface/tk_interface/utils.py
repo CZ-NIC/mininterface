@@ -1,5 +1,4 @@
-from pathlib import Path, PosixPath
-from tkinter import Button, Entry, Label, TclError, Variable, Widget, Spinbox
+from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 from typing import TYPE_CHECKING
@@ -8,8 +7,9 @@ from autocombobox import AutoCombobox
 
 from tkinter_form.tkinter_form import Form, FieldForm
 
-from ..auxiliary import flatten, flatten_keys
-from ..experimental import MININTERFACE_CONFIG, FacetCallback, SubmitButton
+from ..auxiliary import flatten
+from ..config import Config
+from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag
@@ -113,7 +113,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
             nested_frame = Frame(master)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-            if len(tag._get_choices()) > MININTERFACE_CONFIG["gui"]["combobox_since"]:
+            if len(tag._get_choices()) >= Config.gui.combobox_since:
                 widget = AutoCombobox(nested_frame, textvariable=variable)
                 widget['values'] = list(tag._get_choices())
                 widget.pack()
