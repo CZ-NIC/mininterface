@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.7.5
+## 0.7.5 (2025-01-29)
 * UI [configuration](Configuration.md)
+* experimental [Facet._layout](Facet.md#layout)
 
 ## 0.7.4 (2025-01-27)
 * Python 3.13 compatible
