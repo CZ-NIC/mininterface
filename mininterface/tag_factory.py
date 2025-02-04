@@ -1,9 +1,7 @@
 from copy import copy
-from datetime import date, datetime, time
+from datetime import date, time
 from pathlib import Path
 from typing import Type, get_type_hints
-
-from .auxiliary import matches_annotation
 
 from .tag import Tag
 from .type_stubs import TagCallback
@@ -73,12 +71,8 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                                 new.val = val if val is not None else new.val
                                 new.description = description or new.description
                                 if new.annotation is None:
-                                    # pAnnot: Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...)
-                                    # -> DatetimeTag(date=True)
-                                    new.annotation = annotation
+                                    # Annotated[ **origin** list[Path], Tag(...)]
+                                    new.annotation = annotation or field_type.__origin__
+                                # Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...) -> DatetimeTag(date=True)
                                 return tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
-                                # NOTE The mechanism is not perfect. When done, we may test configs.PathTagClass.
-                                # * fetch_from will not transfer PathTag.multiple
-                                # * copy will not transfer list[Path] from `Annotated[list[Path], Tag(...)]`
-                                return type(metadata)(val, description, name=metadata.name, annotation=annotation, *args, **kwargs)._fetch_from(metadata)
     return tag_assure_type(Tag(val, description, annotation, *args, **kwargs))

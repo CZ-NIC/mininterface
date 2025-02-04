@@ -13,7 +13,7 @@ import warnings
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
-                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, FurtherEnv2,
+                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, DynamicDescription, FurtherEnv2,
                      InheritedAnnotatedClass, MissingPositional,
                      MissingUnderscore, MissingNonscalar, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
@@ -541,12 +541,15 @@ class TestInheritedTag(TestAbstract):
         m = runm(PathTagClass, ["/tmp"])  # , "--files2", "/usr"])
         d = dataclass_to_tagdict(m.env)[""]
 
-        [self.assertEqual(type(v), PathTag) for v in d.values()]
+        [self.assertEqual(PathTag, type(v)) for v in d.values()]
         self.assertEqual(d["files"].name, "files")
-        self.assertEqual(d["files"].multiple, True)
+        self.assertTrue(d["files"].multiple)
 
-        # self.assertEqual(d["files2"].name, "Custom name")
-        # self.assertEqual(d["files2"].multiple, True)
+        self.assertEqual(d["files2"].name, "Custom name")
+        self.assertTrue(d["files2"].multiple)
+
+        # self.assertEqual(d["files3"].name, "Custom name")
+        # self.assertTrue(d["files3"].multiple)
 
 
 class TestTypes(TestAbstract):
@@ -833,7 +836,7 @@ class TestAnnotated(TestAbstract):
         self.assertEqual(list[Path], d["files1"].annotation)
         # self.assertEqual(list[Path], d["files2"].annotation) does not work
         self.assertEqual(list[Path], d["files3"].annotation)
-        # self.assertEqual(list[Path], d["files4"].annotation) does not work
+        self.assertEqual(list[Path], d["files4"].annotation)
         self.assertEqual(list[Path], d["files5"].annotation)
         # This does not work, however I do not know what should be the result
         # self.assertEqual(list[Path], d["files6"].annotation)
@@ -973,6 +976,15 @@ class TestTagAnnotation(TestAbstract):
 
         # Enum instance signify the default
         self.assertEqual(ColorEnum.RED, m.choice(ColorEnum.RED))
+
+    def test_dynamic_description(self):
+        """ This is an undocumented feature.
+        When you need a dynamic text, you may use tyro's arg to set it.
+        """
+        m = run(DynamicDescription, interface=Mininterface)
+        d = dataclass_to_tagdict(m.env)[""]
+        # tyro seems to add a space after the description in such case, I don't know why
+        self.assertEqual("My dynamic str ", d["foo"].description)
 
 
 class TestSubcommands(TestAbstract):

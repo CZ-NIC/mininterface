@@ -145,6 +145,13 @@ class PathTag(Tag):
     multiple: bool = False
     """ The user can select multiple files. """
 
+    def __hash__(self):
+        # The function is needed, otherwise the following would not work:
+        # @dataclass
+        # class Env:
+        #   files: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
+        return hash(str(self))
+
     def __post_init__(self):
         super().__post_init__()
         if not self.annotation:
