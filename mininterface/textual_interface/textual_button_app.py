@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from textual.app import App, ComposeResult
+from textual.containers import VerticalScroll
 from textual.widgets import Button, Footer, Label
 
 from ..exceptions import Cancelled
@@ -60,6 +61,7 @@ class TextualButtonApp(App):
         self.focused_i: int = 0
         self.values = {}
         self.interface = interface
+        self.adaptor = self.interface.adaptor
 
     def yes_no(self, text: str, focus_no=True) -> DummyWrapper:
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no))
@@ -78,6 +80,7 @@ class TextualButtonApp(App):
         yield Footer()
         if text := self.interface._redirected.join():
             yield Label(text, id="buffered_text")
+        yield from self.adaptor.layout_elements
         yield Label(self.text, id="question")
 
         self.values.clear()

@@ -53,7 +53,3 @@ class FacetCallback():
     """
     pass
     # NOTE, just a stub. Deprecated, use CallbackTag instead.
-
-
-# NOTE should we use the dataclasses, isn't that slow?
-MININTERFACE_CONFIG = {"gui": {"combobox_since": 5}}

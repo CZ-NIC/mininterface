@@ -159,10 +159,7 @@ class PathTag(Tag):
 @dataclass(repr=False)
 class DatetimeTag(Tag):
     """
-    !!! warning
-        Experimental. Still in development.
-
-    Datetime is supported.
+    Datetime, date and time types are supported.
 
     ```python3
     from datetime import datetime
@@ -214,13 +211,12 @@ class DatetimeTag(Tag):
     # ![Time only](asset/datetime_time.avif)
 
     # NOTE: It would be nice we might put any date format to be parsed.
-    # NOTE: The parameters are still ignored.
 
     date: bool = False
-    """ The date part is active """
+    """ The date part is active. True for datetime and date. """
 
     time: bool = False
-    """ The time part is active """
+    """ The time part is active. True for datetime and time.  """
 
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
@@ -230,9 +226,6 @@ class DatetimeTag(Tag):
         if self.annotation:
             self.date = issubclass(self.annotation, date)
             self.time = issubclass(self.annotation, time) or issubclass(self.annotation, datetime)
-        # NOTE: remove
-        # if not self.time and self.full_precision:
-        #     self.full_precision = False
 
     def _make_default_value(self):
         return datetime.now()

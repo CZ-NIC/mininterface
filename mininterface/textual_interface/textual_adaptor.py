@@ -28,6 +28,8 @@ class TextualAdaptor(BackendAdaptor):
     def __init__(self, interface: "TextualInterface"):
         self.interface = interface
         self.facet = interface.facet = TextualFacet(self, interface.env)
+        self.app: TextualApp | None = None
+        self.layout_elements = []
 
     @staticmethod
     def widgetize(tag: Tag) -> Widget | Changeable:
@@ -73,22 +75,18 @@ class TextualAdaptor(BackendAdaptor):
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         super().run_dialog(form, title, submit)
+        # Unfortunately, there seems to be no way to reuse the app.
+        # Which blocks using multiple form external .form() calls from the web interface.
+        # Textual cannot run in a thread, it seems it cannot run in another process, self.suspend() is of no use.
         self.app = app = TextualApp(self, submit)
         if title:
             app.title = title
-
-        widgets: WidgetList = [f for f in flatten(formdict_to_widgetdict(
-            form, self.widgetize), include_keys=self.header)]
-        if len(widgets) and isinstance(widgets[0], Rule):
-            # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
-            widgets.pop(0)
-        app.widgets = widgets
 
         if not app.run():
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        vals = ((field._link, field.get_ui_value()) for field in widgets if hasattr(field, "_link"))
+        vals = ((field._link, field.get_ui_value()) for field in app.widgets if hasattr(field, "_link"))
         if not Tag._submit_values(vals) or not self.submit_done():
             return self.run_dialog(form, title, submit)
 

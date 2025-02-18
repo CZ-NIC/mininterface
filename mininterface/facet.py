@@ -19,11 +19,14 @@ if TYPE_CHECKING:
 
 @dataclass
 class Image:
-    """ NOTE. Experimental. Undocumented. """
+    """ NOTE. Experimental. """
+
     src: str | Path
+    """ Src to the image. """
 
 
 LayoutElement = TypeVar("LayoutElement", str, Image, Path, "Self")
+""" Either a string, Path or facet.Image. """
 
 
 class BackendAdaptor(ABC):
@@ -102,7 +105,7 @@ class Facet(Generic[EnvClass]):
         print("Title", text)
 
     def _layout(self, elements: list[LayoutElement]):
-        """ Experimental. """
+        """ Experimental. Input is a list of `LayoutElements`."""
         # NOTE remove warn when working in textual
         warn("Facet layout not implemented for this interface.")
 
@@ -120,6 +123,7 @@ class Facet(Generic[EnvClass]):
             "My choice": Tag(choices=["one", "two"], on_change=callback)
         })
         # continue here immediately after clicking on a radio button
+        ```
 
         """
         self.adaptor.post_submit_action = _post_submit

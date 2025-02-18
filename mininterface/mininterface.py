@@ -115,7 +115,7 @@ class Mininterface(Generic[EnvClass]):
 
         ![Asking number](asset/ask-number.avif)
 
-        However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#TextInterface)
+        However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#textinterface)
         is used which is able to turn it into an interactive one.
 
         ```python3

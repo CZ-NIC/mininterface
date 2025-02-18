@@ -3,6 +3,8 @@ from importlib import import_module
 import sys
 from typing import Literal, Type
 
+
+from .config import Config
 from .mininterface import Mininterface
 from .exceptions import InterfaceNotAvailable
 from .text_interface import TextInterface
@@ -38,6 +40,7 @@ def __getattr__(name):
 
 def get_interface(title="", interface: InterfaceType = None, env=None):
     args = title, env
+    interface = interface or Config.interface
     if isinstance(interface, type) and issubclass(interface, Mininterface):
         # the user gave a specific interface, let them catch InterfaceNotAvailable then
         return interface(*args)

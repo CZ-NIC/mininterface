@@ -25,6 +25,7 @@ def flatten(d: dict[str, T | dict], include_keys: Optional[Callable[[str], list]
             yield v
 
 
+# NOTE: Not used.
 def flatten_keys(d: dict[KT, T | dict]) -> Iterable[tuple[KT, T]]:
     """ Recursively traverse whole dict """
     for k, v in d.items():
@@ -68,15 +69,6 @@ def get_description(obj, param: str) -> str:
 
 def yield_annotations(dataclass):
     yield from (cl.__annotations__ for cl in dataclass.__mro__ if is_dataclass(cl))
-
-
-def yield_defaults(dataclass):
-    """ Return tuple(name, type, default value or MISSING).
-    (Default factory is automatically resolved.)
-    """
-    return ((f.name,
-             f.default_factory() if f.default_factory is not MISSING else f.default)
-            for f in fields(dataclass))
 
 
 def matches_annotation(value, annotation) -> bool:
@@ -138,7 +130,10 @@ def subclass_matches_annotation(cls, annotation) -> bool:
             return True
 
     # simple types like scalars
-    return issubclass(cls, annotation)
+    try:
+        return issubclass(cls, annotation)  # cls=tuple[int, str] raises an error since Python 3.13
+    except TypeError:
+        return False
 
 
 def serialize_structure(obj):

@@ -39,6 +39,7 @@ if __name__ == "__main__":
 - [Background](#background)
 - [Installation](#installation)
 - [Docs](#docs)
+- [Gallery](#gallery)
 - [Examples](#examples)
 
 ## You got CLI
@@ -114,8 +115,19 @@ pip install --no-dependencies mininterface
 pip install tyro typing_extensions pyyaml
 ```
 
+## MacOS GUI
+
+If the GUI does not work on MacOS, you might need to launch: `brew install python-tk`
+
 # Docs
 See the docs overview at [https://cz-nic.github.io/mininterface/](https://cz-nic.github.io/mininterface/Overview/).
+
+# Gallery
+
+These projects have the code base reduced thanks to the mininterface:
+
+* **[deduplidog](https://github.com/CZ-NIC/deduplidog/)** – Find duplicates in a scattered directory structure
+* **[touch-timestamp](https://github.com/CZ-NIC/touch-timestamp/)** – A powerful dialog to change the files' timestamp
 
 # Examples
 

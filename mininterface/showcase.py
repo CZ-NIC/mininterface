@@ -26,15 +26,18 @@ class Subcommand1(SharedArgs):
     my_local: int = 1
 
     def run(self):
+        print("Subcommand 1 clicked")
         print("Common:", self.common)  # user input
         print("Number:", self.my_local)  # 1 or user input
         print("Internal:", self.internal)
+        print("The submit button blocked!")
         raise ValidationFail("The submit button blocked!")
 
 
 @dataclass
 class Subcommand2(SharedArgs):
     def run(self):
+        print("Subcommand 2 clicked")
         self._facet.set_title("Button clicked")  # you can access internal self._facet: Facet
         print("Common files", self.files)
 
