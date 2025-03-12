@@ -229,3 +229,7 @@ class DatetimeTag(Tag):
 
     def _make_default_value(self):
         return datetime.now()
+
+@dataclass(repr=False)
+class SecretTag(Tag):
+    pass
