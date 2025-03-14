@@ -1,4 +1,4 @@
-from tkinter import Button, Entry, Spinbox, TclError, Variable, Widget
+from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 from typing import TYPE_CHECKING
@@ -150,7 +150,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                 case SecretTag():
                     grid_info = widget.grid_info()
                     widget.grid_forget()
-                    widget = SecretEntryWrapper(master, variable, grid_info).entry
+                    widget = SecretEntryWrapper(master, tag, variable, grid_info).entry
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL

@@ -33,10 +33,6 @@ class TextualApp(App[bool | None]):
     ImageViewer{
         height: 20;
     }
-
-    SecretInput.hidden {
-        text-opacity: 0;
-    }
     """
     """ Limit layout image size """
 

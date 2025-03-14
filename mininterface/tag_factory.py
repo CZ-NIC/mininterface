@@ -24,11 +24,14 @@ def get_type_hint_from_class_hierarchy(cls, key):
 
 
 def _get_tag_type(tag: Tag) -> Type[Tag]:
+    """ Return the most specific Tag child that a tag value can be expressed with.
+        Ex. Return PathTag for a Tag having a Path as a value.
+    """
     if tag._is_subclass(Path):
         return PathTag
     if tag._is_subclass(date) or tag._is_subclass(time):
         return DatetimeTag
-    return Tag
+    return type(tag)
 
 
 def tag_fetch(tag: Tag, ref: dict | None):

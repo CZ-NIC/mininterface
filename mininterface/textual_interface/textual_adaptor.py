@@ -47,7 +47,7 @@ class TextualAdaptor(BackendAdaptor):
         elif isinstance(tag, (SecretTag)):  # NOTE: PathTag, DatetimeTag not implemented
             match tag:
                 case SecretTag():
-                    o = SecretInput(str(v), placeholder=tag.name or "", type="text")
+                    o = SecretInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
@@ -55,7 +55,6 @@ class TextualAdaptor(BackendAdaptor):
         # Replace with a callback button
         elif tag._is_a_callable():
             o = MyButton(tag.name)
-
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)

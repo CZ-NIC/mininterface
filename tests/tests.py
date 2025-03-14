@@ -32,7 +32,7 @@ from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
 from mininterface.text_interface import AssureInteractiveTerminal
-from mininterface.types import CallbackTag, DatetimeTag, PathTag
+from mininterface.types import CallbackTag, DatetimeTag, PathTag, SecretTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
@@ -679,7 +679,7 @@ class TestValidators(TestAbstract):
 
 
 class TestLog(TestAbstract):
-    @ staticmethod
+    @staticmethod
     def log(object=SimpleEnv):
         run(object, interface=Mininterface)
         logger = logging.getLogger(__name__)
@@ -688,37 +688,37 @@ class TestLog(TestAbstract):
         logger.warning("warning level")
         logger.error("error level")
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity0(self, mock_basicConfig):
         self.sys("-v")
         with self.assertRaises(SystemExit):
             run(SimpleEnv, add_verbosity=False, interface=Mininterface)
         mock_basicConfig.assert_not_called()
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity1(self, mock_basicConfig):
         self.log()
         mock_basicConfig.assert_not_called()
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_custom_verbosity(self, mock_basicConfig):
         """ We use an object, that has verbose attribute too. Which interferes with the one injected. """
         self.log(ConflictingEnv)
@@ -1072,6 +1072,24 @@ class TestSubcommands(TestAbstract):
         # placeholder help works and shows shared arguments of other subcommands
         with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
             r(["subcommand", "--help"])
+
+
+class TestSecretTag(TestAbstract):
+    """Tests for SecretTag functionality"""
+
+    def test_toggle_visibility(self):
+        secret = SecretTag("test", show_toggle=False)
+        self.assertTrue(secret._masked)
+        self.assertFalse(secret.toggle_visibility())
+        self.assertFalse(secret._masked)
+
+    def test_repr_safety(self):
+        secret = SecretTag("sensitive_data")
+        self.assertEqual("SecretTag(masked_value)", repr(secret))
+
+    def test_annotation_default(self):
+        secret = SecretTag("test")
+        self.assertEqual(str, secret.annotation)
 
 
 if __name__ == '__main__':

@@ -2,6 +2,9 @@ from typing import Optional
 from textual import events
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioSet
+from textual.binding import Binding
+
+from ..types.rich_tags import SecretTag
 
 from ..tag import Tag, TagValue
 
@@ -72,20 +75,19 @@ class MySubmitButton(MyButton):
 
 
 class SecretInput(MyInput):
-    # NOTE the password can be probably copied out from the terminal, it is hidden just by CSS
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.show_password = False
-        self.update_class()
+    """A password input widget with toggle functionality."""
 
-        self._arbitrary = SecretInputToggle(self, "👁")
+    BINDINGS = [Binding("ctrl+h", "toggle_visibility", "Toggle visibility")]
 
-    def update_class(self):
-        self.classes = "shown" if self.show_password else "hidden"
+    def __init__(self, tag: SecretTag, *args, **kwargs):
+        self.tag = tag
+        super().__init__(tag._get_ui_val(), *args, password=tag._masked, **kwargs)
+        self.show_password = not self.password  # False
+        if tag.show_toggle:
+            self._arbitrary = SecretInputToggle(self, "👁")
 
-    def toggle_password(self):
-        self.show_password = not self.show_password
-        self.update_class()
+    def action_toggle_visibility(self):
+        self.password = self.tag.toggle_visibility()
 
 
 class SecretInputToggle(Button):
@@ -94,5 +96,5 @@ class SecretInputToggle(Button):
         self.input = input
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.input.toggle_password()
+        self.input.action_toggle_visibility()
         self.label = "🙈" if self.input.show_password else "👁"
