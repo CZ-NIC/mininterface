@@ -1,5 +1,6 @@
 from textual import events
 from textual.widgets import Button, Checkbox, Input, RadioSet
+from textual.binding import Binding
 
 from ..tag import Tag, TagValue
 
@@ -28,6 +29,23 @@ class Changeable:
 class MyInput(Input, Changeable):
     async def on_blur(self):
         return self.trigger_change()
+
+
+class MySecret(MyInput):
+    """A password input widget with toggle functionality."""
+
+    BINDINGS = [Binding("ctrl+h", "toggle_visibility", "Toggle visibility")]
+
+    def __init__(self, show_toggle=False, **kwargs):
+        super().__init__(password=True, **kwargs)
+        self._showing = False
+        self.show_toggle = show_toggle
+
+    def action_toggle_visibility(self):
+        """Toggle between showing and masking the input."""
+        if self.show_toggle:
+            self._showing = not self._showing
+            self.password = not self._showing
 
 
 class MyCheckbox(Checkbox, Changeable):

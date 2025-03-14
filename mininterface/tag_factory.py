@@ -7,7 +7,7 @@ from .auxiliary import matches_annotation
 
 from .tag import Tag
 from .type_stubs import TagCallback
-from .types import CallbackTag, DatetimeTag, PathTag
+from .types import CallbackTag, DatetimeTag, PathTag, SecretTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):
@@ -30,6 +30,8 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
         return PathTag
     if tag._is_subclass(date) or tag._is_subclass(time):
         return DatetimeTag
+    if hasattr(tag, 'show_toggle') or hasattr(tag, '_masked'):
+        return SecretTag
     return Tag
 
 

@@ -15,9 +15,10 @@ from ..experimental import SubmitButton
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
+from ..types import SecretTag
 from .textual_app import TextualApp, WidgetList
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySubmitButton)
+                      MySubmitButton, MySecret)
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -39,6 +40,9 @@ class TextualAdaptor(BackendAdaptor):
         # Handle boolean
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = MyCheckbox(tag.name or "", v)
+        # Handle secret input
+        elif isinstance(tag, SecretTag):
+            o = MySecret(show_toggle=tag.show_toggle, value=v)
         # Replace with radio buttons
         elif tag._get_choices():
             o = MyRadioSet(*(RadioButton(label, value=val == tag.val)
@@ -46,21 +50,9 @@ class TextualAdaptor(BackendAdaptor):
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
-
-        # Replace with a callback button
-        elif tag._is_a_callable():
-            o = MyButton(tag.name)
-
+        # Default: text input
         else:
-            if not isinstance(v, (float, int, str, bool)):
-                v = str(v)
-            if tag._is_subclass(int):
-                type_ = "integer"
-            elif tag._is_subclass(float):
-                type_ = "number"
-            else:
-                type_ = "text"
-            o = MyInput(str(v), placeholder=tag.name or "", type=type_)
+            o = MyInput(value=str(v))
 
         o._link = tag  # The Textual widgets need to get back to this value
         tag._last_ui_val = o.get_ui_value()

@@ -11,6 +11,7 @@ from ..exceptions import Cancelled
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
+from ..types import SecretTag
 from .tk_facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
@@ -53,6 +54,9 @@ class TkWindow(Tk, BackendAdaptor):
     def widgetize(tag: Tag) -> Value:
         """ Wrap Tag to a textual widget. """
         v = tag._get_ui_val()
+        if isinstance(tag, SecretTag):
+            # Create a Value without widget_factory, we'll handle the widget creation in replace_widgets
+            return Value(v, tag.description)
         if tag.annotation is bool and not isinstance(v, bool):
             # tkinter_form unfortunately needs the bool type to display correct widget,
             # otherwise we end up with a text Entry.

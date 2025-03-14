@@ -32,7 +32,7 @@ from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
 from mininterface.text_interface import AssureInteractiveTerminal
-from mininterface.types import CallbackTag, DatetimeTag, PathTag
+from mininterface.types import CallbackTag, DatetimeTag, PathTag, SecretTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
@@ -1060,6 +1060,36 @@ class TestSubcommands(TestAbstract):
         # placeholder help works and shows shared arguments of other subcommands
         with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
             r(["subcommand", "--help"])
+
+
+class TestSecretTag(TestAbstract):
+    """Tests for SecretTag functionality"""
+
+    def test_secret_masking(self):
+        secret = SecretTag("mysecret")
+        self.assertEqual("•••••••••", secret._get_ui_val())
+
+        secret._masked = False
+        self.assertEqual("mysecret", secret._get_ui_val())
+
+    def test_toggle_visibility(self):
+        secret = SecretTag("test", show_toggle=True)
+        self.assertTrue(secret._masked)
+
+        secret.toggle_visibility()
+        self.assertFalse(secret._masked)
+
+    def test_repr_safety(self):
+        secret = SecretTag("sensitive_data")
+        self.assertEqual("SecretTag(masked_value)", repr(secret))
+
+    def test_empty_secret(self):
+        secret = SecretTag("")
+        self.assertEqual("", secret._get_ui_val())
+
+    def test_annotation_default(self):
+        secret = SecretTag("test")
+        self.assertEqual(str, secret.annotation)
 
 
 if __name__ == '__main__':

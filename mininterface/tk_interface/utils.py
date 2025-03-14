@@ -1,4 +1,4 @@
-from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
+from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 from typing import TYPE_CHECKING
@@ -12,7 +12,7 @@ from ..config import Config
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag
+from ..types import DatetimeTag, PathTag, SecretTag
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
 
@@ -129,6 +129,17 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                     if choice_val is tag.val:
                         variable.set(choice_label)
 
+        # Secret input
+        elif isinstance(tag, SecretTag):
+            grid_info = widget.grid_info()
+            widget.grid_forget()
+            nested_frame = SecretEntryFrame(master, show_toggle=tag.show_toggle)
+            nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+            nested_frame.set(variable.get())
+            widget = nested_frame.entry
+            variable = Variable(value=widget.get())
+            widget.configure(textvariable=variable)
+
         # File dialog
         elif isinstance(tag, PathTag):
             grid_info = widget.grid_info()
@@ -200,3 +211,32 @@ def widgets_to_dict(widgets_dict) -> dict[str, dict | FieldForm]:
         else:  # value is a tuple of (Label, Widget (like Entry))
             result[key] = value
     return result
+
+
+class SecretEntryFrame(Frame):
+    """A frame containing a password entry and an optional toggle button."""
+
+    def __init__(self, master, show_toggle=False, **kwargs):
+        super().__init__(master)
+
+        self.entry = Entry(self, show="•", **kwargs)
+        self.entry.pack(side=LEFT, expand=True, fill="both")
+
+        if show_toggle:
+            self.toggle_btn = Button(self, text="👁", width=3, command=self._toggle_visibility)
+            self.toggle_btn.pack(side=LEFT)
+
+        self._showing = False
+
+    def _toggle_visibility(self):
+        """Toggle between showing and masking the input."""
+        self._showing = not self._showing
+        self.entry.config(show="" if self._showing else "•")
+
+    def get(self):
+        """Get the entry's value."""
+        return self.entry.get()
+
+    def set(self, value):
+        """Set the entry's value."""
+        return self.entry.delete(0, "end") or self.entry.insert(0, value)
