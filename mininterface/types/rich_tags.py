@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Any, Callable, Optional
-from typing_extensions import Self, override
-
-from .auxiliary import common_iterables
-from .tag import Tag, ValidationResult, TagValue
+from typing import Annotated, Any, Callable
 
 
-from .type_stubs import TagCallback, TagType  # Allow import from the module
+from ..auxiliary import common_iterables
+from ..tag import Tag, TagValue, ValidationResult
 
 
 def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
