@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
+from .types.alias import Choices, Validation
+
 from .exceptions import Cancelled, InterfaceNotAvailable
 
 from .interfaces import get_interface
@@ -14,7 +16,7 @@ from .form_dict import DataClass, EnvClass
 from .mininterface import EnvClass, Mininterface
 from .start import Start
 from .tag import Tag
-from .types import Choices, PathTag, Validation
+from .types import PathTag
 
 # NOTE:
 # ask_for_missing does not work with tyro Positional, stays missing.
@@ -150,7 +152,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     # Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
 
     # Prepare the config file
-    if config_file is True and not kwargs.get("default") and env_or_list:
+    if config_file is True and not kwargs.get("default"):
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         try:
@@ -185,7 +187,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         # Load configuration from CLI and a config file
         env, wrong_fields = parse_cli(env_or_list, config_file, add_verbosity, ask_for_missing, args, **kwargs)
     else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-        parse_cli(_Empty, None, add_verbosity, ask_for_missing, args)
+        parse_cli(_Empty, config_file, add_verbosity, ask_for_missing, args)
 
     # Build the interface
     m = get_interface(title, interface, env)

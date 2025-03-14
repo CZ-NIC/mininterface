@@ -8,7 +8,8 @@ from tyro.conf import Positional, arg
 
 from mininterface import Tag
 from mininterface.subcommands import Command
-from mininterface.types import CallbackTag, Choices, PathTag, Validation
+from mininterface.types import CallbackTag, PathTag
+from mininterface.types.alias import Choices, Validation
 from mininterface.validators import not_empty
 
 

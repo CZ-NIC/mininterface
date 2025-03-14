@@ -166,10 +166,10 @@ class DateEntryFrame(tk.Frame):
 
         if self.tag.full_precision and separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
+                f"{split_input[3]}:{split_input[4]}:{split_input[5]}"
         elif separator == ' ':
             return f"{split_input[0]}-{split_input[1]}-{split_input[2]} "\
-                   f"{split_input[3]}:{split_input[4]}"
+                f"{split_input[3]}:{split_input[4]}"
         elif separator == ':':
             if self.tag.full_precision:
                 return f"{split_input[0]}:{split_input[1]}:{split_input[2]}"
@@ -230,7 +230,6 @@ class DateEntryFrame(tk.Frame):
                     selected_date += " 00:00:00"
                 else:
                     selected_date += " 00:00"
-
 
         self.spinbox.delete(0, tk.END)
         self.spinbox.insert(0, selected_date)

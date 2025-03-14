@@ -5,31 +5,7 @@ from typing import Annotated, Any, Callable
 
 
 from ..auxiliary import common_iterables
-from ..tag import Tag, TagValue, ValidationResult
-
-
-def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
-    """ Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
-
-    ```python
-    from mininterface import Tag, Validation
-    @dataclass
-    class Env:
-        my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
-
-        # which is an alias for:
-        # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
-    ```
-
-    Args:
-        check: Callback function.
-    """
-    return Tag(validation=check)
-
-
-def Choices(*choices: list[str]):
-    """ An alias, see [`Tag.choices`][mininterface.Tag.choices] """
-    return Tag(choices=choices)
+from ..tag import Tag
 
 
 @dataclass
@@ -122,7 +98,7 @@ class PathTag(Tag):
     ```python
     from pathlib import Path
     from mininterface import run, Tag
-    from mininterface.aliases import PathTag
+    from mininterface.types import PathTag
 
     m = run()
     out = m.form({
@@ -233,3 +209,26 @@ class DatetimeTag(Tag):
 
     def _make_default_value(self):
         return datetime.now()
+
+
+@dataclass(repr=False)
+class SecretTag(Tag):
+    """
+    Secret text input. Suitable for passwords.
+
+    ```python
+    from pathlib import Path
+    from mininterface import run, Tag
+    from mininterface.types import SecretTag
+
+    m = run()
+    out = m.form({
+        "My password": SecretTag("TOKEN"),
+    })
+    print(out)
+    # {'My password': 'TOKEN'}
+    ```
+
+    ![File picker](asset/secret_tag.avif)
+    """
+    pass

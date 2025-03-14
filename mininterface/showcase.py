@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Annotated, Literal
 
-from . import Tag, Validation, run
+from .types.alias import Validation
+
+from . import Tag, run
 from .validators import not_empty
 
 from dataclasses import dataclass, field

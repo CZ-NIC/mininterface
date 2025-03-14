@@ -31,8 +31,11 @@ class TextualApp(App[bool | None]):
 
     DEFAULT_CSS = """
     ImageViewer{
-
         height: 20;
+    }
+
+    SecretInput.hidden {
+        text-opacity: 0;
     }
     """
     """ Limit layout image size """
@@ -78,6 +81,8 @@ class TextualApp(App[bool | None]):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
                 yield fieldt
+                if fieldt._arbitrary:
+                    yield fieldt._arbitrary
                 if isinstance(fieldt, Changeable) and fieldt._link.description:
                     if not focus_set:
                         focus_set = True

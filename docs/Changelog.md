@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.7.6
+## 0.8.0 (unreleased)
 * better annotated fetching
+* SecretTag
 
 ## 0.7.5 (2025-01-29)
 * UI [configuration](Configuration.md)
