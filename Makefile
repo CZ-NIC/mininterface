@@ -1,7 +1,7 @@
 MANIFEST := pyproject.toml
 TAG := $(shell grep "^version" $(MANIFEST) | pz --search '"(\d+\.\d+\.\d+(?:-(?:rc|alpha|beta)\d+)?)?"')
 
-.PHONY: release validate
+.PHONY: release validate pre-check
 default: release
 
 validate:
@@ -14,3 +14,9 @@ release: validate
 	git push origin $(TAG)
 	@echo "Deploying documentation..."
 	mkdocs gh-deploy
+
+pre-check:
+	pre-commit uninstall && \
+	pre-commit install && \
+	pre-commit autoupdate && \
+	pre-commit install --hook-type commit-msg -f
