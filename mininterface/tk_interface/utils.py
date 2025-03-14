@@ -140,6 +140,11 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
             variable = Variable(value=widget.get())
             widget.configure(textvariable=variable)
 
+            # Add tooltip for Ctrl+T shortcut if show_toggle is True
+            if tag.show_toggle:
+                from tktooltip import ToolTip
+                ToolTip(nested_frame, msg="Press Ctrl+T to toggle visibility")
+
         # File dialog
         elif isinstance(tag, PathTag):
             grid_info = widget.grid_info()
@@ -222,16 +227,23 @@ class SecretEntryFrame(Frame):
         self.entry = Entry(self, show="•", **kwargs)
         self.entry.pack(side=LEFT, expand=True, fill="both")
 
+        # Add toggle button if show_toggle is True
+        self.show_toggle = show_toggle
         if show_toggle:
             self.toggle_btn = Button(self, text="👁", width=3, command=self._toggle_visibility)
             self.toggle_btn.pack(side=LEFT)
+
+            # Bind Ctrl+T to toggle visibility
+            self.entry.bind('<Control-t>', lambda e: self._toggle_visibility())
+            self.bind('<Control-t>', lambda e: self._toggle_visibility())
 
         self._showing = False
 
     def _toggle_visibility(self):
         """Toggle between showing and masking the input."""
-        self._showing = not self._showing
-        self.entry.config(show="" if self._showing else "•")
+        if self.show_toggle:  # Only toggle if show_toggle is True
+            self._showing = not self._showing
+            self.entry.config(show="" if self._showing else "•")
 
     def get(self):
         """Get the entry's value."""

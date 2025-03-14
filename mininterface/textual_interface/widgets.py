@@ -34,7 +34,7 @@ class MyInput(Input, Changeable):
 class MySecret(MyInput):
     """A password input widget with toggle functionality."""
 
-    BINDINGS = [Binding("ctrl+h", "toggle_visibility", "Toggle visibility")]
+    BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
 
     def __init__(self, show_toggle=False, **kwargs):
         super().__init__(password=True, **kwargs)
