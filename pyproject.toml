@@ -38,3 +38,4 @@ mininterface = "mininterface.__main__:main"
 [tool.poetry.dev-dependencies]
 attrs = "*"
 pydantic = "*"
+pre-commit = "*"
