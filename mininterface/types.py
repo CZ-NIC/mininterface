@@ -125,7 +125,7 @@ class PathTag(Tag):
     ```python
     from pathlib import Path
     from mininterface import run, Tag
-    from mininterface.aliases import PathTag
+    from mininterface.types import PathTag
 
     m = run()
     out = m.form({
