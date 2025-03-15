@@ -77,7 +77,7 @@ class MySubmitButton(MyButton):
 class SecretInput(MyInput):
     """A password input widget with toggle functionality."""
 
-    BINDINGS = [Binding("ctrl+h", "toggle_visibility", "Toggle visibility")]
+    BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
 
     def __init__(self, tag: SecretTag, *args, **kwargs):
         self.tag = tag
