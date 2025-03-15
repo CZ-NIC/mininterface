@@ -28,6 +28,11 @@ class TkWindow(Tk, BackendAdaptor):
         self._result = None
         self._event_bindings = {}
         self.interface = interface
+        self.shortcuts = set([
+            "Ctrl+H: Show this help",
+            "Enter: Submit form",
+            "Escape: Cancel"
+        ])
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
         self.bind('<Control-h>', self._show_help)  # Help with Ctrl+H
@@ -55,39 +60,8 @@ class TkWindow(Tk, BackendAdaptor):
         help_window = Tk()
         help_window.title("Keyboard Shortcuts")
 
-        # Collect all shortcut hints from widgets
-        shortcuts = [
-            "- Ctrl+H: Show this help",
-            "- Enter: Submit form",
-            "- Escape: Cancel"
-        ]
-
-        if hasattr(self, 'form'):
-            def collect_hints(widget):
-                # If it's a Form widget, we need to check its fields
-                if isinstance(widget, Form):
-                    for field_name, field in widget.fields.items():
-                        if isinstance(field, Form):
-                            collect_hints(field)
-                        else:
-                            # For regular fields, check both field and widget
-                            field_widget = field.widget
-                            # Check field for hints
-                            if hasattr(field, '_shortcut_hints'):
-                                hints = field._shortcut_hints
-                                shortcuts.extend(f"- {hint}" for hint in hints)
-                            # Check widget for hints
-                            if hasattr(field_widget, '_shortcut_hints'):
-                                hints = field_widget._shortcut_hints
-                                shortcuts.extend(f"- {hint}" for hint in hints)
-                            # Check if widget has children
-                            if hasattr(field_widget, 'winfo_children'):
-                                for child in field_widget.winfo_children():
-                                    collect_hints(child)
-
-            collect_hints(self.form)
-
-        help_text = "Keyboard Shortcuts:\n" + "\n".join(shortcuts)
+        # Display all shortcuts
+        help_text = "Keyboard Shortcuts:\n" + "\n".join(f"- {hint}" for hint in sorted(self.shortcuts))
         help_label = Label(
             help_window, text=help_text, justify=LEFT, padx=20, pady=20)
         help_label.pack()
