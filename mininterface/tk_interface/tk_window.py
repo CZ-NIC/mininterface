@@ -31,7 +31,6 @@ class TkWindow(Tk, BackendAdaptor):
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
         self.bind('<Control-h>', self._show_help)  # Help with Ctrl+H
-        self.bind('<Control-t>', self._toggle_secrets)
 
         # NOTE it would be nice to auto-hide the scrollbars if not needed
         self.sf = ScrolledFrame(self, use_ttk=True)
@@ -55,34 +54,38 @@ class TkWindow(Tk, BackendAdaptor):
         """Show help information in a popup window"""
         help_window = Tk()
         help_window.title("Keyboard Shortcuts")
-        help_text = """
-        Keyboard Shortcuts:
-        - Ctrl+H: Show this help
-        - Ctrl+T: Toggle visibility of password fields
-        - Enter: Submit form
-        - Escape: Cancel
-        """
-        help_label = Label(help_window, text=help_text, justify=LEFT, padx=20, pady=20)
+
+        # Check if there are any secret fields
+        has_secrets = False
+        if hasattr(self, 'form'):
+            def find_secret_entries(widget):
+                nonlocal has_secrets
+                if not hasattr(widget, 'winfo_children'):
+                    return
+                for child in widget.winfo_children():
+                    if (isinstance(child, Entry) and
+                            hasattr(child, '_secret_wrapper')):
+                        has_secrets = True
+                        return
+                    elif isinstance(child, (Frame, Form)):
+                        find_secret_entries(child)
+            find_secret_entries(self.form)
+
+        # Build help text based on available shortcuts
+        shortcuts = [
+            "- Ctrl+H: Show this help",
+            "- Enter: Submit form",
+            "- Escape: Cancel"
+        ]
+        if has_secrets:
+            shortcuts.insert(1, "- Ctrl+T: Toggle visibility of password field")
+
+        help_text = "Keyboard Shortcuts:\n" + "\n".join(shortcuts)
+        help_label = Label(
+            help_window, text=help_text, justify=LEFT, padx=20, pady=20)
         help_label.pack()
         help_window.bind('<Escape>', lambda e: help_window.destroy())
         help_window.focus_set()
-
-    def _toggle_secrets(self, event=None):
-        """Toggle visibility of all secret fields"""
-        def find_secret_entries(widget):
-            """Recursively find all SecretEntryWrapper instances"""
-            if not hasattr(widget, 'winfo_children'):
-                return
-
-            for child in widget.winfo_children():
-                if isinstance(child, Entry) and hasattr(child, '_secret_wrapper'):
-                    child._secret_wrapper.toggle_show()
-                elif isinstance(child, (Frame, Form)):
-                    find_secret_entries(child)
-
-        # Only search in form since it contains all the input widgets
-        if hasattr(self, 'form'):
-            find_secret_entries(self.form)
 
     @staticmethod
     def widgetize(tag: Tag) -> Value:
