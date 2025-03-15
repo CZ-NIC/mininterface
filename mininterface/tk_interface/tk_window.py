@@ -11,7 +11,6 @@ from ..exceptions import Cancelled
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
-from ..types import SecretTag
 from .tk_facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
@@ -29,8 +28,14 @@ class TkWindow(Tk, BackendAdaptor):
         self._result = None
         self._event_bindings = {}
         self.interface = interface
+        self.shortcuts = set([
+            "Ctrl+H: Show this help",
+            "Enter: Submit form",
+            "Escape: Cancel"
+        ])
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
+        self.bind('<Control-h>', self._show_help)  # Help with Ctrl+H
 
         # NOTE it would be nice to auto-hide the scrollbars if not needed
         self.sf = ScrolledFrame(self, use_ttk=True)
@@ -49,6 +54,19 @@ class TkWindow(Tk, BackendAdaptor):
         """ Text that has been written to the text widget but might not be yet seen by user.
             Because no mainloop was invoked.
         """
+
+    def _show_help(self, event=None):
+        """Show help information in a popup window"""
+        help_window = Tk()
+        help_window.title("Keyboard Shortcuts")
+
+        # Display all shortcuts
+        help_text = "Keyboard Shortcuts:\n" + "\n".join(f"- {hint}" for hint in sorted(self.shortcuts))
+        help_label = Label(
+            help_window, text=help_text, justify=LEFT, padx=20, pady=20)
+        help_label.pack()
+        help_window.bind('<Escape>', lambda e: help_window.destroy())
+        help_window.focus_set()
 
     @staticmethod
     def widgetize(tag: Tag) -> Value:

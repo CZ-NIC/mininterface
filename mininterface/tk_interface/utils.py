@@ -150,7 +150,12 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                 case SecretTag():
                     grid_info = widget.grid_info()
                     widget.grid_forget()
-                    widget = SecretEntryWrapper(master, tag, variable, grid_info).entry
+                    # Create wrapper and store it in the widget list
+                    wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
+                    widget = wrapper.entry
+                    # Add shortcut to the central shortcuts set
+                    tk_app.shortcuts.add("Ctrl+T: Toggle visibility of password field")
+
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
