@@ -426,6 +426,9 @@ class Mininterface(Generic[EnvClass]):
             # the original dataclass is updated, hence we do not need to catch the output from launch_callback
             adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)
             return _form
+        if isinstance(_form, SimpleNamespace) and not vars(_form):
+            # There is no env, return the empty env. Not well documented.
+            return self.env
         raise ValueError(f"Unknown form input {_form}")
 
     def is_yes(self, text: str) -> bool:

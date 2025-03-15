@@ -201,6 +201,7 @@ class DatetimeTag(Tag):
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
+    # NOTE calling DatetimeTag("2025-02") should convert str to date?
     def __post_init__(self):
         super().__post_init__()
         if self.annotation:
@@ -241,6 +242,12 @@ class SecretTag(Tag):
         """Toggle the masked state"""
         self._masked = not self._masked
         return self._masked
+
+    def _get_masked_val(self):
+        """Value representation, suitable for an UI that does not handle a masked representation itself."""
+        if self._masked and self.val:
+            return "•" * len(str(self.val))
+        return super()._get_ui_val()
 
     def __repr__(self):
         """Ensure secrets are not accidentally exposed in logs/repr"""

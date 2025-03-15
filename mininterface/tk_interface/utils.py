@@ -156,7 +156,6 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                     # Add shortcut to the central shortcuts set
                     tk_app.shortcuts.add("Ctrl+T: Toggle visibility of password field")
 
-
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             variable, widget = create_button(master, _fetch, tag, label1)

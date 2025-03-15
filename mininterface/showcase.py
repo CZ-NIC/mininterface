@@ -1,17 +1,21 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Annotated, Literal
 
-from .types.alias import Validation
+from tyro.conf import Positional
 
-from . import Tag, run
+from .exceptions import ValidationFail
+from .subcommands import Command, SubcommandPlaceholder
+from .types.rich_tags import SecretTag
+
+from . import run, Choices
+from .interfaces import InterfaceName
+from .types.alias import Validation
 from .validators import not_empty
 
-from dataclasses import dataclass, field
-from pathlib import Path
-from mininterface import run
-from mininterface.exceptions import ValidationFail
-from mininterface.subcommands import Command, SubcommandPlaceholder
-from tyro.conf import Positional
+
+ChosenInterface = InterfaceName | Literal["all"]
 
 
 @dataclass
@@ -72,8 +76,17 @@ class Env:
     my_complex: list[tuple[int, str]] = field(default_factory=lambda: [(1, 'foo')])
     """ List of tuples. """
 
+    my_password: Annotated[str, SecretTag()] = "TOKEN"
+    """ Masked input """
 
-def showcase(interface: Literal["gui"] | Literal["tui"] | Literal["all"], case: int):
+    my_time: datetime = datetime.now()
+    """ Nice date handling """
+
+    my_choice: Annotated[str, Choices("one", "two", "three")] = "two"
+    """ Choose between values """
+
+
+def showcase(interface: ChosenInterface, case: int):
     if interface == "all":
         interface = None
     kw = {"args": [], "interface": interface}

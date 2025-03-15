@@ -1,12 +1,12 @@
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 from typing import Literal, Optional
+
 from tyro.conf import FlagConversionOff
 
+from . import Mininterface, run
 from .exceptions import DependencyRequired
-
-from . import run, Mininterface
-from .showcase import showcase
+from .showcase import ChosenInterface, showcase
 
 __doc__ = """Simple GUI dialog. Outputs the value the user entered."""
 
@@ -25,7 +25,6 @@ class Web:
     port: int = 64646
 
 
-InterfaceType = Literal["gui"] | Literal["tui"] | Literal["all"]
 Showcase = Literal[1] | Literal[2]
 
 
@@ -43,7 +42,7 @@ class CliInteface:
     is_no: str = ""
     """ Display confirm box, focusing 'no'. """
 
-    showcase: Optional[tuple[InterfaceType, Showcase]] = None
+    showcase: Optional[tuple[ChosenInterface, Showcase]] = None
     """ Prints various form just to show what's possible."""
 
 

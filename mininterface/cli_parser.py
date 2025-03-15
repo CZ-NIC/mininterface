@@ -256,7 +256,8 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         if mininterface := disk.pop("mininterface", None):
             # Section 'mininterface' in the config file changes the global configuration.
             for key, value in vars(_create_with_missing(MininterfaceConfig, mininterface)).items():
-                setattr(Config, key, value)
+                if value is not MISSING_NONPROP:
+                    setattr(Config, key, value)
         kwargs["default"] = _create_with_missing(env, disk)
 
     # Load configuration from CLI
@@ -267,6 +268,8 @@ def _create_with_missing(env, disk: dict):
     """
     Create a default instance of an Env object. This is due to provent tyro to spawn warnings about missing fields.
     Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
+
+    The result contains MISSING_NONPROP on the places the original Env object must have a value.
     """
 
     # Determine model

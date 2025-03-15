@@ -32,8 +32,7 @@ class TextualAdaptor(BackendAdaptor):
         self.app: TextualApp | None = None
         self.layout_elements = []
 
-    @staticmethod
-    def widgetize(tag: Tag) -> Widget | Changeable:
+    def widgetize(self, tag: Tag) -> Widget | Changeable:
         """ Wrap Tag to a textual widget. """
 
         v = tag._get_ui_val()
