@@ -7,8 +7,10 @@ class SecretEntryWrapper:
     def __init__(self, master, tag: SecretTag, variable: tk.Variable, grid_info):
         self.tag = tag
         self.entry = Entry(master, text=variable, show="•")
-        self.entry._secret_wrapper = self  # Store reference to wrapper
-
+        # Add more hints here as needed
+        self.entry._shortcut_hints = [
+            "Ctrl+T: Toggle visibility of password field"
+        ]
         row = grid_info['row']
         col = grid_info['column']
         self.entry.grid(row=row, column=col)

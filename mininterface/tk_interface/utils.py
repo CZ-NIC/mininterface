@@ -150,7 +150,13 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                 case SecretTag():
                     grid_info = widget.grid_info()
                     widget.grid_forget()
-                    widget = SecretEntryWrapper(master, tag, variable, grid_info).entry
+                    # Create wrapper and store it in the widget list
+                    wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
+                    widget = wrapper.entry
+                    # Store hints in both the field and the widget
+                    field_form._shortcut_hints = wrapper.entry._shortcut_hints
+                    widget._shortcut_hints = wrapper.entry._shortcut_hints
+                    subwidgets.append(wrapper)
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL

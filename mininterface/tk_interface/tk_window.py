@@ -1,5 +1,5 @@
 import sys
-from tkinter import LEFT, Button, Frame, Label, Text, Tk, Entry
+from tkinter import LEFT, Button, Frame, Label, Text, Tk
 from typing import TYPE_CHECKING, Any, Callable
 
 from tkscrollableframe import ScrolledFrame
@@ -55,30 +55,37 @@ class TkWindow(Tk, BackendAdaptor):
         help_window = Tk()
         help_window.title("Keyboard Shortcuts")
 
-        # Check if there are any secret fields
-        has_secrets = False
-        if hasattr(self, 'form'):
-            def find_secret_entries(widget):
-                nonlocal has_secrets
-                if not hasattr(widget, 'winfo_children'):
-                    return
-                for child in widget.winfo_children():
-                    if (isinstance(child, Entry) and
-                            hasattr(child, '_secret_wrapper')):
-                        has_secrets = True
-                        return
-                    elif isinstance(child, (Frame, Form)):
-                        find_secret_entries(child)
-            find_secret_entries(self.form)
-
-        # Build help text based on available shortcuts
+        # Collect all shortcut hints from widgets
         shortcuts = [
             "- Ctrl+H: Show this help",
             "- Enter: Submit form",
             "- Escape: Cancel"
         ]
-        if has_secrets:
-            shortcuts.insert(1, "- Ctrl+T: Toggle visibility of password field")
+
+        if hasattr(self, 'form'):
+            def collect_hints(widget):
+                # If it's a Form widget, we need to check its fields
+                if isinstance(widget, Form):
+                    for field_name, field in widget.fields.items():
+                        if isinstance(field, Form):
+                            collect_hints(field)
+                        else:
+                            # For regular fields, check both field and widget
+                            field_widget = field.widget
+                            # Check field for hints
+                            if hasattr(field, '_shortcut_hints'):
+                                hints = field._shortcut_hints
+                                shortcuts.extend(f"- {hint}" for hint in hints)
+                            # Check widget for hints
+                            if hasattr(field_widget, '_shortcut_hints'):
+                                hints = field_widget._shortcut_hints
+                                shortcuts.extend(f"- {hint}" for hint in hints)
+                            # Check if widget has children
+                            if hasattr(field_widget, 'winfo_children'):
+                                for child in field_widget.winfo_children():
+                                    collect_hints(child)
+
+            collect_hints(self.form)
 
         help_text = "Keyboard Shortcuts:\n" + "\n".join(shortcuts)
         help_label = Label(
