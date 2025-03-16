@@ -1,23 +1,26 @@
 from typing import TYPE_CHECKING
 from textual import events
 from textual.app import App, ComposeResult
-from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget
-from textual.widgets import (Checkbox, Footer, Header, Input, Label,
-                             RadioButton, Static, Rule)
+from textual.widgets import (
+    Checkbox,
+    Footer,
+    Header,
+    Input,
+    Label,
+    Static,
+    Rule
+)
 
 
-from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySubmitButton)
+from .widgets import Changeable
 
 from ..form_dict import formdict_to_widgetdict
 
 from ..auxiliary import flatten
-from ..facet import BackendAdaptor
 
 if TYPE_CHECKING:
-    from . import TextualInterface
     from .textual_adaptor import TextualAdaptor
 
 WidgetList = list[Widget | Changeable]
@@ -30,8 +33,23 @@ class TextualApp(App[bool | None]):
     # ]
 
     DEFAULT_CSS = """
-    ImageViewer{
+    ImageViewer {
         height: 20;
+    }
+
+    FilePickerInput {
+        layout: horizontal;
+        height: auto;
+        margin: 1;
+    }
+
+    FilePickerInput Input {
+        width: 80%;
+    }
+
+    FilePickerInput Button {
+        width: 20%;
+        margin-left: 1;
     }
     """
     """ Limit layout image size """
@@ -76,6 +94,8 @@ class TextualApp(App[bool | None]):
             for i, fieldt in enumerate(self.widgets):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
+                elif hasattr(fieldt, "_link") and fieldt._link.name and not isinstance(fieldt, Input):
+                    yield Label(fieldt._link.name)
                 yield fieldt
                 if fieldt._arbitrary:
                     yield fieldt._arbitrary

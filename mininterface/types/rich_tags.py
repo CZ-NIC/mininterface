@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Annotated, Any, Callable
-
+from typing import Any, Callable
 
 from ..auxiliary import common_iterables
 from ..tag import Tag
@@ -89,7 +88,8 @@ class PathTag(Tag):
     """
     Contains a Path or their list. Use this helper object to select files.
 
-    In the following example, we see that it is not always needed to use this object.
+    In the following example, we see that it is not always needed to use this
+    object.
 
     * File 1 – plain detection, button to a file picker appeared.
     * File 2 – the same.
@@ -107,23 +107,23 @@ class PathTag(Tag):
         "File 3": PathTag([Path("/tmp")], multiple=True),
     })
     print(out)
-    # {'File 1': PosixPath('/tmp'), 'File 2': PosixPath('.'), 'File 3': [PosixPath('/tmp')]}
+    # {'File 1': PosixPath('/tmp'), 'File 2': PosixPath('.')}
+    # {'File 3': [PosixPath('/tmp')]}
     ```
 
     ![File picker](asset/file_picker.avif)
     """
-    # NOTE turn SubmitButton into a Tag too and turn this into a types module.
-    # NOTE Missing in textual. Might implement file filter and be used for validation. (ex: file_exist, is_dir)
-    # NOTE Path multiple is not recognized: "File 4": Tag([], annotation=list[Path])
     multiple: bool = False
     """ The user can select multiple files. """
 
-    def __hash__(self):
-        # The function is needed, otherwise the following would not work:
-        # @dataclass
-        # class Env:
-        #   files: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
-        return hash(str(self))
+    exist: bool = False
+    """ If True, validates that the selected file exists """
+
+    is_dir: bool = False
+    """ If True, validates that the selected path is a directory """
+
+    is_file: bool = False
+    """ If True, validates that the selected path is a file """
 
     def __post_init__(self):
         super().__post_init__()
@@ -132,8 +132,45 @@ class PathTag(Tag):
         else:
             for origin, _ in self._get_possible_types():
                 if origin in common_iterables:
-                    self.multiple = True
                     break
+
+    def _validate(self, value):
+        """Validate the path value based on exist and is_dir attributes"""
+
+        value = super()._validate(value)
+        # Check for multiple paths before any conversion
+        if not self.multiple and isinstance(value, (list, tuple)):
+            self.set_error_text("Multiple paths are not allowed")
+            raise ValueError()
+        # Convert to list for validation
+        paths = value if isinstance(value, list) else [value]
+
+        # Validate each path
+        for path in paths:
+            if not isinstance(path, Path):
+                try:
+                    path = Path(path)
+                except Exception:
+                    self.set_error_text(f"Invalid path format: {path}")
+                    raise ValueError()
+
+            if self.exist and not path.exists():
+                self.set_error_text(f"Path does not exist: {path}")
+                raise ValueError()
+
+            if self.is_dir and self.is_file:
+                self.set_error_text(f"Path cannot be both a file and a directory: {path}")
+                raise ValueError()
+
+            if self.is_dir and not path.is_dir():
+                self.set_error_text(f"Path is not a directory: {path}")
+                raise ValueError()
+
+            if self.is_file and not path.is_file():
+                self.set_error_text(f"Path is not a file: {path}")
+                raise ValueError()
+
+        return value
 
 
 @dataclass(repr=False)

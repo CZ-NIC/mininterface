@@ -1,22 +1,20 @@
 from typing import TYPE_CHECKING
 
-from textual import events
-from textual.app import App, ComposeResult
-from textual.binding import Binding
-from textual.containers import VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Rule, Label, RadioButton
+from textual.widgets import (
+    Rule, Label, RadioButton
+)
 
 from .textual_facet import TextualFacet
+from .file_picker_input import FilePickerInput
 
-from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..experimental import SubmitButton
 from ..facet import BackendAdaptor
-from ..form_dict import TagDict, formdict_to_widgetdict
+from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag
-from .textual_app import TextualApp, WidgetList
+from .textual_app import TextualApp
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
                       MySubmitButton, SecretInput)
 
@@ -40,33 +38,41 @@ class TextualAdaptor(BackendAdaptor):
         # Handle boolean
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = MyCheckbox(tag.name or "", v)
+            o._link = tag
         # Replace with radio buttons
         elif tag._get_choices():
-            o = MyRadioSet(*(RadioButton(label, value=val == tag.val)
-                             for label, val in tag._get_choices().items()))
-        elif isinstance(tag, (SecretTag)):  # NOTE: PathTag, DatetimeTag not implemented
+            o = MyRadioSet(*(RadioButton(label, value=val == tag.val) for label, val in tag._get_choices().items()))
+            o._link = tag
+        elif isinstance(tag, (PathTag, DatetimeTag, SecretTag)):
             match tag:
+                case PathTag():
+                    o = FilePickerInput(tag, placeholder=tag.name or "")
                 case SecretTag():
                     o = SecretInput(tag, placeholder=tag.name or "", type="text")
+                case DatetimeTag():  # NOTE: To be expanded
+                    o = MyInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
-
+            o._link = tag
         # Replace with a callback button
         elif tag._is_a_callable():
             o = MyButton(tag.name)
+            o._link = tag
         else:
-            if not isinstance(v, (float, int, str, bool)):
-                v = str(v)
+            # Determine the appropriate input type
+            type_ = "text"
             if tag._is_subclass(int):
                 type_ = "integer"
             elif tag._is_subclass(float):
                 type_ = "number"
-            else:
-                type_ = "text"
-            o = MyInput(str(v), placeholder=tag.name or "", type=type_)
 
-        o._link = tag  # The Textual widgets need to get back to this value
+            o = MyInput(tag, placeholder=tag.name or "", type=type_)
+
+        # For custom widget types that may not set _link in their constructor
+        if not hasattr(o, "_link"):
+            o._link = tag
+
         tag._last_ui_val = o.get_ui_value()
         return o
 

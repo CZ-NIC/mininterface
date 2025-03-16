@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING
 from warnings import warn
 from pathlib import Path
 
-from textual.widgets import (Checkbox, Footer, Header, Input, Label,
-                             RadioButton, Static)
+from textual.widgets import Label
 
 from humanize import naturalsize
 

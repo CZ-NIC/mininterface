@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
 from textual.widgets import Button, Footer, Label
 
 from ..exceptions import Cancelled
