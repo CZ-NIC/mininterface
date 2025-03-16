@@ -3,9 +3,9 @@ from textual import events
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioSet
 from textual.binding import Binding
+from textual.containers import Horizontal
 
 from ..types.rich_tags import SecretTag
-
 from ..tag import Tag, TagValue
 
 
@@ -33,8 +33,36 @@ class Changeable:
 
 
 class MyInput(Input, Changeable):
-    async def on_blur(self):
-        return self.trigger_change()
+    def __init__(self, tag: Tag, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._link = tag
+        initial_value = ""
+        if hasattr(tag, 'val') and tag.val is not None:
+            if isinstance(tag.val, list):
+                initial_value = ", ".join(str(p) for p in tag.val)
+            else:
+                initial_value = str(tag.val)
+        self.value = initial_value
+
+    def on_blur(self, event: events.Blur) -> None:
+        self.trigger_change()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        self.trigger_change()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        # This is triggered when Enter is pressed
+        self.trigger_change()
+        if hasattr(self._link, 'facet'):
+            self._link.facet.submit()
+
+    def get_ui_value(self):
+        if not self.value:
+            return None
+        if hasattr(self._link, 'multiple') and self._link.multiple:
+            paths = [p.strip() for p in self.value.split(',') if p.strip()]
+            return paths if paths else None
+        return self.value.strip() or None
 
 
 class MyCheckbox(Checkbox, Changeable):
@@ -48,9 +76,6 @@ class MyRadioSet(RadioSet, Changeable):
 
     def on_key(self, event: events.Key) -> None:
         if event.key == "enter":
-            # If the radio button is not selected, select it and prevent default
-            # (which is form submittion).
-            # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
                 event.stop()
                 self.action_toggle()
@@ -67,9 +92,8 @@ class MyButton(Button, Changeable):
 
 
 class MySubmitButton(MyButton):
-
     def on_button_pressed(self, event):
-        event.prevent_default()  # prevent calling the parent MyButton
+        event.prevent_default()
         self._val = True
         self._link.facet.submit()
 
@@ -82,7 +106,7 @@ class SecretInput(MyInput):
     def __init__(self, tag: SecretTag, *args, **kwargs):
         self.tag = tag
         super().__init__(tag._get_ui_val(), *args, password=tag._masked, **kwargs)
-        self.show_password = not self.password  # False
+        self.show_password = not self.password
         if tag.show_toggle:
             self._arbitrary = SecretInputToggle(self, "👁")
 
