@@ -53,12 +53,39 @@ class FileBrowser(Vertical):
         super().__init__()
         self._link = tag
         self.selected_paths = []
-        self._start_path = Path.home()
+
+        # Determine start path from tag value
+        self._start_path = self._get_start_path()
+        
         self._tree = None
         self._status = Static("")
         self._search_prefix = ""
         self._search_timer = None
         self._update_status()
+
+    def _get_start_path(self) -> Path:
+        """Get the starting path from the tag value or fallback to home directory."""
+        try:
+            tag_value = self._link.val
+
+            if isinstance(tag_value, list) and tag_value:
+                path = Path(tag_value[0])
+            elif tag_value:
+                path = Path(tag_value)
+            else:
+                return Path.home()
+
+            if path.exists() and path.is_file():
+                return path.parent
+            elif path.exists() and path.is_dir():
+                return path
+            else:
+                current = path
+                while current != current.parent and not current.exists():
+                    current = current.parent
+                return current
+        except Exception:
+            return Path.home()
 
     def _update_status(self) -> None:
         """Update the status bar with current information."""
