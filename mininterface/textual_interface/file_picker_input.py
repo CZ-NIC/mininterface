@@ -16,6 +16,7 @@ class FileBrowser(Vertical):
         Binding("enter", "select", "Select"),
         Binding("escape", "close", "Close"),
         Binding("space", "toggle_expand", "Toggle Expand"),
+        Binding("backspace", "parent_dir", "Parent Directory"),
     ]
 
     DEFAULT_CSS = """
@@ -33,6 +34,7 @@ class FileBrowser(Vertical):
 
     FileBrowser Tree {
         height: auto;
+        max-height: 16;  /* Limit tree height to leave room for nav buttons */
         width: 100%;
         overflow-y: scroll;
         background: $surface;
@@ -47,6 +49,23 @@ class FileBrowser(Vertical):
         align: center bottom;
         padding: 0 1;
     }
+    FileBrowser Label {
+        height: 1;
+        width: 100%;
+        background: $surface;
+        color: $text;
+        align: center top;
+        padding: 0 1;
+    }
+
+    FileBrowser #nav_buttons {
+        height: 1;
+        width: 100%;
+    }
+
+    FileBrowser Button {
+        margin: 0 1 0 0;
+    }
     """
 
     def __init__(self, tag: PathTag):
@@ -55,15 +74,15 @@ class FileBrowser(Vertical):
         self.selected_paths = []
 
         # Determine start path from tag value
-        self._start_path = self._get_start_path()
-        
+        self._start_path = self._get_start_path_from_tag()
+
         self._tree = None
         self._status = Static("")
         self._search_prefix = ""
         self._search_timer = None
         self._update_status()
 
-    def _get_start_path(self) -> Path:
+    def _get_start_path_from_tag(self) -> Path:
         """Get the starting path from the tag value or fallback to home directory."""
         try:
             tag_value = self._link.val
@@ -89,6 +108,8 @@ class FileBrowser(Vertical):
 
     def _update_status(self) -> None:
         """Update the status bar with current information."""
+        current_dir = f"📂 {self._start_path}"
+
         if self._link.multiple:
             count = len(self.selected_paths)
             if count == 0:
@@ -102,21 +123,25 @@ class FileBrowser(Vertical):
         if self._search_prefix:
             status_text = f"Searching: {self._search_prefix}... | {status_text}"
 
+        full_status = f"{current_dir} | {status_text}"
+
         if hasattr(self, "_status"):
-            self._status.update(status_text)
+            self._status.update(full_status)
 
     def compose(self) -> ComposeResult:
         """Create and yield the tree widget."""
+        nav_container = Horizontal(id="nav_buttons")
+
+        yield nav_container
+
         self._tree = Tree("📂 Files")
         self._tree.root.expand()
-        # Add initial directory contents
         try:
             self._add_directory(self._start_path, self._tree.root)
         except Exception as e:
             self._tree.root.add(f"⚠️ Error: {str(e)}")
         yield self._tree
 
-        # Add status bar
         self._status = Static("")
         self._update_status()
         yield self._status
@@ -176,6 +201,11 @@ class FileBrowser(Vertical):
             except Exception:
                 # If conversion fails, just return
                 return
+
+        # Update current directory if selecting a directory
+        if path.is_dir():
+            self._start_path = path
+            self._update_status()
 
         # Skip directories if we're only looking for files
         if self._link.is_dir is False and path.is_dir():
@@ -264,6 +294,50 @@ class FileBrowser(Vertical):
                 self._tree.cursor_node = node
                 self._tree.scroll_to_node(node)
                 break
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle navigation button presses."""
+        if event.button.id == "goto_root":
+            self._navigate_to(Path("/"))
+        elif event.button.id == "goto_home":
+            self._navigate_to(Path.home())
+        elif event.button.id == "goto_parent":
+            self._navigate_to(self._start_path.parent)
+
+    def _navigate_to(self, path: Path) -> None:
+        """Navigate to a specific directory."""
+        if not path.exists() or not path.is_dir():
+            return
+
+        # Update current path
+        self._start_path = path
+
+        self._tree.clear()
+        self._tree.root.expand()
+        try:
+            self._add_directory(path, self._tree.root)
+        except Exception as e:
+            self._tree.root.add(f"⚠️ Error: {str(e)}")
+
+        self._update_status()
+
+    def action_parent_dir(self) -> None:
+        """Navigate to parent directory."""
+        self._navigate_to(self._start_path.parent)
+
+    def on_tree_node_activated(self, event: Tree.NodeSelected) -> None:
+        """Handle double-click on tree nodes."""
+        node = event.node
+        if not node.data:
+            return
+
+        path = node.data
+        if path.is_dir():
+            # Navigate to this directory
+            self._navigate_to(path)
+        else:
+            # Select this file
+            self.on_tree_node_selected(Tree.NodeSelected(self._tree, node))
 
 
 class FilePickerInput(Horizontal, Changeable):
