@@ -1,16 +1,12 @@
 from typing import TYPE_CHECKING
-from pathlib import Path
 
-from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import (
-    Rule, Label, RadioButton, Button, Input, Tree, Static
+    Rule, Label, RadioButton
 )
-from textual import events
-from textual.widgets.tree import TreeNode
 
 from .textual_facet import TextualFacet
+from .file_picker_input import FilePickerInput
 
 from ..exceptions import Cancelled
 from ..experimental import SubmitButton
@@ -24,50 +20,6 @@ from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
 
 if TYPE_CHECKING:
     from . import TextualInterface
-
-
-class FilePickerInput(Horizontal, Changeable):
-    """A custom widget that combines an input field with a file picker button."""
-
-    def __init__(self, tag: PathTag, **kwargs):
-        super().__init__()
-        self._link = tag
-        initial_value = ""
-        if tag.val is not None:
-            if isinstance(tag.val, list):
-                initial_value = ", ".join(str(p) for p in tag.val)
-            else:
-                initial_value = str(tag.val)
-        self.input = Input(value=initial_value, **kwargs)
-        self.button = Button("Browse", variant="primary", id="file_picker")
-        self.browser = None
-
-    def compose(self) -> ComposeResult:
-        yield self.input
-        yield self.button
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "file_picker":
-            self.browser.remove()
-            self.browser = None
-
-    def on_input_changed(self, event: Input.Changed) -> None:
-        if event.input == self.input:
-            self.trigger_change()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        # This is triggered when Enter is pressed in the input
-        self.trigger_change()
-        if hasattr(self._link, 'facet'):
-            self._link.facet.submit()
-
-    def get_ui_value(self):
-        if not self.input.value:
-            return None
-        if self._link.multiple:
-            paths = [p.strip() for p in self.input.value.split(',') if p.strip()]
-            return paths if paths else None
-        return self.input.value.strip() or None
 
 
 class TextualAdaptor(BackendAdaptor):
@@ -97,10 +49,10 @@ class TextualAdaptor(BackendAdaptor):
                     )
                 case SecretTag():
                     o = SecretInput(tag, placeholder=tag.name or "", type="text")
-                case DatetimeTag():
+                case DatetimeTag():  # NOTE: To be expanded
                     o = MyInput(str(v), placeholder=tag.name or "", type="text")
         # Special type: Submit button
-        elif tag.annotation is SubmitButton:
+        elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
         # Replace with a callback button
         elif tag._is_a_callable():

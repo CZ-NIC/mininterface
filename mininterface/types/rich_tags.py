@@ -116,11 +116,14 @@ class PathTag(Tag):
     multiple: bool = False
     """ The user can select multiple files. """
 
-    file_exist: bool = False
+    exist: bool = False
     """ If True, validates that the selected file exists """
 
     is_dir: bool = False
     """ If True, validates that the selected path is a directory """
+
+    is_file: bool = False
+    """ If True, validates that the selected path is a file """
 
     def __hash__(self):
         return hash(str(self))
@@ -135,7 +138,7 @@ class PathTag(Tag):
                     break
 
     def _validate(self, value):
-        """Validate the path value based on file_exist and is_dir attributes"""
+        """Validate the path value based on exist and is_dir attributes"""
 
         value = super()._validate(value)
         # Check for multiple paths before any conversion
@@ -154,12 +157,20 @@ class PathTag(Tag):
                     self.set_error_text(f"Invalid path format: {path}")
                     raise ValueError()
 
-            if self.file_exist and not path.exists():
+            if self.exist and not path.exists():
                 self.set_error_text(f"Path does not exist: {path}")
+                raise ValueError()
+
+            if self.is_dir and self.is_file:
+                self.set_error_text(f"Path cannot be both a file and a directory: {path}")
                 raise ValueError()
 
             if self.is_dir and not path.is_dir():
                 self.set_error_text(f"Path is not a directory: {path}")
+                raise ValueError()
+
+            if self.is_file and not path.is_file():
+                self.set_error_text(f"Path is not a file: {path}")
                 raise ValueError()
 
         return value

@@ -3,10 +3,10 @@ from textual import events
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioSet
 from textual.binding import Binding
-from textual.containers import Horizontal
 
-from ..types.rich_tags import SecretTag
+from ..types.rich_tags import SecretTag, PathTag
 from ..tag import Tag, TagValue
+from pathlib import Path
 
 
 class Changeable:
@@ -44,25 +44,67 @@ class MyInput(Input, Changeable):
                 initial_value = str(tag.val)
         self.value = initial_value
 
+    def _convert_value(self, value: str):
+        """Convert the string value to the appropriate type."""
+        if not value:
+            return None
+
+        value = value.strip()
+        if not value:
+            return None
+
+        # Special handling for PathTag
+        if isinstance(self._link, PathTag):
+            try:
+                if getattr(self._link, 'multiple', False):
+                    paths = [p.strip() for p in value.split(',') if p.strip()]
+                    if not paths:
+                        return None
+                    # Make sure all paths exist with Path objects
+                    return [Path(p) for p in paths]
+                # Single path case
+                return Path(value)
+            except Exception:  # noqa
+                # Always return the original string value for PathTag if conversion fails
+                # This prevents "Type must be str" error
+                if getattr(self._link, 'multiple', False):
+                    return [value.strip()] if value.strip() else None
+                return value
+
+        try:
+            # Get the expected type from the tag's annotation
+            expected_type = getattr(self._link, 'annotation', str)
+
+            if expected_type == int:
+                return int(value)
+            elif expected_type == float:
+                return float(value)
+            else:
+                return value
+        except (ValueError, TypeError):
+            return None
+
     def on_blur(self, event: events.Blur) -> None:
-        self.trigger_change()
+        # Only trigger if we can convert the value successfully
+        if self._convert_value(self.value) is not None:
+            self.trigger_change()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        self.trigger_change()
+        # Only trigger if we can convert the value successfully
+        if self._convert_value(self.value) is not None:
+            self.trigger_change()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         # This is triggered when Enter is pressed
-        self.trigger_change()
-        if hasattr(self._link, 'facet'):
-            self._link.facet.submit()
+        if self._convert_value(self.value) is not None:
+            self.trigger_change()
+            if hasattr(self._link, 'facet'):
+                self._link.facet.submit()
 
     def get_ui_value(self):
         if not self.value:
             return None
-        if hasattr(self._link, 'multiple') and self._link.multiple:
-            paths = [p.strip() for p in self.value.split(',') if p.strip()]
-            return paths if paths else None
-        return self.value.strip() or None
+        return self._convert_value(self.value)
 
 
 class MyCheckbox(Checkbox, Changeable):
@@ -93,7 +135,7 @@ class MyButton(Button, Changeable):
 
 class MySubmitButton(MyButton):
     def on_button_pressed(self, event):
-        event.prevent_default()
+        event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
         self._link.facet.submit()
 

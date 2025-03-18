@@ -30,8 +30,23 @@ class TextualApp(App[bool | None]):
     # ]
 
     DEFAULT_CSS = """
-    ImageViewer{
+    ImageViewer {
         height: 20;
+    }
+
+    FilePickerInput {
+        layout: horizontal;
+        height: auto;
+        margin: 1;
+    }
+
+    FilePickerInput Input {
+        width: 80%;
+    }
+
+    FilePickerInput Button {
+        width: 20%;
+        margin-left: 1;
     }
     """
     """ Limit layout image size """
