@@ -1,23 +1,26 @@
 from typing import TYPE_CHECKING
 from textual import events
 from textual.app import App, ComposeResult
-from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget
-from textual.widgets import (Checkbox, Footer, Header, Input, Label,
-                             RadioButton, Static, Rule)
+from textual.widgets import (
+    Checkbox,
+    Footer,
+    Header,
+    Input,
+    Label,
+    Static,
+    Rule
+)
 
 
-from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySubmitButton)
+from .widgets import Changeable
 
 from ..form_dict import formdict_to_widgetdict
 
 from ..auxiliary import flatten
-from ..facet import BackendAdaptor
 
 if TYPE_CHECKING:
-    from . import TextualInterface
     from .textual_adaptor import TextualAdaptor
 
 WidgetList = list[Widget | Changeable]

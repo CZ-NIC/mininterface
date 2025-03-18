@@ -1,14 +1,22 @@
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Input, Tree
+from textual.widgets import Button, Input, Tree, Static
 from textual.widgets.tree import TreeNode
 from pathlib import Path
 from .widgets import Changeable
 from textual.app import ComposeResult
 from ..types import PathTag
+from textual.binding import Binding
 
 
 class FileBrowser(Vertical):
     """A file browser dialog."""
+
+    # Add key bindings for easier navigation
+    BINDINGS = [
+        Binding("enter", "select", "Select"),
+        Binding("escape", "close", "Close"),
+        Binding("space", "toggle_expand", "Toggle Expand"),
+    ]
 
     DEFAULT_CSS = """
     FileBrowser {
@@ -30,6 +38,15 @@ class FileBrowser(Vertical):
         background: $surface;
         padding: 0 1;
     }
+
+    FileBrowser Static {
+        height: 1;
+        width: 100%;
+        background: $surface;
+        color: $text;
+        align: center bottom;
+        padding: 0 1;
+    }
     """
 
     def __init__(self, tag: PathTag):
@@ -38,6 +55,28 @@ class FileBrowser(Vertical):
         self.selected_paths = []
         self._start_path = Path.home()
         self._tree = None
+        self._status = Static("")
+        self._search_prefix = ""
+        self._search_timer = None
+        self._update_status()
+
+    def _update_status(self) -> None:
+        """Update the status bar with current information."""
+        if self._link.multiple:
+            count = len(self.selected_paths)
+            if count == 0:
+                status_text = "Multiple selection enabled. Use Enter or click to select files."
+            else:
+                status_text = f"Selected {count} items. Press Enter to finish."
+        else:
+            status_text = "Navigate with arrows. Press Enter to select."
+
+        # Show search info if active
+        if self._search_prefix:
+            status_text = f"Searching: {self._search_prefix}... | {status_text}"
+
+        if hasattr(self, "_status"):
+            self._status.update(status_text)
 
     def compose(self) -> ComposeResult:
         """Create and yield the tree widget."""
@@ -49,6 +88,11 @@ class FileBrowser(Vertical):
         except Exception as e:
             self._tree.root.add(f"⚠️ Error: {str(e)}")
         yield self._tree
+
+        # Add status bar
+        self._status = Static("")
+        self._update_status()
+        yield self._status
 
     def _add_directory(self, path: Path, node: TreeNode) -> None:
         """Add directory contents to the tree."""
@@ -122,6 +166,9 @@ class FileBrowser(Vertical):
             else:
                 self.selected_paths.append(path)
 
+            # Update status bar
+            self._update_status()
+
             # Update parent input field with selected paths
             if hasattr(self.parent, "input"):
                 # Update values without validation
@@ -134,6 +181,62 @@ class FileBrowser(Vertical):
                 self.parent._update_value_from_browser(path)
             # Remove the file browser after selection
             self.remove()
+
+    def action_select(self) -> None:
+        """Select the currently focused node."""
+        if self._tree and self._tree.cursor_node:
+            self.on_tree_node_selected(Tree.NodeSelected(self._tree, self._tree.cursor_node))
+
+    def action_close(self) -> None:
+        """Close the file browser."""
+        self.remove()
+
+    def action_toggle_expand(self) -> None:
+        """Toggle expand/collapse of the current node."""
+        if self._tree and self._tree.cursor_node:
+            if self._tree.cursor_node.is_expanded:
+                self._tree.cursor_node.collapse()
+            else:
+                self._tree.cursor_node.expand()
+
+    def on_key(self, event) -> None:
+        """Handle key events for quick search."""
+        # Check if it's a printable character
+        key = event.key
+        if len(key) == 1 and key.isprintable():
+            self._search_prefix += key
+            if self._search_timer:
+                self.remove_timer(self._search_timer)
+            self._search_timer = self.set_timer(1.0, self._reset_search)
+            self._find_matching_node()
+            self._update_status()
+
+    def _reset_search(self) -> None:
+        """Reset the search prefix."""
+        self._search_prefix = ""
+        self._search_timer = None
+        self._update_status()
+
+    def _find_matching_node(self) -> None:
+        """Find and focus the first node that starts with the search prefix."""
+        if not self._tree or not self._search_prefix:
+            return
+
+        # Look through all visible nodes
+        for node in self._tree.walk_nodes():
+            if node is self._tree.root:
+                continue
+
+            # Get the node label text (remove emoji prefix if present)
+            label = node.label.plain
+            if label.startswith(("📁", "📄")):
+                label = label[2:].strip()
+
+            # Check if it matches the prefix
+            if label.lower().startswith(self._search_prefix.lower()):
+                self._tree.cursor_node = node
+                self._tree.scroll_to_node(node)
+                break
 
 
 class FilePickerInput(Horizontal, Changeable):
@@ -186,10 +289,18 @@ class FilePickerInput(Horizontal, Changeable):
                 self.mount(self.browser)
                 # Ensure it's displayed after mounting
                 self.refresh()
+
+                # Focus the tree widget after a short delay to ensure it's rendered
+                self.set_timer(0.1, self._focus_tree)
             else:
                 self.browser.remove()
                 self.browser = None
                 self.refresh()
+
+    def _focus_tree(self) -> None:
+        """Focus the tree widget after it's mounted."""
+        if self.browser and self.browser._tree:
+            self.browser._tree.focus()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input == self.input:
