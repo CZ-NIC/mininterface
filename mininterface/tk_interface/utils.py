@@ -1,20 +1,21 @@
-from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
+from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 from typing import TYPE_CHECKING
 
 from autocombobox import AutoCombobox
 
-from tkinter_form.tkinter_form import Form, FieldForm
+from tkinter_form.tkinter_form import FieldForm, Form
 
 from ..auxiliary import flatten
 from ..config import Config
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag
+from ..types import DatetimeTag, PathTag, SecretTag
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
+from .secret_entry import SecretEntryWrapper
 
 if TYPE_CHECKING:
     from tk_window import TkWindow
@@ -129,20 +130,31 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                     if choice_val is tag.val:
                         variable.set(choice_label)
 
-        # File dialog
-        elif isinstance(tag, PathTag):
-            grid_info = widget.grid_info()
+        elif isinstance(tag, (PathTag, DatetimeTag, SecretTag)):
+            match tag:
+                # File dialog
+                case PathTag():
+                    grid_info = widget.grid_info()
 
-            widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
-            widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+                    widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
+                    widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
 
-        # Calendar
-        elif isinstance(tag, DatetimeTag):
-            grid_info = widget.grid_info()
-            widget.grid_forget()
-            nested_frame = DateEntryFrame(master, tk_app, tag, variable)
-            nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
-            widget = nested_frame.spinbox
+                # Calendar
+                case DatetimeTag():
+                    grid_info = widget.grid_info()
+                    widget.grid_forget()
+                    nested_frame = DateEntryFrame(master, tk_app, tag, variable)
+                    nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+                    widget = nested_frame.spinbox
+
+                case SecretTag():
+                    grid_info = widget.grid_info()
+                    widget.grid_forget()
+                    # Create wrapper and store it in the widget list
+                    wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
+                    widget = wrapper.entry
+                    # Add shortcut to the central shortcuts set
+                    tk_app.shortcuts.add("Ctrl+T: Toggle visibility of password field")
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL

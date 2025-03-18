@@ -1,5 +1,10 @@
+from typing import Optional
 from textual import events
+from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioSet
+from textual.binding import Binding
+
+from ..types.rich_tags import SecretTag
 
 from ..tag import Tag, TagValue
 
@@ -8,6 +13,8 @@ class Changeable:
     """ Widget that can implement on_change method. """
 
     _link: Tag
+    _arbitrary: Optional[Widget] = None
+    """ NOTE: Due to the poor design, we attach ex. hide buttons this way. """
 
     def trigger_change(self):
         if tag := self._link:
@@ -65,3 +72,29 @@ class MySubmitButton(MyButton):
         event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
         self._link.facet.submit()
+
+
+class SecretInput(MyInput):
+    """A password input widget with toggle functionality."""
+
+    BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
+
+    def __init__(self, tag: SecretTag, *args, **kwargs):
+        self.tag = tag
+        super().__init__(tag._get_ui_val(), *args, password=tag._masked, **kwargs)
+        self.show_password = not self.password  # False
+        if tag.show_toggle:
+            self._arbitrary = SecretInputToggle(self, "👁")
+
+    def action_toggle_visibility(self):
+        self.password = self.tag.toggle_visibility()
+
+
+class SecretInputToggle(Button):
+    def __init__(self, input: SecretInput, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = input
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.input.action_toggle_visibility()
+        self.label = "🙈" if self.input.show_password else "👁"

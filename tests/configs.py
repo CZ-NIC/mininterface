@@ -4,11 +4,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Callable, Optional
 
-from tyro.conf import Positional
+from tyro.conf import Positional, arg
 
 from mininterface import Tag
 from mininterface.subcommands import Command
-from mininterface.types import CallbackTag, Choices, PathTag, Validation
+from mininterface.types import CallbackTag, PathTag
+from mininterface.types.alias import Choices, Validation
 from mininterface.validators import not_empty
 
 
@@ -166,10 +167,12 @@ class ComplicatedTypes:
 @dataclass
 class PathTagClass:
     files: Positional[list[Path]] = field(default_factory=list)
+
+    # This becomes PathTag(multiple=True)
+    files2: Annotated[list[Path], Tag(name="Custom name")] = field(default_factory=list)
+
     # NOTE this should become PathTag(multiple=True)
-    # files2: Annotated[list, Tag(name="Custom name")] = field(default_factory=list)
-    # NOTE this should become PathTag(multiple=True)
-    # files2: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
+    # files3: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
 
 
 @dataclass
@@ -207,7 +210,7 @@ class AnnotatedClassInner:
     # files7: Annotated[list[Path], None]
     # files8: Annotated[list[Path], Tag(annotation=str)]
     files3: list[Path] = field(default_factory=list)
-    # files4: Positional[list[Path]] = field(default_factory=list)
+    files4: Positional[list[Path]] = field(default_factory=list)
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
@@ -236,3 +239,11 @@ class Subcommand1(SharedArgs):
 @dataclass
 class Subcommand2(SharedArgs):
     b: int
+
+
+dynamic_str = "My dynamic str"
+
+
+@dataclass
+class DynamicDescription:
+    foo: Annotated[str, Tag(name="Foo"), arg(help=dynamic_str)] = "hello"

@@ -344,7 +344,7 @@ class Tag:
         # Hence, I add a hash function with no intention yet.
         return hash(str(self))
 
-    def _fetch_from(self, tag: "Self") -> "Self":
+    def _fetch_from(self, tag: "Self", name: str = "") -> "Self":
         """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
         """
@@ -355,6 +355,8 @@ class Tag:
                 setattr(self, attr, getattr(tag, attr))
         if self.description == "":
             self.description = tag.description
+        if name and self.name is None:
+            self._original_name = self.name = name
         return self
 
     def _is_a_callable(self) -> bool:
@@ -486,8 +488,7 @@ class Tag:
         self.description = f"{s} {o}"
         if self.name:
             # Why checking self.name?
-            # If not set, we would end up with '* None'
-            # `m.form({"my_text": Tag("", validation=validators.not_empty)})`
+            # If for any reason (I do not know the use case) is not set, we would end up with '* None'
             self.name = f"* {n}"
         self._error_text = s
 

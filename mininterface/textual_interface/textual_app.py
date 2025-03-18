@@ -31,7 +31,6 @@ class TextualApp(App[bool | None]):
 
     DEFAULT_CSS = """
     ImageViewer{
-
         height: 20;
     }
     """
@@ -78,11 +77,13 @@ class TextualApp(App[bool | None]):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
                 yield fieldt
-                if isinstance(fieldt, Changeable) and fieldt._link.description:
+                if isinstance(fieldt, Changeable) and (arb := fieldt._arbitrary):
+                    yield arb
+                if isinstance(fieldt, Changeable) and (desc := fieldt._link.description):
                     if not focus_set:
                         focus_set = True
                         self.focused_i = i
-                    yield Label(fieldt._link.description)
+                    yield Label(desc)
                 yield Label("")
         self.focusable = [w for w in self.widgets if isinstance(w, (Input, Changeable))]
 

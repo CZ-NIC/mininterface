@@ -34,9 +34,8 @@ class BackendAdaptor(ABC):
     post_submit_action: Optional[Callable] = None
     interface: "Mininterface"
 
-    @staticmethod
     @abstractmethod
-    def widgetize(tag: Tag):
+    def widgetize(self, tag: Tag):
         """ Wrap Tag to a UI widget. """
         pass
 
@@ -63,7 +62,7 @@ class MinAdaptor(BackendAdaptor):
         self.facet = Facet(self, interface.env)
         self.interface = interface
 
-    def widgetize(tag: Tag):
+    def widgetize(self, tag: Tag):
         pass
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:

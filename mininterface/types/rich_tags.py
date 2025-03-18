@@ -1,38 +1,11 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Any, Callable, Optional
-from typing_extensions import Self, override
-
-from .auxiliary import common_iterables
-from .tag import Tag, ValidationResult, TagValue
+from typing import Annotated, Any, Callable
 
 
-from .type_stubs import TagCallback, TagType  # Allow import from the module
-
-
-def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
-    """ Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
-
-    ```python
-    from mininterface import Tag, Validation
-    @dataclass
-    class Env:
-        my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
-
-        # which is an alias for:
-        # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
-    ```
-
-    Args:
-        check: Callback function.
-    """
-    return Tag(validation=check)
-
-
-def Choices(*choices: list[str]):
-    """ An alias, see [`Tag.choices`][mininterface.Tag.choices] """
-    return Tag(choices=choices)
+from ..auxiliary import common_iterables
+from ..tag import Tag
 
 
 @dataclass
@@ -125,7 +98,7 @@ class PathTag(Tag):
     ```python
     from pathlib import Path
     from mininterface import run, Tag
-    from mininterface.aliases import PathTag
+    from mininterface.types import PathTag
 
     m = run()
     out = m.form({
@@ -144,6 +117,13 @@ class PathTag(Tag):
     # NOTE Path multiple is not recognized: "File 4": Tag([], annotation=list[Path])
     multiple: bool = False
     """ The user can select multiple files. """
+
+    def __hash__(self):
+        # The function is needed, otherwise the following would not work:
+        # @dataclass
+        # class Env:
+        #   files: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
+        return hash(str(self))
 
     def __post_init__(self):
         super().__post_init__()
@@ -221,6 +201,7 @@ class DatetimeTag(Tag):
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
+    # NOTE calling DatetimeTag("2025-02") should convert str to date?
     def __post_init__(self):
         super().__post_init__()
         if self.annotation:
@@ -229,3 +210,49 @@ class DatetimeTag(Tag):
 
     def _make_default_value(self):
         return datetime.now()
+
+
+@dataclass(repr=False)
+class SecretTag(Tag):
+    """
+    Contains a secret value that should be masked in the UI.
+
+    ```python
+    from mininterface import run, Tag
+    from mininterface.types import SecretTag
+
+    m = run()
+    out = m.form({
+        "My password": SecretTag("TOKEN"),
+    })
+    print(out)
+    # {'My password': 'TOKEN'}
+    ```
+
+    ![File picker](asset/secret_tag.avif)
+    """
+
+    show_toggle: bool = True
+    """ Toggle visibility button (eye icon) """
+
+    _masked: bool = True
+    """ Internal state for visibility """
+
+    def toggle_visibility(self):
+        """Toggle the masked state"""
+        self._masked = not self._masked
+        return self._masked
+
+    def _get_masked_val(self):
+        """Value representation, suitable for an UI that does not handle a masked representation itself."""
+        if self._masked and self.val:
+            return "•" * len(str(self.val))
+        return super()._get_ui_val()
+
+    def __repr__(self):
+        """Ensure secrets are not accidentally exposed in logs/repr"""
+        return f"{self.__class__.__name__}(masked_value)"
+
+    def __hash__(self):
+        """Make SecretTag hashable for use with Annotated"""
+        return hash((self.show_toggle, self._masked))

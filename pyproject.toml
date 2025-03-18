@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.7.5"
+version = "0.7.6"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "GPL-3.0-or-later"
@@ -17,9 +17,10 @@ python = "^3.10"
 tyro = "^0.9"
 typing_extensions = "*"
 pyyaml = "*"
+simple_term_menu = "*"
 # Standard requirements
 autocombobox = "1.4.2"
-humanize = "*"          # used only in the TkInterface, hence it is not a minimal requirement
+humanize = "*"          # NOTE check the size and optinally make it optional
 textual = "<2.0.0"
 tkinter-tooltip = "*"
 tkinter_form = "0.2.1"

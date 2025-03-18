@@ -15,9 +15,10 @@ from ..experimental import SubmitButton
 from ..facet import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
+from ..types import DatetimeTag, PathTag, SecretTag
 from .textual_app import TextualApp, WidgetList
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySubmitButton)
+                      MySubmitButton, SecretInput)
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -31,8 +32,7 @@ class TextualAdaptor(BackendAdaptor):
         self.app: TextualApp | None = None
         self.layout_elements = []
 
-    @staticmethod
-    def widgetize(tag: Tag) -> Widget | Changeable:
+    def widgetize(self, tag: Tag) -> Widget | Changeable:
         """ Wrap Tag to a textual widget. """
 
         v = tag._get_ui_val()
@@ -43,6 +43,10 @@ class TextualAdaptor(BackendAdaptor):
         elif tag._get_choices():
             o = MyRadioSet(*(RadioButton(label, value=val == tag.val)
                              for label, val in tag._get_choices().items()))
+        elif isinstance(tag, (SecretTag)):  # NOTE: PathTag, DatetimeTag not implemented
+            match tag:
+                case SecretTag():
+                    o = SecretInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
@@ -50,7 +54,6 @@ class TextualAdaptor(BackendAdaptor):
         # Replace with a callback button
         elif tag._is_a_callable():
             o = MyButton(tag.name)
-
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)

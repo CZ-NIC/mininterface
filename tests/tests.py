@@ -13,7 +13,7 @@ import warnings
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
-                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, FurtherEnv2,
+                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, DynamicDescription, FurtherEnv2,
                      InheritedAnnotatedClass, MissingPositional,
                      MissingUnderscore, MissingNonscalar, NestedDefaultedEnv, NestedMissingEnv,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
@@ -32,7 +32,7 @@ from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
 from mininterface.text_interface import AssureInteractiveTerminal
-from mininterface.types import CallbackTag, DatetimeTag, PathTag
+from mininterface.types import CallbackTag, DatetimeTag, PathTag, SecretTag
 from mininterface.validators import limit, not_empty
 
 SYS_ARGV = None  # To be redirected
@@ -160,7 +160,8 @@ class TestInteface(TestAbstract):
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
-        self.assertEqual({"my label": Tag(True, "my description"), "nested": {"inner": "another"}}, dict1)
+        self.assertEqual(repr({"my label": Tag(True, "my description", name="my label"),
+                         "nested": {"inner": "another"}}), repr(dict1))
 
         # Empty form invokes editing self.env, which is empty
         with patch('builtins.input', side_effect=["c"]):
@@ -541,12 +542,15 @@ class TestInheritedTag(TestAbstract):
         m = runm(PathTagClass, ["/tmp"])  # , "--files2", "/usr"])
         d = dataclass_to_tagdict(m.env)[""]
 
-        [self.assertEqual(type(v), PathTag) for v in d.values()]
+        [self.assertEqual(PathTag, type(v)) for v in d.values()]
         self.assertEqual(d["files"].name, "files")
-        self.assertEqual(d["files"].multiple, True)
+        self.assertTrue(d["files"].multiple)
 
-        # self.assertEqual(d["files2"].name, "Custom name")
-        # self.assertEqual(d["files2"].multiple, True)
+        self.assertEqual(d["files2"].name, "Custom name")
+        self.assertTrue(d["files2"].multiple)
+
+        # self.assertEqual(d["files3"].name, "Custom name")
+        # self.assertTrue(d["files3"].multiple)
 
 
 class TestTypes(TestAbstract):
@@ -676,7 +680,7 @@ class TestValidators(TestAbstract):
 
 
 class TestLog(TestAbstract):
-    @ staticmethod
+    @staticmethod
     def log(object=SimpleEnv):
         run(object, interface=Mininterface)
         logger = logging.getLogger(__name__)
@@ -685,37 +689,37 @@ class TestLog(TestAbstract):
         logger.warning("warning level")
         logger.error("error level")
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity0(self, mock_basicConfig):
         self.sys("-v")
         with self.assertRaises(SystemExit):
             run(SimpleEnv, add_verbosity=False, interface=Mininterface)
         mock_basicConfig.assert_not_called()
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity1(self, mock_basicConfig):
         self.log()
         mock_basicConfig.assert_not_called()
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
         mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
-    @ patch('logging.basicConfig')
+    @patch('logging.basicConfig')
     def test_custom_verbosity(self, mock_basicConfig):
         """ We use an object, that has verbose attribute too. Which interferes with the one injected. """
         self.log(ConflictingEnv)
@@ -833,7 +837,7 @@ class TestAnnotated(TestAbstract):
         self.assertEqual(list[Path], d["files1"].annotation)
         # self.assertEqual(list[Path], d["files2"].annotation) does not work
         self.assertEqual(list[Path], d["files3"].annotation)
-        # self.assertEqual(list[Path], d["files4"].annotation) does not work
+        self.assertEqual(list[Path], d["files4"].annotation)
         self.assertEqual(list[Path], d["files5"].annotation)
         # This does not work, however I do not know what should be the result
         # self.assertEqual(list[Path], d["files6"].annotation)
@@ -974,6 +978,15 @@ class TestTagAnnotation(TestAbstract):
         # Enum instance signify the default
         self.assertEqual(ColorEnum.RED, m.choice(ColorEnum.RED))
 
+    def test_dynamic_description(self):
+        """ This is an undocumented feature.
+        When you need a dynamic text, you may use tyro's arg to set it.
+        """
+        m = run(DynamicDescription, interface=Mininterface)
+        d = dataclass_to_tagdict(m.env)[""]
+        # tyro seems to add a space after the description in such case, I don't know why
+        self.assertEqual("My dynamic str ", d["foo"].description)
+
 
 class TestSubcommands(TestAbstract):
 
@@ -1060,6 +1073,31 @@ class TestSubcommands(TestAbstract):
         # placeholder help works and shows shared arguments of other subcommands
         with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
             r(["subcommand", "--help"])
+
+
+class TestSecretTag(TestAbstract):
+    """Tests for SecretTag functionality"""
+
+    def test_secret_masking(self):
+        secret = SecretTag("mysecret")
+        self.assertEqual("••••••••", secret._get_masked_val())
+
+        self.assertFalse(secret.toggle_visibility())
+        self.assertEqual("mysecret", secret._get_masked_val())
+
+    def test_toggle_visibility(self):
+        secret = SecretTag("test", show_toggle=False)
+        self.assertTrue(secret._masked)
+        self.assertFalse(secret.toggle_visibility())
+        self.assertFalse(secret._masked)
+
+    def test_repr_safety(self):
+        secret = SecretTag("sensitive_data")
+        self.assertEqual("SecretTag(masked_value)", repr(secret))
+
+    def test_annotation_default(self):
+        secret = SecretTag("test")
+        self.assertEqual(str, secret.annotation)
 
 
 if __name__ == '__main__':

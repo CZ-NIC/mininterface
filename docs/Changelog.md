@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0 (unreleased)
+* better annotated fetching
+* SecretTag
+* much better TextInterface
+
 ## 0.7.5 (2025-01-29)
 * UI [configuration](Configuration.md)
 * experimental [Facet._layout](Facet.md#layout)
