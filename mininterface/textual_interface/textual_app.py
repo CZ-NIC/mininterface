@@ -94,6 +94,8 @@ class TextualApp(App[bool | None]):
             for i, fieldt in enumerate(self.widgets):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
+                elif hasattr(fieldt, "_link") and fieldt._link.name and not isinstance(fieldt, Input):
+                    yield Label(fieldt._link.name)
                 yield fieldt
                 if fieldt._arbitrary:
                     yield fieldt._arbitrary
