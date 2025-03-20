@@ -34,27 +34,28 @@ class FileBrowser(Vertical):
 
     FileBrowser Tree {
         height: auto;
-        max-height: 16;  /* Limit tree height to leave room for nav buttons */
+        max-height: 14;  /* Başlık için yer açmak adına yüksekliği azalttık */
         width: 100%;
         overflow-y: scroll;
         background: $surface;
         padding: 0 1;
     }
 
-    FileBrowser Static {
+    FileBrowser Static#tree_header {
+        height: 1;
+        width: 100%;
+        background: $surface;
+        color: $text;
+        align: left top;
+        padding: 0 1;
+    }
+
+    FileBrowser Static#status_bar {
         height: 1;
         width: 100%;
         background: $surface;
         color: $text;
         align: center bottom;
-        padding: 0 1;
-    }
-    FileBrowser Label {
-        height: 1;
-        width: 100%;
-        background: $surface;
-        color: $text;
-        align: center top;
         padding: 0 1;
     }
 
@@ -77,10 +78,10 @@ class FileBrowser(Vertical):
         self._start_path = self._get_start_path_from_tag()
 
         self._tree = None
-        self._status = Static("")
+        self._header = None
+        self._status = None
         self._search_prefix = ""
         self._search_timer = None
-        self._update_status()
 
     def _get_start_path_from_tag(self) -> Path:
         """Get the starting path from the tag value or fallback to home directory."""
@@ -107,8 +108,13 @@ class FileBrowser(Vertical):
             return Path.home()
 
     def _update_status(self) -> None:
-        """Update the status bar with current information."""
+        """Update the header and status bar with current information."""
         current_dir = f"📂 {self._start_path}"
+
+        # Update the header with the current directory
+        if self._header:
+            self._header.update(current_dir)
+            self._header.refresh()
 
         if self._link.multiple:
             count = len(self.selected_paths)
@@ -123,18 +129,19 @@ class FileBrowser(Vertical):
         if self._search_prefix:
             status_text = f"Searching: {self._search_prefix}... | {status_text}"
 
-        full_status = f"{current_dir} | {status_text}"
-
-        if hasattr(self, "_status"):
-            self._status.update(full_status)
+        if self._status:
+            self._status.update(status_text)
+            self._status.refresh()
 
     def compose(self) -> ComposeResult:
-        """Create and yield the tree widget."""
+        """Create and yield the tree widget with a dynamic header."""
         nav_container = Horizontal(id="nav_buttons")
-
         yield nav_container
 
-        self._tree = Tree("📂 Files")
+        self._header = Static(f"📂 {self._start_path}", id="tree_header")
+        yield self._header
+
+        self._tree = Tree("")
         self._tree.root.expand()
         try:
             self._add_directory(self._start_path, self._tree.root)
@@ -142,14 +149,13 @@ class FileBrowser(Vertical):
             self._tree.root.add(f"⚠️ Error: {str(e)}")
         yield self._tree
 
-        self._status = Static("")
+        self._status = Static("", id="status_bar")
         self._update_status()
         yield self._status
 
     def _add_directory(self, path: Path, node: TreeNode) -> None:
         """Add directory contents to the tree."""
         try:
-            # Sort directories first, then files
             paths = sorted(
                 path.iterdir(),
                 key=lambda p: (not p.is_dir(), p.name.lower())
@@ -162,11 +168,10 @@ class FileBrowser(Vertical):
                 try:
                     if item.is_dir():
                         branch = node.add(f"📁 {item.name}", data=item, expand=False)
-                        # Check if directory has contents before adding dummy node
                         if next(item.iterdir(), None) is not None:
                             branch.add("Loading...")
                     else:
-                        if not self._link.is_dir:  # Only show files if not dir-only
+                        if not self._link.is_dir:
                             node.add(f"📄 {item.name}", data=item)
                 except PermissionError:
                     continue
@@ -182,9 +187,7 @@ class FileBrowser(Vertical):
         if not node.data:
             return
 
-        # Remove dummy nodes
         node.remove_children()
-        # Add actual directory contents
         self._add_directory(node.data, node)
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
@@ -193,50 +196,35 @@ class FileBrowser(Vertical):
         if not node.data:
             return
 
-        # Ensure node.data is a Path object
         path = node.data
         if not isinstance(path, Path):
             try:
                 path = Path(str(path))
             except Exception:
-                # If conversion fails, just return
                 return
 
-        # Update current directory if selecting a directory
         if path.is_dir():
             self._start_path = path
             self._update_status()
+            self.refresh()
 
-        # Skip directories if we're only looking for files
         if self._link.is_dir is False and path.is_dir():
             return
 
-        # Skip files if we're only looking for directories
         if self._link.is_dir is True and not path.is_dir():
             return
 
-        # For multiple selection
         if self._link.multiple:
-            # Toggle selection
             if path in self.selected_paths:
                 self.selected_paths.remove(path)
             else:
                 self.selected_paths.append(path)
-
-            # Update status bar
             self._update_status()
-
-            # Update parent input field with selected paths
             if hasattr(self.parent, "input"):
-                # Update values without validation
                 self.parent._update_value_from_browser(self.selected_paths)
-        # For single selection
         else:
-            # Set the selected path
             if hasattr(self.parent, "input"):
-                # Update value without validation
                 self.parent._update_value_from_browser(path)
-            # Remove the file browser after selection
             self.remove()
 
     def action_select(self) -> None:
@@ -258,7 +246,6 @@ class FileBrowser(Vertical):
 
     def on_key(self, event) -> None:
         """Handle key events for quick search."""
-        # Check if it's a printable character
         key = event.key
         if len(key) == 1 and key.isprintable():
             self._search_prefix += key
@@ -279,17 +266,14 @@ class FileBrowser(Vertical):
         if not self._tree or not self._search_prefix:
             return
 
-        # Look through all visible nodes
         for node in self._tree.walk_nodes():
             if node is self._tree.root:
                 continue
 
-            # Get the node label text (remove emoji prefix if present)
             label = node.label.plain
             if label.startswith(("📁", "📄")):
                 label = label[2:].strip()
 
-            # Check if it matches the prefix
             if label.lower().startswith(self._search_prefix.lower()):
                 self._tree.cursor_node = node
                 self._tree.scroll_to_node(node)
@@ -309,9 +293,7 @@ class FileBrowser(Vertical):
         if not path.exists() or not path.is_dir():
             return
 
-        # Update current path
         self._start_path = path
-
         self._tree.clear()
         self._tree.root.expand()
         try:
@@ -320,6 +302,7 @@ class FileBrowser(Vertical):
             self._tree.root.add(f"⚠️ Error: {str(e)}")
 
         self._update_status()
+        self.refresh()
 
     def action_parent_dir(self) -> None:
         """Navigate to parent directory."""
@@ -333,10 +316,8 @@ class FileBrowser(Vertical):
 
         path = node.data
         if path.is_dir():
-            # Navigate to this directory
             self._navigate_to(path)
         else:
-            # Select this file
             self.on_tree_node_selected(Tree.NodeSelected(self._tree, node))
 
 
@@ -385,13 +366,9 @@ class FilePickerInput(Horizontal, Changeable):
         """Handle button press event."""
         if event.button.id == "file_picker":
             if not self.browser:
-                # Create and mount the file browser
                 self.browser = FileBrowser(self._link)
                 self.mount(self.browser)
-                # Ensure it's displayed after mounting
                 self.refresh()
-
-                # Focus the tree widget after a short delay to ensure it's rendered
                 self.set_timer(0.1, self._focus_tree)
             else:
                 self.browser.remove()
@@ -408,7 +385,6 @@ class FilePickerInput(Horizontal, Changeable):
             self.trigger_change()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        # This is triggered when Enter is pressed in the input
         self.trigger_change()
         if hasattr(self._link, 'facet'):
             self._link.facet.submit()
@@ -422,25 +398,19 @@ class FilePickerInput(Horizontal, Changeable):
         if not value:
             return None
 
-        # For multiple path selection
         if self._link.multiple:
-            # Split by comma and clean up
             path_strings = [p.strip() for p in value.split(',') if p.strip()]
             if not path_strings:
                 return None
 
-            # Try to convert each path to a Path object
             try:
                 return [Path(p) for p in path_strings]
             except Exception:
-                # If conversion fails, return the string values
                 return path_strings
 
-        # For single path selection
         try:
             return Path(value)
         except Exception:
-            # If conversion fails, return the string value
             return value
 
     def _update_value_from_browser(self, path_value):
@@ -448,54 +418,37 @@ class FilePickerInput(Horizontal, Changeable):
         if not self._link:
             return
 
-        # Fix the annotation to match the actual value type
         if isinstance(path_value, list):
             self._link.annotation = list[Path]
         else:
             self._link.annotation = Path
 
-        # For multiple paths
         if isinstance(path_value, list):
-            # Set the input value
             paths_str = ", ".join(str(p) for p in path_value)
             self.input.value = paths_str
-
-            # Directly set the tag's value without validation
             self._link.val = path_value
-
-            # Directly call callback if exists
             if hasattr(self._link, '_callback') and self._link._callback:
                 self._link._callback(self._link)
-        # For single path
         else:
-            # Set the input value
             self.input.value = str(path_value)
-
-            # Directly set the tag's value without validation
             self._link.val = path_value
-
-            # Directly call callback if exists
             if hasattr(self._link, '_callback') and self._link._callback:
                 self._link._callback(self._link)
 
     def trigger_change(self):
         """Override trigger_change to prevent validation errors."""
         if tag := self._link:
-            # Get the current value without validation
             value = self.get_ui_value()
 
-            # Fix the annotation to match the actual value type
             if isinstance(value, list) and all(isinstance(p, Path) for p in value):
                 tag.annotation = list[Path]
             elif isinstance(value, Path):
                 tag.annotation = Path
 
-            # Directly set the value on the tag and trigger change
             if isinstance(value, list) and tag.multiple:
                 tag.val = value
             elif value is not None:
                 tag.val = value
 
-            # Only manually trigger the change callback without validation
             if hasattr(tag, '_callback') and tag._callback:
                 tag._callback(tag)
