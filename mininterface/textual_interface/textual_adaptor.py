@@ -50,7 +50,7 @@ class TextualAdaptor(BackendAdaptor):
                 case SecretTag():
                     o = SecretInput(tag, placeholder=tag.name or "", type="text")
                 case DatetimeTag():  # NOTE: To be expanded
-                    o = MyInput(str(v), placeholder=tag.name or "", type="text")
+                    o = MyInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
@@ -58,15 +58,15 @@ class TextualAdaptor(BackendAdaptor):
         elif tag._is_a_callable():
             o = MyButton(tag.name)
         else:
-            if not isinstance(v, (float, int, str, bool)):
-                v = str(v)
+            # Pass the tag directly to MyInput rather than converting to string first
+            # This allows MyInput to properly handle the value and retain type information
+            type_ = "text"
             if tag._is_subclass(int):
                 type_ = "integer"
             elif tag._is_subclass(float):
                 type_ = "number"
-            else:
-                type_ = "text"
-            o = MyInput(str(v), placeholder=tag.name or "", type=type_)
+
+            o = MyInput(tag, placeholder=tag.name or "", type=type_)
 
         o._link = tag
         tag._last_ui_val = o.get_ui_value()

@@ -33,16 +33,25 @@ class Changeable:
 
 
 class MyInput(Input, Changeable):
-    def __init__(self, tag: Tag, *args, **kwargs):
+    def __init__(self, value_or_tag, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._link = tag
-        initial_value = ""
-        if hasattr(tag, 'val') and tag.val is not None:
-            if isinstance(tag.val, list):
-                initial_value = ", ".join(str(p) for p in tag.val)
-            else:
-                initial_value = str(tag.val)
-        self.value = initial_value
+
+        # Handle both cases: when called with a Tag object or with a direct value
+        if isinstance(value_or_tag, Tag):
+            # Case 1: Called with a Tag object
+            tag = value_or_tag
+            self._link = tag
+            initial_value = ""
+            if hasattr(tag, 'val') and tag.val is not None:
+                if isinstance(tag.val, list):
+                    initial_value = ", ".join(str(p) for p in tag.val)
+                else:
+                    initial_value = str(tag.val)
+            self.value = initial_value
+        else:
+            # Case 2: Called with a direct value (str, int, etc.)
+            self.value = str(value_or_tag)
+            # The _link will be set later by the calling function (widgetize)
 
     def _convert_value(self, value: str):
         """Convert the string value to the appropriate type."""
@@ -52,6 +61,10 @@ class MyInput(Input, Changeable):
         value = value.strip()
         if not value:
             return None
+
+        # If _link isn't set yet, return the value as is
+        if not hasattr(self, '_link'):
+            return value
 
         # Special handling for PathTag
         if isinstance(self._link, PathTag):
