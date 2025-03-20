@@ -11,7 +11,6 @@ from textual.binding import Binding
 class FileBrowser(Vertical):
     """A file browser dialog."""
 
-    # Add key bindings for easier navigation
     BINDINGS = [
         Binding("enter", "select", "Select"),
         Binding("escape", "close", "Close"),
@@ -34,7 +33,7 @@ class FileBrowser(Vertical):
 
     FileBrowser Tree {
         height: auto;
-        max-height: 14;  /* Başlık için yer açmak adına yüksekliği azalttık */
+        max-height: 14;
         width: 100%;
         overflow-y: scroll;
         background: $surface;
@@ -74,7 +73,6 @@ class FileBrowser(Vertical):
         self._link = tag
         self.selected_paths = []
 
-        # Determine start path from tag value
         self._start_path = self._get_start_path_from_tag()
 
         self._tree = None
@@ -82,6 +80,7 @@ class FileBrowser(Vertical):
         self._status = None
         self._search_prefix = ""
         self._search_timer = None
+        self._is_quick_search = False
 
     def _get_start_path_from_tag(self) -> Path:
         """Get the starting path from the tag value or fallback to home directory."""
@@ -111,7 +110,6 @@ class FileBrowser(Vertical):
         """Update the header and status bar with current information."""
         current_dir = f"📂 {self._start_path}"
 
-        # Update the header with the current directory
         if self._header:
             self._header.update(current_dir)
             self._header.refresh()
@@ -125,7 +123,6 @@ class FileBrowser(Vertical):
         else:
             status_text = "Navigate with arrows. Press Enter to select."
 
-        # Show search info if active
         if self._search_prefix:
             status_text = f"Searching: {self._search_prefix}... | {status_text}"
 
@@ -190,8 +187,67 @@ class FileBrowser(Vertical):
         node.remove_children()
         self._add_directory(node.data, node)
 
+    def action_select(self) -> None:
+        """Select the currently focused node."""
+        if self._tree and self._tree.cursor_node:
+            self.on_tree_node_selected(Tree.NodeSelected(self._tree, self._tree.cursor_node))
+
+    def action_close(self) -> None:
+        """Close the file browser."""
+        self.remove()
+
+    def action_toggle_expand(self) -> None:
+        """Toggle expand/collapse of the current node."""
+        if self._tree and self._tree.cursor_node:
+            if self._tree.cursor_node.is_expanded:
+                self._tree.cursor_node.collapse()
+            else:
+                self._tree.cursor_node.expand()
+
+    def on_key(self, event) -> None:
+        """Handle key events for quick search."""
+        key = event.key
+        if len(key) == 1 and key.isprintable():
+            self._search_prefix += key
+            self._search_timer = self.set_timer(1.0, self._reset_search)
+            self._find_matching_node()
+            self._update_status()
+
+    def _find_matching_node(self) -> None:
+        """Find and focus the first node that starts with the search prefix without triggering selection."""
+        if not self._tree or not self._search_prefix:
+            return
+
+        def walk_nodes(node, depth=0):
+            """Walk through nodes in a depth-first manner, yielding nodes in display order."""
+            if depth > 0:  # Skip the root node
+                yield node
+            for child in node.children:
+                yield from walk_nodes(child, depth + 1)
+
+        # Get all nodes in display order (excluding the root)
+        nodes = list(walk_nodes(self._tree.root))
+
+        # Find the first matching node
+        for node in nodes:
+            label = node.label.plain
+            if label.startswith(("📁", "📄")):
+                label = label[2:].strip()
+
+            if label.lower().startswith(self._search_prefix.lower()):
+                # set the flag to indicate this is a quick search focus change
+                self._is_quick_search = True
+                self._tree.select_node(node)
+                self._tree.scroll_to_node(node)
+                self._is_quick_search = False
+                break
+
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         """Called when a node is selected."""
+        # Skip selection logic if this is a quick search focus change
+        if self._is_quick_search:
+            return
+
         node = event.node
         if not node.data:
             return
@@ -227,57 +283,11 @@ class FileBrowser(Vertical):
                 self.parent._update_value_from_browser(path)
             self.remove()
 
-    def action_select(self) -> None:
-        """Select the currently focused node."""
-        if self._tree and self._tree.cursor_node:
-            self.on_tree_node_selected(Tree.NodeSelected(self._tree, self._tree.cursor_node))
-
-    def action_close(self) -> None:
-        """Close the file browser."""
-        self.remove()
-
-    def action_toggle_expand(self) -> None:
-        """Toggle expand/collapse of the current node."""
-        if self._tree and self._tree.cursor_node:
-            if self._tree.cursor_node.is_expanded:
-                self._tree.cursor_node.collapse()
-            else:
-                self._tree.cursor_node.expand()
-
-    def on_key(self, event) -> None:
-        """Handle key events for quick search."""
-        key = event.key
-        if len(key) == 1 and key.isprintable():
-            self._search_prefix += key
-            if self._search_timer:
-                self.remove_timer(self._search_timer)
-            self._search_timer = self.set_timer(1.0, self._reset_search)
-            self._find_matching_node()
-            self._update_status()
-
     def _reset_search(self) -> None:
-        """Reset the search prefix."""
+        """Reset the search prefix after a timeout."""
         self._search_prefix = ""
         self._search_timer = None
         self._update_status()
-
-    def _find_matching_node(self) -> None:
-        """Find and focus the first node that starts with the search prefix."""
-        if not self._tree or not self._search_prefix:
-            return
-
-        for node in self._tree.walk_nodes():
-            if node is self._tree.root:
-                continue
-
-            label = node.label.plain
-            if label.startswith(("📁", "📄")):
-                label = label[2:].strip()
-
-            if label.lower().startswith(self._search_prefix.lower()):
-                self._tree.cursor_node = node
-                self._tree.scroll_to_node(node)
-                break
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle navigation button presses."""
