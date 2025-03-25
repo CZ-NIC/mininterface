@@ -38,15 +38,15 @@ class TextualAdaptor(BackendAdaptor):
         # Handle boolean
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
             o = MyCheckbox(tag.name or "", v)
+            o._link = tag
         # Replace with radio buttons
         elif tag._get_choices():
             o = MyRadioSet(*(RadioButton(label, value=val == tag.val) for label, val in tag._get_choices().items()))
+            o._link = tag
         elif isinstance(tag, (PathTag, DatetimeTag, SecretTag)):
             match tag:
                 case PathTag():
-                    o = FilePickerInput(
-                        tag, placeholder=tag.name or ""
-                    )
+                    o = FilePickerInput(tag, placeholder=tag.name or "")
                 case SecretTag():
                     o = SecretInput(tag, placeholder=tag.name or "", type="text")
                 case DatetimeTag():  # NOTE: To be expanded
@@ -54,12 +54,13 @@ class TextualAdaptor(BackendAdaptor):
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)
+            o._link = tag
         # Replace with a callback button
         elif tag._is_a_callable():
             o = MyButton(tag.name)
+            o._link = tag
         else:
-            # Pass the tag directly to MyInput rather than converting to string first
-            # This allows MyInput to properly handle the value and retain type information
+            # Determine the appropriate input type
             type_ = "text"
             if tag._is_subclass(int):
                 type_ = "integer"
@@ -68,7 +69,10 @@ class TextualAdaptor(BackendAdaptor):
 
             o = MyInput(tag, placeholder=tag.name or "", type=type_)
 
-        o._link = tag
+        # For custom widget types that may not set _link in their constructor
+        if not hasattr(o, "_link"):
+            o._link = tag
+
         tag._last_ui_val = o.get_ui_value()
         return o
 

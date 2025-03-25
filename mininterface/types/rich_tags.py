@@ -125,9 +125,6 @@ class PathTag(Tag):
     is_file: bool = False
     """ If True, validates that the selected path is a file """
 
-    def __hash__(self):
-        return hash(str(self))
-
     def __post_init__(self):
         super().__post_init__()
         if not self.annotation:
