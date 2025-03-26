@@ -28,14 +28,15 @@ class TkWindow(Tk, BackendAdaptor):
         self._result = None
         self._event_bindings = {}
         self.interface = interface
+        # NOTE: I'd prefer to have shortcuts somewhere ex. in the status bar ad hoc
         self.shortcuts = set([
-            "Ctrl+H: Show this help",
+            "F1: Show this help",
             "Enter: Submit form",
             "Escape: Cancel"
         ])
         self.title(interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
-        self.bind('<Control-h>', self._show_help)  # Help with Ctrl+H
+        self.bind('<F1>', self._show_help)  # Help with Ctrl+H
 
         # NOTE it would be nice to auto-hide the scrollbars if not needed
         self.sf = ScrolledFrame(self, use_ttk=True)
@@ -68,8 +69,7 @@ class TkWindow(Tk, BackendAdaptor):
         help_window.bind('<Escape>', lambda e: help_window.destroy())
         help_window.focus_set()
 
-    @staticmethod
-    def widgetize(tag: Tag) -> Value:
+    def widgetize(self, tag: Tag) -> Value:
         """ Wrap Tag to a textual widget. """
         v = tag._get_ui_val()
         if tag.annotation is bool and not isinstance(v, bool):

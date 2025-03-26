@@ -34,8 +34,8 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     return type(tag)
 
 
-def tag_fetch(tag: Tag, ref: dict | None):
-    return tag._fetch_from(Tag(**ref))
+def tag_fetch(tag: Tag, ref: dict | None, name: str):
+    return tag._fetch_from(Tag(**ref), name)
 
 
 def tag_assure_type(tag: Tag):

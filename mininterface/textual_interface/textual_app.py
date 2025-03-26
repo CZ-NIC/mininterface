@@ -97,13 +97,13 @@ class TextualApp(App[bool | None]):
                 elif hasattr(fieldt, "_link") and fieldt._link.name and not isinstance(fieldt, Input):
                     yield Label(fieldt._link.name)
                 yield fieldt
-                if fieldt._arbitrary:
-                    yield fieldt._arbitrary
-                if isinstance(fieldt, Changeable) and fieldt._link.description:
+                if isinstance(fieldt, Changeable) and (arb := fieldt._arbitrary):
+                    yield arb
+                if isinstance(fieldt, Changeable) and (desc := fieldt._link.description):
                     if not focus_set:
                         focus_set = True
                         self.focused_i = i
-                    yield Label(fieldt._link.description)
+                    yield Label(desc)
                 yield Label("")
         self.focusable = [w for w in self.widgets if isinstance(w, (Input, Changeable))]
 

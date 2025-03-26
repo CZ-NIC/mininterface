@@ -160,7 +160,8 @@ class TestInteface(TestAbstract):
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
-        self.assertEqual({"my label": Tag(True, "my description"), "nested": {"inner": "another"}}, dict1)
+        self.assertEqual(repr({"my label": Tag(True, "my description", name="my label"),
+                         "nested": {"inner": "another"}}), repr(dict1))
 
         # Empty form invokes editing self.env, which is empty
         with patch('builtins.input', side_effect=["c"]):
@@ -1083,6 +1084,13 @@ class TestSubcommands(TestAbstract):
 
 class TestSecretTag(TestAbstract):
     """Tests for SecretTag functionality"""
+
+    def test_secret_masking(self):
+        secret = SecretTag("mysecret")
+        self.assertEqual("••••••••", secret._get_masked_val())
+
+        self.assertFalse(secret.toggle_visibility())
+        self.assertEqual("mysecret", secret._get_masked_val())
 
     def test_toggle_visibility(self):
         secret = SecretTag("test", show_toggle=False)

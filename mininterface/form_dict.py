@@ -106,7 +106,7 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
             if not isinstance(val, Tag):
                 tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
             else:
-                tag = tag_fetch(val, d)
+                tag = tag_fetch(val, d, key)
             tag = tag_assure_type(tag)
             fd[key] = tag
     return fd
@@ -186,7 +186,7 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
             if not isinstance(val, Tag):
                 tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:
-                tag = tag_fetch(val, d)
+                tag = tag_fetch(val, d, param)
                 tag = tag_assure_type(tag)
             (subdict if _nested else main)[param] = tag
     return subdict

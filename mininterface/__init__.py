@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
+from .config import Config
+
 from .types.alias import Choices, Validation
 
 from .exceptions import Cancelled, InterfaceNotAvailable
@@ -38,7 +40,8 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         config_file: Path | str | bool = True,
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
-        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | None = None,
+        # We do not use InterfaceType as a type here because we want the documentation to show full alias:
+        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | None = None,
         args: Optional[Sequence[str]] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
