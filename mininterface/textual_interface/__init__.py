@@ -16,13 +16,22 @@ from ..mininterface import Mininterface
 from .textual_adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
 
-if not sys.stdin.isatty():
-    raise InterfaceNotAvailable
-
 
 class TextualInterface(Redirectable, Mininterface):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, need_atty=True, **kwargs):
+        if need_atty and not sys.stdin.isatty():
+            # TODO
+            # We cannot have the check at the module level due to WebUI (without atty).
+            # Without this check, an erroneous textual instance appears.
+            # With the, a TextInterface run – arrows work, not text.
+            # Investigate, whether we can grasp text input with TextInterface when piping stdin.
+            # We should do it as ipdb did that (as it is mentioned in Interfaces.md).
+            # Then, put into Interfaces.md
+            # interactive terminal -> TextualInterface
+            # non-interactive -> TextInterface
+            # non-terminal (cron) -> Mininterface
+            raise InterfaceNotAvailable
         super().__init__(*args, **kwargs)
         self.adaptor = TextualAdaptor(self)
 

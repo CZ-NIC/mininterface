@@ -54,6 +54,24 @@ class AssureInteractiveTerminal:
         return self._entered or sys.stdin.isatty() and sys.stdout.isatty()
 
 
+class StdinTTYWrapper:
+    """ Revive interactive features when piping into the program.
+    Fail when in a cron job.
+    """
+
+    def __enter__(self):
+        self.original_stdin = sys.stdin
+        if not sys.stdin.isatty():
+            try:
+                sys.stdin = open("/dev/tty", "r")
+            except OSError:
+                sys.stdin = self.original_stdin
+        return sys.stdin
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdin = self.original_stdin
+
+
 class TextInterface(AssureInteractiveTerminal, Mininterface):
     """ Plain text fallback interface. No dependencies. """
 
@@ -63,18 +81,20 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
 
     def alert(self, text: str):
         """ Display text and let the user hit any key. """
-        input(text + " Hit any key.")
+        with StdinTTYWrapper():
+            input(text + " Hit any key.")
 
     def ask(self, text: str = None):
-        if not self.interactive:
-            return super().ask(text)
-        try:
-            txt = input(text + ": ") if text else input()
-        except EOFError:
-            txt = "x"
-        if txt == "x":
-            raise Cancelled(".. cancelled")
-        return txt
+        with StdinTTYWrapper():
+            if not self.interactive:
+                return super().ask(text)
+            try:
+                txt = input(text + ": ") if text else input()
+            except EOFError:
+                txt = "x"
+            if txt == "x":
+                raise Cancelled(".. cancelled")
+            return txt
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,
@@ -83,7 +103,8 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
              submit: str | bool = True
              ) -> FormDict | DataClass | EnvClass:
         try:
-            return self._form(form, title, self.adaptor, submit=submit)
+            with StdinTTYWrapper():
+                return self._form(form, title, self.adaptor, submit=submit)
         except NotImplementedError:  # simple-term-menu raises this when vscode runs tests
             if not self.interactive:
                 return super().form(form=form, title=title, submit=submit)
@@ -112,20 +133,23 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
         """
         Let user write number. Empty input = 0.
         """
-        while True:
-            try:
-                t = self.ask(text=text)
-                if not t:
-                    return 0
-                return int(t)
-            except ValueError:
-                print("This is not a number")
+        with StdinTTYWrapper():
+            while True:
+                try:
+                    t = self.ask(text=text)
+                    if not t:
+                        return 0
+                    return int(t)
+                except ValueError:
+                    print("This is not a number")
 
     def is_yes(self, text: str):
-        return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
+        with StdinTTYWrapper():
+            return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
 
     def is_no(self, text):
-        return self.ask(text=text + " y/[n]").lower() in ("n", "no", "")
+        with StdinTTYWrapper():
+            return self.ask(text=text + " y/[n]").lower() in ("n", "no", "")
 
 
 class ReplInterface(TextInterface):

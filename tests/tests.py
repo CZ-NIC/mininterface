@@ -1092,6 +1092,13 @@ class TestSecretTag(TestAbstract):
         self.assertFalse(secret.toggle_visibility())
         self.assertEqual("mysecret", secret._get_masked_val())
 
+    def test_secret_masking(self):
+        secret = SecretTag("mysecret")
+        self.assertEqual("••••••••", secret._get_masked_val())
+
+        self.assertFalse(secret.toggle_visibility())
+        self.assertEqual("mysecret", secret._get_masked_val())
+
     def test_toggle_visibility(self):
         secret = SecretTag("test", show_toggle=False)
         self.assertTrue(secret._masked)

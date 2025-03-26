@@ -4,6 +4,7 @@
 * better annotated fetching
 * SecretTag
 * much better TextInterface
+* experimental WebInterface
 
 ## 0.7.5 (2025-01-29)
 * UI [configuration](Configuration.md)

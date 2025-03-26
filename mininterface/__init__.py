@@ -1,3 +1,4 @@
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -116,6 +117,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
             You may write "gui" or "tui" literal or pass a specific Mininterface type,
             see the full [list](Interfaces.md) of possible interfaces.
+            If not set, we look also for an environment variable MININTERFACE_INTERFACE and in the config file.
         args: Parse arguments from a sequence instead of the command line.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
@@ -173,6 +175,8 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
 
     # Determine title
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
+    if not interface:
+        interface = os.environ.get("MININTERFACE_INTERFACE")
     start = Start(title, interface)
 
     # Hidden meta-commands in args
@@ -193,6 +197,8 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         parse_cli(_Empty, config_file, add_verbosity, ask_for_missing, args)
 
     # Build the interface
+    if i_ := os.environ.get("MININTERFACE_ENFORCED_WEB"):
+        interface = "web"
     m = get_interface(title, interface, env)
 
     # Empty CLI → GUI edit

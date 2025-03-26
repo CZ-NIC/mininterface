@@ -361,6 +361,19 @@ class Tag:
             self._original_name = self.name = name
         return self
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["facet"] = None  # TODO WebUi rather than deleting facet, try removing StdIO from it.
+        state["_src_dict"] = None
+        state["_src_obj"] = None
+        state["_src_class"] = None
+        return state
+
+    def __setstate__(self, state):
+        # TODO check with WebUI.
+        self.__dict__.update(state)
+        self._update_source(self.val)
+
     def _is_a_callable(self) -> bool:
         """ True, if the value is a callable function.
         Why not checking isinstance(self.annotation, Callable)?

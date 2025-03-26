@@ -14,11 +14,11 @@ with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
-# `GuiInterface` = `TkInterface`
+# `GuiInterface` or `TkInterface` or 'gui'
 
 A tkinter window.
 
-# `TuiInterface`
+# `TuiInterface` or 'tui'
 
 An interactive terminal.
 
@@ -28,10 +28,64 @@ If [textual](https://github.com/Textualize/textual) installed, rich and mouse cl
 
 ## `TextInterface`
 
-Plain text only interface with no dependency as a fallback.
+Plain text only interface with no dependency as a fallback. Does not clear whole screen as TextualInterface if it suits better your program flow.
 
 When used in a with statement, the non-interactive session becomes interactive if possible, see the Mininterface [enter][mininterface.Mininterface.__enter__] method.
+
+# `WebInterface` or 'web'
+
+Exposed to a web.
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+
+@dataclass
+class Env:
+    my_flag: bool = False
+    my_number: int = 4
+
+if __name__ == "__main__":
+    m = run(Env, interface="web")
+    m.form()  # Exposed on the web
+```
+
+Note that you can expose to the web any mininterface application, like this GUI:
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+
+@dataclass
+class Env:
+    my_flag: bool = False
+    my_number: int = 4
+
+if __name__ == "__main__":
+    m = run(Env, interface="gui")
+    m.form()  # Seen in the GUI
+```
+
+We expose it to the web by invoking it through the `mininterface` program.
+
+```bash
+$ mininterface --web.cmd ./program.py --web.port 9997
+```
+
+!!! Caveat
+    Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!
+
+    ```python
+    hello = "world"  # This line would run thrice!
+    with run(interface="web") as m:
+        m.form({"one": 1})
+        m.form({"two": 2})
+    ```
 
 # `ReplInterface`
 
 A debug terminal. Invokes a breakpoint after every dialog.
+
+# `Mininterface`
+
+When a GUI is not available (GuiInterface), nor the rich TUI is available (TextualInterface), nor the mere interactive TextInterface is available, the original non-interactive Mininterface is used. The ensures the program is still working in cron jobs etc.

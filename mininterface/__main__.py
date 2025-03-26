@@ -1,5 +1,5 @@
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, Optional
 
 from tyro.conf import FlagConversionOff
@@ -8,19 +8,17 @@ from . import Mininterface, run
 from .exceptions import DependencyRequired
 from .showcase import ChosenInterface, showcase
 
-__doc__ = """Simple GUI dialog. Outputs the value the user entered."""
+__doc__ = """Simple GUI/TUI dialog. Outputs the value the user entered. See the full docs at: https://cz-nic.github.io/mininterface/"""
 
 
 @dataclass
 class Web:
-    """ Experimenal undocumented feature. """
+    """Launch a miniterface program, while the TextualInterface will be exposed to the web.
+
+    NOTE Experimenal undocumented feature. """
 
     cmd: str = ""
-    """ Launch a miniterface program, while the TextualInterface will be exposed to the web."""
-    # NOTE: The textual app ends after the first submit. We have to correct that before the web makes sense.
-    # with run(interface=TextualInterface) as m:
-    #   m.form({"hello": 1})  # the app ends here
-    #   m.form({"hello": 2})  # we never get here
+    """Path to a program, using mininterface."""
 
     port: int = 64646
 
@@ -41,18 +39,16 @@ class CliInteface:
     """ Display confirm box, focusing 'yes'. """
     is_no: str = ""
     """ Display confirm box, focusing 'no'. """
+    choice: list = field(default_factory=list)
+    """ Prompt the user to select. """
 
     showcase: Optional[tuple[ChosenInterface, Showcase]] = None
     """ Prints various form just to show what's possible."""
 
 
-def web(m: Mininterface):
-    try:
-        from textual_serve.server import Server
-    except ImportError:
-        raise DependencyRequired("web")
-    server = Server(m.env.web.cmd, port=m.env.web.port)
-    server.serve()
+def web(env: Web):
+    from .web_interface import WebInterface
+    WebInterface(cmd=env.cmd, port=env.port)
 
 
 def main():
@@ -72,7 +68,7 @@ def main():
     [print(val) for val in result]
 
     if m.env.web.cmd:
-        web(m)
+        web(m.env.web)
     if m.env.showcase:
         showcase(*m.env.showcase)
 
