@@ -264,10 +264,10 @@ class FileBrowser(Vertical):
             self._update_status()
             self.refresh()
 
-        if self._link.is_dir is False and path.is_dir():
+        if not self._link.is_dir and path.is_dir():
             return
 
-        if self._link.is_dir is True and not path.is_dir():
+        if self._link.is_dir and not path.is_dir():
             return
 
         if self._link.multiple:
@@ -357,12 +357,7 @@ class FilePickerInput(Horizontal, Changeable):
     def __init__(self, tag: PathTag, **kwargs):
         super().__init__()
         self._link = tag
-        initial_value = ""
-        if tag.val is not None:
-            if isinstance(tag.val, list):
-                initial_value = ", ".join(str(p) for p in tag.val)
-            else:
-                initial_value = str(tag.val)
+        initial_value = str(tag.val)
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
         self.button = Button("Browse", variant="primary", id="file_picker")
         self.browser = None
@@ -390,75 +385,16 @@ class FilePickerInput(Horizontal, Changeable):
         if self.browser and self.browser._tree:
             self.browser._tree.focus()
 
-    def on_input_changed(self, event: Input.Changed) -> None:
-        if event.input == self.input:
-            self.trigger_change()
-
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.trigger_change()
-        if hasattr(self._link, 'facet'):
-            self._link.facet.submit()
+        self._link.facet.adaptor.app.action_confirm()
 
     def get_ui_value(self):
         """Get the current value of the input field."""
-        if not self.input.value:
-            return None
-
-        value = self.input.value.strip()
-        if not value:
-            return None
-
-        if self._link.multiple:
-            path_strings = [p.strip() for p in value.split(',') if p.strip()]
-            if not path_strings:
-                return None
-
-            try:
-                return [Path(p) for p in path_strings]
-            except Exception:
-                return path_strings
-
-        try:
-            return Path(value)
-        except Exception:
-            return value
+        return self.input.value
 
     def _update_value_from_browser(self, path_value):
         """Update the value from browser selection directly, bypassing validation."""
-        if not self._link:
-            return
-
         if isinstance(path_value, list):
-            self._link.annotation = list[Path]
-        else:
-            self._link.annotation = Path
-
-        if isinstance(path_value, list):
-            paths_str = ", ".join(str(p) for p in path_value)
-            self.input.value = paths_str
-            self._link.val = path_value
-            if hasattr(self._link, '_callback') and self._link._callback:
-                self._link._callback(self._link)
+            self.input.value = str([str(p) for p in path_value])
         else:
             self.input.value = str(path_value)
-            self._link.val = path_value
-            if hasattr(self._link, '_callback') and self._link._callback:
-                self._link._callback(self._link)
-
-    def trigger_change(self):
-        """Override trigger_change to prevent validation errors."""
-        if tag := self._link:
-            value = self.get_ui_value()
-
-            if isinstance(value, list) and all(isinstance(p, Path) for p in value):
-                tag.annotation = list[Path]
-            elif isinstance(value, Path):
-                tag.annotation = Path
-
-            if isinstance(value, list) and tag.multiple:
-                tag.val = value
-            elif value is not None:
-                tag.val = value
-
-            if hasattr(tag, '_callback') and tag._callback:
-                tag._callback(tag)

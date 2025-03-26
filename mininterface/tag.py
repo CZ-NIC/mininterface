@@ -261,6 +261,8 @@ class Tag:
     _attrs_field: AttrsFieldInfo = None
 
     def __post_init__(self):
+        """ Determine annotation and fetch other information. """
+
         # Fetch information from the nested tag: `Tag(Tag(...))`
         if isinstance(self.val, Tag):
             if self._src_obj or self._src_key:

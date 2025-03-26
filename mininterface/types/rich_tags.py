@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from ..auxiliary import common_iterables
 from ..tag import Tag
@@ -113,25 +113,38 @@ class PathTag(Tag):
 
     ![File picker](asset/file_picker.avif)
     """
-    multiple: bool = False
+    multiple: Optional[bool] = None
     """ The user can select multiple files. """
 
-    exist: bool = False
+    exist: Optional[bool] = None
     """ If True, validates that the selected file exists """
 
-    is_dir: bool = False
+    is_dir: Optional[bool] = None
     """ If True, validates that the selected path is a directory """
 
-    is_file: bool = False
+    is_file: Optional[bool] = None
     """ If True, validates that the selected path is a file """
 
     def __post_init__(self):
-        super().__post_init__()
-        if not self.annotation:
+        # Determine annotation from multiple
+        if not self.annotation and self.multiple is not None:
             self.annotation = list[Path] if self.multiple else Path
-        else:
+
+        # Determine the annotation from the value and correct it,
+        # as the Tag.guess_type will fetch a mere `str` from `PathTag("/var")`
+        super().__post_init__()
+        if self.annotation == str:  # PathTag("/var")
+            self.annotation = Path
+        if self.annotation == list[str]:  # PathTag(["/var"])
+            self.annotation = list[Path]
+        if self.annotation == list:  # PathTag([])
+            self.annotation = list[Path]
+
+        # Determine multiple from annotation
+        if self.multiple is None:
             for origin, _ in self._get_possible_types():
                 if origin in common_iterables:
+                    self.multiple = True
                     break
 
     def _validate(self, value):

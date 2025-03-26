@@ -37,7 +37,7 @@ def flatten_keys(d: dict[KT, T | dict]) -> Iterable[tuple[KT, T]]:
 
 def guess_type(val: T) -> type[T]:
     t = type(val)
-    if t in common_iterables and len(common_iterables):
+    if t in common_iterables:
         elements_type = set(type(x) for x in val)
         if len(elements_type) == 1:
             return t[list(elements_type)[0]]

@@ -521,6 +521,11 @@ class TestInheritedTag(TestAbstract):
             "3": PathTag([Path("/tmp")], multiple=True),
             "4": PathTag([Path("/tmp")]),
             "5": PathTag(Path("/tmp")),
+            "6": PathTag(["/tmp"]),
+            "7": PathTag([]),
+            # NOTE these should work
+            # "7": Tag(Path("/tmp")),
+            # "8": Tag([Path("/tmp")]),
         }, m)
 
         # every item became PathTag
@@ -530,11 +535,13 @@ class TestInheritedTag(TestAbstract):
         # correct annotation
         self.assertEqual(d["1"].annotation, PathType)
         self.assertEqual(d["2"].annotation, Path)
-        self.assertEqual(d["3"].annotation, list[PathType])
-        self.assertEqual(d["3"].annotation, list[PathType])
+        self.assertEqual(d["3"].annotation, list[Path])
         self.assertEqual(d["4"].annotation, list[PathType])
+        self.assertEqual(d["5"].annotation, PathType)
+        self.assertEqual(d["6"].annotation, list[Path])
+        self.assertEqual(d["7"].annotation, list[Path])
         # PathTag specific attribute
-        [self.assertTrue(v.multiple) for k, v in d.items() if k in ("3", "4")]
+        [self.assertTrue(v.multiple) for k, v in d.items() if k in ("3", "4", "6", "7")]
         [self.assertFalse(v.multiple) for k, v in d.items() if k in ("1", "2", "5")]
 
     def test_path_class(self):
