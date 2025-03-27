@@ -1,8 +1,6 @@
 from typing import TYPE_CHECKING
 from textual import events
 from textual.app import App, ComposeResult
-from textual.content import Content
-from textual.binding import Binding
 from textual.containers import VerticalScroll, Container
 from textual.widget import Widget
 from textual.widgets import (
@@ -119,7 +117,6 @@ class MainContents(Static):
         yield Footer()
         if text := self.adaptor.interface._redirected.join():
             yield Label(text, id="buffered_text")
-        focus_set = False
         with VerticalScroll():
             yield from self.adaptor.layout_elements
             for i, fieldt in enumerate(self.widgets):
@@ -133,16 +130,19 @@ class MainContents(Static):
                 if isinstance(fieldt, Changeable) and (arb := fieldt._arbitrary):
                     yield arb
                 if isinstance(fieldt, Changeable) and (desc := fieldt._link.description):
-                    if not focus_set:
-                        focus_set = True
-                        self.focused_i = i
                     yield Label(desc)
                 yield Label("")
         self.focusable_.clear()
         self.focusable_.extend(w for w in self.widgets if isinstance(w, (Input, Changeable)))
 
     def on_mount(self):
-        self.widgets[self.focused_i].focus()
+        if self.widgets and 0 <= self.focused_i < len(self.widgets):
+            widget = self.widgets[self.focused_i]
+            # If it's a widget with an input field (like FilePickerInput), focus that input
+            if hasattr(widget, "input") and hasattr(widget.input, "focus"):
+                widget.input.focus()
+            else:
+                widget.focus()
 
     def on_key(self, event: events.Key) -> None:
         f = self.focusable_
