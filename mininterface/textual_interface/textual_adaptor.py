@@ -1,25 +1,20 @@
 from typing import TYPE_CHECKING
 
-from textual import events
-from textual.app import App, ComposeResult
-from textual.binding import Binding
-from textual.containers import VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Rule, Label, RadioButton
 
 from .textual_facet import TextualFacet
 from .file_picker_input import FilePickerInput
 
-from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..experimental import SubmitButton
 from ..facet import BackendAdaptor
-from ..form_dict import TagDict, formdict_to_widgetdict
+from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag, SecretTag
-from .textual_app import TextualApp, WidgetList
+from ..types import PathTag, SecretTag
+from .textual_app import TextualApp
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySubmitButton, SecretInput)
+                      MySubmitButton, MySecretInput)
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -49,7 +44,7 @@ class TextualAdaptor(BackendAdaptor):
                 case PathTag():
                     o = FilePickerInput(tag, placeholder=tag.name or "")
                 case SecretTag():
-                    o = SecretInput(tag, placeholder=tag.name or "", type="text")
+                    o = MySecretInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             o = MySubmitButton(tag.name)

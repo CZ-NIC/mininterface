@@ -3,6 +3,8 @@ from textual import events
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioSet
 from textual.binding import Binding
+from textual.containers import Horizontal
+from textual.app import ComposeResult
 
 from ..types.rich_tags import SecretTag
 
@@ -30,6 +32,13 @@ class Changeable:
             return None
         else:
             return self.value
+
+    def _mount_arbitrary(self):
+        """Helper method to position _arbitrary correctly if it exists"""
+        if getattr(self, "_arbitrary", None):
+            # Eğer arbitrary bir buton ise, pozisyonunu ayarla
+            if isinstance(self._arbitrary, Button):
+                self._arbitrary.styles.dock = "right"
 
 
 class MyInput(Input, Changeable):
@@ -74,27 +83,58 @@ class MySubmitButton(MyButton):
         self._link.facet.submit()
 
 
-class SecretInput(MyInput):
-    """A password input widget with toggle functionality."""
+class MySecretInput(Horizontal, Changeable):
+    """A custom widget that combines an input field with a visibility toggle button."""
 
     BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
 
-    def __init__(self, tag: SecretTag, *args, **kwargs):
+    DEFAULT_CSS = """
+    MySecretInput {
+        layout: horizontal;
+        height: auto;
+        width: 100%;
+    }
+
+    MySecretInput Input {
+        width: 80%;
+        margin: 1;
+    }
+
+    MySecretInput Button {
+        width: 20%;
+        margin: 1;
+        background: $accent;
+        color: $text;
+    }
+    """
+
+    def __init__(self, tag: SecretTag, **kwargs):
+        super().__init__()
         self.tag = tag
-        super().__init__(tag._get_ui_val(), *args, password=tag._masked, **kwargs)
-        self.show_password = not self.password  # False
-        if tag.show_toggle:
-            self._arbitrary = SecretInputToggle(self, "👁")
+        initial_value = tag._get_ui_val()
+        self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""), password=tag._masked)
+        self.button = Button("👁", variant="primary", id="toggle_visibility")
 
-    def action_toggle_visibility(self):
-        self.password = self.tag.toggle_visibility()
-
-
-class SecretInputToggle(Button):
-    def __init__(self, input: SecretInput, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.input = input
+    def compose(self) -> ComposeResult:
+        """Compose the widget layout."""
+        yield self.input
+        yield self.button
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.input.action_toggle_visibility()
-        self.label = "🙈" if self.input.show_password else "👁"
+        """Handle button press event."""
+        if event.button.id == "toggle_visibility":
+            self.toggle_visibility()
+
+    def toggle_visibility(self):
+        """Toggle password visibility."""
+        is_masked = self.tag.toggle_visibility()
+        self.input.password = is_masked
+        self.button.label = "🙈" if is_masked else "👁"
+
+    def action_toggle_visibility(self):
+        """Action method for the toggle visibility binding."""
+        self.toggle_visibility()
+
+    def get_ui_value(self):
+        """Get the current value of the input field."""
+        return self.input.value
