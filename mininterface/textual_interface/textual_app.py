@@ -136,13 +136,7 @@ class MainContents(Static):
         self.focusable_.extend(w for w in self.widgets if isinstance(w, (Input, Changeable)))
 
     def on_mount(self):
-        if self.widgets and 0 <= self.focused_i < len(self.widgets):
-            widget = self.widgets[self.focused_i]
-            # If it's a widget with an input field (like FilePickerInput), focus that input
-            if hasattr(widget, "input") and hasattr(widget.input, "focus"):
-                widget.input.focus()
-            else:
-                widget.focus()
+        self.widgets[self.focused_i].focus()
 
     def on_key(self, event: events.Key) -> None:
         f = self.focusable_

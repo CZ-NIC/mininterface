@@ -33,12 +33,17 @@ class Changeable:
         else:
             return self.value
 
-    def _mount_arbitrary(self):
-        """Helper method to position _arbitrary correctly if it exists"""
-        if getattr(self, "_arbitrary", None):
-            # Eğer arbitrary bir buton ise, pozisyonunu ayarla
-            if isinstance(self._arbitrary, Button):
-                self._arbitrary.styles.dock = "right"
+    def focus(self):
+        """Focus this widget or its input element if available.
+
+        This provides a consistent interface for all widgets.
+        Compound widgets with inner input fields will delegate focus
+        to the appropriate input element.
+        """
+        if hasattr(self, "input") and hasattr(self.input, "focus"):
+            self.input.focus()
+        elif hasattr(super(), "focus"):
+            super().focus()
 
 
 class MyInput(Input, Changeable):
@@ -111,6 +116,7 @@ class MySecretInput(Horizontal, Changeable):
     def __init__(self, tag: SecretTag, **kwargs):
         super().__init__()
         self.tag = tag
+        self._link = tag
         initial_value = tag._get_ui_val()
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""), password=tag._masked)
         self.button = Button("👁", variant="primary", id="toggle_visibility")
@@ -123,17 +129,22 @@ class MySecretInput(Horizontal, Changeable):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press event."""
         if event.button.id == "toggle_visibility":
-            self.toggle_visibility()
+            self.action_toggle_visibility()
 
-    def toggle_visibility(self):
-        """Toggle password visibility."""
+    def action_toggle_visibility(self):
+        """Toggle password visibility.
+
+        This action method is called when:
+        1. User presses the visibility toggle button
+        2. User presses Ctrl+T keyboard shortcut
+        """
         is_masked = self.tag.toggle_visibility()
         self.input.password = is_masked
         self.button.label = "🙈" if is_masked else "👁"
 
-    def action_toggle_visibility(self):
-        """Action method for the toggle visibility binding."""
-        self.toggle_visibility()
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle Enter key in the input field to submit the form."""
+        self._link.facet.adaptor.app.action_confirm()
 
     def get_ui_value(self):
         """Get the current value of the input field."""
