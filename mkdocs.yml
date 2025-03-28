@@ -51,7 +51,7 @@ nav:
       - Subcommands.md
       - Helper-types.md
   - Extras:
-      - Configuration.md
+      - Options.md
       - Exceptions.md
       - Interfaces.md
       - Standalone.md

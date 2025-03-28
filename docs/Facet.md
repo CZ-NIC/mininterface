@@ -1,5 +1,5 @@
 # Facet
-::: mininterface.facet.Facet
+::: mininterface.mininterface.facet.Facet
 
 ## Layout
 

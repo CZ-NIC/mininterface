@@ -1,6 +1,7 @@
 #
 # CLI and config file parsing.
 #
+from dataclasses import dataclass, fields, asdict
 import logging
 import sys
 import warnings
@@ -18,9 +19,13 @@ from tyro._argparse_formatter import TyroArgumentParser
 from tyro._singleton import MISSING_NONPROP
 from tyro.extras import get_parser
 
+from mininterface.static import merge_dicts
+
+from .static import dataclass_asdict_no_defaults
+
 
 from .auxiliary import yield_annotations
-from .config import MininterfaceConfig, Config
+from .options import GuiOptions, MininterfaceOptions, TextOptions, TextualOptions, WebOptions
 from .form_dict import EnvClass, MissingTagValue
 from .tag import Tag
 from .tag_factory import tag_factory
@@ -101,11 +106,12 @@ def assure_args(args: Optional[Sequence[str]] = None):
     return args
 
 
-def run_tyro_parser(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
-                    kwargs: dict,
-                    add_verbosity: bool,
-                    ask_for_missing: bool,
-                    args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
+def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
+              kwargs: dict,
+              add_verbosity: bool = True,
+              ask_for_missing: bool = True,
+              args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
+    """ Run the tyro parser to fetch program configuration from CLI """
     type_form = env_or_list
     if isinstance(type_form, list):
         # We have to convert the list of possible classes (subcommands) to union for tyro.
@@ -218,23 +224,22 @@ def set_default(kwargs, field_name, val):
     setattr(kwargs["default"], field_name, val)
 
 
-def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
-              config_file: Path | None = None,
-              add_verbosity=True,
-              ask_for_missing=True,
-              args=None,
-              **kwargs) -> tuple[EnvClass | None, dict, WrongFields]:
-    """ Parse CLI arguments, possibly merged from a config file.
+def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
+                      config_file: Path | None = None,
+                      options: Optional[MininterfaceOptions] = None,
+                      **kwargs) -> tuple[EnvClass | None, dict, WrongFields]:
+    """ Fetches the config file into the program defaults kwargs["default"] and UI options.
 
     Args:
         env_class: Class with the configuration.
         config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
+        options: Used to complement the 'mininterface' config file section-
     Kwargs:
         The same as for argparse.ArgumentParser.
 
     Returns:
-        Configuration namespace.
+        Tuple of kwargs and options.
     """
     if isinstance(env_or_list, list):
         subcommands, env = env_or_list, None
@@ -253,15 +258,42 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
-        if mininterface := disk.pop("mininterface", None):
-            # Section 'mininterface' in the config file changes the global configuration.
-            for key, value in vars(_create_with_missing(MininterfaceConfig, mininterface)).items():
-                if value is not MISSING_NONPROP:
-                    setattr(Config, key, value)
+        if confopt := disk.pop("mininterface", None):
+            # Section 'mininterface' in the config file.
+            options = _merge_options(options, confopt)
+
         kwargs["default"] = _create_with_missing(env, disk)
 
-    # Load configuration from CLI
-    return run_tyro_parser(subcommands or env, kwargs, add_verbosity, ask_for_missing, args)
+    return kwargs, options
+
+
+def _merge_options(runopt: MininterfaceOptions | None, confopt: dict, _def_fact=MininterfaceOptions):
+    # Options inheritance:
+    # Config file > program-given through run(options=) > the default options (original dataclasses)
+
+    # Assure the default options
+    # Either the program-given or create fresh defaults
+    if runopt:
+        # Merge the program-given options to the config file options if not yet present.
+        confopt = merge_dicts(dataclass_asdict_no_defaults(runopt), confopt)
+    else:
+        runopt = _def_fact()
+
+    # Merge option sections.
+    # Ex: TextOptions will derive from both Tui and Ui. You may specify a Tui default value, common for all Tui interfaces.
+    for sources in [("ui", "gui"),
+                    ("ui", "tui"),
+                    ("ui", "tui", "textual"),
+                    ("ui", "tui", "text"),
+                    ("ui", "tui", "textual", "web"),
+                    ]:
+        target = sources[-1]
+        confopt[target] = {**{k: v for s in sources for k, v in confopt.get(s, {}).items()}, **confopt.get(target, {})}
+
+    for key, value in vars(_create_with_missing(_def_fact, confopt)).items():
+        if value is not MISSING_NONPROP:
+            setattr(runopt, key, value)
+    return runopt
 
 
 def _create_with_missing(env, disk: dict):

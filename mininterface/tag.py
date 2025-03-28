@@ -6,15 +6,17 @@ from types import FunctionType, MethodType, NoneType, UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, Union, get_args, get_origin
 from warnings import warn
 
+from .types.internal import BoolWidget, CallbackButtonWidget, EnumWidget, FacetButtonWidget, RecommendedWidget, SubmitButtonWidget
+
 from .type_stubs import TagCallback
 
-from .experimental import SubmitButton
+from .experimental import FacetCallback, SubmitButton
 
 
 from .auxiliary import common_iterables, flatten, guess_type, matches_annotation, serialize_structure, subclass_matches_annotation
 
 if TYPE_CHECKING:
-    from .facet import Facet
+    from .mininterface.facet import Facet
     from .form_dict import TagDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 else:
@@ -222,8 +224,8 @@ class Tag:
     # Following attributes are not meant to be set externally.
     #
     facet: Optional["Facet"] = None
-    """ Access to the UI [`facet`][mininterface.facet.Facet] from the front-end side.
-    (Read [`Mininterface.facet`][mininterface.Mininterface.facet] to access from the back-end side.)
+    """ Access to the UI [`facet`][mininterface.mininterface.facet.Facet] from the front-end side.
+    (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
 
     Set the UI facet from within a callback, ex. a validator.
 
@@ -393,6 +395,28 @@ class Tag:
             if self.update(ui_val) and self.on_change:
                 self.on_change(self)
             self._last_ui_val = ui_val
+
+    def _recommend_widget(self) -> RecommendedWidget | type["Self"] | None:
+        """ Recommend a widget type.
+        Gives the information how the tag might be handled.
+        These are the types the interface should implement.
+        Returning None means the type is scalar or unknown (like mixed) and thus might default to str handling.
+        """
+        v = self._get_ui_val()
+        if self.annotation is bool or not self.annotation and (v is True or v is False):
+            return BoolWidget()
+        elif self._get_choices():
+            return EnumWidget()
+        elif type(self) is not Tag:
+            # SecretTag, PathTag, DatetimeTag
+            return self
+        elif self.annotation is SubmitButton:  # NOTE EXPERIMENTAL
+            return SubmitButtonWidget()
+        elif self._is_a_callable():
+            return CallbackButtonWidget()
+        elif self.annotation is FacetCallback:
+            return FacetButtonWidget()
+        return None  # scalar or unknown -›
 
     @staticmethod
     def _is_a_callable_val(val: TagValue, annot: type = None) -> bool:

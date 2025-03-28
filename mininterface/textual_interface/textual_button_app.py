@@ -60,7 +60,7 @@ class TextualButtonApp(App):
         self.focused_i: int = 0
         self.values = {}
         self.interface = interface
-        self.adaptor = self.interface.adaptor
+        self.adaptor = self.interface._adaptor
 
     def yes_no(self, text: str, focus_no=True) -> DummyWrapper:
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no))

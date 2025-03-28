@@ -7,8 +7,9 @@ from autocombobox import AutoCombobox
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
+from ..types.internal import CallbackButtonWidget, EnumWidget, FacetButtonWidget, SubmitButtonWidget
+
 from ..auxiliary import flatten
-from ..config import Config
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
@@ -18,7 +19,7 @@ from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
 
 if TYPE_CHECKING:
-    from tk_window import TkWindow
+    from mininterface.tk_interface.adaptor import TkAdaptor
 
 
 def recursive_set_focus(widget: Widget):
@@ -88,7 +89,7 @@ def _set_true(variable: Variable, tag: Tag):
     return _
 
 
-def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
+def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     def _fetch(variable):
         return ready_to_replace(widget, variable, field_form)
 
@@ -105,71 +106,66 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
         subwidgets = []
         master = widget.master
 
-        # Replace with radio buttons
-        if tag.choices:
-            chosen_val = tag._get_ui_val()
-            variable = Variable()
-            grid_info = _fetch(variable)
+        # We implement some of the types the tkinter_form don't know how to handle
+        match tag._recommend_widget():
+            case EnumWidget():
+                # Replace with radio buttons
+                chosen_val = tag._get_ui_val()
+                variable = Variable()
+                grid_info = _fetch(variable)
 
-            nested_frame = Frame(master)
-            nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+                nested_frame = Frame(master)
+                nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-            if len(tag._get_choices()) >= Config.gui.combobox_since:
-                widget = AutoCombobox(nested_frame, textvariable=variable)
-                widget['values'] = list(tag._get_choices())
-                widget.pack()
-                widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
-                if chosen_val is not None:
-                    variable.set(chosen_val)
+                if len(tag._get_choices()) >= adaptor.options.combobox_since:
+                    widget = AutoCombobox(nested_frame, textvariable=variable)
+                    widget['values'] = list(tag._get_choices())
+                    widget.pack()
+                    widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+                    if chosen_val is not None:
+                        variable.set(chosen_val)
 
-            else:
-                for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
-                    widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
-                    widget2.grid(row=i, column=1, sticky="w")
-                    subwidgets.append(widget2)
-                    if choice_val is tag.val:
-                        variable.set(choice_label)
+                else:
+                    for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
+                        widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
+                        widget2.grid(row=i, column=1, sticky="w")
+                        subwidgets.append(widget2)
+                        if choice_val is tag.val:
+                            variable.set(choice_label)
 
-        elif isinstance(tag, (PathTag, DatetimeTag, SecretTag)):
-            match tag:
-                # File dialog
-                case PathTag():
-                    grid_info = widget.grid_info()
+            case PathTag():
+                grid_info = widget.grid_info()
 
-                    widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
-                    widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+                widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
+                widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+            case DatetimeTag():
+                grid_info = widget.grid_info()
+                widget.grid_forget()
+                nested_frame = DateEntryFrame(master, adaptor, tag, variable)
+                nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+                widget = nested_frame.spinbox
+            case SecretTag():
+                grid_info = widget.grid_info()
+                widget.grid_forget()
+                # Create wrapper and store it in the widget list
+                wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
+                widget = wrapper.entry
+                # Add shortcut to the central shortcuts set
+                adaptor.shortcuts.add("Ctrl+T: Toggle visibility of password field")
 
-                # Calendar
-                case DatetimeTag():
-                    grid_info = widget.grid_info()
-                    widget.grid_forget()
-                    nested_frame = DateEntryFrame(master, tk_app, tag, variable)
-                    nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
-                    widget = nested_frame.spinbox
+            # Special type: Submit button
+            case SubmitButtonWidget():  # NOTE EXPERIMENTAL
+                variable, widget = create_button(master, _fetch, tag, label1)
+                widget.config(command=_set_true(variable, tag))
+            case FacetButtonWidget():  # NOTE EXPERIMENTAL
+                # Special type: FacetCallback button
+                variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: tag.val(tag.facet))
 
-                case SecretTag():
-                    grid_info = widget.grid_info()
-                    widget.grid_forget()
-                    # Create wrapper and store it in the widget list
-                    wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
-                    widget = wrapper.entry
-                    # Add shortcut to the central shortcuts set
-                    tk_app.shortcuts.add("Ctrl+T: Toggle visibility of password field")
-
-        # Special type: Submit button
-        elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
-            variable, widget = create_button(master, _fetch, tag, label1)
-            widget.config(command=_set_true(variable, tag))
-
-        # Special type: FacetCallback button
-        elif tag.annotation is FacetCallback:  # NOTE EXPERIMENTAL
-            variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: tag.val(tag.facet))
-
-        # Replace with a callback button
-        elif tag._is_a_callable():
-            def inner(tag: Tag):
-                tag.facet.submit(_post_submit=tag._run_callable)
-            variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
+            case CallbackButtonWidget():
+                # Replace with a callback button
+                def inner(tag: Tag):
+                    tag.facet.submit(_post_submit=tag._run_callable)
+                variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
 
         # Add event handler
         tag._last_ui_val = variable.get()

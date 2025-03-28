@@ -50,7 +50,7 @@ class ChangeableWithInput(Changeable):
 
     def focus(self):
         """Focus the input element of this widget."""
-        self.input.focus()  # TODO  super().focus()?
+        self.input.focus()
 
 
 class MyInput(Changeable, Input):

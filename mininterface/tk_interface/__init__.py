@@ -1,5 +1,7 @@
 from typing import Type
 
+from ..options import GuiOptions
+
 try:
     # It seems tkinter is installed either by default or not installable at all.
     # Tkinter is not marked as a requirement as other libraries does that neither.
@@ -8,7 +10,7 @@ except ImportError:
     from ..exceptions import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
-from .tk_window import TkWindow
+from .adaptor import TkAdaptor
 from .redirect_text_tkinter import RedirectTextTkinter
 from ..exceptions import InterfaceNotAvailable
 from ..form_dict import DataClass, FormDict
@@ -19,23 +21,20 @@ from ..mininterface import EnvClass, Mininterface
 class TkInterface(Redirectable, Mininterface):
     """ When used in the with statement, the GUI window does not vanish between dialogues. """
 
+    _adaptor: TkAdaptor
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        try:
-            self.adaptor = TkWindow(self)
-        except TclError:
-            # even when installed the libraries are installed, display might not be available, hence tkinter fails
-            raise InterfaceNotAvailable
-        self._redirected = RedirectTextTkinter(self.adaptor.text_widget, self.adaptor)
+        self._redirected = RedirectTextTkinter(self._adaptor.text_widget, self._adaptor)
 
     def __exit__(self, *_):
         super().__exit__(self)
         # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
-        self.adaptor.destroy()
+        self._adaptor.destroy()
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
-        self.adaptor.buttons(text, [("Ok", None)])
+        self._adaptor.buttons(text, [("Ok", None)])
 
     def ask(self, text: str) -> str:
         return self.form({text: ""})[text]
@@ -46,13 +45,13 @@ class TkInterface(Redirectable, Mininterface):
              *,
              submit: str | bool = True
              ) -> FormDict | DataClass | EnvClass:
-        return self._form(form, title, self.adaptor, submit=submit)
+        return self._form(form, title, self._adaptor, submit=submit)
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]
 
     def is_yes(self, text):
-        return self.adaptor.yes_no(text, False)
+        return self._adaptor.yes_no(text, False)
 
     def is_no(self, text):
-        return self.adaptor.yes_no(text, True)
+        return self._adaptor.yes_no(text, True)

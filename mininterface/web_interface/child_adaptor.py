@@ -1,40 +1,34 @@
 
 import pickle
 import struct
-import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-
 from textual.widget import Widget
-from textual.widgets import Rule, Label, RadioButton
 
+from ..textual_interface.facet import TextualFacet
 
-from ..textual_interface.textual_adaptor import TextualAdaptor
-from ..textual_interface.textual_facet import TextualFacet
+from ..options import WebOptions
 
-from ..auxiliary import flatten
-from ..exceptions import Cancelled
-from ..experimental import SubmitButton
-from ..facet import BackendAdaptor, Facet
-from ..form_dict import TagDict, formdict_to_widgetdict
+from ..form_dict import TagDict
+from ..mininterface.adaptor import BackendAdaptor
+from ..mininterface.facet import Facet
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag, SecretTag
-from ..textual_interface.textual_app import TextualApp, WidgetList
-from ..textual_interface.widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                                         MySubmitButton, SecretInput)
+from ..textual_interface.widgets import Changeable
 
 if TYPE_CHECKING:
     from ..mininterface import Mininterface
-    from . import TextualInterface
-    from .app import WebParentApp
 
 
 class SerializedChildAdaptor(BackendAdaptor):
     """ Serialized output, piped to the parent process. """
 
-    def __init__(self, interface: "Mininterface"):
-        self.facet = Facet(self, interface.env)  # TODO, proper Facet
+    facet: TextualFacet  # TODO?
+    options: WebOptions
+
+    def __init__(self, interface: "Mininterface", options):
+        # self.facet = Facet(self, interface.env)  # TODO, proper Facet
+        super().__init__(interface, options)
         pass
 
     def receive(self):
@@ -55,7 +49,7 @@ class SerializedChildAdaptor(BackendAdaptor):
 
     def send(self, msg):
         response_data = pickle.dumps(msg)
-        sys.stdout.buffer.write(struct.pack("I", len(response_data)))  # Poslat délku zprávy
+        sys.stdout.buffer.write(struct.pack("I", len(response_data)))
         sys.stdout.buffer.write(response_data)
         sys.stdout.buffer.flush()
         return self.receive()

@@ -4,7 +4,13 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-from ..textual_interface.textual_adaptor import TextualAdaptor
+from ..textual_interface.facet import TextualFacet
+
+from ..options import WebOptions
+
+from ..mininterface.facet import Facet
+
+from ..textual_interface.adaptor import TextualAdaptor
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -12,8 +18,11 @@ if TYPE_CHECKING:
 
 class WebParentAdaptor(TextualAdaptor):
 
-    def __init__(self, interface: "TextualInterface", environ=None, app=None):
-        super().__init__(interface)
+    facet: TextualFacet  # NOTE proper facet
+    options: WebOptions
+
+    def __init__(self, *args, environ=None, app=None):
+        super().__init__(*args)
         self.process = subprocess.Popen(
             sys.argv,
             stdin=subprocess.PIPE,

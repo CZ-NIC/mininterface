@@ -21,7 +21,7 @@ from ..form_dict import formdict_to_widgetdict
 from ..auxiliary import flatten
 
 if TYPE_CHECKING:
-    from .textual_adaptor import TextualAdaptor
+    from .adaptor import TextualAdaptor
 
 WidgetList = list[Widget | Changeable]
 

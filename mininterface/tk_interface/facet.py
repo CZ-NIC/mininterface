@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING
 from humanize import naturalsize
 
 from ..exceptions import DependencyRequired
-from ..facet import Facet, Image, LayoutElement
+from ..mininterface.facet import Facet, Image, LayoutElement
 
 if TYPE_CHECKING:
-    from .tk_window import TkWindow
+    from .adaptor import TkAdaptor
 
 
 class TkFacet(Facet):
-    adaptor: "TkWindow"
+    adaptor: "TkAdaptor"
 
     def set_title(self, title: str):
         if not title:

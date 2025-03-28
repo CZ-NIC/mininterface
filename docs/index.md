@@ -112,7 +112,7 @@ Should you need just the CLI part and you are happy with basic text dialogs, use
 
 ```bash
 pip install --no-dependencies mininterface
-pip install tyro typing_extensions pyyaml
+pip install tyro typing_extensions pyyaml simple_term_menu
 ```
 
 ## MacOS GUI

@@ -68,4 +68,5 @@ print(values["my_point"].i)  # 100
 ![GUI window](asset/supported_types_2.avif "A prompted dialog after editation")
 
 
-::: mininterface.types
+::: mininterface.types.rich_tags
+::: mininterface.types.alias

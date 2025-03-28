@@ -9,7 +9,7 @@ from warnings import warn
 
 from .auxiliary import flatten
 
-from .cli_parser import run_tyro_parser
+from .cli_parser import parse_cli
 from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import EnvClass, DataClass, TagDict, dataclass_to_tagdict
 from .interfaces import get_interface
@@ -63,12 +63,12 @@ class Start:
         # Process help
         # The help should produce only shared arguments
         if "--help" in args and len(common_bases):
-            run_tyro_parser(next(iter(common_bases)), {}, False, True, args=args)
+            parse_cli(next(iter(common_bases)), {}, False, True, args=args)
             raise NotImplemented("We should never come here. Help failed.")
 
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
-            form, wf = run_tyro_parser(env_class, {}, False, True, args=args)  # NOTE what to do with wf?
+            form, wf = parse_cli(env_class, {}, False, True, args=args)  # NOTE what to do with wf?
             name = form.__class__.__name__
             if isinstance(form, Command):  # even though we officially support only Command here, we tolerate other
                 form._facet = m.facet

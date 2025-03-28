@@ -2,16 +2,20 @@ import logging
 from dataclasses import is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic, Type, overload
+from typing import TYPE_CHECKING, Any, Generic, Optional, Type, overload
 
-from .exceptions import Cancelled
+from .adaptor import BackendAdaptor, MinAdaptor
 
-from .cli_parser import run_tyro_parser
-from .subcommands import Command
-from .facet import BackendAdaptor, Facet, MinAdaptor
-from .form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
-                        dict_to_tagdict, formdict_resolve)
-from .tag import ChoicesType, Tag, TagValue
+from ..options import MininterfaceOptions, UiOptions
+
+from ..exceptions import Cancelled
+
+from ..cli_parser import parse_cli
+from ..subcommands import Command
+from .facet import Facet
+from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
+                         dict_to_tagdict, formdict_resolve)
+from ..tag import ChoicesType, Tag, TagValue
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -32,10 +36,28 @@ class Mininterface(Generic[EnvClass]):
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 
-    def __init__(self, title: str = "",
+    _adaptor: MinAdaptor
+    facet: Facet
+    """ Access to the UI [`facet`][mininterface.mininterface.facet.Facet] from the back-end side.
+    (Read [`Tag.facet`][mininterface.Tag.facet] to access from the front-end side.)
+
+    ```python
+    from mininterface import run
+    with run(title='My window title') as m:
+        m.facet.set_title("My form title")
+        m.form({"My form": 1})
+    ```
+
+    ![Facet back-end](asset/facet_backend.avif)
+    """
+
+    def __init__(self,
+                 title: str = "",
+                 options: Optional[UiOptions] = None,
                  _env: EnvClass | SimpleNamespace | None = None
                  ):
         self.title = title or "Mininterface"
+
         # Why `or SimpleNamespace()`?
         # We want to prevent error raised in `self.form(None)` if self.env would have been set to None.
         # It would be None if the user created this mininterface (without setting env)
@@ -65,19 +87,7 @@ class Mininterface(Generic[EnvClass]):
 
         """
 
-        self.facet = Facet(None, self.env)
-        """ Access to the UI [`facet`][mininterface.facet.Facet] from the back-end side.
-        (Read [`Tag.facet`][mininterface.Tag.facet] to access from the front-end side.)
-
-        ```python
-        from mininterface import run
-        with run(title='My window title') as m:
-            m.facet.set_title("My form title")
-            m.form({"My form": 1})
-        ```
-
-        ![Facet back-end](asset/facet_backend.avif)
-        """
+        self._adaptor = self.__annotations__["_adaptor"](self, options)
 
         if isinstance(self.env, Command):
             self.env.run()
@@ -409,7 +419,7 @@ class Mininterface(Generic[EnvClass]):
             # The form dict might be a default dict but we want output just the dict (it's shorter).
             f = dict(f)
         print(f"Asking the form {title}".strip(), f)
-        return self._form(form, title, MinAdaptor(self), submit)
+        return self._form(form, title, self._adaptor, submit)
 
     def _form(self,
               form: DataClass | Type[DataClass] | FormDict | None,
@@ -421,7 +431,7 @@ class Mininterface(Generic[EnvClass]):
         if isinstance(_form, dict):
             return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
-            _form, wf = run_tyro_parser(_form, {}, False, False, args=[])  # NOTE what to do with wf?
+            _form, wf = parse_cli(_form, {}, False, False, args=[])  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)
             # the original dataclass is updated, hence we do not need to catch the output from launch_callback
             adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)

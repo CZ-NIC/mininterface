@@ -1,7 +1,14 @@
 """ Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
 import os
 import sys
+from types import SimpleNamespace
 from typing import Optional
+
+from ..mininterface.adaptor import MinAdaptor
+
+from ..form_dict import EnvClass
+
+from ..options import UiOptions
 
 from ..textual_interface import TextualInterface
 from .child_adaptor import SerializedChildAdaptor
@@ -19,8 +26,13 @@ from .app import WebParentApp
 
 class WebInterface(TextualInterface):
 
-    def __init__(self, *args, cmd: Optional[str] = None, port=64646, **kwargs):
-        super().__init__(*args, need_atty=False, **kwargs)
+    _adaptor: MinAdaptor
+
+    def __init__(self,
+                 title: str = "",
+                 options: Optional[UiOptions] = None,
+                 _env: EnvClass | SimpleNamespace | None = None,
+                 cmd: Optional[str] = None, port=64646, **kwargs):
         # TODO
         # * Yes/no/alert support (ButtonApp).
         # * lambda, print, on_change, layout, SubmitTrue support
@@ -49,17 +61,19 @@ class WebInterface(TextualInterface):
         #   with run(interface=TextualInterface) as m:
         #     m.form({"hello": 1})  # the app ends here
         #     m.form({"hello": 2})  # we never get here
+
+        super().__init__(title, options, _env, need_atty=False, **kwargs)
         match os.environ.get("MININTERFACE_ENFORCED_WEB"):
             case '_web-child-serialized':
-                self.adaptor = SerializedChildAdaptor(self)
+                self._adaptor = SerializedChildAdaptor(self, options)
                 return
             case '_web-parent':
                 envir = os.environ.copy()
                 envir["MININTERFACE_ENFORCED_WEB"] = '_web-child-serialized'
-                self.adaptor = WebParentAdaptor(self, environ=envir)
-                self.adaptor.app = self.app = app = WebParentApp(self.adaptor, submit=True)
+                self._adaptor = WebParentAdaptor(self, options, environ=envir)
+                self._adaptor.app = self.app = app = WebParentApp(self._adaptor, submit=True)
                 app.run()
-                self.adaptor.disconnect()
+                self._adaptor.disconnect()
                 quit()
             case _:
                 try:

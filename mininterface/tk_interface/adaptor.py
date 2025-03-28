@@ -1,40 +1,51 @@
 import sys
-from tkinter import LEFT, Button, Frame, Label, Text, Tk
+from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
 from typing import TYPE_CHECKING, Any, Callable
 
+from ..options import GuiOptions
+
+from ..exceptions import InterfaceNotAvailable
 from tkscrollableframe import ScrolledFrame
 from tktooltip import ToolTip
 
 from tkinter_form import Form, Value
 
 from ..exceptions import Cancelled
-from ..facet import BackendAdaptor
+from ..mininterface.adaptor import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
-from .tk_facet import TkFacet
+from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
 if TYPE_CHECKING:
     from . import TkInterface
 
 
-class TkWindow(Tk, BackendAdaptor):
-    """ An editing window. """
+class TkAdaptor(Tk, BackendAdaptor):
+    """ An editing Tk window. """
 
-    def __init__(self, interface: "TkInterface"):
-        super().__init__()
-        self.facet = interface.facet = TkFacet(self, interface.env)
+    facet: TkFacet
+    options: GuiOptions
+
+    def __init__(self, *args):
+        BackendAdaptor.__init__(self, *args)
+
+        try:
+            Tk.__init__(self)
+        except TclError:
+            # even when installed the libraries are installed, display might not be available, hence tkinter fails
+            raise InterfaceNotAvailable
+
         self.params = None
         self._result = None
         self._event_bindings = {}
-        self.interface = interface
         # NOTE: I'd prefer to have shortcuts somewhere ex. in the status bar ad hoc
         self.shortcuts = set([
             "F1: Show this help",
             "Enter: Submit form",
             "Escape: Cancel"
         ])
-        self.title(interface.title)
+        self.title(self.interface.title)
         self.bind('<Escape>', lambda _: self._ok(Cancelled))
         self.bind('<F1>', self._show_help)  # Help with Ctrl+H
 

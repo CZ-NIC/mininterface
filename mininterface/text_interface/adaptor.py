@@ -1,9 +1,14 @@
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar
 import warnings
 
+from ..types.internal import BoolWidget, CallbackButtonWidget, EnumWidget, SubmitButtonWidget
+
+from ..options import TextOptions
+
 from ..experimental import SubmitButton
 from .facet import TextFacet
-from ..facet import BackendAdaptor
+from ..mininterface.adaptor import BackendAdaptor
 from ..types.rich_tags import SecretTag
 
 from ..exceptions import Cancelled
@@ -24,10 +29,8 @@ class Submit(StopIteration):
 
 class TextAdaptor(BackendAdaptor):
 
-    def __init__(self, interface: "TextInterface"):
-        super().__init__()
-        self.facet = interface.facet = TextFacet(self, interface.env)
-        self.interface = interface
+    facet: TextFacet
+    options: TextOptions
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """
@@ -39,44 +42,39 @@ class TextAdaptor(BackendAdaptor):
 
         v = tag._get_ui_val()
 
-        # Handle boolean
-        if tag.annotation is bool or not tag.annotation and (v is True or v is False):
-            return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
-        # Replace with radio buttons
-        elif choices := tag._get_choices():
-            if only_label:
-                return tag.val or f"({len(choices)} options)"
-            else:
-                return list(choices.values())[self._choose(choices, title=tag.name)]
-        elif isinstance(tag, (SecretTag)):  # NOTE: PathTag, DatetimeTag not implemented
-            match tag:
-                case SecretTag():
-                    # NOTE the input should be masked (according to tag._masked)
-                    return tag._get_masked_val() if only_label else self.interface.ask(label)
-        # Special type: Submit button
-        elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL and not implemented here
-            if only_label:
-                return "(submit button)"
-            else:
-                tag.update(True)
-                tag.facet.submit()
-                raise Submit
-
-        # Replace with a callback button
-        elif tag._is_a_callable():
-            if only_label:
-                return "(submit)"
-            else:
-                tag.facet.submit(_post_submit=tag._run_callable)
-                raise Submit
-
-        else:
-            if only_label:
-                return v
-            elif tag._is_subclass((int, float)):
-                return self.interface.ask_number(label)
-            else:
-                return self.interface.ask(label)
+        match tag._recommend_widget():
+            # NOTE: PathTag, DatetimeTag not implemented
+            case BoolWidget():
+                return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
+            case EnumWidget():
+                choices = tag._get_choices()
+                if only_label:
+                    return tag.val or f"({len(choices)} options)"
+                else:
+                    return list(choices.values())[self._choose(choices, title=tag.name)]
+            case SecretTag():
+                # NOTE the input should be masked (according to tag._masked)
+                return tag._get_masked_val() if only_label else self.interface.ask(label)
+            case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
+                if only_label:
+                    return "(submit button)"
+                else:
+                    tag.update(True)
+                    tag.facet.submit()
+                    raise Submit
+            case CallbackButtonWidget():  # Replace with a callback button
+                if only_label:
+                    return "(submit)"
+                else:
+                    tag.facet.submit(_post_submit=tag._run_callable)
+                    raise Submit
+            case _:
+                if only_label:
+                    return v
+                elif tag._is_subclass((int, float)):
+                    return self.interface.ask_number(label)
+                else:
+                    return self.interface.ask(label)
 
     def _get_tag_val(self, val: Tag | dict):
         match val:
