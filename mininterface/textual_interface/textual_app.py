@@ -124,12 +124,12 @@ class MainContents(Static):
                     yield Label(fieldt.placeholder)
                 # TODO MyRadioSet not shown now: add name in widgetize and display here
                 # NOTE: has this something to do with the PathTag?
-                elif hasattr(fieldt, "_link") and fieldt._link.name and not isinstance(fieldt, Input):
-                    yield Label(fieldt._link.name)
+                elif hasattr(fieldt, "tag") and fieldt.tag.name and not isinstance(fieldt, Input):
+                    yield Label(fieldt.tag.name)
                 yield fieldt
                 if isinstance(fieldt, Changeable) and (arb := fieldt._arbitrary):
                     yield arb
-                if isinstance(fieldt, Changeable) and (desc := fieldt._link.description):
+                if isinstance(fieldt, Changeable) and (desc := fieldt.tag.description):
                     yield Label(desc)
                 yield Label("")
         self.focusable_.clear()
@@ -162,7 +162,7 @@ class MainContents(Static):
                         case Checkbox():
                             label = inp_.label
                         case Changeable():
-                            label = inp_._link.name
+                            label = inp_.tag.name
                         case _:
                             label = ""
                     if str(label).casefold().startswith(letter):
