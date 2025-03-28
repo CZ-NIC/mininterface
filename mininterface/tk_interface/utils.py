@@ -8,7 +8,6 @@ from autocombobox import AutoCombobox
 from tkinter_form.tkinter_form import FieldForm, Form
 
 from ..auxiliary import flatten
-from ..config import Config
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
@@ -18,7 +17,7 @@ from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
 
 if TYPE_CHECKING:
-    from tk_window import TkWindow
+    from mininterface.tk_interface.adaptor import TkAdaptor
 
 
 def recursive_set_focus(widget: Widget):
@@ -88,7 +87,7 @@ def _set_true(variable: Variable, tag: Tag):
     return _
 
 
-def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
+def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     def _fetch(variable):
         return ready_to_replace(widget, variable, field_form)
 
@@ -114,7 +113,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
             nested_frame = Frame(master)
             nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-            if len(tag._get_choices()) >= Config.gui.combobox_since:
+            if len(tag._get_choices()) >= adaptor.options.combobox_since:
                 widget = AutoCombobox(nested_frame, textvariable=variable)
                 widget['values'] = list(tag._get_choices())
                 widget.pack()
@@ -143,7 +142,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                 case DatetimeTag():
                     grid_info = widget.grid_info()
                     widget.grid_forget()
-                    nested_frame = DateEntryFrame(master, tk_app, tag, variable)
+                    nested_frame = DateEntryFrame(master, adaptor, tag, variable)
                     nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
                     widget = nested_frame.spinbox
 
@@ -154,7 +153,7 @@ def replace_widgets(tk_app: "TkWindow", nested_widgets, form: TagDict):
                     wrapper = SecretEntryWrapper(master, tag, variable, grid_info)
                     widget = wrapper.entry
                     # Add shortcut to the central shortcuts set
-                    tk_app.shortcuts.add("Ctrl+T: Toggle visibility of password field")
+                    adaptor.shortcuts.add("Ctrl+T: Toggle visibility of password field")
 
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL

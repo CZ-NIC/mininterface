@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING, TypeVar
 import warnings
 
+from ..options import TextOptions
+
 from ..experimental import SubmitButton
 from .facet import TextFacet
-from ..facet import BackendAdaptor
+from ..mininterface.adaptor import BackendAdaptor
 from ..types.rich_tags import SecretTag
 
 from ..exceptions import Cancelled
@@ -24,10 +26,8 @@ class Submit(StopIteration):
 
 class TextAdaptor(BackendAdaptor):
 
-    def __init__(self, interface: "TextInterface"):
-        super().__init__()
-        self.facet = interface.facet = TextFacet(self, interface.env)
-        self.interface = interface
+    facet: TextFacet
+    options: TextOptions
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """

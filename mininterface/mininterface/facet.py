@@ -1,19 +1,16 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Generic, Literal, Optional, TypeVar
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 from warnings import warn
 
-from .redirectable import Redirectable
 
-from .exceptions import ValidationFail
+from ..redirectable import Redirectable
 
 
-from .form_dict import EnvClass, TagDict
-from .tag import Tag
+from ..form_dict import EnvClass, TagDict
 
 if TYPE_CHECKING:
-    from . import Mininterface
+    from .adaptor import BackendAdaptor
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 
@@ -29,53 +26,13 @@ LayoutElement = TypeVar("LayoutElement", str, Image, Path, "Self")
 """ Either a string, Path or facet.Image. """
 
 
-class BackendAdaptor(ABC):
-    facet: "Facet"
-    post_submit_action: Optional[Callable] = None
-    interface: "Mininterface"
-
-    @abstractmethod
-    def widgetize(self, tag: Tag):
-        """ Wrap Tag to a UI widget. """
-        pass
-
-    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """ Let the user edit the dict values.
-
-        Setups the facet._fetch_from_adaptor.
-        """
-        self.facet._fetch_from_adaptor(form)
-
-    def submit_done(self) -> str | Literal[True]:
-        if self.post_submit_action:
-            try:
-                self.post_submit_action()
-            except ValidationFail as e:
-                self.interface.alert(str(e))
-                return False
-        return True
-
-
-class MinAdaptor(BackendAdaptor):
-    def __init__(self, interface: "Mininterface"):
-        super().__init__()
-        self.facet = Facet(self, interface.env)
-        self.interface = interface
-
-    def widgetize(self, tag: Tag):
-        pass
-
-    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        return form
-
-
 class Facet(Generic[EnvClass]):
     """ A frontend side of the interface. While a dialog is open,
         this allows to set frontend properties like the heading.
 
 
     Read [`Tag.facet`][mininterface.Tag.facet] to see how to access from the front-end side.
-    Read [`Mininterface.facet`][mininterface.Mininterface.facet] to see how to access from the back-end side.
+    Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to see how to access from the back-end side.
     """
     # Every UI adopts this object through BackendAdaptor methods.
 
@@ -86,7 +43,7 @@ class Facet(Generic[EnvClass]):
     If you change something, it will not probably be shown in the form because there is no refresh mechanism.
     """
 
-    def __init__(self, adaptor: BackendAdaptor, env: EnvClass):
+    def __init__(self, adaptor: "BackendAdaptor", env: EnvClass):
         self.adaptor = adaptor
         self._env = env
 

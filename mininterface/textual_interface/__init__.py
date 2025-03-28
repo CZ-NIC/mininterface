@@ -1,6 +1,8 @@
 """ Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
 import sys
-from typing import Type
+from typing import Optional, Type
+
+from ..options import TextualOptions
 
 try:
     from textual.app import App as _ImportCheck
@@ -13,11 +15,13 @@ from ..form_dict import DataClass, EnvClass, FormDict
 from ..redirectable import Redirectable
 from ..tag import Tag
 from ..mininterface import Mininterface
-from .textual_adaptor import TextualAdaptor
+from .adaptor import TextualAdaptor
 from .textual_button_app import TextualButtonApp
 
 
 class TextualInterface(Redirectable, Mininterface):
+
+    _adaptor: TextualAdaptor
 
     def __init__(self, *args, need_atty=True, **kwargs):
         if need_atty and not sys.stdin.isatty():
@@ -33,7 +37,6 @@ class TextualInterface(Redirectable, Mininterface):
             # non-terminal (cron) -> Mininterface
             raise InterfaceNotAvailable
         super().__init__(*args, **kwargs)
-        self.adaptor = TextualAdaptor(self)
 
     def alert(self, text: str) -> None:
         """ Display the OK dialog with text. """
@@ -48,7 +51,7 @@ class TextualInterface(Redirectable, Mininterface):
              *,
              submit: str | bool = True,
              ) -> FormDict | DataClass | EnvClass:
-        return self._form(form, title, self.adaptor, submit=submit)
+        return self._form(form, title, self._adaptor, submit=submit)
 
     def ask_number(self, text: str):
         return self.form({text: Tag("", "", int, text)})[text]

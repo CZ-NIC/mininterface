@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import logging
 import os
 import sys
@@ -19,15 +20,17 @@ from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
                      SimpleEnv, Subcommand1, Subcommand2, callback_raw,
                      callback_tag, callback_tag2)
+from dumb_options import GuiOptions, MininterfaceOptions, TextOptions, TextualOptions, TuiOptions, UiOptions as UiDumb, WebOptions
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
 from mininterface.interfaces import TextInterface
 from mininterface.auxiliary import flatten, matches_annotation, subclass_matches_annotation
-from mininterface.cli_parser import parse_cli
+from mininterface.cli_parser import _merge_options, parse_cli, parse_config_file
 from mininterface.exceptions import Cancelled
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
+from mininterface.options import UiOptions
 from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
@@ -614,7 +617,8 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_wrong_fields(self):
-        _, wf = parse_cli(AnnotatedClass, args=[])
+        kwargs, _ = parse_config_file(AnnotatedClass)
+        _, wf = parse_cli(AnnotatedClass, kwargs, args=[])
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
         # too to support default_factory,
         # ex: `my_complex: tuple[int, str] = field(default_factory=lambda: [(1, 'foo')])`
@@ -649,6 +653,50 @@ class TestRun(TestAbstract):
             with warnings.catch_warnings(record=True) as w:
                 r(model)
                 self.assertIn("Unknown fields in the configuration file", str(w[0].message))
+
+    def test_options(self):
+        # NOTE
+        # The options had little params at the moment of the test writing.
+        # when there is more options, use the actual objects instead of the dumb ones here.
+        # Then, you might get rid of the dumb_options.py and _def_fact factory parameter in _merge_options.
+
+        opt1 = MininterfaceOptions(gui=GuiOptions(combobox_since=1))
+        opt2 = MininterfaceOptions(gui=GuiOptions(combobox_since=10))
+        self.assertEqual(opt1, _merge_options(None, {'gui': {'combobox_since': 1}}, MininterfaceOptions))
+
+        # config file options are superior to the program-given options
+        self.assertEqual(opt1, _merge_options(opt2, {'gui': {'combobox_since': 1}}, MininterfaceOptions))
+
+        opt3 = MininterfaceOptions(
+            ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
+            gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
+            tui=TuiOptions(foo=3, p_config=2, p_dynamic=0),
+            textual=TextualOptions(foo=3, p_config=1, p_dynamic=0, test_todo=74),
+            text=TextOptions(foo=3, p_config=2, p_dynamic=0),
+            web=WebOptions(foo=3, p_config=1, p_dynamic=0, test_todo=74), interface=None)
+
+        def conf():
+            return {'textual': {'p_config': 1}, 'tui': {'p_config': 2}, 'ui': {'foo': 3}}
+        self.assertEqual(opt3, _merge_options(None, conf(), MininterfaceOptions))
+
+        opt4 = MininterfaceOptions(text=TextOptions(p_dynamic=200),
+                                   tui=TuiOptions(p_dynamic=100, p_config=100, foo=100))
+
+        res4 = MininterfaceOptions(
+            ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
+            gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
+            tui=TuiOptions(foo=100, p_config=2, p_dynamic=100),
+            textual=TextualOptions(foo=100, p_config=1, p_dynamic=100, test_todo=74),
+            text=TextOptions(foo=100, p_config=2, p_dynamic=200),
+            web=WebOptions(foo=100, p_config=1, p_dynamic=100, test_todo=74), interface=None)
+        self.assertEqual(res4, _merge_options(opt4, conf(), MininterfaceOptions))
+
+    def test_options_inheritance(self):
+        """ The interface gets the relevant options section, not whole MininterfaceOptions """
+        opt1 = MininterfaceOptions(gui=GuiOptions(combobox_since=1))
+        m = run(options=opt1, interface=Mininterface)
+        self.assertIsInstance(m, Mininterface)
+        self.assertIsInstance(m._adaptor.options, UiOptions)
 
 
 class TestValidators(TestAbstract):

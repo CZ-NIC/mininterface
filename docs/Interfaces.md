@@ -14,9 +14,16 @@ with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
+# `Mininterface`
+
+When a GUI is not available (GuiInterface), nor the rich TUI is available (TextualInterface), nor the mere interactive TextInterface is available, the original non-interactive Mininterface is used. The ensures the program is still working in cron jobs etc.
+
+
 # `GuiInterface` or `TkInterface` or 'gui'
 
 A tkinter window.
+
+It inherits from [`GuiOptions`][mininterface.options.GuiOptions]
 
 # `TuiInterface` or 'tui'
 
@@ -85,7 +92,3 @@ $ mininterface --web.cmd ./program.py --web.port 9997
 # `ReplInterface`
 
 A debug terminal. Invokes a breakpoint after every dialog.
-
-# `Mininterface`
-
-When a GUI is not available (GuiInterface), nor the rich TUI is available (TextualInterface), nor the mere interactive TextInterface is available, the original non-interactive Mininterface is used. The ensures the program is still working in cron jobs etc.

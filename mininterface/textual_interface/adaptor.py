@@ -7,13 +7,15 @@ from textual.containers import VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Rule, Label, RadioButton
 
-from .textual_facet import TextualFacet
+from ..options import TextualOptions, UiOptions
+
+from .facet import TextualFacet
 from .file_picker_input import FilePickerInput
 
 from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..experimental import SubmitButton
-from ..facet import BackendAdaptor
+from ..mininterface.adaptor import BackendAdaptor
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag
@@ -27,9 +29,12 @@ if TYPE_CHECKING:
 
 class TextualAdaptor(BackendAdaptor):
 
-    def __init__(self, interface: "TextualInterface"):
-        self.interface = interface
-        self.facet = interface.facet = TextualFacet(self, interface.env)
+    facet: TextualFacet
+    options: TextualOptions
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
         self.app: TextualApp | None = None
         self.layout_elements = []
 

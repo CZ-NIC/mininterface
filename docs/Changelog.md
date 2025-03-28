@@ -5,9 +5,11 @@
 * SecretTag
 * much better TextInterface
 * experimental WebInterface
+* PathTag UI in TextualInterface
+* UI options available from the program
 
 ## 0.7.5 (2025-01-29)
-* UI [configuration](Configuration.md)
+* UI [options](Options.md)
 * experimental [Facet._layout](Facet.md#layout)
 
 ## 0.7.4 (2025-01-27)

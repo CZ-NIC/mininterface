@@ -4,7 +4,7 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-from ..textual_interface.textual_adaptor import TextualAdaptor
+from ..textual_interface.adaptor import TextualAdaptor
 
 if TYPE_CHECKING:
     from . import TextualInterface

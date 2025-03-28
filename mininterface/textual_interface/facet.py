@@ -8,9 +8,9 @@ from textual.widgets import Label
 from humanize import naturalsize
 
 from ..exceptions import DependencyRequired
-from ..facet import Facet, Image, LayoutElement
+from ..mininterface.facet import Facet, Image, LayoutElement
 if TYPE_CHECKING:
-    from .textual_adaptor import TextualAdaptor
+    from .adaptor import TextualAdaptor
 
 
 class TextualFacet(Facet):

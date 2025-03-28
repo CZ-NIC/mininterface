@@ -10,12 +10,12 @@ except ImportError:
 
 from ..types import DatetimeTag
 if TYPE_CHECKING:
-    from tk_window import TkWindow
+    from mininterface.tk_interface.adaptor import TkAdaptor
 
 
 class DateEntryFrame(tk.Frame):
 
-    def __init__(self, master, tk_app: "TkWindow", tag: DatetimeTag, variable: tk.Variable, **kwargs):
+    def __init__(self, master, tk_app: "TkAdaptor", tag: DatetimeTag, variable: tk.Variable, **kwargs):
         super().__init__(master, **kwargs)
 
         self.tk_app = tk_app

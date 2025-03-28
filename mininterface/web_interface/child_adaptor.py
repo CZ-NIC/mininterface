@@ -9,14 +9,16 @@ from typing import TYPE_CHECKING
 from textual.widget import Widget
 from textual.widgets import Rule, Label, RadioButton
 
+from ..mininterface.adaptor import BackendAdaptor
 
-from ..textual_interface.textual_adaptor import TextualAdaptor
-from ..textual_interface.textual_facet import TextualFacet
+
+from ..textual_interface.adaptor import TextualAdaptor
+from ..textual_interface.facet import TextualFacet
 
 from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..experimental import SubmitButton
-from ..facet import BackendAdaptor, Facet
+from ..mininterface.facet import Facet
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag

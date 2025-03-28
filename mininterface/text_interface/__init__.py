@@ -1,16 +1,12 @@
 
 import sys
-import warnings
 from pprint import pprint
 from typing import TYPE_CHECKING, Type
-
-from simple_term_menu import TerminalMenu
-
-from .adaptor import TextAdaptor
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import DataClass, EnvClass, FormDict
 from ..mininterface import Mininterface
+from .adaptor import TextAdaptor
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self, Type
@@ -75,9 +71,7 @@ class StdinTTYWrapper:
 class TextInterface(AssureInteractiveTerminal, Mininterface):
     """ Plain text fallback interface. No dependencies. """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.adaptor = TextAdaptor(self)
+    _adaptor: TextAdaptor
 
     def alert(self, text: str):
         """ Display text and let the user hit any key. """
@@ -104,7 +98,7 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
              ) -> FormDict | DataClass | EnvClass:
         try:
             with StdinTTYWrapper():
-                return self._form(form, title, self.adaptor, submit=submit)
+                return self._form(form, title, self._adaptor, submit=submit)
         except NotImplementedError:  # simple-term-menu raises this when vscode runs tests
             if not self.interactive:
                 return super().form(form=form, title=title, submit=submit)
