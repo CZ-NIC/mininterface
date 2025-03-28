@@ -50,24 +50,21 @@ class ChangeableWithInput(Changeable):
 
     def focus(self):
         """Focus the input element of this widget."""
-        super().focus()
+        self.input.focus()  # TODO  super().focus()?
 
 
-class MyInput(Input, Changeable):
-    def __init__(self, tag: Tag, value: str = "", *, password: bool = False, placeholder: str = "", type: str = "text"):
-        Changeable.__init__(self, tag)
-        Input.__init__(self, value=value, password=password, placeholder=placeholder, type=type)
+class MyInput(Changeable, Input):
 
     async def on_blur(self):
         return self.trigger_change()
 
 
-class MyCheckbox(Checkbox, Changeable):
+class MyCheckbox(Changeable, Checkbox):
     def on_checkbox_changed(self):
         return self.trigger_change()
 
 
-class MyRadioSet(RadioSet, Changeable):
+class MyRadioSet(Changeable, RadioSet):
     def on_radio_set_changed(self):
         return self.trigger_change()
 
@@ -81,7 +78,7 @@ class MyRadioSet(RadioSet, Changeable):
                 self.action_toggle()
 
 
-class MyButton(Button, Changeable):
+class MyButton(Changeable, Button):
     _val: TagValue
 
     def on_button_pressed(self, event):
@@ -99,7 +96,7 @@ class MySubmitButton(MyButton):
         self.tag.facet.submit()
 
 
-class MySecretInput(Horizontal, ChangeableWithInput):
+class MySecretInput(ChangeableWithInput, Horizontal):
     """A custom widget that combines an input field with a visibility toggle button."""
 
     BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
@@ -125,9 +122,7 @@ class MySecretInput(Horizontal, ChangeableWithInput):
     """
 
     def __init__(self, tag: SecretTag, **kwargs):
-        # Initialize both base classes properly
-        ChangeableWithInput.__init__(self, tag)
-        Horizontal.__init__(self)
+        super().__init__(tag)
 
         initial_value = tag._get_ui_val()
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""), password=tag._masked)

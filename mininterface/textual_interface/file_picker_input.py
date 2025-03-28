@@ -333,7 +333,7 @@ class FileBrowser(Vertical):
             self.on_tree_node_selected(Tree.NodeSelected(self._tree, node))
 
 
-class FilePickerInput(Horizontal, ChangeableWithInput):
+class FilePickerInput(ChangeableWithInput, Horizontal):
     """A custom widget that combines an input field with a file picker button."""
 
     DEFAULT_CSS = """
@@ -357,13 +357,11 @@ class FilePickerInput(Horizontal, ChangeableWithInput):
     """
 
     def __init__(self, tag: PathTag, **kwargs):
-        # Initialize both base classes properly
-        ChangeableWithInput.__init__(self, tag)
-        Horizontal.__init__(self)
+        super().__init__(tag)
 
         initial_value = str(tag.val)
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
-        self.button = Button("Browse", variant="primary", id="file_picker")
+        self.button = Button("...", variant="primary", id="file_picker")
         self.browser = None
 
     def compose(self) -> ComposeResult:
