@@ -34,11 +34,12 @@ class TextualAdaptor(BackendAdaptor):
         v = tag._get_ui_val()
         # Handle boolean
         if tag.annotation is bool or not tag.annotation and (v is True or v is False):
-            o = MyCheckbox(tag.name or "", v)
+            o = MyCheckbox(tag, tag.name or "", v)
         # Replace with radio buttons
         elif tag._get_choices():
-            o = MyRadioSet(*(RadioButton(label, value=val == tag.val)
-                             for label, val in tag._get_choices().items()))
+            radio_buttons = [RadioButton(label, value=val == tag.val)
+                             for label, val in tag._get_choices().items()]
+            o = MyRadioSet(tag, *radio_buttons)
         elif isinstance(tag, (SecretTag, PathTag)):  # NOTE: DatetimeTag not implemented
             match tag:
                 case PathTag():
@@ -47,11 +48,11 @@ class TextualAdaptor(BackendAdaptor):
                     o = MySecretInput(tag, placeholder=tag.name or "", type="text")
         # Special type: Submit button
         elif tag.annotation is SubmitButton:  # NOTE EXPERIMENTAL
-            o = MySubmitButton(tag.name)
+            o = MySubmitButton(tag, tag.name)
 
         # Replace with a callback button
         elif tag._is_a_callable():
-            o = MyButton(tag.name)
+            o = MyButton(tag, tag.name)
         else:
             if not isinstance(v, (float, int, str, bool)):
                 v = str(v)
@@ -61,9 +62,8 @@ class TextualAdaptor(BackendAdaptor):
                 type_ = "number"
             else:
                 type_ = "text"
-            o = MyInput(str(v), placeholder=tag.name or "", type=type_)
+            o = MyInput(tag, str(v), placeholder=tag.name or "", type=type_)
 
-        o._link = tag  # The Textual widgets need to get back to this value
         tag._last_ui_val = o.get_ui_value()
         return o
 
@@ -87,7 +87,7 @@ class TextualAdaptor(BackendAdaptor):
             raise Cancelled
 
         # validate and store the UI value → Tag value → original value
-        vals = ((field._link, field.get_ui_value()) for field in app.widgets if hasattr(field, "_link"))
+        vals = ((field.tag, field.get_ui_value()) for field in app.widgets if hasattr(field, "tag"))
         if not Tag._submit_values(vals) or not self.submit_done():
             return self.run_dialog(form, title, submit)
 

@@ -14,12 +14,16 @@ from ..tag import Tag, TagValue
 class Changeable:
     """ Widget that can implement on_change method. """
 
-    _link: Tag
+    tag: Tag
     _arbitrary: Optional[Widget] = None
     """ NOTE: Due to the poor design, we attach ex. hide buttons this way. """
 
+    def __init__(self, tag: Tag, *args, **kwargs):
+        self.tag = tag
+        super().__init__(*args, **kwargs)
+
     def trigger_change(self):
-        if tag := self._link:
+        if tag := self.tag:
             tag._on_change_trigger(self.get_ui_value())
 
     def get_ui_value(self):
@@ -33,20 +37,27 @@ class Changeable:
         else:
             return self.value
 
-    def focus(self):
-        """Focus this widget or its input element if available.
 
-        This provides a consistent interface for all widgets.
-        Compound widgets with inner input fields will delegate focus
-        to the appropriate input element.
-        """
-        if hasattr(self, "input") and hasattr(self.input, "focus"):
-            self.input.focus()
-        elif hasattr(super(), "focus"):
-            super().focus()
+class ChangeableWithInput(Changeable):
+    """Base class for widgets that contain an input element"""
+
+    def __init__(self, tag: Tag, *args, **kwargs):
+        super().__init__(tag, *args, **kwargs)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle Enter key in the input field to submit the form."""
+        self.tag.facet.adaptor.app.action_confirm()
+
+    def focus(self):
+        """Focus the input element of this widget."""
+        super().focus()
 
 
 class MyInput(Input, Changeable):
+    def __init__(self, tag: Tag, value: str = "", *, password: bool = False, placeholder: str = "", type: str = "text"):
+        Changeable.__init__(self, tag)
+        Input.__init__(self, value=value, password=password, placeholder=placeholder, type=type)
+
     async def on_blur(self):
         return self.trigger_change()
 
@@ -74,10 +85,10 @@ class MyButton(Button, Changeable):
     _val: TagValue
 
     def on_button_pressed(self, event):
-        self._link.facet.submit(_post_submit=self._link._run_callable)
+        self.tag.facet.submit(_post_submit=self.tag._run_callable)
 
     def get_ui_value(self):
-        return self._link.val
+        return self.tag.val
 
 
 class MySubmitButton(MyButton):
@@ -85,10 +96,10 @@ class MySubmitButton(MyButton):
     def on_button_pressed(self, event):
         event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
-        self._link.facet.submit()
+        self.tag.facet.submit()
 
 
-class MySecretInput(Horizontal, Changeable):
+class MySecretInput(Horizontal, ChangeableWithInput):
     """A custom widget that combines an input field with a visibility toggle button."""
 
     BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
@@ -114,9 +125,10 @@ class MySecretInput(Horizontal, Changeable):
     """
 
     def __init__(self, tag: SecretTag, **kwargs):
-        super().__init__()
-        self.tag = tag
-        self._link = tag
+        # Initialize both base classes properly
+        ChangeableWithInput.__init__(self, tag)
+        Horizontal.__init__(self)
+
         initial_value = tag._get_ui_val()
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""), password=tag._masked)
         self.button = Button("👁", variant="primary", id="toggle_visibility")
@@ -141,10 +153,6 @@ class MySecretInput(Horizontal, Changeable):
         is_masked = self.tag.toggle_visibility()
         self.input.password = is_masked
         self.button.label = "🙈" if is_masked else "👁"
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle Enter key in the input field to submit the form."""
-        self._link.facet.adaptor.app.action_confirm()
 
     def get_ui_value(self):
         """Get the current value of the input field."""

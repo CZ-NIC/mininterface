@@ -1,11 +1,13 @@
+from pathlib import Path
+
+from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Tree, Static
 from textual.widgets.tree import TreeNode
-from pathlib import Path
-from .widgets import Changeable
-from textual.app import ComposeResult
+
 from ..types import PathTag
-from textual.binding import Binding
+from .widgets import ChangeableWithInput
 
 
 class FileBrowser(Vertical):
@@ -70,7 +72,7 @@ class FileBrowser(Vertical):
 
     def __init__(self, tag: PathTag):
         super().__init__()
-        self._link = tag
+        self.tag = tag
         self.selected_paths = []
 
         self._start_path = self._get_start_path_from_tag()
@@ -85,7 +87,7 @@ class FileBrowser(Vertical):
     def _get_start_path_from_tag(self) -> Path:
         """Get the starting path from the tag value or fallback to home directory."""
         try:
-            tag_value = self._link.val
+            tag_value = self.tag.val
 
             if isinstance(tag_value, list) and tag_value:
                 path = Path(tag_value[0])
@@ -114,7 +116,7 @@ class FileBrowser(Vertical):
             self._header.update(current_dir)
             self._header.refresh()
 
-        if self._link.multiple:
+        if self.tag.multiple:
             count = len(self.selected_paths)
             if count == 0:
                 status_text = "Multiple selection enabled. Use Enter or click to select files."
@@ -168,7 +170,7 @@ class FileBrowser(Vertical):
                         if next(item.iterdir(), None) is not None:
                             branch.add("Loading...")
                     else:
-                        if not self._link.is_dir:
+                        if not self.tag.is_dir:
                             node.add(f"📄 {item.name}", data=item)
                 except PermissionError:
                     continue
@@ -264,13 +266,13 @@ class FileBrowser(Vertical):
             self._update_status()
             self.refresh()
 
-        if not self._link.is_dir and path.is_dir():
+        if not self.tag.is_dir and path.is_dir():
             return
 
-        if self._link.is_dir and not path.is_dir():
+        if self.tag.is_dir and not path.is_dir():
             return
 
-        if self._link.multiple:
+        if self.tag.multiple:
             if path in self.selected_paths:
                 self.selected_paths.remove(path)
             else:
@@ -331,7 +333,7 @@ class FileBrowser(Vertical):
             self.on_tree_node_selected(Tree.NodeSelected(self._tree, node))
 
 
-class FilePickerInput(Horizontal, Changeable):
+class FilePickerInput(Horizontal, ChangeableWithInput):
     """A custom widget that combines an input field with a file picker button."""
 
     DEFAULT_CSS = """
@@ -355,8 +357,10 @@ class FilePickerInput(Horizontal, Changeable):
     """
 
     def __init__(self, tag: PathTag, **kwargs):
-        super().__init__()
-        self._link = tag
+        # Initialize both base classes properly
+        ChangeableWithInput.__init__(self, tag)
+        Horizontal.__init__(self)
+
         initial_value = str(tag.val)
         self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
         self.button = Button("Browse", variant="primary", id="file_picker")
@@ -371,7 +375,7 @@ class FilePickerInput(Horizontal, Changeable):
         """Handle button press event."""
         if event.button.id == "file_picker":
             if not self.browser:
-                self.browser = FileBrowser(self._link)
+                self.browser = FileBrowser(self.tag)
                 self.mount(self.browser)
                 self.refresh()
                 self.set_timer(0.1, self._focus_tree)
@@ -384,9 +388,6 @@ class FilePickerInput(Horizontal, Changeable):
         """Focus the tree widget after it's mounted."""
         if self.browser and self.browser._tree:
             self.browser._tree.focus()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self._link.facet.adaptor.app.action_confirm()
 
     def get_ui_value(self):
         """Get the current value of the input field."""
