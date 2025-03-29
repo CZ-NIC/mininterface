@@ -1,26 +1,16 @@
-from enum import Enum
-from typing import TYPE_CHECKING, TypeVar
 import warnings
 
-from ..types.internal import BoolWidget, CallbackButtonWidget, EnumWidget, SubmitButtonWidget
-
-from ..options import TextOptions
-
-from ..experimental import SubmitButton
-from .facet import TextFacet
-from ..mininterface.adaptor import BackendAdaptor
-from ..types.rich_tags import SecretTag
+from simple_term_menu import TerminalMenu
 
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface import Tag
-from simple_term_menu import TerminalMenu
-
-if TYPE_CHECKING:
-    from . import TextInterface
-
-
-T = TypeVar("T")
+from ..mininterface.adaptor import BackendAdaptor
+from ..options import TextOptions
+from ..types.internal import (BoolWidget, CallbackButtonWidget, EnumWidget,
+                              SubmitButtonWidget)
+from ..types.rich_tags import SecretTag
+from .facet import TextFacet
 
 
 class Submit(StopIteration):
@@ -34,11 +24,14 @@ class TextAdaptor(BackendAdaptor):
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """
+        # NOTE some field does not return description
 
         if not only_label:
             label = tag.name
             if v := self.widgetize(tag, only_label=True):
                 label += f" {v}"
+            if d := tag.description:
+                print(d)
 
         v = tag._get_ui_val()
 
@@ -51,7 +44,7 @@ class TextAdaptor(BackendAdaptor):
                 if only_label:
                     return tag.val or f"({len(choices)} options)"
                 else:
-                    return list(choices.values())[self._choose(choices, title=tag.name)]
+                    return list(choices)[self._choose(choices, title=tag.name)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)
@@ -78,10 +71,13 @@ class TextAdaptor(BackendAdaptor):
 
     def _get_tag_val(self, val: Tag | dict):
         match val:
-            case Tag():
-                return f": {self.widgetize(val, only_label=True) or '(empty)'}"
-            case dict():
-                return "..."
+            case Tag() as tag:
+                s = f": {self.widgetize(tag, only_label=True) or '(empty)'}"
+                if d := tag.description:
+                    return s + f" \\| {d}"
+                return s
+            case dict() as d:
+                return f"... ({len(d)}×)"
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """ Let the user edit the form_dict values in a GUI window.
