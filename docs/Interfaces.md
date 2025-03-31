@@ -35,9 +35,7 @@ If [textual](https://github.com/Textualize/textual) installed, rich and mouse cl
 
 ## `TextInterface`
 
-Plain text only interface with no dependency as a fallback. Does not clear whole screen as TextualInterface if it suits better your program flow.
-
-When used in a with statement, the non-interactive session becomes interactive if possible, see the Mininterface [enter][mininterface.Mininterface.__enter__] method.
+Plain text only interface with no dependency as a fallback. The non-interactive session becomes interactive if possible but there is no mouse support. Does not clear whole screen as TextualInterface if it suits better your program flow.
 
 # `WebInterface` or 'web'
 
@@ -88,6 +86,9 @@ $ mininterface --web.cmd ./program.py --web.port 9997
         m.form({"one": 1})
         m.form({"two": 2})
     ```
+
+!!! Warning
+    Still in beta. We appreciate help with testing etc.
 
 # `ReplInterface`
 

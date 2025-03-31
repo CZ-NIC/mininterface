@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.8.0 (unreleased)
+* CHANGED: EnumTag instead of Tag(choices=)
 * better annotated fetching
 * SecretTag
 * much better TextInterface

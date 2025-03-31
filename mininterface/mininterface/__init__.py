@@ -4,6 +4,8 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic, Optional, Type, overload
 
+from ..types.rich_tags import EnumTag
+
 from .adaptor import BackendAdaptor, MinAdaptor
 
 from ..options import MininterfaceOptions, UiOptions
@@ -200,64 +202,8 @@ class Mininterface(Generic[EnvClass]):
         """ Prompt the user to select. Useful for a menu creation.
 
         Args:
-            choices: You can denote the choices in many ways.
-                Either put options in an iterable:
+            choices: You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
 
-                ```python
-                from mininterface import run
-                m = run()
-                m.choice([1, 2])
-                ```
-
-                ![Choices as a list](asset/choices_list.avif)
-
-                Or to a dict `{name: value}`. Then name are used as labels.
-
-                ```python
-                m.choice({"one": 1, "two": 2})  # returns 1
-                ```
-
-                Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
-
-                ```python
-                m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
-                ```
-
-                ![Choices with labels](asset/choices_labels.avif)
-
-                Alternatively, you may use an Enum.
-
-                ```python
-                class Color(Enum):
-                    RED = "red"
-                    GREEN = "green"
-                    BLUE = "blue"
-
-                m.choice(Color)
-                ```
-
-                ![Choices from enum](asset/choice_enum_type.avif)
-
-                Alternatively, you may use an Enum instance.
-
-                ```python
-                class Color(Enum):
-                    RED = "red"
-                    GREEN = "green"
-                    BLUE = "blue"
-
-                m.choice(Color.BLUE)
-                ```
-
-                ![Choices from enum](asset/choice_enum_instance.avif)
-
-                Alternatively, you may use an Enum instances list.
-
-                ```python
-                m.choice([Color.GREEN, Color.BLUE])
-                ```
-
-                ![Choices from enum list](asset/choice_enum_list.avif)
 
             title: Form title
             default: The value of the checked choice.
@@ -274,7 +220,7 @@ class Mininterface(Generic[EnvClass]):
             If launch=True and the chosen value is a callback, we call it and return its result.
 
         !!! info
-            To tackle a more detailed form, see [`Tag.choices`][mininterface.Tag.choices].
+            To tackle a more detailed form, see [`EnumTag.choices`][mininterface.types.EnumTag.choices].
         """
         # NOTE to build a nice menu, I need this
         # Args:
@@ -301,7 +247,7 @@ class Mininterface(Generic[EnvClass]):
                 out = choices[0]
             tag = Tag(out)
         else:  # Trigger the dialog
-            tag = Tag(val=default, choices=choices)
+            tag = EnumTag(val=default, choices=choices)
             key = title or "Choose"
             self.form({key: tag})[key]
 

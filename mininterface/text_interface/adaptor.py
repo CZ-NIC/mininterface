@@ -7,9 +7,9 @@ from ..form_dict import TagDict
 from ..mininterface import Tag
 from ..mininterface.adaptor import BackendAdaptor
 from ..options import TextOptions
-from ..types.internal import (BoolWidget, CallbackButtonWidget, EnumWidget,
+from ..types.internal import (BoolWidget, CallbackButtonWidget,
                               SubmitButtonWidget)
-from ..types.rich_tags import SecretTag
+from ..types.rich_tags import EnumTag, SecretTag
 from .facet import TextFacet
 
 
@@ -39,7 +39,7 @@ class TextAdaptor(BackendAdaptor):
             # NOTE: PathTag, DatetimeTag not implemented
             case BoolWidget():
                 return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
-            case EnumWidget():
+            case EnumTag():
                 choices = tag._get_choices()
                 if only_label:
                     return tag.val or f"({len(choices)} options)"

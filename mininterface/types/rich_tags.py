@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
+from warnings import warn
 
 from ..auxiliary import common_iterables
-from ..tag import Tag
+from ..tag import ChoiceLabel, ChoicesType, Tag, TagValue
 
 
 @dataclass
@@ -258,6 +260,9 @@ class DatetimeTag(Tag):
             self.date = issubclass(self.annotation, date)
             self.time = issubclass(self.annotation, time) or issubclass(self.annotation, datetime)
 
+    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
+        return super().__hash__()
+
     def _make_default_value(self):
         return datetime.now()
 
@@ -288,6 +293,9 @@ class SecretTag(Tag):
     _masked: bool = True
     """ Internal state for visibility """
 
+    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
+        return super().__hash__()
+
     def toggle_visibility(self):
         """Toggle the masked state"""
         self._masked = not self._masked
@@ -306,3 +314,107 @@ class SecretTag(Tag):
     def __hash__(self):
         """Make SecretTag hashable for use with Annotated"""
         return hash((self.show_toggle, self._masked))
+
+
+@dataclass(repr=False)
+class EnumTag(Tag):
+    """ Handle choices – radio buttons / select box.
+    The value serves as the initially selected choice.
+    It is constrained to those defined in the `choices` attribute.
+    """
+
+    choices: ChoicesType | None = None
+    """ The possible values.
+
+
+    ```python
+    m.form({"My restrained": EnumTag(choices=("one", "two"))})
+    ```
+
+    You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
+
+    Here we focus at the `EnumTag` itself and its [`Choices`][mininterface.types.Choices] alias. It can be used to annotate a default value in a dataclass.
+
+    ```python
+    from dataclasses import dataclass
+    from typing import Annotated
+    from mininterface import run, Choices
+    from mininterface.types import EnumTag
+
+    @dataclass
+    class Env:
+        foo: Annotated["str", Choices("one", "two")] = "one"
+        # `Choices` is an alias for `EnumTag(choices=)`
+        #   so the same would be:
+        # foo: Annotated["str", EnumTag(choices=("one", "two"))] = "one"
+
+    m = run(Env)
+    m.form()  # prompts a dialog
+    ```
+    ![Form choice](asset/tag_choices.avif)
+
+    !!! Tip
+        When dealing with a simple use case, use the [mininterface.choice][mininterface.Mininterface.choice] dialog.
+    """
+    # NOTE we should support (maybe it is done)
+    # * Enums: Tag(enum) # no `choice` param`
+    # * more date types (now only str possible)
+    # * mininterface.choice `def choice(choices=, guesses=)`
+
+    def __repr__(self):
+        return super().__repr__()[:-1] + f", choices={list(self._get_choices())})"
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.choices:
+            if isinstance(self.val, Enum):  # Enum instance, ex: val=ColorEnum.RED
+                self.choices = self.val.__class__
+            elif isinstance(self.val, type) and issubclass(self.val, Enum):  # Enum type, ex: val=ColorEnum
+                self.choices = self.val
+                self.val = None
+
+    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
+        return super().__hash__()
+
+    def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
+        """ Whereas self.choices might have different format, this returns a canonic dict. """
+
+        if self.choices is None:
+            return {}
+        if isinstance(self.choices, dict):
+            if isinstance(next(iter(self.choices)), tuple):
+                # Span key tuple into a table
+                # Ex: [ ("one", "two"), ("hello", "world") ]
+                # one   - two
+                # hello - world"
+                data = list(self.choices)
+                col_widths = [max(len(row[i]) for row in data) for i in range(len(data[0]))]
+                keys = (" - ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row)) for row in data)
+                try:
+                    return {key: value for key, value in zip(keys, self.choices.values())}
+                except IndexError:
+                    # different lengths, table does not work
+                    # Ex: [ ("one", "two", "three"), ("hello", "world") ]
+                    return {" - ".join(key): value for key, value in self.choices.items()}
+            return self.choices
+        if isinstance(self.choices, common_iterables):
+            return {self._repr_val(v): v for v in self.choices}
+        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
+            return {str(v.value): v for v in list(self.choices)}
+
+        warn(f"Not implemented choices: {self.choices}")
+
+    def update(self, ui_value: TagValue) -> bool:
+        ch = self._get_choices()
+        if ui_value in ch:
+            return super().update(ch[ui_value])
+        else:
+            self.set_error_text(f"Must be one of {list(ch.keys())}")
+            return False
+
+    def _validate(self, out_value):
+        if out_value in self._get_choices().values():
+            return out_value
+        else:
+            self.set_error_text(f"Not one of the allowed values")
+            raise ValueError

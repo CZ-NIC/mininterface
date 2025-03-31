@@ -6,7 +6,7 @@ from types import FunctionType, MethodType, NoneType, UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, Union, get_args, get_origin
 from warnings import warn
 
-from .types.internal import BoolWidget, CallbackButtonWidget, EnumWidget, FacetButtonWidget, RecommendedWidget, SubmitButtonWidget
+from .types.internal import BoolWidget, CallbackButtonWidget,  FacetButtonWidget, RecommendedWidget, SubmitButtonWidget
 
 from .type_stubs import TagCallback
 
@@ -55,12 +55,92 @@ ValidationResult = bool | ErrorMessage
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 ChoiceLabel = str
-ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[ChoiceLabel, TagValue] | list[Enum] | Type[Enum]
+RichChoiceLabel = ChoiceLabel | tuple[ChoiceLabel]
+ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichChoiceLabel,
+                                                                      TagValue] | list[Enum] | Type[Enum]
 """ You can denote the choices in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
-Values might be Tags as well.
+Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(ChoicesType)` to illustrate the examples.
 
-See [mininterface.choice][mininterface.Mininterface.choice] or [`Tag.choices`][mininterface.Tag.choices] for examples.
+## Iterables like list
+
+Either put options in an iterable:
+
+```python
+from mininterface import run
+m = run()
+m.choice([1, 2])
+```
+
+![Choices as a list](asset/choices_list.avif)
+
+## Dict for labels
+
+Or to a dict `{name: value}`. Then name are used as labels.
+
+```python
+m.choice({"one": 1, "two": 2})  # returns 1
+```
+
+## Dict with tuples for table
+
+If you use tuple as the keys, they will be joined into a table.
+
+```python
+m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
+```
+
+![Table like](asset/choice_table_span.avif)
+
+## Tags for labels
+
+Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
+
+```python
+m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
+```
+
+![Choices with labels](asset/choices_labels.avif)
+
+## Enums
+
+Alternatively, you may use an Enum.
+
+```python
+class Color(Enum):
+    RED = "red"
+    GREEN = "green"
+    BLUE = "blue"
+
+m.choice(Color)
+```
+
+![Choices from enum](asset/choice_enum_type.avif)
+
+Alternatively, you may use an Enum instance. (Which means the default value is already selected.)
+
+```python
+class Color(Enum):
+    RED = "red"
+    GREEN = "green"
+    BLUE = "blue"
+
+m.choice(Color.BLUE)
+```
+
+![Choices from enum](asset/choice_enum_instance.avif)
+
+Alternatively, you may use an Enum instances list.
+
+```python
+m.choice([Color.GREEN, Color.BLUE])
+```
+
+![Choices from enum list](asset/choice_enum_list.avif)
+
+## Further examples
+
+See [mininterface.choice][mininterface.Mininterface.choice] or [`EnumTag.choices`][mininterface.types.EnumTag.choices] for further usage.
 """
 
 
@@ -156,32 +236,6 @@ class Tag:
     NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
     """
 
-    choices: ChoicesType | None = None
-    """ Print the radio buttons / select box. Constraint the value.
-
-    ```python
-    from dataclasses import dataclass
-    from typing import Annotated
-    from mininterface import run, Choices
-
-    @dataclass
-    class Env:
-        foo: Annotated["str", Choices("one", "two")] = "one"
-        # `Choices` is an alias for `Tag(choices=)`
-
-    m = run(Env)
-    m.form()  # prompts a dialog
-    ```
-    ![Form choice](asset/tag_choices.avif)
-
-    !!! info
-        When dealing with a simple use case, use the [mininterface.choice][mininterface.Mininterface.choice] dialog.
-    """
-    # NOTE we should support (maybe it is done)
-    # * Enums: Tag(enum) # no `choice` param`
-    # * more date types (now only str possible)
-    # * mininterface.choice `def choice(choices=, guesses=)`
-
     on_change: Callable[["Tag"], Any] | None = None
     """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
     The callback runs while the dialog is still running.
@@ -190,7 +244,8 @@ class Tag:
     In the following example, we alter the heading title according to the chosen value.
 
     ```python
-    from mininterface import run, Tag
+    from mininterface import run
+    from mininterface.types import EnumTag
 
     def callback(tag: Tag):
         tag.facet.set_title(f"Value changed to {tag.val}")
@@ -198,7 +253,7 @@ class Tag:
     m = run()
     m.facet.set_title("Click the checkbox")
     m.form({
-        "My choice": Tag(choices=["one", "two"], on_change=callback)
+        "My choice": EnumTag(choices=["one", "two"], on_change=callback)
     })
     ```
 
@@ -245,7 +300,7 @@ class Tag:
     ![Facet front-end](asset/facet_frontend.avif)
     """
 
-    original_val = None
+    original_val: TagValue = None
     """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
 
     ```python
@@ -261,6 +316,9 @@ class Tag:
 
     _pydantic_field: PydanticFieldInfo = None
     _attrs_field: AttrsFieldInfo = None
+    _original_desc: Optional[str] = None
+    _original_name: Optional[str] = None
+    _last_ui_val: TagValue = None
 
     def __post_init__(self):
         """ Determine annotation and fetch other information. """
@@ -283,12 +341,9 @@ class Tag:
                     self._attrs_field: dict | None = attr.fields_dict(self._src_class).get(self._src_key)
                 except attr.exceptions.NotAnAttrsClassError:
                     pass
-        if not self.annotation and self.val is not None and not self.choices:
-            if isinstance(self.val, Enum):  # Enum instance, ex: val=ColorEnum.RED
-                self.choices = self.val.__class__
-            elif isinstance(self.val, type) and issubclass(self.val, Enum):  # Enum type, ex: val=ColorEnum
-                self.choices = self.val
-                self.val = None
+        if not self.annotation and self.val is not None:
+            if isinstance(self.val, Enum) or (isinstance(self.val, type) and issubclass(self.val, Enum)):
+                self.annotation = Enum
             else:
                 # When having choices with None default self.val, this would impose self.val be of a NoneType,
                 # preventing it to set a value.
@@ -323,16 +378,12 @@ class Tag:
             # clean-up protected members
             if field.name.startswith("_"):
                 continue
-            if field.name not in ("val", "description", "annotation", "name", "choices"):
+            if field.name not in ("val", "description", "annotation", "name"):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
             if field.name == 'validation' and (func_name := getattr(field_value, "__name__", "")):
                 v = func_name
-            elif field.name == "choices":
-                if not self._get_choices():
-                    continue
-                v = list(self._get_choices())
             elif field.name == "val" and self._is_a_callable():
                 v = self.val.__name__
             else:
@@ -352,7 +403,8 @@ class Tag:
         """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
         """
-        for attr in ('val', 'annotation', 'name', 'validation', 'choices', 'on_change', "facet",
+        # TODO what about children? Like 'choices' is not fetched from.
+        for attr in ('val', 'annotation', 'name', 'validation', 'on_change', "facet",
                      "_src_obj", "_src_key", "_src_class",
                      "_original_desc", "_original_name", "original_val"):
             if getattr(self, attr, None) is None:
@@ -405,8 +457,6 @@ class Tag:
         v = self._get_ui_val()
         if self.annotation is bool or not self.annotation and (v is True or v is False):
             return BoolWidget()
-        elif self._get_choices():
-            return EnumWidget()
         elif type(self) is not Tag:
             # SecretTag, PathTag, DatetimeTag
             return self
@@ -603,20 +653,6 @@ class Tag:
             return str(v.value)
         return str(v)
 
-    def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
-        """ Wherease self.choices might have different format, this returns a canonic dict. """
-
-        if self.choices is None:
-            return {}
-        if isinstance(self.choices, dict):
-            return self.choices
-        if isinstance(self.choices, common_iterables):
-            return {self._repr_val(v): v for v in self.choices}
-        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
-            return {str(v.value): v for v in list(self.choices)}
-
-        warn(f"Not implemented choices: {self.choices}")
-
     def _validate(self, out_value) -> TagValue:
         """ Runs
             * self.validation callback
@@ -691,14 +727,6 @@ class Tag:
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
-
-        # Choice check
-        if (ch := self._get_choices()):
-            if out_value in ch:
-                out_value = ch[out_value]
-            else:
-                self.set_error_text(f"Must be one of {list(ch.keys())}")
-                return False
 
         # Type conversion
         # Even though GuiInterface does some type conversion (str → int) independently,

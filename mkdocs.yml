@@ -43,19 +43,22 @@ markdown_extensions:
 nav:
   - Introduction: index.md
   - Overview.md
+  - Supported-types.md
+  - Examples.md
   - API:
       - run.md
       - Mininterface.md
       - Tag.md
       - Facet.md
       - Subcommands.md
-      - Helper-types.md
+      - Types.md
   - Extras:
       - Options.md
       - Exceptions.md
       - Interfaces.md
       - Standalone.md
-      - Types.md
+      - Helper-types.md
       - Validation.md
       - Experimental.md
   - Changelog.md
+  - Dev-guide.md

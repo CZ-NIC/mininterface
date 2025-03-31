@@ -11,8 +11,6 @@ from .adaptor import TextAdaptor
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self, Type
 
-# TODO missing in docs
-
 
 class AssureInteractiveTerminal:
     """ Try to make the non-interactive terminal interactive. """

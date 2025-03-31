@@ -1,11 +1,12 @@
 from copy import copy
 from datetime import date, time
+from enum import Enum
 from pathlib import Path
 from typing import Type, get_type_hints
 
 from .tag import Tag
 from .type_stubs import TagCallback
-from .types import CallbackTag, DatetimeTag, PathTag
+from .types import CallbackTag, DatetimeTag, PathTag, EnumTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):
@@ -31,6 +32,8 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
         return PathTag
     if tag._is_subclass(date) or tag._is_subclass(time):
         return DatetimeTag
+    if tag._is_subclass(Enum):
+        return EnumTag
     return type(tag)
 
 
@@ -41,7 +44,9 @@ def tag_fetch(tag: Tag, ref: dict | None, name: str):
 def tag_assure_type(tag: Tag):
     """ morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)` """
     if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
-        return type_(annotation=tag.annotation)._fetch_from(tag)
+        # I cannot use type_._fetch_from(tag) here as EnumTag.__post_init__
+        # needs the self.val which would not be yet set.
+        return type_(**tag.__dict__)
     return tag
 
 

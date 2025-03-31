@@ -3,17 +3,22 @@ from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
 from typing import TYPE_CHECKING
 
-from autocombobox import AutoCombobox
+try:
+    from autocombobox import AutoCombobox
+except ImportError:
+    AutoCombobox = None
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
-from ..types.internal import CallbackButtonWidget, EnumWidget, FacetButtonWidget, SubmitButtonWidget
+from ..types.rich_tags import EnumTag
+
+from ..types.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
 from ..auxiliary import flatten
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag, SecretTag
+from ..types import DatetimeTag, PathTag, SecretTag, EnumTag
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
@@ -108,7 +113,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
-            case EnumWidget():
+            case EnumTag():
                 # Replace with radio buttons
                 chosen_val = tag._get_ui_val()
                 variable = Variable()
@@ -117,7 +122,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 nested_frame = Frame(master)
                 nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-                if len(tag._get_choices()) >= adaptor.options.combobox_since:
+                if len(tag._get_choices()) >= adaptor.options.combobox_since and AutoCombobox:
                     widget = AutoCombobox(nested_frame, textvariable=variable)
                     widget['values'] = list(tag._get_choices())
                     widget.pack()

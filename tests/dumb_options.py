@@ -28,8 +28,7 @@ class TuiOptions(UiOptions):
 
 @dataclass
 class TextualOptions(TuiOptions):
-    test_todo: int = 74
-    """ fds fdsfsd TODO """
+    foobar: int = 74
     ...
 
 

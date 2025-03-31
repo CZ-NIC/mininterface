@@ -6,7 +6,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.app import ComposeResult
 
-from ..types.rich_tags import SecretTag
+from ..types.rich_tags import SecretTag, EnumTag
 
 from ..tag import Tag, TagValue
 
@@ -75,6 +75,9 @@ class MyRadioSet(Changeable, RadioSet):
             # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
                 event.stop()
+                # TODO
+                # not having selected and clicking enter will raise an error
+                # out = m.choice(["one", "two", "three"])
                 self.action_toggle()
 
 

@@ -5,6 +5,7 @@ graph LR
     subgraph mininterface
         run --> GUI
         run --> TUI
+        run --> WebUI
         run --> env
         CLI --> run
         id1[config file] --> CLI
@@ -13,9 +14,9 @@ graph LR
 ```
 
 ## Basic usage
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user with methods like [`m.is_yes("Is that alright?")`][mininterface.Mininterface.is_yes].
 
-There are a lot of supported [types](Types.md) you can use, not only scalars and well-known objects (`Path`, `datetime`), but also functions, iterables (like `list[Path]`) and union types (like `int | None`). To do even more advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its subclasses. Ex. for a validation only, use its [`Validation alias`][mininterface.types.alias.Validation].
+There are a lot of supported [types](Supported-types.md) you can use, not only scalars and well-known objects (`Path`, `datetime`), but also functions, iterables (like `list[Path]`) and union types (like `int | None`). To do even more advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its [subclasses](Types.md). Ex. for a validation only, use its [`Validation alias`][mininterface.types.alias.Validation].
 
 At last, use [`Facet`](Facet.md) to tackle the interface from the back-end (`m`) or the front-end (`Tag`) side.
 
@@ -106,3 +107,9 @@ And in a YAML config file. Note that you are not obliged to define all the attri
 further:
   host: example.com
 ```
+
+## Bash integration
+
+Mininterface can be used as a standalone dialog layer for sh scripts. See `mininterface --help`.
+
+Ex. `mininterface --choice one two three  # outputs one of them`

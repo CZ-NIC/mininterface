@@ -21,6 +21,8 @@ from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      SimpleEnv, Subcommand1, Subcommand2, callback_raw,
                      callback_tag, callback_tag2)
 from dumb_options import GuiOptions, MininterfaceOptions, TextOptions, TextualOptions, TuiOptions, UiOptions as UiDumb, WebOptions
+from mininterface.tag_factory import tag_assure_type
+from mininterface.types.rich_tags import EnumTag
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
@@ -163,6 +165,7 @@ class TestInteface(TestAbstract):
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
+
         self.assertEqual(repr({"my label": Tag(True, "my description", name="my label"),
                          "nested": {"inner": "another"}}), repr(dict1))
 
@@ -212,10 +215,9 @@ class TestInteface(TestAbstract):
 
     def test_choice_callback(self):
         m = run(interface=Mininterface)
-
-        form = """Asking the form {'My choice': Tag(val=None, description='', annotation=None, name=None, choices=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
+        form = """Asking the form {'My choice': EnumTag(val=None, description='', annotation=None, name=None, choices=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
         with self.assertOutputs(form):
-            m.form({"My choice": Tag(choices=[
+            m.form({"My choice": EnumTag(choices=[
                 callback_raw,
                 CallbackTag(callback_tag),
                 # This case works here but is not supported as such form cannot be submit in GUI:
@@ -228,7 +230,7 @@ class TestInteface(TestAbstract):
             # Not supported: "My choice3": Tag(callback_tag, annotation=CallbackTag),
         }
 
-        form = """Asking the form {'Choose': Tag(val=None, description='', annotation=None, name=None, choices=['My choice1', 'My choice2'])}"""
+        form = """Asking the form {'Choose': EnumTag(val=None, description='', annotation=None, name=None, choices=['My choice1', 'My choice2'])}"""
         with self.assertOutputs(form):
             m.choice(choices)
 
@@ -362,7 +364,7 @@ class TestConversion(TestAbstract):
         self.assertIsNone(env1.severity)
 
     def test_choices_param(self):
-        t = Tag("one", choices=["one", "two"])
+        t = EnumTag("one", choices=["one", "two"])
         t.update("two")
         self.assertEqual(t.val, "two")
         t.update("three")
@@ -374,7 +376,7 @@ class TestConversion(TestAbstract):
         self.assertTrue(d[""]["choices"].update("two"))
 
         # dict is the input
-        t = Tag(1, choices={"one": 1, "two": 2})
+        t = EnumTag(1, choices={"one": 1, "two": 2})
         self.assertTrue(t.update("two"))
         self.assertEqual(2, t.val)
         self.assertFalse(t.update("three"))
@@ -385,7 +387,7 @@ class TestConversion(TestAbstract):
         # list of Tags are the input
         t1 = Tag(1, name="one")
         t2 = Tag(2, name="two")
-        t = Tag(1, choices=[t1, t2])
+        t = EnumTag(1, choices=[t1, t2])
         self.assertTrue(t.update("two"))
         self.assertEqual(t2, t.val)
         self.assertFalse(t.update("three"))
@@ -397,27 +399,32 @@ class TestConversion(TestAbstract):
 
     def test_choice_enum(self):
         # Enum type supported
-        t1 = Tag(ColorEnum.GREEN, choices=ColorEnum)
+        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
         t1.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t1.val)
 
         # list of enums supported
-        t2 = Tag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
+        t2 = EnumTag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
         self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._get_choices())
         t2.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE, t2.val)
 
         # Enum type supported even without explicit definition
-        t3 = Tag(ColorEnum.GREEN)
+        t3 = EnumTag(ColorEnum.GREEN)
         self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
         self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._get_choices())
         t3.update(str(ColorEnum.BLUE.value))
         self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
         self.assertEqual(ColorEnum.BLUE, t3.val)
+
+        # We pass the EnumType which does not include the default options.
         t4 = Tag(ColorEnum)
-        self.assertIsNone(t4.val)
-        t4.update(str(ColorEnum.BLUE.value))
-        self.assertEqual(ColorEnum.BLUE, t4.val)
+        # But the Tag itself does not work with the Enum, so it does not reset the value.
+        self.assertIsNotNone(t4.val)
+        # Raising a form will automatically invoke the EnumTag instead of the Tag.
+        t5 = tag_assure_type(t4)
+        # The EnumTag resets the value.
+        self.assertIsNone(t5.val)
 
     def test_tag_src_update(self):
         m = run(ConstrainedEnv, interface=Mininterface)
@@ -671,9 +678,9 @@ class TestRun(TestAbstract):
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
             gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
             tui=TuiOptions(foo=3, p_config=2, p_dynamic=0),
-            textual=TextualOptions(foo=3, p_config=1, p_dynamic=0, test_todo=74),
+            textual=TextualOptions(foo=3, p_config=1, p_dynamic=0, foobar=74),
             text=TextOptions(foo=3, p_config=2, p_dynamic=0),
-            web=WebOptions(foo=3, p_config=1, p_dynamic=0, test_todo=74), interface=None)
+            web=WebOptions(foo=3, p_config=1, p_dynamic=0, foobar=74), interface=None)
 
         def conf():
             return {'textual': {'p_config': 1}, 'tui': {'p_config': 2}, 'ui': {'foo': 3}}
@@ -686,9 +693,9 @@ class TestRun(TestAbstract):
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
             gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
             tui=TuiOptions(foo=100, p_config=2, p_dynamic=100),
-            textual=TextualOptions(foo=100, p_config=1, p_dynamic=100, test_todo=74),
+            textual=TextualOptions(foo=100, p_config=1, p_dynamic=100, foobar=74),
             text=TextOptions(foo=100, p_config=2, p_dynamic=200),
-            web=WebOptions(foo=100, p_config=1, p_dynamic=100, test_todo=74), interface=None)
+            web=WebOptions(foo=100, p_config=1, p_dynamic=100, foobar=74), interface=None)
         self.assertEqual(res4, _merge_options(opt4, conf(), MininterfaceOptions))
 
     def test_options_inheritance(self):

@@ -93,10 +93,12 @@ Wrapper between various libraries that provide a user interface.
 Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. `Mininterface` is here to help.
 
 The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of [tyro](https://github.com/brentyi/tyro) does not require any overhead (as its `argparse` alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:
+
 * Call it as `program.py --help` to display full help.
 * Use any flag in CLI: `program.py --my-flag`  causes `env.my_flag` be set to `True`.
 * The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
+* Or access your program via [web browser](http://127.0.0.1:8000/Interfaces/#webinterface-or-web).
 
 # Installation
 
@@ -105,6 +107,21 @@ Install with a single command from [PyPi](https://pypi.org/project/mininterface/
 ```bash
 pip install mininterface[all]  # GPLv3 and compatible
 ```
+
+## Bundles
+
+There are various bundles. We mark the bundles with GPL3 dependencies.
+
+| bundle | size | licence | description |
+| ------ | ---- | ----------- | ---- |
+| mininterface | 30 MB | LGPL | standard (GUI, TUI) |
+| mininterface | 36 MB | LGPL | standard (GUI, TUI) |
+| mininterface[web] | 36 MB | | including [WebInterface](Interfaces.md#webinterface-or-web) |
+| mininterface[img] | | | images |
+| mininterface[tui] | | | images |
+| mininterface[gui] | | GPL | images, combobox, calendar |
+| mininterface[ui] | 100 MB | GPL | full installation |
+| mininterface[all] | 100 MB | GPL | full installation, same as `ui`, reserved for future use (big dependencies, optional interfaces) |
 
 ## Minimal installation
 
@@ -129,76 +146,84 @@ These projects have the code base reduced thanks to the mininterface:
 * **[deduplidog](https://github.com/CZ-NIC/deduplidog/)** – Find duplicates in a scattered directory structure
 * **[touch-timestamp](https://github.com/CZ-NIC/touch-timestamp/)** – A powerful dialog to change the files' timestamp
 
-# Examples
+# Hello world
 
-A powerful [`m.form`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form) dialog method accepts either a dataclass or a dict. Take a look on both.
+Take a look at the following example.
+1. We define any Env class.
+2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
+3. Then, we use various dialog methods, like [`is_yes`][mininterface.Mininterface.is_yes], [`choice`][mininterface.Mininterface.choice] or [`form`][mininterface.Mininterface.form].
 
-## A complex dataclass.
+Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
 ```python3
-from typing import Annotated
 from dataclasses import dataclass
-from mininterface.validators import not_empty
-from mininterface import run, Tag, Validation
-
-@dataclass
-class NestedEnv:
-  another_number: int = 7
-  """ This field is nested """
+from pathlib import Path
+from mininterface import run
 
 @dataclass
 class Env:
-  nested_config: NestedEnv
-
-  mandatory_str: str
-  """ As there is no default value, you will be prompted automatically to fill up the field """
-
-  my_number: int | None = None
-  """ This is not just a dummy number, if left empty, it is None. """
-
-  my_string: str = "Hello"
-  """ A dummy string """
-
+  my_file: Path  # This is my help text
   my_flag: bool = False
-  """ Checkbox test """
+  my_number: int = 4
 
-  my_validated: Annotated[str, Validation(not_empty)] = "hello"
-  """ A validated field """
+if __name__ == "__main__":
+    # Here, the user will be prompted
+    # for missing parameters (`my_file`) automatically
+    with run(Env) as m:
 
-m = run(Env, title="My program")
-# See some values
-print(m.env.nested_config.another_number)  # 7
-print(m.env)
-# Env(nested_config=NestedEnv(another_number=7), my_number=5, my_string='Hello', my_flag=False, my_validated='hello')
+      # You can lean on the typing
+      # Ex. directly read from the file object:
+      print("The file contents:", m.env.my_file.read_text())
 
-# Edit values in a dialog
-m.form()
+      # You can use various dialog methods,
+      # like `is_yes` for bool
+      if m.is_yes("Do you want to continue?"):
+
+        # or `choice` for choosing a value
+        fruit = m.choice(("apple", "banana", "sirup"), "Choose a fruit")
+
+        if fruit == "apple":
+          # or `form` for an arbitrary values
+          m.form({
+            "How many": 0,
+            "Choose another file": m.env.my_file
+          })
 ```
 
-As the attribute `mandatory_str` requires a value, a prompt appears automatically:
+Launch with `./program.py`:
 
-![Complex example missing field](asset/complex_example_missing_field.avif)
+![Tutorial](asset/tutorial_tk1.avif)
+![Tutorial](asset/tutorial_tk2.avif)
+![Tutorial](asset/tutorial_tk3.avif)
+![Tutorial](asset/tutorial_tk4.avif)
 
-Then, full form appears:
+Or at the remote machine `MININTERFACE_INTERFACE=tui ./program.py`:
 
-![Complex example](asset/complex_example.avif)
+![Tutorial](asset/tutorial_textual1.avif)
+![Tutorial](asset/tutorial_textual2.avif)
+![Tutorial](asset/tutorial_textual3.avif)
+![Tutorial](asset/tutorial_textual4.avif)
 
-## Form with paths
+Or via the plain text `MININTERFACE_INTERFACE=text ./program.py`:
 
-We have a dict with some paths. Here is how it looks.
+![Tutorial](asset/tutorial_text.avif)
 
-```python
-from pathlib import Path
-from mininterface import run, Tag
+Or via web browser `MININTERFACE_INTERFACE=web ./program.py`:
 
-m = run(title="My program")
-my_dictionary = {
-  "paths": Tag("", annotation=list[Path]),
-  "default_paths": Tag([Path("/tmp"), Path("/usr")], annotation=list[Path])
-  }
+![Tutorial](asset/tutorial_web.avif)
 
-# Edit values in a dialog
-m.form(my_dictionary)
+You can always set Env via CLI or a config file:
+
+```bash
+$ MININTERFACE_INTERFACE=gui ./program.py --help
+usage: program.py [-h] [OPTIONS]
+
+╭─ options ──────────────────────────────────────────────────────────────╮
+│ -h, --help             show this help message and exit                 │
+│ -v, --verbose          Verbosity level. Can be used twice to increase. │
+│ --my-file PATH         This is my help text (required)                 │
+│ --my-flag, --no-my-flag                                                │
+│                        (default: False)                                │
+│ --my-number INT        (default: 4)                                    │
+╰────────────────────────────────────────────────────────────────────────╯
 ```
-
-![List of paths](asset/list_of_paths.avif)

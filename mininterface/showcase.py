@@ -7,7 +7,7 @@ from tyro.conf import Positional
 
 from .exceptions import ValidationFail
 from .subcommands import Command, SubcommandPlaceholder
-from .types.rich_tags import SecretTag
+from .types.rich_tags import SecretTag, EnumTag
 
 from . import run, Choices
 from .interfaces import InterfaceName
