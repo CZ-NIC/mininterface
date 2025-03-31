@@ -7,7 +7,7 @@ name = "mininterface"
 version = "0.8.0-alpha1"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
-license = "GPL-3.0-or-later"
+license = "LGPL-3.0-or-later"
 homepage = "https://github.com/CZ-NIC/mininterface"
 readme = "README.md"
 
