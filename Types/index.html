@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../Standalone/">
+        <link rel="prev" href="../Subcommands/">
       
       
-        <link rel="next" href="../Validation/">
+        <link rel="next" href="../Options/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#types" class="md-skip">
+        <a href="#mininterface.types.rich_tags" class="md-skip">
           Skip to content
         </a>
       
@@ -256,20 +256,60 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../Supported-types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Supported types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -280,8 +320,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -396,18 +436,267 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Helper-types/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Types
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Helper types
+    Types
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      rich_tags
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.CallbackTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      CallbackTag
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      PathTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PathTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.multiple" class="md-nav__link">
+    <span class="md-ellipsis">
+      multiple
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      exist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.is_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_dir
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.is_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.DatetimeTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatetimeTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DatetimeTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.date" class="md-nav__link">
+    <span class="md-ellipsis">
+      date
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.time" class="md-nav__link">
+    <span class="md-ellipsis">
+      time
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.full_precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      full_precision
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      SecretTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SecretTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.show_toggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      show_toggle
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.toggle_visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      toggle_visibility
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.__repr__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __repr__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.__hash__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __hash__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.EnumTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      EnumTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EnumTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.EnumTag.choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      choices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      alias
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.alias.Validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.alias.Choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Choices
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -424,22 +713,22 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -450,8 +739,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -464,11 +753,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../Configuration/" class="md-nav__link">
+      <a href="../Options/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Configuration
+    UI Options
   </span>
   
 
@@ -545,160 +834,18 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Types
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Helper-types/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Types
+    Helper types
   </span>
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types" class="md-nav__link">
-    <span class="md-ellipsis">
-      types
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types.CallbackTag" class="md-nav__link">
-    <span class="md-ellipsis">
-      CallbackTag
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types.PathTag" class="md-nav__link">
-    <span class="md-ellipsis">
-      PathTag
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="PathTag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.types.PathTag.multiple" class="md-nav__link">
-    <span class="md-ellipsis">
-      multiple
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag" class="md-nav__link">
-    <span class="md-ellipsis">
-      DatetimeTag
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="DatetimeTag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.date" class="md-nav__link">
-    <span class="md-ellipsis">
-      date
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.time" class="md-nav__link">
-    <span class="md-ellipsis">
-      time
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.full_precision" class="md-nav__link">
-    <span class="md-ellipsis">
-      full_precision
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types.Validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.types.Choices" class="md-nav__link">
-    <span class="md-ellipsis">
-      Choices
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -773,6 +920,26 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Dev-guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -790,8 +957,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -800,16 +965,16 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags" class="md-nav__link">
     <span class="md-ellipsis">
-      types
+      rich_tags
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types.CallbackTag" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.CallbackTag" class="md-nav__link">
     <span class="md-ellipsis">
       CallbackTag
     </span>
@@ -818,7 +983,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types.PathTag" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.PathTag" class="md-nav__link">
     <span class="md-ellipsis">
       PathTag
     </span>
@@ -828,9 +993,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mininterface.types.PathTag.multiple" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.PathTag.multiple" class="md-nav__link">
     <span class="md-ellipsis">
       multiple
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      exist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.is_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_dir
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.PathTag.is_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_file
     </span>
   </a>
   
@@ -842,7 +1034,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.DatetimeTag" class="md-nav__link">
     <span class="md-ellipsis">
       DatetimeTag
     </span>
@@ -852,7 +1044,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.date" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.date" class="md-nav__link">
     <span class="md-ellipsis">
       date
     </span>
@@ -861,7 +1053,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.time" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.time" class="md-nav__link">
     <span class="md-ellipsis">
       time
     </span>
@@ -870,7 +1062,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mininterface.types.DatetimeTag.full_precision" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.DatetimeTag.full_precision" class="md-nav__link">
     <span class="md-ellipsis">
       full_precision
     </span>
@@ -884,7 +1076,91 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types.Validation" class="md-nav__link">
+  <a href="#mininterface.types.rich_tags.SecretTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      SecretTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SecretTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.show_toggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      show_toggle
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.toggle_visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      toggle_visibility
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.__repr__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __repr__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.SecretTag.__hash__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __hash__
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.EnumTag" class="md-nav__link">
+    <span class="md-ellipsis">
+      EnumTag
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EnumTag">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mininterface.types.rich_tags.EnumTag.choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      choices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.alias" class="md-nav__link">
+    <span class="md-ellipsis">
+      alias
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mininterface.types.alias.Validation" class="md-nav__link">
     <span class="md-ellipsis">
       Validation
     </span>
@@ -893,7 +1169,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mininterface.types.Choices" class="md-nav__link">
+  <a href="#mininterface.types.alias.Choices" class="md-nav__link">
     <span class="md-ellipsis">
       Choices
     </span>
@@ -919,72 +1195,16 @@
   
 
 
-<h1 id="types">Types</h1>
-<p>Various types are supported:</p>
-<ul>
-<li>scalars</li>
-<li>functions</li>
-<li>well-known objects (<code>Path</code>, <code>datetime</code>)</li>
-<li>iterables (like <code>list[Path]</code>)</li>
-<li>custom classes (somewhat)</li>
-<li>union types (like <code>int | None</code>)</li>
-</ul>
-<p>Take a look how it works with the variables organized in a dataclass:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy number &quot;&quot;&quot;</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">my_boolean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy boolean &quot;&quot;&quot;</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">my_conditional_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A number that can be null if left empty &quot;&quot;&quot;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; A dummy path &quot;&quot;&quot;</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath(&#39;/tmp&#39;),</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
-</code></pre></div>
-<p><img alt="GUI window" src="../asset/supported_types_1.avif" title="A prompted dialog" /></p>
-<p>Variables organized in a dict:</p>
-<p>Along scalar types, there is (basic) support for common iterables or custom classes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="n">i</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;my_number&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>          <span class="s2">&quot;my_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>          <span class="s2">&quot;my_point&quot;</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>          <span class="p">}</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># Prompt a dialog</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># {&#39;my_number&#39;: 2, &#39;my_list&#39;: [2, 3], &#39;my_point&#39;: &lt;__main__.Point object...&gt;}</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;my_point&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># 100</span>
-</code></pre></div>
-<p><img alt="GUI window" src="../asset/supported_types_2.avif" title="A prompted dialog after editation" /></p>
+  <h1>Types</h1>
+
+<p>These useful types can be imported from <code>mininterface.types</code>. They are all subclasses of the <a href="../Tag/"><code>Tag</code></a>, the main object for storing values. Normally, you don't need to use or know much about those but they can be helpful when you need to further specify the functionality, such as restricting a <code>Path</code> to directories only.</p>
 
 
 <div class="doc doc-object doc-module">
 
 
 
-<a id="mininterface.types"></a>
+<a id="mininterface.types.rich_tags"></a>
     <div class="doc doc-contents first">
 
 
@@ -1002,7 +1222,7 @@
 
 
 
-<h2 id="mininterface.types.CallbackTag" class="doc doc-heading">
+<h2 id="mininterface.types.rich_tags.CallbackTag" class="doc doc-heading">
             <code>CallbackTag</code>
 
 
@@ -1092,7 +1312,7 @@
 
 
 
-<h2 id="mininterface.types.PathTag" class="doc doc-heading">
+<h2 id="mininterface.types.rich_tags.PathTag" class="doc doc-heading">
             <code>PathTag</code>
 
 
@@ -1103,7 +1323,8 @@
 
 
         <p>Contains a Path or their list. Use this helper object to select files.</p>
-<p>In the following example, we see that it is not always needed to use this object.</p>
+<p>In the following example, we see that it is not always needed to use this
+object.</p>
 <ul>
 <li>File 1 – plain detection, button to a file picker appeared.</li>
 <li>File 2 – the same.</li>
@@ -1111,7 +1332,7 @@
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Tag</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface.aliases</span> <span class="kn">import</span> <span class="n">PathTag</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface.types</span> <span class="kn">import</span> <span class="n">PathTag</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
@@ -1120,7 +1341,8 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="s2">&quot;File 3&quot;</span><span class="p">:</span> <span class="n">PathTag</span><span class="p">([</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)],</span> <span class="n">multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">})</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># {&#39;File 1&#39;: PosixPath(&#39;/tmp&#39;), &#39;File 2&#39;: PosixPath(&#39;.&#39;), &#39;File 3&#39;: [PosixPath(&#39;/tmp&#39;)]}</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># {&#39;File 1&#39;: PosixPath(&#39;/tmp&#39;), &#39;File 2&#39;: PosixPath(&#39;.&#39;)}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># {&#39;File 3&#39;: [PosixPath(&#39;/tmp&#39;)]}</span>
 </code></pre></div>
 <p><img alt="File picker" src="../asset/file_picker.avif" /></p>
 
@@ -1139,8 +1361,8 @@
 
 
 
-<h3 id="mininterface.types.PathTag.multiple" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">multiple</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
+<h3 id="mininterface.types.rich_tags.PathTag.multiple" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">multiple</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
 
 </h3>
 
@@ -1148,6 +1370,57 @@
     <div class="doc doc-contents ">
 
         <p>The user can select multiple files.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.rich_tags.PathTag.exist" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">exist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>If True, validates that the selected file exists</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.rich_tags.PathTag.is_dir" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>If True, validates that the selected path is a directory</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.rich_tags.PathTag.is_file" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>If True, validates that the selected path is a file</p>
     </div>
 
 </div>
@@ -1166,7 +1439,7 @@
 
 
 
-<h2 id="mininterface.types.DatetimeTag" class="doc doc-heading">
+<h2 id="mininterface.types.rich_tags.DatetimeTag" class="doc doc-heading">
             <code>DatetimeTag</code>
 
 
@@ -1218,7 +1491,7 @@
 
 
 
-<h3 id="mininterface.types.DatetimeTag.date" class="doc doc-heading">
+<h3 id="mininterface.types.rich_tags.DatetimeTag.date" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">date</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 
 </h3>
@@ -1235,7 +1508,7 @@
 
 
 
-<h3 id="mininterface.types.DatetimeTag.time" class="doc doc-heading">
+<h3 id="mininterface.types.rich_tags.DatetimeTag.time" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 
 </h3>
@@ -1252,7 +1525,7 @@
 
 
 
-<h3 id="mininterface.types.DatetimeTag.full_precision" class="doc doc-heading">
+<h3 id="mininterface.types.rich_tags.DatetimeTag.full_precision" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">full_precision</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 
 </h3>
@@ -1275,11 +1548,234 @@
 
 </div>
 
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.types.rich_tags.SecretTag" class="doc doc-heading">
+            <code>SecretTag</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Contains a secret value that should be masked in the UI.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Tag</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface.types</span> <span class="kn">import</span> <span class="n">SecretTag</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="s2">&quot;My password&quot;</span><span class="p">:</span> <span class="n">SecretTag</span><span class="p">(</span><span class="s2">&quot;TOKEN&quot;</span><span class="p">),</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">})</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># {&#39;My password&#39;: &#39;TOKEN&#39;}</span>
+</code></pre></div>
+<p><img alt="File picker" src="../asset/secret_tag.avif" /></p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.rich_tags.SecretTag.show_toggle" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">show_toggle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Toggle visibility button (eye icon)</p>
+    </div>
+
+</div>
+
+
 
 <div class="doc doc-object doc-function">
 
 
-<h2 id="mininterface.types.Validation" class="doc doc-heading">
+<h3 id="mininterface.types.rich_tags.SecretTag.toggle_visibility" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">toggle_visibility</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Toggle the masked state</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="mininterface.types.rich_tags.SecretTag.__repr__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__repr__</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Ensure secrets are not accidentally exposed in logs/repr</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="mininterface.types.rich_tags.SecretTag.__hash__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__hash__</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Make SecretTag hashable for use with Annotated</p>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="mininterface.types.rich_tags.EnumTag" class="doc doc-heading">
+            <code>EnumTag</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Handle choices – radio buttons / select box.
+The value serves as the initially selected choice.
+It is constrained to those defined in the <code>choices</code> attribute.</p>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mininterface.types.rich_tags.EnumTag.choices" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">choices</span><span class="p">:</span> <span class="n">ChoicesType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The possible values.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">&quot;My restrained&quot;</span><span class="p">:</span> <span class="n">EnumTag</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">))})</span>
+</code></pre></div>
+<p>You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the <a class="autorefs autorefs-internal" href="../Helper-types/#mininterface.tag.ChoicesType"><code>ChoicesType</code></a> for more details.</p>
+<p>Here we focus at the <code>EnumTag</code> itself and its <a class="autorefs autorefs-internal" href="#mininterface.types.alias.Choices"><code>Choices</code></a> alias. It can be used to annotate a default value in a dataclass.</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Choices</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span> <span class="nn">mininterface.types</span> <span class="kn">import</span> <span class="n">EnumTag</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">foo</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="n">Choices</span><span class="p">(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;one&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="c1"># `Choices` is an alias for `EnumTag(choices=)`</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="c1">#   so the same would be:</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="c1"># foo: Annotated[&quot;str&quot;, EnumTag(choices=(&quot;one&quot;, &quot;two&quot;))] = &quot;one&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># prompts a dialog</span>
+</code></pre></div>
+<img alt="Form choice" src="../asset/tag_choices.avif" /></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>When dealing with a simple use case, use the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> dialog.</p>
+</div>
+    </div>
+
+</div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="mininterface.types.alias"></a>
+    <div class="doc doc-contents first">
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="mininterface.types.alias.Validation" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">Validation</span><span class="p">(</span><span class="n">check</span><span class="p">)</span></code>
 
 </h2>
@@ -1333,7 +1829,7 @@
 <div class="doc doc-object doc-function">
 
 
-<h2 id="mininterface.types.Choices" class="doc doc-heading">
+<h2 id="mininterface.types.alias.Choices" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">Choices</span><span class="p">(</span><span class="o">*</span><span class="n">choices</span><span class="p">)</span></code>
 
 </h2>
@@ -1341,7 +1837,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>An alias, see <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.choices"><code>Tag.choices</code></a></p>
+        <p>An alias, see <a class="autorefs autorefs-internal" href="#mininterface.types.rich_tags.EnumTag.choices"><code>EnumTag.choices</code></a></p>
 
     </div>
 
