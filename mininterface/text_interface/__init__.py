@@ -98,6 +98,7 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
             with StdinTTYWrapper():
                 return self._form(form, title, self._adaptor, submit=submit)
         except NotImplementedError:  # simple-term-menu raises this when vscode runs tests
+            # NOTE And it seems that the simple-term-menu is not available at Windows.
             if not self.interactive:
                 return super().form(form=form, title=title, submit=submit)
 
