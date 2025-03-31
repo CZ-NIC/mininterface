@@ -75,10 +75,7 @@ class MyRadioSet(Changeable, RadioSet):
             # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
                 event.stop()
-                # TODO
-                # not having selected and clicking enter will raise an error
-                # out = m.choice(["one", "two", "three"])
-                self.action_toggle()
+                self.action_toggle_button()
 
 
 class MyButton(Changeable, Button):

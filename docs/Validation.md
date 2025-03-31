@@ -30,5 +30,4 @@ print(type(m.env.my_string))  # Tag
 print(m.env.my_string.val)  # hello
 ```
 
-## validators
 ::: mininterface.validators

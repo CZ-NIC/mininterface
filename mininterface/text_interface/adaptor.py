@@ -40,11 +40,11 @@ class TextAdaptor(BackendAdaptor):
             case BoolWidget():
                 return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
             case EnumTag():
-                choices = tag._get_choices()
+                choices = [k for k, *_ in tag._get_choices()]
                 if only_label:
                     return tag.val or f"({len(choices)} options)"
                 else:
-                    return list(choices)[self._choose(choices, title=tag.name)]
+                    return choices[self._choose(choices, title=tag.name)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)

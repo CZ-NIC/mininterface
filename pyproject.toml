@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.8.0-alpha1"
+version = "0.8.0"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "LGPL-3.0-or-later"
@@ -25,11 +25,11 @@ tkinter-tooltip = "*"
 tkinter_form = "0.2.1"
 tkscrollableframe = "*"
 # Extras requirements
-textual-serve = { version = "*", optional = true}
-pillow = { version = "*", optional = true}
-tkcalendar = { version = "*", optional = true}
-textual_imageview = { version = "*", optional = true}
-autocombobox = { version = "1.4.2", optional = true}
+textual-serve = { version = "*", optional = true }
+pillow = { version = "*", optional = true }
+tkcalendar = { version = "*", optional = true }
+textual_imageview = { version = "*", optional = true }
+autocombobox = { version = "1.4.2", optional = true }
 
 [tool.poetry.extras]
 # These projects have GPLv3

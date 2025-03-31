@@ -1,8 +1,8 @@
-# UI Options
+## UI Options
 
 The UI behaviour might be modified via an options object. This can be passed to the [run][mininterface.run] function or defined through a config file. Options defined in the config file have bigger priority. Every interface has its own options object.
 
-# Config file special section
+## Config file special section
 In a YAML config file, use a special section 'mininterface' to set up the UI. For example, this stub will enforce your program to use the Tui interface.
 
 ```yaml
@@ -40,7 +40,7 @@ The difference when using such configuration file.
 
 ![Configuration not used](asset/configuration-not-used.avif) ![Configuration used](asset/configuration-used.avif)
 
-# The options object
+## The options object
 
 ```python
 from mininterface.options import MininterfaceOptions

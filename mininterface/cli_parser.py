@@ -19,12 +19,7 @@ from tyro._argparse_formatter import TyroArgumentParser
 from tyro._singleton import MISSING_NONPROP
 from tyro.extras import get_parser
 
-from mininterface.static import merge_dicts
-
-from .static import dataclass_asdict_no_defaults
-
-
-from .auxiliary import yield_annotations
+from .auxiliary import yield_annotations,  dataclass_asdict_no_defaults, merge_dicts
 from .options import GuiOptions, MininterfaceOptions, TextOptions, TextualOptions, WebOptions
 from .form_dict import EnvClass, MissingTagValue
 from .tag import Tag

@@ -1,13 +1,14 @@
 # Changelog
 
 ## 0.8.0 (unreleased)
-* CHANGED: EnumTag instead of Tag(choices=)
-* better annotated fetching
-* SecretTag
-* much better TextInterface
-* experimental WebInterface
+* CHANGED: [EnumTag][mininterface.types.rich_tags.EnumTag] instead of Tag(choices=)
+* [WebInterface](Interfaces.md#webinterface-or-web) (working draft)
+* much better [TextInterface](Interfaces.md#textinterface)
+* [SecretTag][mininterface.types.rich_tags.SecretTag]
 * PathTag UI in TextualInterface
 * UI options available from the program
+* Mininterface.choice [tips][mininterface.Mininterface.choice] parameter
+* better annotated fetching
 
 ## 0.7.5 (2025-01-29)
 * UI [options](Options.md)
@@ -26,7 +27,7 @@
 ## 0.7.1 (2024-11-27)
 * GUI scrollbars if window is bigger than the screen
 * [non-interactive][mininterface.Mininterface.__enter__] session support
-* [datetime](Types.md#mininterface.types.DatetimeTag) support
+* [datetime][mininterface.types.DatetimeTag] support
 * nested generics support (a tuple in a list)
 
 ## 0.7.0 (2024-11-08)

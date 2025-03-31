@@ -314,6 +314,7 @@ class SecretTag(Tag):
     def __hash__(self):
         """Make SecretTag hashable for use with Annotated"""
         return hash((self.show_toggle, self._masked))
+# TODO tests, changelog, _tips -> tips, docs
 
 
 @dataclass(repr=False)
@@ -361,8 +362,10 @@ class EnumTag(Tag):
     # * more date types (now only str possible)
     # * mininterface.choice `def choice(choices=, guesses=)`
 
+    tips: ChoicesType | None = None
+
     def __repr__(self):
-        return super().__repr__()[:-1] + f", choices={list(self._get_choices())})"
+        return super().__repr__()[:-1] + f", choices={[k for k, *_ in self._get_choices()]})"
 
     def __post_init__(self):
         super().__post_init__()
@@ -376,7 +379,7 @@ class EnumTag(Tag):
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
-    def _get_choices(self) -> dict[ChoiceLabel, TagValue]:
+    def _build_choices(self) -> dict[ChoiceLabel, TagValue]:
         """ Whereas self.choices might have different format, this returns a canonic dict. """
 
         if self.choices is None:
@@ -404,8 +407,25 @@ class EnumTag(Tag):
 
         warn(f"Not implemented choices: {self.choices}")
 
+    def _get_choices(self) -> list[tuple[ChoiceLabel, TagValue], bool]:
+        """ Return a list of tuples (label, choice value, is tip) """
+
+        if not self.tips:
+            return list((k, v, False) for k, v in self._build_choices().items())
+
+        index = set(self.tips)
+        front = []
+        back = []
+        for k, v in self._build_choices().items():
+            if v in index:
+                front.append((k, v, True))
+            else:
+                back.append((k, v, False))
+        return front + back
+
     def update(self, ui_value: TagValue) -> bool:
-        ch = self._get_choices()
+        """ UI value is the label. We store the key. """
+        ch = self._build_choices()
         if ui_value in ch:
             return super().update(ch[ui_value])
         else:
@@ -413,7 +433,7 @@ class EnumTag(Tag):
             return False
 
     def _validate(self, out_value):
-        if out_value in self._get_choices().values():
+        if out_value in self._build_choices().values():
             return out_value
         else:
             self.set_error_text(f"Not one of the allowed values")

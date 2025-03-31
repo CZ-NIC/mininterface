@@ -4,6 +4,8 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING
 
+from ..auxiliary import flatten
+
 from ..textual_interface.facet import TextualFacet
 
 from ..options import WebOptions
@@ -39,9 +41,14 @@ class WebParentAdaptor(TextualAdaptor):
         if not length_data:
             return False
         msg_length = struct.unpack("I", length_data)[0]
+        # TODO this reads form only, we should be able to read ex. print output
         received_data = p.stdout.read(msg_length)
         received_object = pickle.loads(received_data)
         form = received_object
+
+        # sets the facet to all the tags in the form
+        for t in flatten(received_object):
+            t.facet = self.facet
 
         self.facet._fetch_from_adaptor(form)  # TODO rather use run_dialog
         return True

@@ -29,6 +29,7 @@ class SerializedChildAdaptor(BackendAdaptor):
     def __init__(self, interface: "Mininterface", options):
         # self.facet = Facet(self, interface.env)  # TODO, proper Facet
         super().__init__(interface, options)
+        self.layout_elements = []  # TODO
         pass
 
     def receive(self):

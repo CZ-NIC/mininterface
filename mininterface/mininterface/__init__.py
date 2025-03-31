@@ -196,15 +196,21 @@ class Mininterface(Generic[EnvClass]):
         print("Asking number:", text)
         return 0
 
-    def choice(self, choices: ChoicesType, title: str = "", _guesses=None,
-               skippable: bool = True, launch: bool = True, _multiple=True, default: str | TagValue | None = None
+    def choice(self, choices: ChoicesType,
+               title: str = "",
+               default: str | TagValue | None = None,
+               tips: ChoicesType | None = None,
+               _multiple=False,
+               skippable: bool = True,
+               launch: bool = True
                ) -> TagValue | list[TagValue] | Any:
         """ Prompt the user to select. Useful for a menu creation.
 
         Args:
-            choices: You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
-
-
+            choices:
+                You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as labels.
+                You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
+                See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
             title: Form title
             default: The value of the checked choice.
 
@@ -212,6 +218,8 @@ class Mininterface(Generic[EnvClass]):
                 m.choice({"one": 1, "two": 2}, default=2)  # returns 2
                 ```
                 ![Default choice](asset/choices_default.avif)
+
+            tips: Choices to be highlighted. Use the list of choice values to denote which one the user might prefer.
             skippable: If there is a single option, choose it directly, without a dialog.
             launch: If the chosen value is a callback, we directly call it and return its return value.
 
@@ -224,7 +232,6 @@ class Mininterface(Generic[EnvClass]):
         """
         # NOTE to build a nice menu, I need this
         # Args:
-        # guesses: Choices to be highlighted.
         # multiple: Multiple choice.
         # Returns: If multiple=True, list of the chosen values.
         #
@@ -247,7 +254,7 @@ class Mininterface(Generic[EnvClass]):
                 out = choices[0]
             tag = Tag(out)
         else:  # Trigger the dialog
-            tag = EnumTag(val=default, choices=choices)
+            tag = EnumTag(val=default, choices=choices, tips=tips)
             key = title or "Choose"
             self.form({key: tag})[key]
 

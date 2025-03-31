@@ -39,7 +39,7 @@ if __name__ == "__main__":
 - [Installation](#installation)
 - [Docs](#docs)
 - [Gallery](#gallery)
-- [Examples](#examples)
+- [Hello world](#hello-world)
 
 ## You got CLI
 It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.

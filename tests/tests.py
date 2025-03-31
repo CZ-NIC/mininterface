@@ -124,6 +124,7 @@ def mock_interactive_terminal(func):
     # mock the session could be made interactive
     @patch("sys.stdin.isatty", new=lambda: True)
     @patch("sys.stdout.isatty", new=lambda: True)
+    @patch.dict(sys.modules, {"ipdb": None})  # ipdb prevents vscode to finish test_ask_form
     def _(*args, **kwargs):
         return func(*args, **kwargs)
     return _
@@ -362,69 +363,6 @@ class TestConversion(TestAbstract):
         ui[""]["severity"] = ""  # UI is not able to write None, it does an empty string instead
         Tag._submit_values(zip(flatten(fd), flatten(ui)))
         self.assertIsNone(env1.severity)
-
-    def test_choices_param(self):
-        t = EnumTag("one", choices=["one", "two"])
-        t.update("two")
-        self.assertEqual(t.val, "two")
-        t.update("three")
-        self.assertEqual(t.val, "two")
-
-        m = run(ConstrainedEnv)
-        d = dataclass_to_tagdict(m.env)
-        self.assertFalse(d[""]["choices"].update(""))
-        self.assertTrue(d[""]["choices"].update("two"))
-
-        # dict is the input
-        t = EnumTag(1, choices={"one": 1, "two": 2})
-        self.assertTrue(t.update("two"))
-        self.assertEqual(2, t.val)
-        self.assertFalse(t.update("three"))
-        self.assertEqual(2, t.val)
-        self.assertTrue(t.update("one"))
-        self.assertEqual(1, t.val)
-
-        # list of Tags are the input
-        t1 = Tag(1, name="one")
-        t2 = Tag(2, name="two")
-        t = EnumTag(1, choices=[t1, t2])
-        self.assertTrue(t.update("two"))
-        self.assertEqual(t2, t.val)
-        self.assertFalse(t.update("three"))
-        self.assertEqual(t2, t.val)
-        self.assertTrue(t.update("one"))
-        self.assertEqual(t1, t.val)
-
-        # self.assertEqual(m.choice(["one", "two"]), "two")
-
-    def test_choice_enum(self):
-        # Enum type supported
-        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
-        t1.update(str(ColorEnum.BLUE.value))
-        self.assertEqual(ColorEnum.BLUE, t1.val)
-
-        # list of enums supported
-        t2 = EnumTag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
-        self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._get_choices())
-        t2.update(str(ColorEnum.BLUE.value))
-        self.assertEqual(ColorEnum.BLUE, t2.val)
-
-        # Enum type supported even without explicit definition
-        t3 = EnumTag(ColorEnum.GREEN)
-        self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
-        self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._get_choices())
-        t3.update(str(ColorEnum.BLUE.value))
-        self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
-        self.assertEqual(ColorEnum.BLUE, t3.val)
-
-        # We pass the EnumType which does not include the default options.
-        t4 = Tag(ColorEnum)
-        # But the Tag itself does not work with the Enum, so it does not reset the value.
-        self.assertIsNotNone(t4.val)
-        # Raising a form will automatically invoke the EnumTag instead of the Tag.
-        t5 = tag_assure_type(t4)
-        # The EnumTag resets the value.
-        self.assertIsNone(t5.val)
 
     def test_tag_src_update(self):
         m = run(ConstrainedEnv, interface=Mininterface)
@@ -1167,6 +1105,84 @@ class TestSecretTag(TestAbstract):
     def test_annotation_default(self):
         secret = SecretTag("test")
         self.assertEqual(str, secret.annotation)
+
+
+class TestEnumTag(TestAbstract):
+    def test_choices_param(self):
+        t = EnumTag("one", choices=["one", "two"])
+        t.update("two")
+        self.assertEqual(t.val, "two")
+        t.update("three")
+        self.assertEqual(t.val, "two")
+
+        m = run(ConstrainedEnv)
+        d = dataclass_to_tagdict(m.env)
+        self.assertFalse(d[""]["choices"].update(""))
+        self.assertTrue(d[""]["choices"].update("two"))
+
+        # dict is the input
+        t = EnumTag(1, choices={"one": 1, "two": 2})
+        self.assertTrue(t.update("two"))
+        self.assertEqual(2, t.val)
+        self.assertFalse(t.update("three"))
+        self.assertEqual(2, t.val)
+        self.assertTrue(t.update("one"))
+        self.assertEqual(1, t.val)
+
+        # list of Tags are the input
+        t1 = Tag(1, name="one")
+        t2 = Tag(2, name="two")
+        t = EnumTag(1, choices=[t1, t2])
+        self.assertTrue(t.update("two"))
+        self.assertEqual(t2, t.val)
+        self.assertFalse(t.update("three"))
+        self.assertEqual(t2, t.val)
+        self.assertTrue(t.update("one"))
+        self.assertEqual(t1, t.val)
+
+    def test_choice_enum(self):
+        # Enum type supported
+        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
+        t1.update(str(ColorEnum.BLUE.value))
+        self.assertEqual(ColorEnum.BLUE, t1.val)
+
+        # list of enums supported
+        t2 = EnumTag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
+        self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._build_choices())
+        t2.update(str(ColorEnum.BLUE.value))
+        self.assertEqual(ColorEnum.BLUE, t2.val)
+
+        # Enum type supported even without explicit definition
+        t3 = EnumTag(ColorEnum.GREEN)
+        self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
+        self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._build_choices())
+        t3.update(str(ColorEnum.BLUE.value))
+        self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
+        self.assertEqual(ColorEnum.BLUE, t3.val)
+
+        # We pass the EnumType which does not include the default options.
+        t4 = Tag(ColorEnum)
+        # But the Tag itself does not work with the Enum, so it does not reset the value.
+        self.assertIsNotNone(t4.val)
+        # Raising a form will automatically invoke the EnumTag instead of the Tag.
+        t5 = tag_assure_type(t4)
+        # The EnumTag resets the value.
+        self.assertIsNone(t5.val)
+
+    def test_tips(self):
+        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)  # , tips=ColorEnum.BLUE)
+        self.assertListEqual([
+            ('1', ColorEnum.RED, False),
+            ('2', ColorEnum.GREEN, False),
+            ('3', ColorEnum.BLUE, False),
+        ], t1._get_choices())
+
+        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum, tips=[ColorEnum.BLUE])
+        self.assertListEqual([
+            ('3', ColorEnum.BLUE, True),
+            ('1', ColorEnum.RED, False),
+            ('2', ColorEnum.GREEN, False),
+        ], t1._get_choices())
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
-from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Widget
+from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style, Widget
 from typing import TYPE_CHECKING
 
 try:
@@ -122,17 +122,23 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 nested_frame = Frame(master)
                 nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
 
-                if len(tag._get_choices()) >= adaptor.options.combobox_since and AutoCombobox:
+                # highlight style
+                style = Style()
+                style.configure("Custom.TRadiobutton", background="lightyellow")
+
+                choices = tag._get_choices()
+                if len(choices) >= adaptor.options.combobox_since and AutoCombobox:
                     widget = AutoCombobox(nested_frame, textvariable=variable)
-                    widget['values'] = list(tag._get_choices())
+                    widget['values'] = [k for k, *_ in choices]
                     widget.pack()
                     widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
                     if chosen_val is not None:
                         variable.set(chosen_val)
 
                 else:
-                    for i, (choice_label, choice_val) in enumerate(tag._get_choices().items()):
-                        widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable, value=choice_label)
+                    for i, (choice_label, choice_val, tip) in enumerate(choices):
+                        widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable,
+                                              value=choice_label, style="Custom.TRadiobutton" if tip else None)
                         widget2.grid(row=i, column=1, sticky="w")
                         subwidgets.append(widget2)
                         if choice_val is tag.val:

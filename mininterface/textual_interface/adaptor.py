@@ -37,8 +37,8 @@ class TextualAdaptor(BackendAdaptor):
             case BoolWidget():
                 o = MyCheckbox(tag, tag.name or "", v)
             case EnumTag():
-                radio_buttons = [RadioButton(label, value=val == tag.val)
-                                 for label, val in tag._get_choices().items()]
+                radio_buttons = [RadioButton(label, value=val == tag.val, classes="enum-highlight" if tip else None)
+                                 for label, val, tip in tag._get_choices()]
                 o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
                 o = FilePickerInput(tag, placeholder=tag.name or "")

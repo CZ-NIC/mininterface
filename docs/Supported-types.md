@@ -124,7 +124,7 @@ with run(Env) as m:
 
 ### Enums
 
-To constraint a value, either pass an enum object or use handy additional type [EnumTag](Types.md#mininterface.types.EnumTag) that might speed you up a bit.
+To constraint a value, either pass an enum object or use handy additional type [EnumTag][mininterface.types.rich_tags.EnumTag] that might speed you up a bit.
 
 ### Well-known objects
 

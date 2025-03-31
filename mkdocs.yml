@@ -20,6 +20,8 @@ plugins:
             members_order: source
             show_bases: false
             show_labels: false
+            show_root_heading: true
+            heading_level: 3
 
 markdown_extensions:
   - pymdownx.highlight:

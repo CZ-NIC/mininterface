@@ -10,7 +10,8 @@ from textual.widgets import (
     Input,
     Label,
     Static,
-    Rule
+    Rule,
+    RadioSet
 )
 
 
@@ -50,6 +51,9 @@ class TextualApp(App[bool | None]):
     FilePickerInput Button {
         width: 20%;
         margin-left: 1;
+    }
+    .enum-highlight {
+        text-style: bold;
     }
     """
     """ Limit layout image size """
@@ -140,17 +144,23 @@ class MainContents(Static):
 
     def on_key(self, event: events.Key) -> None:
         f = self.focusable_
+        ff = self.app.focused
         try:
-            index = f.index(self.app.focused)
+            index = f.index(ff)
         except ValueError:  # probably some other element were focused
             return
         match event.key:
+            # Go up and down the form.
+            # With the exception of the RadioSet, there keep the default behavior,
+            # traversing its elements, unless we are at the edge.
             case "down":
-                f[(index + 1) % len(f)].focus()
-                event.stop()
+                if not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1:
+                    f[(index + 1) % len(f)].focus()
+                    event.stop()
             case "up":
-                f[(index - 1) % len(f)].focus()
-                event.stop()
+                if not isinstance(ff, RadioSet) or ff._selected == 0:
+                    f[(index - 1) % len(f)].focus()
+                    event.stop()
             case "enter":
                 # NOTE a multiline input might be
                 # isinstance(self.focused,
