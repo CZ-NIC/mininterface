@@ -619,7 +619,7 @@ class Tag:
             return self.annotation()
 
     def _get_ui_val(self):
-        """ Get values as suitable for UI.
+        """ Get values as suitable for UI. Adaptor should not read the value directly.
         Some values are not expected to be parsed by any UI.
         But we will reconstruct them in self.update later.
 

@@ -2,6 +2,7 @@
 
 ## unreleased
 * enh: options add shortcut
+* feat: EnumTag multiple
 
 ## 0.8.0 (2025-04-01)
 * CHANGED: [EnumTag][mininterface.types.rich_tags.EnumTag] instead of Tag(choices=)

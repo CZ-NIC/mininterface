@@ -14,7 +14,7 @@ from ..types.internal import (BoolWidget, CallbackButtonWidget,
 from .facet import TextualFacet
 from .file_picker_input import FilePickerInputFactory
 from .textual_app import TextualApp
-from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
+from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet, MySelectionList,
                       MySubmitButton)
 
 
@@ -40,9 +40,15 @@ class TextualAdaptor(BackendAdaptor):
             case BoolWidget():
                 o = MyCheckbox(tag, tag.name or "", v)
             case EnumTag():
-                radio_buttons = [RadioButton(label, value=val == tag.val, classes="enum-highlight" if tip else None)
-                                 for label, val, tip in tag._get_choices()]
-                o = MyRadioSet(tag, *radio_buttons)
+                if tag.multiple:
+                    selected = set(tag.val)
+
+                    o = MySelectionList(tag, *((label, val, val in selected)
+                                        for label, val, tip in tag._get_choices()))  # TODO tip not used
+                else:
+                    radio_buttons = [RadioButton(label, value=val == tag.val, classes="enum-highlight" if tip else None)
+                                     for label, val, tip in tag._get_choices()]
+                    o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
                 o = FilePickerInputFactory(self, tag, placeholder=tag.name or "")
             case SecretTag():

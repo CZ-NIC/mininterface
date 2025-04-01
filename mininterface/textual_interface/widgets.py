@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from textual import events
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Input, RadioSet
+from textual.widgets import Button, Checkbox, Input, RadioSet, SelectionList
 
 
 from ..tag import Tag, TagValue
@@ -19,16 +19,10 @@ class Changeable:
         super().__init__(*args, **kwargs)
 
     def trigger_change(self):
-        if tag := self.tag:
-            tag._on_change_trigger(self.get_ui_value())
+        self.tag._on_change_trigger(self.get_ui_value())
 
     def get_ui_value(self):
-        if isinstance(self, RadioSet):
-            if self.pressed_button:
-                return str(self.pressed_button.label)
-            else:
-                return None
-        elif isinstance(self, Button):
+        if isinstance(self, Button):  # NOTE: I suspect this is not used as Button already implement get_ui_value
             return None
         else:
             return self.value
@@ -65,13 +59,32 @@ class MyRadioSet(Changeable, RadioSet):
         return self.trigger_change()
 
     def on_key(self, event: events.Key) -> None:
+        # if event.key == "down":
+        #     return False
         if event.key == "enter":
             # If the radio button is not selected, select it and prevent default
             # (which is form submittion).
             # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
-                event.stop()
                 self.action_toggle_button()
+                # TODO: If it is the only tag, we submit the form. But this should be implemented at the Tag level.
+                if len(self.tag.facet._form) > 1 or self.tag is not next(iter(self.tag.facet._form.values())):
+                    event.stop()
+
+    def get_ui_value(self):
+        if self.pressed_button:
+            # TODO tady to může být .value ... ale co tkinterface a textinterface?
+            return str(self.pressed_button.label)
+        else:
+            return None
+
+
+class MySelectionList(Changeable, SelectionList):
+    def on_selection_changed(self):
+        return self.trigger_change()
+
+    def get_ui_value(self):
+        return self.selected
 
 
 class MyButton(Changeable, Button):

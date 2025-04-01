@@ -92,7 +92,7 @@ class FileBrowser(Vertical):
     def _get_start_path_from_tag(self) -> Path:
         """Get the starting path from the tag value or fallback to home directory."""
         try:
-            tag_value = self.tag.val
+            tag_value = self.tag._get_ui_val()
 
             if isinstance(tag_value, list) and tag_value:
                 path = Path(tag_value[0])
@@ -370,7 +370,7 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
         def __init__(self, tag: PathTag, **kwargs):
             super().__init__(tag)
 
-            initial_value = str(tag.val)
+            initial_value = str(tag._get_ui_val())
             self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
             self.button = Button("...", variant="primary", id="file_picker")
             self.browser = None

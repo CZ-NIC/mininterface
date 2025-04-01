@@ -127,22 +127,26 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 style.configure("Custom.TRadiobutton", background="lightyellow")
 
                 choices = tag._get_choices()
-                if len(choices) >= adaptor.options.combobox_since and AutoCombobox:
-                    widget = AutoCombobox(nested_frame, textvariable=variable)
-                    widget['values'] = [k for k, *_ in choices]
-                    widget.pack()
-                    widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
-                    if chosen_val is not None:
-                        variable.set(chosen_val)
 
+                if tag.multiple:
+                    raise NotImplementedError  # TODO
                 else:
-                    for i, (choice_label, choice_val, tip) in enumerate(choices):
-                        widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable,
-                                              value=choice_label, style="Custom.TRadiobutton" if tip else None)
-                        widget2.grid(row=i, column=1, sticky="w")
-                        subwidgets.append(widget2)
-                        if choice_val is tag.val:
-                            variable.set(choice_label)
+                    if len(choices) >= adaptor.options.combobox_since and AutoCombobox:
+                        widget = AutoCombobox(nested_frame, textvariable=variable)
+                        widget['values'] = [k for k, *_ in choices]
+                        widget.pack()
+                        widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+                        if chosen_val is not None:
+                            variable.set(chosen_val)
+
+                    else:
+                        for i, (choice_label, choice_val, tip) in enumerate(choices):
+                            widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable,
+                                                  value=choice_label, style="Custom.TRadiobutton" if tip else None)
+                            widget2.grid(row=i, column=1, sticky="w")
+                            subwidgets.append(widget2)
+                            if choice_val is tag.val:
+                                variable.set(choice_label)
 
             case PathTag():
                 grid_info = widget.grid_info()

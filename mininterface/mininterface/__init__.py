@@ -2,7 +2,7 @@ import logging
 from dataclasses import is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, overload
+from typing import TYPE_CHECKING, Any, Generic, Literal, Optional, Type, TypeVar, overload
 
 from ..types.rich_tags import EnumTag
 
@@ -23,6 +23,8 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Mininterface(Generic[EnvClass]):
@@ -196,11 +198,23 @@ class Mininterface(Generic[EnvClass]):
         print("Asking number:", text)
         return 0
 
+    @overload
+    def choice(self, choices: list[T], multiple: Literal[True], **kwargs) -> list[T]: ...
+
+    @overload
+    def choice(self, choices: list[T], multiple: Literal[False], **kwargs) -> T: ...
+
+    @overload
+    def choice(self, choices: list[T], default: list[T],  **kwargs) -> list[T]: ...
+
+    @overload
+    def choice(self, choices: list[T], default: T,  **kwargs) -> T: ...
+
     def choice(self, choices: ChoicesType,
                title: str = "",
-               default: str | TagValue | None = None,
+               default: str | TagValue | list[str] | list[TagValue] | None = None,
                tips: ChoicesType | None = None,
-               _multiple=False,
+               multiple: Optional[bool] = None,
                skippable: bool = True,
                launch: bool = True
                ) -> TagValue | list[TagValue] | Any:
@@ -219,12 +233,14 @@ class Mininterface(Generic[EnvClass]):
                 ```
                 ![Default choice](asset/choices_default.avif)
 
+                If the list is given, this imply multiple choice.
             tips: Choices to be highlighted. Use the list of choice values to denote which one the user might prefer.
+            multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
             launch: If the chosen value is a callback, we directly call it and return its return value.
 
         Returns:
-            The chosen value.
+            The chosen value. Or chosen values in the case of multiple choice.
             If launch=True and the chosen value is a callback, we call it and return its result.
 
         !!! info
@@ -241,6 +257,9 @@ class Mininterface(Generic[EnvClass]):
         #   (possibly because the lambda hides a part of GUI)
         # m = run(Env)
         # tag = Tag(x, choices=["one", "two", x])
+        if isinstance(default, list):
+            multiple = True
+
         if skippable and isinstance(choices, Enum):  # Enum instance, ex: val=ColorEnum.RED
             default = choices
             choices = choices.__class__
@@ -252,19 +271,20 @@ class Mininterface(Generic[EnvClass]):
                 out = next(iter(choices.values()))
             else:
                 out = choices[0]
-            tag = Tag(out)
+            tag = Tag([out] if multiple else out)
         else:  # Trigger the dialog
-            tag = EnumTag(val=default, choices=choices, tips=tips)
+            tag = EnumTag(val=default, choices=choices, tips=tips, multiple=multiple)
             key = title or "Choose"
             self.form({key: tag})[key]
 
         if launch:
-            if tag._is_a_callable():
+            if tag._is_a_callable():  # NOTE this does not work for multiple choice
                 return tag._run_callable()
             if isinstance(tag.val, Tag) and tag.val._is_a_callable():
                 # Nested Tag: `m.choice([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
                 return tag.val._run_callable()
         return tag.val
+    # TODO possibility to un/check all (shortcut)
 
     @overload
     def form(self, form: None = None, title: str = "") -> EnvClass: ...

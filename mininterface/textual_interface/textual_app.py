@@ -11,7 +11,8 @@ from textual.widgets import (
     Label,
     Static,
     Rule,
-    RadioSet
+    RadioSet,
+    SelectionList
 )
 
 
@@ -154,11 +155,14 @@ class MainContents(Static):
             # With the exception of the RadioSet, there keep the default behavior,
             # traversing its elements, unless we are at the edge.
             case "down":
-                if not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1:
+                # (Unfortunaly, I don't know how to implement allowing navigation directly to the RadioSet and SelectionList.)
+                if (not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1) \
+                        and not isinstance(ff, SelectionList):
                     f[(index + 1) % len(f)].focus()
                     event.stop()
             case "up":
-                if not isinstance(ff, RadioSet) or ff._selected == 0:
+                if (not isinstance(ff, RadioSet) or ff._selected == 0) \
+                        and not isinstance(ff, SelectionList):
                     f[(index - 1) % len(f)].focus()
                     event.stop()
             case "enter":

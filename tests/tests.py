@@ -214,6 +214,16 @@ class TestInteface(TestAbstract):
         self.assertEqual(1, m.choice({"label": 1}))
         self.assertEqual(ColorEnumSingle.ORANGE, m.choice(ColorEnumSingle))
 
+    def test_choice_multiple(self):
+        m = run(interface=Mininterface)
+        self.assertEqual([1], m.choice([1], multiple=True))
+        self.assertEqual([1], m.choice({"label": 1}, multiple=True))
+        self.assertEqual([ColorEnumSingle.ORANGE], m.choice(ColorEnumSingle, multiple=True))
+
+        self.assertEqual([1], m.choice([1], default=[1]))
+        self.assertEqual([1], m.choice({"label": 1}, default=[1]))
+        self.assertEqual([ColorEnumSingle.ORANGE], m.choice(ColorEnumSingle, default=[ColorEnumSingle.ORANGE]))
+
     def test_choice_callback(self):
         m = run(interface=Mininterface)
         form = """Asking the form {'My choice': EnumTag(val=None, description='', annotation=None, name=None, choices=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
@@ -1128,6 +1138,7 @@ class TestEnumTag(TestAbstract):
         self.assertEqual(2, t.val)
         self.assertTrue(t.update("one"))
         self.assertEqual(1, t.val)
+        self.assertFalse(t.multiple)
 
         # list of Tags are the input
         t1 = Tag(1, name="one")
@@ -1139,6 +1150,7 @@ class TestEnumTag(TestAbstract):
         self.assertEqual(t2, t.val)
         self.assertTrue(t.update("one"))
         self.assertEqual(t1, t.val)
+        self.assertFalse(t.multiple)
 
     def test_choice_enum(self):
         # Enum type supported
@@ -1169,6 +1181,8 @@ class TestEnumTag(TestAbstract):
         # The EnumTag resets the value.
         self.assertIsNone(t5.val)
 
+        [self.assertFalse(t.multiple) for t in (t1, t2, t3, t5)]
+
     def test_tips(self):
         t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)  # , tips=ColorEnum.BLUE)
         self.assertListEqual([
@@ -1183,6 +1197,28 @@ class TestEnumTag(TestAbstract):
             ('1', ColorEnum.RED, False),
             ('2', ColorEnum.GREEN, False),
         ], t1._get_choices())
+
+    def test_multiple(self):
+        choices = {("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33}
+        t1 = EnumTag(choices=choices)
+        t2 = EnumTag(11, choices=choices)
+        t3 = EnumTag([11], choices=choices)
+        t4 = EnumTag([11, 33], choices=choices)
+        t5 = EnumTag(choices=choices, multiple=True)
+
+        [self.assertTrue(t.multiple) for t in (t3, t4, t5)]
+        [self.assertFalse(t.multiple) for t in (t1, t2)]
+
+        with self.assertRaises(TypeError), redirect_stderr(StringIO()):
+            self.assertFalse(t3.update(22))
+
+        self.assertListEqual([11], t3.val)
+        self.assertTrue(t3.update([22]))
+        self.assertListEqual([22], t3.val)
+
+        self.assertListEqual([11, 33], t4.val)
+        self.assertTrue(t4.update([22, 11]))
+        self.assertListEqual([22, 11], t4.val)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,1 @@
+::: mininterface.types.alias

@@ -128,7 +128,7 @@ To constraint a value, either pass an enum object or use handy additional type [
 
 ### Well-known objects
 
-We've added extra function for known objects like `Path` or `datetime` (file exists check etc.), see [custom types](Custom-types.md).
+We've added extra function for known objects like `Path` or `datetime` (file exists check etc.), see [`Tag` subclasses](Tag-subclasses.md).
 
 ### Iterables
 
@@ -154,4 +154,10 @@ class Env:
 
 ### Additional
 
-We've added some other useful [custom types](Custom-types.md).
+We've added some other useful custom types.
+
+These useful types can be imported from `mininterface.types`.
+
+1. [Tag subclasses](Tag-subclasses.md) – They are mosty subclasses of the [`Tag`](Tag.md), the main object for storing values. Normally, you don't need to use or know much about those but they can be helpful when you need to further specify the functionality, such as restricting a `Path` to directories only.
+2. [Tag aliases](Tag-aliases.md) – Userful shortcuts.
+3. [Prepared annotations](Prepared-annotations.md) – Useful types to be used for nifty CLI parsing.

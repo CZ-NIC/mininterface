@@ -27,7 +27,7 @@ def _assure_blank_or_any(args):
         return args[0]
 
 
-_BlankTrue = Annotated[
+BlankTrue = Annotated[
     list[str] | None,
     PrimitiveConstructorSpec(
         nargs="*",
@@ -40,15 +40,19 @@ _BlankTrue = Annotated[
         str_from_instance=lambda instance: [instance],
     )]
 """
-NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
 When left blank, this flag produces True.
-    Return boolean for 0/false/off/1/true/on.
-    Return a metavar value if metavar is a list.
-    Else raises ValueError.
+
+Return boolean for 0/false/off/1/true/on.
+
+Else raises ValueError.
+
+!!! Warning
+    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
+
 """
 
 
-_BlankTrueString = Annotated[
+BlankTrueString = Annotated[
     list[str] | str | None,
     PrimitiveConstructorSpec(
         nargs="*",
@@ -61,9 +65,31 @@ _BlankTrueString = Annotated[
         str_from_instance=lambda instance: [instance],
     )]
 """
-NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
-
 When left blank, this flag produces True.
-        Return boolean for 0/false/off/1/true/on.
-        Else returns input value or None if flag omitted.
+    Return boolean for 0/false/off/1/true/on.
+    Else returns input value or None if flag omitted.
+
+!!! Warning
+    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
+
+"""
+
+
+BlankStr = Annotated[
+    str | None,
+    PrimitiveConstructorSpec(
+        nargs="*",
+        metavar="blank=true | str",
+        instance_from_str=lambda args: args[0] if len(args) else True,
+        is_instance=lambda instance: True,  # NOTE not sure
+        str_from_instance=lambda instance: [instance],
+    )]
+"""
+When left blank, this flag produces None.
+    Return boolean for 0/false/off/1/true/on.
+    Else returns input value or None if flag omitted.
+
+!!! Warning
+    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
+
 """

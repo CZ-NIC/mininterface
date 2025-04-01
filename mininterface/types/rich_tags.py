@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 from warnings import warn
 
+from numpy import isin
+
 from ..auxiliary import common_iterables
 from ..tag import ChoiceLabel, ChoicesType, Tag, TagValue
 
@@ -314,7 +316,6 @@ class SecretTag(Tag):
     def __hash__(self):
         """Make SecretTag hashable for use with Annotated"""
         return hash((self.show_toggle, self._masked))
-# TODO tests, changelog, _tips -> tips, docs
 
 
 @dataclass(repr=False)
@@ -362,17 +363,45 @@ class EnumTag(Tag):
     # * more date types (now only str possible)
     # * mininterface.choice `def choice(choices=, guesses=)`
 
+    multiple: Optional[bool] = None
+
+    # TODO choice multiple test, docs, IDE type hint
+    # TODO choice changelog, docs
+    # TODO choice multiple tk and text notimplemented
+
     tips: ChoicesType | None = None
 
     def __repr__(self):
         return super().__repr__()[:-1] + f", choices={[k for k, *_ in self._get_choices()]})"
 
     def __post_init__(self):
+        # Determine multiple
+        candidate = self.val
+        if isinstance(self.val, list):
+            if self.multiple is False:
+                raise ValueError("Multiple cannot be set to False when value is a list")
+            self.multiple = True
+            if len(self.val):
+                candidate = self.val[0]
+        elif self.val is not None:
+            if self.multiple:
+                raise ValueError("Multiple cannot be set to True when value is not a list")
+            self.multiple = False
+
+        # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
+        self.annotation = type(self)
         super().__post_init__()
+        self.annotation = None
+
+        # Assure list val for multiple selection
+        if self.val is None and self.multiple:
+            self.val = []
+
+        # Determine choices
         if not self.choices:
-            if isinstance(self.val, Enum):  # Enum instance, ex: val=ColorEnum.RED
-                self.choices = self.val.__class__
-            elif isinstance(self.val, type) and issubclass(self.val, Enum):  # Enum type, ex: val=ColorEnum
+            if isinstance(candidate, Enum):  # Enum instance, ex: val=ColorEnum.RED
+                self.choices = candidate.__class__
+            elif isinstance(candidate, type) and issubclass(candidate, Enum):  # Enum type, ex: val=ColorEnum
                 self.choices = self.val
                 self.val = None
 
@@ -423,18 +452,37 @@ class EnumTag(Tag):
                 back.append((k, v, False))
         return front + back
 
-    def update(self, ui_value: TagValue) -> bool:
-        """ UI value is the label. We store the key. """
+    def update(self, ui_value: TagValue | list[TagValue]) -> bool:
+        """ For self.multiple, UI is the value.
+            For not self.multiple, UI value is the label. We store the key. """
         ch = self._build_choices()
-        if ui_value in ch:
-            return super().update(ch[ui_value])
+
+        if self.multiple:
+            vals = set(ch.values())
+            for v in ui_value:
+                if v not in vals:
+                    self.set_error_text(f"Must be one of {list(ch.keys())}")
+                    return False
+            return super().update(ui_value)
         else:
-            self.set_error_text(f"Must be one of {list(ch.keys())}")
-            return False
+            if ui_value in ch:
+                return super().update(ch[ui_value])
+            else:
+                self.set_error_text(f"Must be one of {list(ch.keys())}")
+                return False
 
     def _validate(self, out_value):
-        if out_value in self._build_choices().values():
-            return out_value
+        vals = self._build_choices().values()
+
+        if self.multiple:
+            if all(v in vals for v in out_value):
+                return out_value
+            else:
+                self.set_error_text(f"A value is not one of the allowed")
+                raise ValueError
         else:
-            self.set_error_text(f"Not one of the allowed values")
-            raise ValueError
+            if out_value in vals:
+                return out_value
+            else:
+                self.set_error_text(f"Not one of the allowed values")
+                raise ValueError
