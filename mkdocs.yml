@@ -53,7 +53,7 @@ nav:
       - Tag.md
       - Facet.md
       - Subcommands.md
-      - Types.md
+      - Custom-types.md
   - Extras:
       - Options.md
       - Exceptions.md

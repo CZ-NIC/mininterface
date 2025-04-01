@@ -128,7 +128,7 @@ To constraint a value, either pass an enum object or use handy additional type [
 
 ### Well-known objects
 
-We've added extra function for known objects like `Path` or `datetime` (file exists check etc.), see [types](Types.md).
+We've added extra function for known objects like `Path` or `datetime` (file exists check etc.), see [custom types](Custom-types.md).
 
 ### Iterables
 
@@ -154,4 +154,4 @@ class Env:
 
 ### Additional
 
-We've added some other useful [types](Types.md).
+We've added some other useful [custom types](Custom-types.md).

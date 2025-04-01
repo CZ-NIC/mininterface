@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.8.0 (unreleased)
+## unreleased
+* enh: options add shortcut
+
+## 0.8.0 (2025-04-01)
 * CHANGED: [EnumTag][mininterface.types.rich_tags.EnumTag] instead of Tag(choices=)
 * [WebInterface](Interfaces.md#webinterface-or-web) (working draft)
 * much better [TextInterface](Interfaces.md#textinterface)

@@ -214,7 +214,7 @@ Or via web browser `MININTERFACE_INTERFACE=web ./program.py`:
 You can always set Env via CLI or a config file:
 
 ```bash
-$ MININTERFACE_INTERFACE=gui ./program.py --help
+$ ./program.py --help
 usage: program.py [-h] [OPTIONS]
 
 ╭─ options ──────────────────────────────────────────────────────────────╮

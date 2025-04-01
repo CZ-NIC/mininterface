@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -6,8 +7,12 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Tree, Static
 from textual.widgets.tree import TreeNode
 
+
 from ..types import PathTag
 from .widgets import ChangeableWithInput
+
+if TYPE_CHECKING:  # TODO
+    from .adaptor import TextualAdaptor
 
 
 class FileBrowser(Vertical):
@@ -333,67 +338,75 @@ class FileBrowser(Vertical):
             self.on_tree_node_selected(Tree.NodeSelected(self._tree, node))
 
 
-class FilePickerInput(ChangeableWithInput, Horizontal):
-    """A custom widget that combines an input field with a file picker button."""
+def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
+    class FilePickerInput(ChangeableWithInput, Horizontal):
+        """A custom widget that combines an input field with a file picker button."""
 
-    DEFAULT_CSS = """
-    FilePickerInput {
-        layout: horizontal;
-        height: auto;
-        width: 100%;
-    }
+        BINDINGS = [Binding(adaptor.options.toggle_widget, "on_button_pressed", "Toggle picker")]
 
-    FilePickerInput Input {
-        width: 80%;
-        margin: 1;
-    }
+        def action_on_button_pressed(self):
+            self.button.press()
 
-    FilePickerInput Button {
-        width: 20%;
-        margin: 1;
-        background: $accent;
-        color: $text;
-    }
-    """
+        DEFAULT_CSS = """
+        FilePickerInput {
+            layout: horizontal;
+            height: auto;
+            width: 100%;
+        }
 
-    def __init__(self, tag: PathTag, **kwargs):
-        super().__init__(tag)
+        FilePickerInput Input {
+            width: 80%;
+            margin: 1;
+        }
 
-        initial_value = str(tag.val)
-        self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
-        self.button = Button("...", variant="primary", id="file_picker")
-        self.browser = None
+        FilePickerInput Button {
+            width: 20%;
+            margin: 1;
+            background: $accent;
+            color: $text;
+        }
+        """
 
-    def compose(self) -> ComposeResult:
-        """Compose the widget layout."""
-        yield self.input
-        yield self.button
+        def __init__(self, tag: PathTag, **kwargs):
+            super().__init__(tag)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press event."""
-        if event.button.id == "file_picker":
-            if not self.browser:
-                self.browser = FileBrowser(self.tag)
-                self.mount(self.browser)
-                self.refresh()
-                self.set_timer(0.1, self._focus_tree)
+            initial_value = str(tag.val)
+            self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
+            self.button = Button("...", variant="primary", id="file_picker")
+            self.browser = None
+
+        def compose(self) -> ComposeResult:
+            """Compose the widget layout."""
+            yield self.input
+            yield self.button
+
+        def on_button_pressed(self, event: Button.Pressed) -> None:
+            """Handle button press event."""
+            if event.button.id == "file_picker":
+                if not self.browser:
+                    self.browser = FileBrowser(self.tag)
+                    self.mount(self.browser)
+                    self.refresh()
+                    self.set_timer(0.1, self._focus_tree)
+                else:
+                    self.browser.remove()
+                    self.browser = None
+                    self.refresh()
+
+        def _focus_tree(self) -> None:
+            """Focus the tree widget after it's mounted."""
+            if self.browser and self.browser._tree:
+                self.browser._tree.focus()
+
+        def get_ui_value(self):
+            """Get the current value of the input field."""
+            return self.input.value
+
+        def _update_value_from_browser(self, path_value):
+            """Update the value from browser selection directly, bypassing validation."""
+            if isinstance(path_value, list):
+                self.input.value = str([str(p) for p in path_value])
             else:
-                self.browser.remove()
-                self.browser = None
-                self.refresh()
+                self.input.value = str(path_value)
 
-    def _focus_tree(self) -> None:
-        """Focus the tree widget after it's mounted."""
-        if self.browser and self.browser._tree:
-            self.browser._tree.focus()
-
-    def get_ui_value(self):
-        """Get the current value of the input field."""
-        return self.input.value
-
-    def _update_value_from_browser(self, path_value):
-        """Update the value from browser selection directly, bypassing validation."""
-        if isinstance(path_value, list):
-            self.input.value = str([str(p) for p in path_value])
-        else:
-            self.input.value = str(path_value)
+    return FilePickerInput(tag, **kwargs)

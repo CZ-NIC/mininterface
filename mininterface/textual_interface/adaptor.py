@@ -1,18 +1,21 @@
 from textual.widget import Widget
 from textual.widgets import Label, RadioButton, Rule
 
+from .secret_input import SecretInputFactory
+
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..options import TextualOptions
 from ..tag import Tag
-from ..types import PathTag, SecretTag, EnumTag
-from ..types.internal import (BoolWidget, CallbackButtonWidget,                               SubmitButtonWidget)
+from ..types import EnumTag, PathTag, SecretTag
+from ..types.internal import (BoolWidget, CallbackButtonWidget,
+                              SubmitButtonWidget)
 from .facet import TextualFacet
-from .file_picker_input import FilePickerInput
+from .file_picker_input import FilePickerInputFactory
 from .textual_app import TextualApp
 from .widgets import (Changeable, MyButton, MyCheckbox, MyInput, MyRadioSet,
-                      MySecretInput, MySubmitButton)
+                      MySubmitButton)
 
 
 class TextualAdaptor(BackendAdaptor):
@@ -41,9 +44,9 @@ class TextualAdaptor(BackendAdaptor):
                                  for label, val, tip in tag._get_choices()]
                 o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
-                o = FilePickerInput(tag, placeholder=tag.name or "")
+                o = FilePickerInputFactory(self, tag, placeholder=tag.name or "")
             case SecretTag():
-                o = MySecretInput(tag, placeholder=tag.name or "", type="text")
+                o = SecretInputFactory(self, tag, placeholder=tag.name or "", type="text")
             case SubmitButtonWidget():
                 # Special type: Submit button
                 # NOTE EXPERIMENTAL

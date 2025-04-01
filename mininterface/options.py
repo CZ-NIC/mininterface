@@ -9,7 +9,8 @@ InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["
 
 @dataclass
 class UiOptions:
-    ...
+    toggle_widget: str = "f4"
+    """ Shortcuts to toggle ex. calendar or file picker. """
 
 
 @dataclass
