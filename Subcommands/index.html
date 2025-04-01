@@ -470,9 +470,10 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command" class="md-nav__link">
     <span class="md-ellipsis">
       Command
@@ -489,8 +490,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="SubcommandPlaceholder">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--the-cli-behaviour" class="md-nav__link">
@@ -501,11 +501,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--an-example-of-command-usage" class="md-nav__link">
     <span class="md-ellipsis">
@@ -513,8 +508,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="An example of Command usage">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--powerful-automation" class="md-nav__link">
@@ -522,11 +516,6 @@
       Powerful automation
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -552,13 +541,18 @@
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#mininterface.subcommands.SubcommandPlaceholder" class="md-nav__link">
     <span class="md-ellipsis">
       SubcommandPlaceholder
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -647,7 +641,7 @@
         
   
   <span class="md-ellipsis">
-    UI Options
+    Options
   </span>
   
 
@@ -863,9 +857,10 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="subcommands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command" class="md-nav__link">
     <span class="md-ellipsis">
       Command
@@ -882,8 +877,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="SubcommandPlaceholder">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--the-cli-behaviour" class="md-nav__link">
@@ -894,11 +888,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--an-example-of-command-usage" class="md-nav__link">
     <span class="md-ellipsis">
@@ -906,8 +895,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="An example of Command usage">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#mininterface.subcommands.Command--powerful-automation" class="md-nav__link">
@@ -915,11 +903,6 @@
       Powerful automation
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -945,13 +928,18 @@
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#mininterface.subcommands.SubcommandPlaceholder" class="md-nav__link">
     <span class="md-ellipsis">
       SubcommandPlaceholder
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -980,7 +968,12 @@
 
 
 
-<a id="mininterface.subcommands"></a>
+<h3 id="mininterface.subcommands" class="doc doc-heading">
+            <code>mininterface.subcommands</code>
+
+
+</h3>
+
     <div class="doc doc-contents first">
 
         <p>Dealing with CLI subcommands, <code>from mininterface.subcommands import *</code></p>
@@ -1000,11 +993,11 @@
 
 
 
-<h2 id="mininterface.subcommands.Command" class="doc doc-heading">
+<h4 id="mininterface.subcommands.Command" class="doc doc-heading">
             <code>Command</code>
 
 
-</h2>
+</h4>
 
 
     <div class="doc doc-contents ">
@@ -1015,12 +1008,12 @@
 <p>Put list of Commands to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a> and divide your application into different sections.
 Alternative to argparse <a href="https://docs.python.org/3/library/argparse.html#sub-commands">subcommands</a>.</p>
 <p>Commands might inherit from the same parent to share the common attributes.</p>
-<h4 id="mininterface.subcommands.Command--subcommandplaceholder">SubcommandPlaceholder</h4>
+<h6 id="mininterface.subcommands.Command--subcommandplaceholder">SubcommandPlaceholder</h6>
 <p>What if I need to use my program
 Special placeholder class SubcommandPlaceholder.
 This special class let the user to choose the subcommands via UI,
 while still benefiniting from default CLI arguments.</p>
-<h5 id="mininterface.subcommands.Command--the-cli-behaviour">The CLI behaviour:</h5>
+<h6 id="mininterface.subcommands.Command--the-cli-behaviour">The CLI behaviour:</h6>
 <ul>
 <li><code>./program.py</code> -&gt; UI started with subcommand choice</li>
 <li><code>./program.py subcommand --flag</code> -&gt; special class <code>SubcommandPlaceholder</code> allows defining a common <code>--flag</code>
@@ -1028,7 +1021,7 @@ while still benefiniting from default CLI arguments.</p>
 <li><code>./program.py subcommand1 --flag</code> -&gt; program run</li>
 <li><code>./program.py subcommand1</code> -&gt; fails to CLI for now</li>
 </ul>
-<h4 id="mininterface.subcommands.Command--an-example-of-command-usage">An example of Command usage</h4>
+<h6 id="mininterface.subcommands.Command--an-example-of-command-usage">An example of Command usage</h6>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
@@ -1083,7 +1076,7 @@ while still benefiniting from default CLI arguments.</p>
 <p>Terminal output:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Common files [PosixPath(&#39;page1.html&#39;), PosixPath(&#39;page2.html&#39;)]
 </code></pre></div></p>
-<h5 id="mininterface.subcommands.Command--powerful-automation">Powerful automation</h5>
+<h6 id="mininterface.subcommands.Command--powerful-automation">Powerful automation</h6>
 <p>Note we use <code>from tyro.conf import Positional</code> to denote the positional argument. We did not have to write <code>--files</code> to put there HTML files.</p>
 
 
@@ -1102,17 +1095,17 @@ while still benefiniting from default CLI arguments.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="mininterface.subcommands.Command.init" class="doc doc-heading">
+<h5 id="mininterface.subcommands.Command.init" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">init</span><span class="p">()</span></code>
 
-</h3>
+</h5>
 
 
     <div class="doc doc-contents ">
 
         <p>Just before the form appears.
 As the <code>__post_init__</code> method is not guaranteed to run just once (internal CLI behaviour),
-you are welcome to override this method instead. You can use <a class="autorefs autorefs-internal" href="../Facet/#mininterface.mininterface.facet.Facet">self._facet</a> from within.</p>
+you are welcome to override this method instead. You can use <a class="autorefs autorefs-internal" href="../Facet/#mininterface.facet.Facet">self._facet</a> from within.</p>
 
     </div>
 
@@ -1121,10 +1114,10 @@ you are welcome to override this method instead. You can use <a class="autorefs 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="mininterface.subcommands.Command.run" class="doc doc-heading">
+<h5 id="mininterface.subcommands.Command.run" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
 
-</h3>
+</h5>
 
 
     <div class="doc doc-contents ">
@@ -1147,11 +1140,11 @@ you are welcome to override this method instead. You can use <a class="autorefs 
 
 
 
-<h2 id="mininterface.subcommands.SubcommandPlaceholder" class="doc doc-heading">
+<h4 id="mininterface.subcommands.SubcommandPlaceholder" class="doc doc-heading">
             <code>SubcommandPlaceholder</code>
 
 
-</h2>
+</h4>
 
 
     <div class="doc doc-contents ">

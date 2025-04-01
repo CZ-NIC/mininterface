@@ -508,7 +508,7 @@
         
   
   <span class="md-ellipsis">
-    UI Options
+    Options
   </span>
   
 
@@ -1010,10 +1010,10 @@
 
 
 
-<h2 id="mininterface.tag.ValidationResult" class="doc doc-heading">
+<h3 id="mininterface.tag.ValidationResult" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">ValidationResult</span> <span class="o">=</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ErrorMessage</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -1027,10 +1027,10 @@
 
 
 
-<h2 id="mininterface.tag.ErrorMessage" class="doc doc-heading">
+<h3 id="mininterface.tag.ErrorMessage" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">ErrorMessage</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;ErrorMessage&#39;</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -1044,10 +1044,10 @@
 
 
 
-<h2 id="mininterface.tag.TagValue" class="doc doc-heading">
+<h3 id="mininterface.tag.TagValue" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">TagValue</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;TagValue&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Any</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -1061,10 +1061,10 @@
 
 
 
-<h2 id="mininterface.tag.ChoicesType" class="doc doc-heading">
+<h3 id="mininterface.tag.ChoicesType" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">ChoicesType</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RichChoiceLabel</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span> <span class="o">|</span> <span class="n">Type</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -1072,28 +1072,28 @@
         <p>You can denote the choices in many ways.
 Either put options in an iterable or to a dict <code>{labels: value}</code>.
 Values might be Tags as well. Let's take a detailed look. We will use the <code>run.choice(ChoicesType)</code> to illustrate the examples.</p>
-<h4 id="mininterface.tag.ChoicesType--iterables-like-list">Iterables like list</h4>
+<h5 id="mininterface.tag.ChoicesType--iterables-like-list">Iterables like list</h5>
 <p>Either put options in an iterable:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </code></pre></div>
 <p><img alt="Choices as a list" src="../asset/choices_list.avif" /></p>
-<h4 id="mininterface.tag.ChoicesType--dict-for-labels">Dict for labels</h4>
+<h5 id="mininterface.tag.ChoicesType--dict-for-labels">Dict for labels</h5>
 <p>Or to a dict <code>{name: value}</code>. Then name are used as labels.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">({</span><span class="s2">&quot;one&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># returns 1</span>
 </code></pre></div>
-<h4 id="mininterface.tag.ChoicesType--dict-with-tuples-for-table">Dict with tuples for table</h4>
+<h5 id="mininterface.tag.ChoicesType--dict-with-tuples-for-table">Dict with tuples for table</h5>
 <p>If you use tuple as the keys, they will be joined into a table.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">({(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">,</span> <span class="s2">&quot;three&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;lorem&quot;</span><span class="p">,</span> <span class="s2">&quot;ipsum&quot;</span><span class="p">,</span> <span class="s2">&quot;dolor&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
 </code></pre></div>
 <p><img alt="Table like" src="../asset/choice_table_span.avif" /></p>
-<h4 id="mininterface.tag.ChoicesType--tags-for-labels">Tags for labels</h4>
+<h5 id="mininterface.tag.ChoicesType--tags-for-labels">Tags for labels</h5>
 <p>Alternatively, you may specify the names in <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tags</code></a>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="n">Tag</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;one&quot;</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;two&quot;</span><span class="p">)])</span>  <span class="c1"># returns 1</span>
 </code></pre></div>
 <p><img alt="Choices with labels" src="../asset/choices_labels.avif" /></p>
-<h4 id="mininterface.tag.ChoicesType--enums">Enums</h4>
+<h5 id="mininterface.tag.ChoicesType--enums">Enums</h5>
 <p>Alternatively, you may use an Enum.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
@@ -1116,7 +1116,7 @@ Values might be Tags as well. Let's take a detailed look. We will use the <code>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="n">Color</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">])</span>
 </code></pre></div>
 <p><img alt="Choices from enum list" src="../asset/choice_enum_list.avif" /></p>
-<h4 id="mininterface.tag.ChoicesType--further-examples">Further examples</h4>
+<h5 id="mininterface.tag.ChoicesType--further-examples">Further examples</h5>
 <p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> or <a class="autorefs autorefs-internal" href="../Types/#mininterface.types.rich_tags.EnumTag.choices"><code>EnumTag.choices</code></a> for further usage.</p>
     </div>
 
@@ -1126,10 +1126,10 @@ Values might be Tags as well. Let's take a detailed look. We will use the <code>
 
 
 
-<h2 id="mininterface.form_dict.DataClass" class="doc doc-heading">
+<h3 id="mininterface.form_dict.DataClass" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">DataClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;DataClass&#39;</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -1143,10 +1143,10 @@ Values might be Tags as well. Let's take a detailed look. We will use the <code>
 
 
 
-<h2 id="mininterface.form_dict.EnvClass" class="doc doc-heading">
+<h3 id="mininterface.form_dict.EnvClass" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">EnvClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;EnvClass&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">DataClass</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
