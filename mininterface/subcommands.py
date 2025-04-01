@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .mininterface.facet import Facet
+    from .facet import Facet
 else:
     Facet = None
 
@@ -120,7 +120,7 @@ class Command(ABC):
     def init(self):
         """ Just before the form appears.
         As the `__post_init__` method is not guaranteed to run just once (internal CLI behaviour),
-        you are welcome to override this method instead. You can use [self._facet][mininterface.mininterface.facet.Facet] from within.
+        you are welcome to override this method instead. You can use [self._facet][mininterface.facet.Facet] from within.
         """
         ...
 

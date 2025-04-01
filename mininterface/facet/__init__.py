@@ -10,7 +10,7 @@ from ..redirectable import Redirectable
 from ..form_dict import EnvClass, TagDict
 
 if TYPE_CHECKING:
-    from .adaptor import BackendAdaptor
+    from ..mininterface.adaptor import BackendAdaptor
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 
@@ -30,9 +30,8 @@ class Facet(Generic[EnvClass]):
     """ A frontend side of the interface. While a dialog is open,
         this allows to set frontend properties like the heading.
 
-
-    Read [`Tag.facet`][mininterface.Tag.facet] to see how to access from the front-end side.
-    Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to see how to access from the back-end side.
+    Read [`Tag.facet`][mininterface.Tag.facet] to see how to access it from the front-end side.
+    Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to see how to access it from the back-end side.
     """
     # Every UI adopts this object through BackendAdaptor methods.
 

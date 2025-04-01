@@ -1,5 +1,5 @@
 from ..exceptions import ValidationFail
-from .facet import Facet
+from ..facet import Facet
 from ..form_dict import TagDict
 from ..options import UiOptions
 from ..tag import Tag
@@ -14,12 +14,7 @@ if TYPE_CHECKING:
 
 class BackendAdaptor(ABC):
     """
-    An interface architecture:
-
-    Mininterface: front-end for the programmer. Uniform methods.
-    Adaptor: Connection point. Public attributes not meant to be used by the programmer.
-    App: External library UI handler.
-    Facet: Layout definition.
+    Connection point between a Mininterface and an external UI library.
     """
     facet: Facet
     post_submit_action: Optional[Callable] = None

@@ -16,7 +16,7 @@ from .experimental import FacetCallback, SubmitButton
 from .auxiliary import common_iterables, flatten, guess_type, matches_annotation, serialize_structure, subclass_matches_annotation
 
 if TYPE_CHECKING:
-    from .mininterface.facet import Facet
+    from .facet import Facet
     from .form_dict import TagDict
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 else:
@@ -279,7 +279,7 @@ class Tag:
     # Following attributes are not meant to be set externally.
     #
     facet: Optional["Facet"] = None
-    """ Access to the UI [`facet`][mininterface.mininterface.facet.Facet] from the front-end side.
+    """ Access to the UI [`facet`][mininterface.mininterface.Facet] from the front-end side.
     (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
 
     Set the UI facet from within a callback, ex. a validator.

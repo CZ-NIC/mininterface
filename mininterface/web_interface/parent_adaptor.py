@@ -10,7 +10,7 @@ from ..textual_interface.facet import TextualFacet
 
 from ..options import WebOptions
 
-from ..mininterface.facet import Facet
+from ..facet import Facet
 
 from ..textual_interface.adaptor import TextualAdaptor
 

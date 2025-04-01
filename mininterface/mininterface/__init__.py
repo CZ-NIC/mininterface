@@ -14,7 +14,7 @@ from ..exceptions import Cancelled
 
 from ..cli_parser import parse_cli
 from ..subcommands import Command
-from .facet import Facet
+from ..facet import Facet
 from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                          dict_to_tagdict, formdict_resolve)
 from ..tag import ChoicesType, Tag, TagValue
@@ -40,7 +40,7 @@ class Mininterface(Generic[EnvClass]):
 
     _adaptor: MinAdaptor
     facet: Facet
-    """ Access to the UI [`facet`][mininterface.mininterface.facet.Facet] from the back-end side.
+    """ Access to the UI [`facet`][mininterface.facet.Facet] from the back-end side.
     (Read [`Tag.facet`][mininterface.Tag.facet] to access from the front-end side.)
 
     ```python

@@ -12,7 +12,7 @@ from ..options import WebOptions
 
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
-from ..mininterface.facet import Facet
+from ..facet import Facet
 from ..tag import Tag
 from ..textual_interface.widgets import Changeable
 
