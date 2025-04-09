@@ -29,6 +29,10 @@ if TYPE_CHECKING:
 
 def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():
+        if not child.winfo_manager():
+            # This is a hidden widget. Ex. Tkinter_form generates Entry for EnumTag
+            # which we hide and put our own EnumTag widget over its place.
+            continue
         if isinstance(child, (Entry, Checkbutton, Combobox, Radiobutton)):
             child.focus_set()
             return True
@@ -98,7 +102,6 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     def _fetch(variable):
         return ready_to_replace(widget, variable, field_form)
 
-    # NOTE tab order broken, injected to another position
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
@@ -110,6 +113,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         variable = field_form.variable
         subwidgets = []
         master = widget.master
+        widget.pack_forget()
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
@@ -140,12 +144,30 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                             variable.set(chosen_val)
 
                     else:
+                        def change_takefocus(rb: Radiobutton, buttons: list[Radiobutton]):
+                            """ Tab will jump on the next form element (not on the next radiobutton). """
+                            [b.configure(takefocus=0) for b in buttons]
+                            rb.configure(takefocus=1)
+
                         for i, (choice_label, choice_val, tip) in enumerate(choices):
-                            widget2 = Radiobutton(nested_frame, text=choice_label, variable=variable,
-                                                  value=choice_label, style="Custom.TRadiobutton" if tip else None)
+                            selected = choice_val is tag.val
+                            widget2 = Radiobutton(nested_frame,
+                                                  text=choice_label,
+                                                  variable=variable,
+                                                  value=choice_label,
+                                                  style="Custom.TRadiobutton" if tip else None,
+                                                  takefocus=selected)
+                            if adaptor.options.radio_select_on_focus:
+                                widget2.bind("<FocusIn>",
+                                             lambda _, var=variable, val=choice_label: var.set(val),
+                                             add='+')
+                            # Getting here with Tab will refocus the currently selected button
+                            widget2.bind("<FocusIn>",
+                                         lambda _, self=widget2, buttons=subwidgets: change_takefocus(self, buttons),
+                                         add='+')
                             widget2.grid(row=i, column=1, sticky="w")
                             subwidgets.append(widget2)
-                            if choice_val is tag.val:
+                            if selected:
                                 variable.set(choice_label)
 
             case PathTag():
@@ -181,6 +203,9 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 def inner(tag: Tag):
                     tag.facet.submit(_post_submit=tag._run_callable)
                 variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
+            case _:
+                grid_info = _fetch(variable)
+                widget.grid(row=grid_info['row'], column=grid_info['column'])
 
         # Add event handler
         tag._last_ui_val = variable.get()

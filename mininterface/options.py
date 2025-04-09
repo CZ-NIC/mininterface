@@ -20,6 +20,9 @@ class GuiOptions(UiOptions):
     combobox_since: int = 5
     """ The threshold to switch from radio buttons to a combobox. """
 
+    radio_select_on_focus: bool = False
+    """ Select the radio button on focus. Ex. when navigating by arrows. """
+
 
 @dataclass
 class TuiOptions(UiOptions):

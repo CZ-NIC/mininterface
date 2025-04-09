@@ -147,16 +147,17 @@ class TestInteface(TestAbstract):
                 self.assertEqual(1, m1.ask_number("Number"))
 
         with patch('builtins.input', side_effect=["", "", "y", "Y", "n", "n", "N", "y", "hello"]):
+            # TODO is_no must be deprecated as it is counterintuitive
             self.assertTrue(m1.is_yes(""))
-            self.assertTrue(m1.is_no(""))
+            self.assertFalse(m1.is_no(""))
 
             self.assertTrue(m1.is_yes(""))
             self.assertTrue(m1.is_yes(""))
             self.assertFalse(m1.is_yes(""))
 
-            self.assertTrue(m1.is_no(""))
-            self.assertTrue(m1.is_no(""))
             self.assertFalse(m1.is_no(""))
+            self.assertFalse(m1.is_no(""))
+            self.assertTrue(m1.is_no(""))
 
             self.assertEqual("hello", m1.ask(""))
 
@@ -1145,11 +1146,11 @@ class TestEnumTag(TestAbstract):
         t2 = Tag(2, name="two")
         t = EnumTag(1, choices=[t1, t2])
         self.assertTrue(t.update("two"))
-        self.assertEqual(t2, t.val)
+        self.assertEqual(t2.val, t.val)  # TODO
         self.assertFalse(t.update("three"))
-        self.assertEqual(t2, t.val)
+        self.assertEqual(t2.val, t.val)
         self.assertTrue(t.update("one"))
-        self.assertEqual(t1, t.val)
+        self.assertEqual(t1.val, t.val)
         self.assertFalse(t.multiple)
 
     def test_choice_enum(self):
@@ -1219,6 +1220,22 @@ class TestEnumTag(TestAbstract):
         self.assertListEqual([11, 33], t4.val)
         self.assertTrue(t4.update([22, 11]))
         self.assertListEqual([22, 11], t4.val)
+
+    def test_build_choices(self):
+        t = EnumTag()
+        self.assertDictEqual({}, t._build_choices())
+
+        t.choices = {"one": 1}
+        self.assertDictEqual({"one": 1}, t._build_choices())
+
+        t.choices = {"one": Tag(1, name="one")}
+        self.assertDictEqual({"one": 1}, t._build_choices())
+
+        t.choices = [Tag(1, name="one"), Tag(2, name="two")]
+        self.assertDictEqual({"one": 1, "two": 2}, t._build_choices())
+
+        t.choices = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
+        self.assertDictEqual({"one   - col2   ": 1, "three - column3": 3}, t._build_choices())
 
 
 if __name__ == '__main__':

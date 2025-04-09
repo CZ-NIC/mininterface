@@ -11,7 +11,7 @@ from ..auxiliary import flatten
 
 from ..textual_interface import TextualAdaptor
 
-from ..textual_interface.adaptor import ButtonAppType
+from ..textual_interface.adaptor import ButtonAppType, ValsType
 
 from .app import SerCommand
 
@@ -81,7 +81,7 @@ class SerializedChildAdaptor(TextualAdaptor):
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         BackendAdaptor.run_dialog(self, form, title, submit)
-        vals = self.send(SerCommand.FORM, self.facet._form)
+        vals: ValsType = self.send(SerCommand.FORM, self.facet._form)
 
         if not self._try_submit((orig_tag, ui_val) for orig_tag, (_, ui_val) in zip(flatten(self.facet._form), vals)):
             return self.run_dialog(form, title, submit)

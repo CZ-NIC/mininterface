@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 from textual.widget import Widget
 from textual.widgets import Label, RadioButton, Rule
 
@@ -12,7 +12,7 @@ from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..options import TextualOptions
-from ..tag import Tag
+from ..tag import Tag, UiValue
 from ..types import EnumTag, PathTag, SecretTag
 from ..types.internal import (BoolWidget, CallbackButtonWidget,
                               SubmitButtonWidget)
@@ -24,6 +24,8 @@ from .widgets import (TagWidget, MyButton, MyCheckbox, MyInput, MyRadioSet, MySe
 
 if TYPE_CHECKING:
     from . import TextualInterface
+
+ValsType = Iterable[tuple[Tag, UiValue]]
 
 
 class TextualAdaptor(BackendAdaptor):
@@ -135,5 +137,5 @@ class TextualAdaptor(BackendAdaptor):
 
         return form
 
-    def _serialize_vals(self, app: TextualApp):
+    def _serialize_vals(self, app: TextualApp) -> ValsType:
         return ((field.tag, field.get_ui_value()) for field in app.widgets if isinstance(field, TagWidget))

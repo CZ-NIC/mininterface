@@ -2,10 +2,8 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Iterable, Optional
 from warnings import warn
-
-from numpy import isin
 
 from ..auxiliary import common_iterables
 from ..tag import ChoiceLabel, ChoicesType, Tag, TagValue
@@ -390,7 +388,13 @@ class EnumTag(Tag):
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
         self.annotation = type(self)
+        reset_name = not self.name
         super().__post_init__()
+        if reset_name:
+            # Inheriting the name of the default value in self.val (done in post_init)
+            # does not make sense to me. Let's reset here so that we receive
+            # the dict key or the dataclass attribute name as the name in form_dict.py .
+            self.name = None
         self.annotation = None
 
         # Assure list val for multiple selection
@@ -408,6 +412,18 @@ class EnumTag(Tag):
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
+    @classmethod
+    def _get_tag_val(cls, v) -> TagValue:
+        """ TagValue can be anything, except the Tag. The nested Tag returns its value instead.
+
+        # TODO test
+        Ex: EnumTag(choices=[Tag(1, name='A'), ...])._build_choices() -> {"A": 1}
+
+        """
+        if isinstance(v, Tag):
+            return cls._get_tag_val(v.val)
+        return v
+
     def _build_choices(self) -> dict[ChoiceLabel, TagValue]:
         """ Whereas self.choices might have different format, this returns a canonic dict. """
 
@@ -423,16 +439,16 @@ class EnumTag(Tag):
                 col_widths = [max(len(row[i]) for row in data) for i in range(len(data[0]))]
                 keys = (" - ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row)) for row in data)
                 try:
-                    return {key: value for key, value in zip(keys, self.choices.values())}
+                    return {key: self._get_tag_val(v) for key, v in zip(keys, self.choices.values())}
                 except IndexError:
                     # different lengths, table does not work
                     # Ex: [ ("one", "two", "three"), ("hello", "world") ]
-                    return {" - ".join(key): value for key, value in self.choices.items()}
-            return self.choices
-        if isinstance(self.choices, common_iterables):
-            return {self._repr_val(v): v for v in self.choices}
+                    return {" - ".join(key): self._get_tag_val(v) for key, v in self.choices.items()}
+            return {key: self._get_tag_val(v) for key, v in self.choices.items()}
+        if isinstance(self.choices, Iterable):
+            return {self._repr_val(v): self._get_tag_val(v) for v in self.choices}
         if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
-            return {str(v.value): v for v in list(self.choices)}
+            return {str(v.value): self._get_tag_val(v) for v in list(self.choices)}
 
         warn(f"Not implemented choices: {self.choices}")
 

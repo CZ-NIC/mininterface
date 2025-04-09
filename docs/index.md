@@ -1,4 +1,4 @@
-# Mininterface – access to GUI, TUI, CLI and config files
+# Mininterface – access to GUI, TUI, web, CLI and config files
 [![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg)](https://github.com/CZ-NIC/mininterface/actions)
 [![Downloads](https://static.pepy.tech/badge/mininterface)](https://pepy.tech/project/mininterface)
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 - [Hello world](#hello-world)
 
 ## You got CLI
-It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI, you receive powerful YAML-configurable CLI parsing.
+It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI/web, you receive powerful YAML-configurable CLI parsing.
 
 
 ```bash

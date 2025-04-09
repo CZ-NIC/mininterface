@@ -45,7 +45,6 @@ class FormContents(Static):
         yield self.output  # NOTE not used
         yield Footer()
 
-        yield Label(f"HE {len(self.adaptor.interface._redirected.pending_buffer)}", id="buffered_text2")
         if text := self.adaptor.interface._redirected.join():
             yield Label(text, id="buffered_text")
         with VerticalScroll():

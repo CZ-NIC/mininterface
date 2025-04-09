@@ -52,7 +52,7 @@ def _choose_options(type_: Mininterface, options: Optional[MininterfaceOptions])
     """ Pass only the relevant options section suitable for the given interface type """
     opt = None
     if options:
-        match type(type_):
+        match type_.__name__:
             case "TkInterface":
                 opt = options.gui
             case "TextualInterface":

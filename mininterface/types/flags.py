@@ -1,3 +1,4 @@
+from typing import Annotated, TypeVar, Any
 from typing import Annotated
 from tyro.constructors import PrimitiveConstructorSpec
 
@@ -16,25 +17,15 @@ def _assure_blank_or_bool(args):
             elif args[0].lower() in ["1", "true", "on"]:
                 return True
             raise TypeError(_blank_error.format(args[0]))
-
-    raise ValueError(_blank_error.format(args[0]))
-
-
-def _assure_blank_or_any(args):
-    try:
-        return _assure_blank_or_bool(args)
-    except TypeError:
-        return args[0]
+        case _:
+            raise ValueError(_blank_error.format(args[0]))
 
 
 BlankTrue = Annotated[
     list[str] | None,
     PrimitiveConstructorSpec(
         nargs="*",
-        # metavar="blank|str",
-        # metavar="blank true|false|0|1|on|off|str",
-        # metavar="blank true|1|on | false|0|off",
-        metavar="blank=true|false",
+        metavar="blank=True|BOOL",
         instance_from_str=_assure_blank_or_bool,
         is_instance=lambda instance: True,  # NOTE not sure
         str_from_instance=lambda instance: [instance],
@@ -52,42 +43,49 @@ Else raises ValueError.
 """
 
 
-BlankTrueString = Annotated[
-    list[str] | str | None,
-    PrimitiveConstructorSpec(
-        nargs="*",
-        # metavar="blank|str",
-        # metavar="blank true|false|0|1|on|off|str",
-        # metavar="blank true|1|on | false|0|off | str",
-        metavar="blank=true|false|str",
-        instance_from_str=_assure_blank_or_any,
-        is_instance=lambda instance: True,  # NOTE not sure
-        str_from_instance=lambda instance: [instance],
-    )]
+T = TypeVar("T")
+
+
+class Blank:
+    def __class_getitem__(cls, item_type: type[T]) -> Any:
+        def instance_from_str(args: list[str]) -> T | bool:
+            if not args:
+                return True
+            if len(args) > 1:
+                raise NotImplemented("Describe your use case in an issue please.")
+            match args:
+                case "True":
+                    return True
+                case "False":
+                    return False
+                case _:
+                    return item_type(*args)
+
+        def is_instance(_: object) -> bool:
+            return True
+
+        def str_from_instance(val: T | bool) -> list[str]:
+            return [str(val)]
+
+        return Annotated[
+            str | None,  # the base type is not used, we parse arbitrary
+            PrimitiveConstructorSpec(
+                nargs="*",
+                metavar=f"blank=True|BOOL|{item_type.__name__.upper()}",
+                instance_from_str=instance_from_str,
+                is_instance=is_instance,
+                str_from_instance=str_from_instance,
+            )
+        ]
+
+
 """
 When left blank, this flag produces True.
-    Return boolean for 0/false/off/1/true/on.
-    Else returns input value or None if flag omitted.
+    Return boolean for True|False.
+    Return None if the flag is omitted.
+    Else returns T created from the input value.
 
-!!! Warning
-    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
-
-"""
-
-
-BlankStr = Annotated[
-    str | None,
-    PrimitiveConstructorSpec(
-        nargs="*",
-        metavar="blank=true | str",
-        instance_from_str=lambda args: args[0] if len(args) else True,
-        is_instance=lambda instance: True,  # NOTE not sure
-        str_from_instance=lambda instance: [instance],
-    )]
-"""
-When left blank, this flag produces None.
-    Return boolean for 0/false/off/1/true/on.
-    Else returns input value or None if flag omitted.
+Note that you can not use 'True' or 'False' for values, as the parameter becomes a bool.
 
 !!! Warning
     NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.

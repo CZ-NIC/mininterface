@@ -223,7 +223,7 @@ class Mininterface(Generic[EnvClass]):
         Args:
             choices:
                 You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as labels.
-                You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
+                You can also use tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
                 See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
             title: Form title
             default: The value of the checked choice.
