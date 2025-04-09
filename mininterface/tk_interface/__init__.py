@@ -1,7 +1,5 @@
 from typing import Type
 
-from ..options import GuiOptions
-
 try:
     # It seems tkinter is installed either by default or not installable at all.
     # Tkinter is not marked as a requirement as other libraries does that neither.
@@ -10,15 +8,17 @@ except ImportError:
     from ..exceptions import InterfaceNotAvailable
     raise InterfaceNotAvailable
 
-from .adaptor import TkAdaptor
-from .redirect_text_tkinter import RedirectTextTkinter
 from ..exceptions import InterfaceNotAvailable
 from ..form_dict import DataClass, FormDict
-from ..redirectable import Redirectable
 from ..mininterface import EnvClass, Mininterface
+from ..mininterface.mixin import ButtonMixin
+from ..options import GuiOptions
+from ..redirectable import Redirectable
+from .adaptor import TkAdaptor
+from .redirect_text_tkinter import RedirectTextTkinter
 
 
-class TkInterface(Redirectable, Mininterface):
+class TkInterface(Redirectable, ButtonMixin, Mininterface):
     """ When used in the with statement, the GUI window does not vanish between dialogues. """
 
     _adaptor: TkAdaptor
@@ -31,10 +31,6 @@ class TkInterface(Redirectable, Mininterface):
         super().__exit__(self)
         # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
         self._adaptor.destroy()
-
-    def alert(self, text: str) -> None:
-        """ Display the OK dialog with text. """
-        self._adaptor.buttons(text, [("Ok", None)])
 
     def ask(self, text: str) -> str:
         return self.form({text: ""})[text]
@@ -49,9 +45,3 @@ class TkInterface(Redirectable, Mininterface):
 
     def ask_number(self, text: str) -> int:
         return self.form({text: 0})[text]
-
-    def is_yes(self, text):
-        return self._adaptor.yes_no(text, False)
-
-    def is_no(self, text):
-        return self._adaptor.yes_no(text, True)

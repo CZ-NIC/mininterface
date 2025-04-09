@@ -1,3 +1,4 @@
+import sys
 from typing import TYPE_CHECKING, Optional
 from textual import events
 from textual.widget import Widget
@@ -7,8 +8,12 @@ from textual.widgets import Button, Checkbox, Input, RadioSet, SelectionList
 from ..tag import Tag, TagValue
 
 
-class Changeable:
-    """ Widget that can implement on_change method. """
+class TagWidget:
+    """ Widget that has a tag inside, this can implement on_change method etc. """
+    # Since every TagWidget has two parent, continue from the constructor to the other brach via `super`.
+    # For an unknown reason, the TagWidget cannot inherit directly from Widget, as
+    # `MyInput(TagWidget, Input)` would not work would continue here directly to `Widget`, skipping the `Input`.
+    # MRO seems fine but instead of the Input, a mere text is shown.
 
     tag: Tag
     _arbitrary: Optional[Widget] = None
@@ -28,7 +33,7 @@ class Changeable:
             return self.value
 
 
-class ChangeableWithInput(Changeable):
+class TagWidgetWithInput(TagWidget):
     """Base class for widgets that contain an input element"""
 
     def __init__(self, tag: Tag, *args, **kwargs):
@@ -43,18 +48,18 @@ class ChangeableWithInput(Changeable):
         self.input.focus()
 
 
-class MyInput(Changeable, Input):
+class MyInput(TagWidget, Input):
 
     async def on_blur(self):
         return self.trigger_change()
 
 
-class MyCheckbox(Changeable, Checkbox):
+class MyCheckbox(TagWidget, Checkbox):
     def on_checkbox_changed(self):
         return self.trigger_change()
 
 
-class MyRadioSet(Changeable, RadioSet):
+class MyRadioSet(TagWidget, RadioSet):
     def on_radio_set_changed(self):
         return self.trigger_change()
 
@@ -79,7 +84,7 @@ class MyRadioSet(Changeable, RadioSet):
             return None
 
 
-class MySelectionList(Changeable, SelectionList):
+class MySelectionList(TagWidget, SelectionList):
     def on_selection_changed(self):
         return self.trigger_change()
 
@@ -87,8 +92,11 @@ class MySelectionList(Changeable, SelectionList):
         return self.selected
 
 
-class MyButton(Changeable, Button):
+class MyButton(TagWidget, Button):
     _val: TagValue
+
+    def __init__(self, tag, *args, **kwargs):
+        super().__init__(tag, tag.name, *args, **kwargs)
 
     def on_button_pressed(self, event):
         self.tag.facet.submit(_post_submit=self.tag._run_callable)
@@ -98,8 +106,14 @@ class MyButton(Changeable, Button):
 
 
 class MySubmitButton(MyButton):
+    def __init__(self, *args, **kwargs):
+        self._val = None
+        super().__init__(*args, **kwargs)
 
     def on_button_pressed(self, event):
         event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
         self.tag.facet.submit()
+
+    def get_ui_value(self):
+        return self._val  # TODO use self.value instead?

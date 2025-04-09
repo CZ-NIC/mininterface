@@ -9,7 +9,7 @@ from textual.widgets.tree import TreeNode
 
 
 from ..types import PathTag
-from .widgets import ChangeableWithInput
+from .widgets import TagWidgetWithInput
 
 if TYPE_CHECKING:  # TODO
     from .adaptor import TextualAdaptor
@@ -339,7 +339,7 @@ class FileBrowser(Vertical):
 
 
 def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
-    class FilePickerInput(ChangeableWithInput, Horizontal):
+    class FilePickerInput(TagWidgetWithInput, Horizontal):
         """A custom widget that combines an input field with a file picker button."""
 
         BINDINGS = [Binding(adaptor.options.toggle_widget, "on_button_pressed", "Toggle picker")]

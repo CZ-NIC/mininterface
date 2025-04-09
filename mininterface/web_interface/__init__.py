@@ -71,8 +71,6 @@ class WebInterface(TextualInterface):
                 envir = os.environ.copy()
                 envir["MININTERFACE_ENFORCED_WEB"] = '_web-child-serialized'
                 self._adaptor = WebParentAdaptor(self, options, environ=envir)
-                self._adaptor.app = self.app = app = WebParentApp(self._adaptor, submit=True)
-                app.run()
                 self._adaptor.disconnect()
                 quit()
             case _:

@@ -6,7 +6,7 @@ from os import isatty
 import sys
 from typing import Literal, Optional, Type
 
-from .mininterface import Mininterface
+from .mininterface import EnvClass, Mininterface
 from .options import MininterfaceOptions, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
@@ -78,18 +78,26 @@ def _get_interface_type(interface: InterfaceType = None):
             raise InterfaceNotAvailable
 
 
-def get_interface(title="", interface: InterfaceType = None, env=None, options: Optional[MininterfaceOptions] = None):
+def get_interface(interface: InterfaceType = None, title="", options: Optional[MininterfaceOptions] = None, env: EnvClass = None) -> Mininterface[EnvClass]:
+    """ Returns the best available interface.
+
+    Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
+
+    Args:
+        interface: An interface type of preference.
+        title:
+        options: [MininterfaceOptions][mininterface.options.MininterfaceOptions] objects
+        env: You can specify the .env attribute of the returned object.
+    """
     def call(type_):
         opt = _choose_options(type_, options)
         return type_(title, opt, env)
 
     interface = interface or (options.interface if options else None)
 
-    if isinstance(interface, type) and issubclass(interface, Mininterface):
-        # the user gave a specific interface, let them catch InterfaceNotAvailable then
-        return call(interface)
-
     try:
+        if isinstance(interface, type) and issubclass(interface, Mininterface):
+            return call(interface)
         return call(_get_interface_type(interface))
     except InterfaceNotAvailable:
         pass

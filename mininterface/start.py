@@ -29,7 +29,7 @@ class Start:
 
         NOTE: This is a basic and bash only integration. It might be easily expanded.
         """
-        m = get_interface(self.title, self.interface)
+        m = get_interface(self.interface, self.title)
         comp_dir = Path("/etc/bash_completion.d/")
         prog = Path(sys.argv[0]).name
         target = comp_dir/prog
@@ -46,7 +46,7 @@ class Start:
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
     def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None):
-        m = get_interface(self.title, self.interface)
+        m = get_interface(self.interface, self.title)
         forms: TagDict = defaultdict(Tag)
         args = args or []
         # remove placeholder as we do not want it to be in the form

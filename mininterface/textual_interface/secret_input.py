@@ -5,7 +5,7 @@ from textual.containers import Horizontal
 from textual.widgets import Button, Input
 
 from ..types.rich_tags import SecretTag
-from .widgets import ChangeableWithInput
+from .widgets import TagWidgetWithInput
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 def SecretInputFactory(adaptor: "TextualAdaptor", tag: SecretTag, **kwargs):
 
-    class SecretInput(ChangeableWithInput, Horizontal):
+    class SecretInput(TagWidgetWithInput, Horizontal):
         """A custom widget that combines an input field with a visibility toggle button."""
 
         BINDINGS = [Binding(adaptor.options.toggle_widget, "toggle_visibility", "Toggle visibility")]

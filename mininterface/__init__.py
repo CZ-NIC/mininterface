@@ -204,7 +204,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     # Build the interface
     if os.environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
-    m = get_interface(title, interface, env, options)
+    m = get_interface(interface, title, options, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:

@@ -141,8 +141,9 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
             return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
 
     def is_no(self, text):
+        # TODO is_no seems counterintuitive!
         with StdinTTYWrapper():
-            return self.ask(text=text + " y/[n]").lower() in ("n", "no", "")
+            return self.ask(text=text + " y/[n]").lower() not in ("n", "no", "")
 
 
 class ReplInterface(TextInterface):

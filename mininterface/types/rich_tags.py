@@ -13,7 +13,7 @@ from ..tag import ChoiceLabel, ChoicesType, Tag, TagValue
 
 @dataclass
 class CallbackTag(Tag):
-    ''' Callback function is guaranteed to receives the [Tag][mininterface.Tag] as a parameter.
+    ''' Callback function is guaranteed to receive the [Tag][mininterface.Tag] as a parameter.
 
     !!! warning
         Experimental. May change.

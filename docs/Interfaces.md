@@ -14,6 +14,10 @@ with TuiInterface("My program") as m:
     number = m.ask_number("Returns number")
 ```
 
+Or you may use the `get_interface` function to ensure the interface is available.
+
+::: mininterface.interfaces.get_interface
+
 # `Mininterface`
 
 When a GUI is not available (GuiInterface), nor the rich TUI is available (TextualInterface), nor the mere interactive TextInterface is available, the original non-interactive Mininterface is used. The ensures the program is still working in cron jobs etc.

@@ -46,7 +46,7 @@ class Redirectable:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._always_shown = False
-        self._redirected: Type[RedirectText] = RedirectText()
+        self._redirected: RedirectText = RedirectText()
         self._original_stdout = sys.stdout
 
     def __enter__(self) -> "Self":

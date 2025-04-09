@@ -1,8 +1,15 @@
+import logging
 import pickle
 import struct
 import subprocess
 import sys
+from types import GeneratorType
 from typing import TYPE_CHECKING
+
+
+from ..form_dict import TagDict
+
+from .app import SerCommand, WebParentApp
 
 from ..auxiliary import flatten
 
@@ -13,6 +20,7 @@ from ..options import WebOptions
 from ..facet import Facet
 
 from ..textual_interface.adaptor import TextualAdaptor
+from ..textual_interface.button_contents import ButtonAppType
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -33,6 +41,8 @@ class WebParentAdaptor(TextualAdaptor):
             bufsize=0,
             env=environ
         )
+        self.app = app = WebParentApp(self, submit=True)
+        app.run()
 
     def receive(self):
         """ Receives further instruction from the underlying ChildAdaptor. """
@@ -41,20 +51,30 @@ class WebParentAdaptor(TextualAdaptor):
         if not length_data:
             return False
         msg_length = struct.unpack("I", length_data)[0]
-        # TODO this reads form only, we should be able to read ex. print output
-        received_data = p.stdout.read(msg_length)
-        received_object = pickle.loads(received_data)
-        form = received_object
+        command, text, data = pickle.loads(p.stdout.read(msg_length))
 
-        # sets the facet to all the tags in the form
-        for t in flatten(received_object):
-            t.facet = self.facet
+        self.interface._redirected.write(text)
+        match command, data:
+            case SerCommand.FORM, [form]:
+                form: TagDict
 
-        self.facet._fetch_from_adaptor(form)  # TODO rather use run_dialog
+                # sets the facet to all the tags in the form
+                for t in flatten(form):
+                    t.facet = self.facet
+
+                self.button_app = False
+                self.facet._fetch_from_adaptor(form)  # TODO rather use run_dialog
+            case SerCommand.BUTTONS, data:
+                data: ButtonAppType
+                self._build_buttons(*data)
+            case _:
+                raise ValueError("Web parent: Unknown command from child")
         return True
 
     def send(self, object):
         p = self.process
+        if isinstance(object, GeneratorType):
+            object = list(object)
         serialized = pickle.dumps(object)
         p.stdin.write(struct.pack("I", len(serialized)))
         p.stdin.write(serialized)

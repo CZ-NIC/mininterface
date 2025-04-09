@@ -2,17 +2,16 @@ import sys
 from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
 from typing import TYPE_CHECKING, Any, Callable
 
-from ..options import GuiOptions
-
-from ..exceptions import InterfaceNotAvailable
 from tkscrollableframe import ScrolledFrame
 from tktooltip import ToolTip
 
 from tkinter_form import Form, Value
 
-from ..exceptions import Cancelled
-from ..mininterface.adaptor import BackendAdaptor
+from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import TagDict, formdict_to_widgetdict
+from ..mininterface.adaptor import BackendAdaptor
+from ..mininterface.mixin import ButtonAdaptorMixin
+from ..options import GuiOptions
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
     from . import TkInterface
 
 
-class TkAdaptor(Tk, BackendAdaptor):
+class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
     """ An editing Tk window. """
 
     facet: TkFacet
