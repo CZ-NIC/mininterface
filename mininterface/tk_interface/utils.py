@@ -1,6 +1,6 @@
 from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
-from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style, Widget
+from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style, Widget, Label
 from typing import TYPE_CHECKING
 
 try:
@@ -34,6 +34,14 @@ def recursive_set_focus(widget: Widget):
             # which we hide and put our own EnumTag widget over its place.
             continue
         if isinstance(child, (Entry, Checkbutton, Combobox, Radiobutton)):
+            if isinstance(child, Radiobutton) and child.cget("takefocus") == 0:
+                # NOTE the takefocus solution is not good.
+                # We've set takefocus=0 to all radios that are not selected.
+                # But proper way would be to compare the real value, if the radio box is checked.
+                # If no radio in group is checked, focus the first.
+                # But attention, if adaptor.options.radio_select_on_focus,
+                # the focusing must not trigger the var setting – radio box should stay unchecked.
+                continue
             child.focus_set()
             return True
         if recursive_set_focus(child):
@@ -118,6 +126,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
             case EnumTag():
+                tag: EnumTag
                 # Replace with radio buttons
                 chosen_val = tag._get_ui_val()
                 variable = Variable()
@@ -128,9 +137,13 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
 
                 # highlight style
                 style = Style()
-                style.configure("Custom.TRadiobutton", background="lightyellow")
+                style.configure("Custom.TRadiobutton", background="lightyellow", font=("Courier", 12))
+
+                style2 = Style()
+                style2.configure("Custom2.TRadiobutton")  # , font=("Courier", 12))
 
                 choices = tag._get_choices()
+                tupled_keys = tag._tupled_keys() or choices.keys()
 
                 if tag.multiple:
                     raise NotImplementedError  # TODO
@@ -149,13 +162,13 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                             [b.configure(takefocus=0) for b in buttons]
                             rb.configure(takefocus=1)
 
-                        for i, (choice_label, choice_val, tip) in enumerate(choices):
+                        for i, ((choice_label, choice_val, tip), tupled_key) in enumerate(zip(choices, tupled_keys)):
                             selected = choice_val is tag.val
                             widget2 = Radiobutton(nested_frame,
-                                                  text=choice_label,
+                                                  text="",
                                                   variable=variable,
                                                   value=choice_label,
-                                                  style="Custom.TRadiobutton" if tip else None,
+                                                  style="Custom.TRadiobutton" if tip else "Custom2.TRadiobutton",
                                                   takefocus=selected)
                             if adaptor.options.radio_select_on_focus:
                                 widget2.bind("<FocusIn>",
@@ -169,6 +182,12 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                             subwidgets.append(widget2)
                             if selected:
                                 variable.set(choice_label)
+
+                            # display labels
+                            for i2, col in enumerate(tupled_key):
+                                label1_widget = Label(nested_frame, text=col)
+                                label1_widget.grid(row=i, column=1+1+i2, sticky="w")
+                                label1_widget.bind("<Button-1>", lambda _, rb=widget: rb.select())
 
             case PathTag():
                 grid_info = widget.grid_info()

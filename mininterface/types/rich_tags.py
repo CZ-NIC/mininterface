@@ -6,7 +6,7 @@ from typing import Any, Callable, Iterable, Optional
 from warnings import warn
 
 from ..auxiliary import common_iterables
-from ..tag import ChoiceLabel, ChoicesType, Tag, TagValue
+from ..tag import ChoiceLabel, ChoicesType, RichChoiceLabel, Tag, TagValue
 
 
 @dataclass
@@ -424,26 +424,36 @@ class EnumTag(Tag):
             return cls._get_tag_val(v.val)
         return v
 
+    def _tupled_keys(self) -> list[tuple[ChoiceLabel]] | None:
+        """ If the choice has tupled keys instead of single, returns their list.
+        (Of the same lenght as the _get_choices.)
+        Otherwise None.
+        By default, tupled keys are processed here in _build_choices,
+        and joined with a dash but some interfaces (Tk) might want to do
+        the keys into the table processing on their own.
+        """
+        if isinstance(self.choices, dict) and isinstance(next(iter(self.choices)), tuple):
+            return list(self.choices)
+
     def _build_choices(self) -> dict[ChoiceLabel, TagValue]:
         """ Whereas self.choices might have different format, this returns a canonic dict. """
 
         if self.choices is None:
             return {}
+        if tupled := self._tupled_keys():
+            # Span key tuple into a table
+            # Ex: [ ("one", "two"), ("hello", "world") ]
+            # one   - two
+            # hello - world"
+            col_widths = [max(len(row[i]) for row in tupled) for i in range(len(tupled[0]))]
+            keys = (" - ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row)) for row in tupled)
+            try:
+                return {key: self._get_tag_val(v) for key, v in zip(keys, self.choices.values())}
+            except IndexError:
+                # different lengths, table does not work
+                # Ex: [ ("one", "two", "three"), ("hello", "world") ]
+                return {" - ".join(key): self._get_tag_val(v) for key, v in self.choices.items()}
         if isinstance(self.choices, dict):
-            if isinstance(next(iter(self.choices)), tuple):
-                # Span key tuple into a table
-                # Ex: [ ("one", "two"), ("hello", "world") ]
-                # one   - two
-                # hello - world"
-                data = list(self.choices)
-                col_widths = [max(len(row[i]) for row in data) for i in range(len(data[0]))]
-                keys = (" - ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row)) for row in data)
-                try:
-                    return {key: self._get_tag_val(v) for key, v in zip(keys, self.choices.values())}
-                except IndexError:
-                    # different lengths, table does not work
-                    # Ex: [ ("one", "two", "three"), ("hello", "world") ]
-                    return {" - ".join(key): self._get_tag_val(v) for key, v in self.choices.items()}
             return {key: self._get_tag_val(v) for key, v in self.choices.items()}
         if isinstance(self.choices, Iterable):
             return {self._repr_val(v): self._get_tag_val(v) for v in self.choices}
