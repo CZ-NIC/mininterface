@@ -42,11 +42,14 @@ class TextAdaptor(BackendAdaptor):
                 return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
             case EnumTag():
                 tag: EnumTag
+                choices, values = zip(*((label + (" <--" if tip else " "), v)
+                                        for label, v, tip, _ in tag._get_choices(delim=" - ")))
                 if tag.multiple:
-                    raise NotImplementedError  # TODO
+                    if only_label:
+                        return tag._get_selected_keys() or f"({len(choices)} options)"
+                    else:
+                        return [values[i] for i in self._choose(choices, title=tag.name, multiple=True)]
                 else:
-                    choices, values = zip(*((label + (" <--" if tip else " "), v)
-                                          for label, v, tip, _ in tag._get_choices(delim=" - ")))
                     if only_label:
                         return tag._get_selected_key() or f"({len(choices)} options)"
                     else:
@@ -133,19 +136,20 @@ class TextAdaptor(BackendAdaptor):
                 break
         return form
 
-    def _choose(self, items: list, title=None, append_ok=False) -> int:
+    def _choose(self, items: list, title=None, append_ok=False, multiple: bool = False) -> int | tuple[int]:
         it = items
-        if len(items) < 10:
-            it = [f"[{i+1}] {item}" for i, item in enumerate(items)]
-            kwargs = {}
-        else:
-            kwargs = {"show_search_hint": True}
+        kwargs = {}
+        if not multiple:
+            if len(items) < 10:
+                it = [f"[{i+1}] {item}" for i, item in enumerate(items)]
+            else:
+                kwargs = {"show_search_hint": True}
 
         if append_ok:
             it = ["ok"] + it
         while True:
             try:
-                menu = TerminalMenu(it, title=title, **kwargs)
+                menu = TerminalMenu(it, title=title, multi_select=multiple, **kwargs)
                 index = menu.show()
                 break
             except ValueError:
@@ -155,8 +159,17 @@ class TextAdaptor(BackendAdaptor):
                 pass
         if index is None:
             raise Cancelled
-        if append_ok:
-            if index == 0:
-                raise Submit
-            index -= 1
+
+        if multiple:
+            index: tuple[int]
+            if append_ok:
+                if 0 in index:
+                    raise Submit
+                index = tuple(i-1 for i in index)
+        else:
+            index: int
+            if append_ok:
+                if index == 0:
+                    raise Submit
+                index -= 1
         return index

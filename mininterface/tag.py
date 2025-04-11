@@ -319,6 +319,8 @@ class Tag:
     _original_desc: Optional[str] = None
     _original_name: Optional[str] = None
     _last_ui_val: TagValue = None
+    """ This is the value as was in the current UI. Used by on_change_trigger
+        to determine whether the UI value changed. """
 
     def __post_init__(self):
         """ Determine annotation and fetch other information. """
@@ -369,7 +371,6 @@ class Tag:
         self._original_name = self.name
         self.original_val = self.val
         self._last_ui_val = None
-        """ This is the value as was in the current UI. Used by on_change. """
 
     def __repr__(self):
         field_strings = []

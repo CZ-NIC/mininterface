@@ -15,7 +15,7 @@ from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag, EnumTag
-from .select_input import SelectInputWrapper, VariableDictWrapper
+from .select_input import SelectInputWrapper, VariableAnyWrapper
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
@@ -70,10 +70,12 @@ def choose_file_handler(variable: Variable, tag: PathTag):
     return _
 
 
-def on_change_handler(variable: Variable | VariableDictWrapper, tag: Tag):
+def on_change_handler(variable: Variable | VariableAnyWrapper, tag: Tag):
     """ Closure handler """
     def _(*_):
         try:
+            # import ipdb
+            # ipdb.set_trace()  # TODO
             return tag._on_change_trigger(variable.get())
         except TclError:
             # Ex: putting there an empty value to an input entry,
@@ -113,6 +115,8 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         variable = field_form.variable
         master = widget.master
         widget.pack_forget()
+        process_change_handler = True
+        """ If False, you process _last_ui_val and launch _on_change_trigger. """
         enum_tag = False
 
         # We implement some of the types the tkinter_form don't know how to handle
@@ -121,13 +125,15 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 grid_info = widget.grid_info()
                 wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor)
                 enum_tag = True
-                variable = wrapper.variable_dict
+                variable = wrapper.variable_wrapper
                 # since tkinter variables do not allow objects,
                 # and choice values can be objects (ex. callbacks)
                 # we use out special variable_dict instead
                 replace_variable(variable)
                 widget.grid_forget()
                 widget = wrapper.widget
+                if tag.multiple:
+                    process_change_handler = False
 
             case PathTag():
                 grid_info = widget.grid_info()
@@ -170,17 +176,18 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 widget.grid(row=grid_info['row'], column=grid_info['column'])
 
         # Add event handler
-        tag._last_ui_val = variable.get()
-        w = widget
-        h = on_change_handler(variable, tag)
-        if enum_tag:  # isinstance(w, Radiobutton):
-            variable.trace_add("write", h)
-        elif isinstance(w, Combobox):
-            w.bind("<<ComboboxSelected>>", h)
-        elif isinstance(w, (Entry, Spinbox)):
-            w.bind("<FocusOut>", h)
-        elif isinstance(w, Checkbutton):
-            w.configure(command=h)
+        if process_change_handler:
+            tag._last_ui_val = variable.get()
+            h = on_change_handler(variable, tag)
+            if enum_tag:  # isinstance(w, Radiobutton):
+                variable.trace_add("write", h)  # TODO
+                # pass
+            elif isinstance(widget, Combobox):
+                widget.bind("<<ComboboxSelected>>", h)
+            elif isinstance(widget, (Entry, Spinbox)):
+                widget.bind("<FocusOut>", h)
+            elif isinstance(widget, Checkbutton):
+                widget.configure(command=h)
 
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself

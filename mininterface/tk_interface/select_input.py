@@ -1,5 +1,5 @@
-from tkinter import Variable, Widget
-from tkinter.ttk import Frame, Label, Radiobutton, Style
+from tkinter import BooleanVar, Variable, Widget
+from tkinter.ttk import Checkbutton, Frame, Label, Radiobutton, Style
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .. import Optional
@@ -19,24 +19,21 @@ T = TypeVar("T", bound=str)
 V = TypeVar("V")
 
 
-class VariableDictWrapper(Generic[T, V]):
+class VariableAnyWrapper(Generic[T, V]):
     """ Since tkinter is not able to hold objects as values, keep a mapping.
     You can use this object as a standard Variable (which is underlying and you can still access it).
     """
 
-    def __init__(self, variable: Variable):
+    def __init__(self, variable: Variable, mapping: dict[T, V]):
         self.variable = variable
-        self.mapping = {}
+        self.mapping = mapping
 
-    def add(self, key: T, value: V) -> T:
-        self.mapping[key] = value
-        return key
+    # def add(self, key: T, value: V) -> T:
+    #     self.mapping[key] = value
+    #     return key
 
     def get(self) -> V | None:
         key = self.variable.get()
-        # if not key:
-        # return None
-        # return self.mapping[key]
         return self.mapping.get(key, None)
 
     def set(self, key: T):
@@ -44,6 +41,15 @@ class VariableDictWrapper(Generic[T, V]):
 
     def trace_add(self, *args, **kwargs):
         return self.variable.trace_add(*args, **kwargs)
+
+
+class SetVar(set):
+    def get(self):
+        # casting to list, as multiple=True claims it returns a list
+        return list(self)
+
+    def set(self):
+        raise NotImplemented("Was not meant to be used.")
 
 
 class SelectInputWrapper:
@@ -54,8 +60,6 @@ class SelectInputWrapper:
         self.adaptor = adaptor
         self.choices: ChoicesReturnType = tag._get_choices()
         self.variable = Variable()
-        self.variable_dict = VariableDictWrapper(self.variable)
-        [self.variable_dict.add(k, v) for k, v, *_ in self.choices]
         self.widget = widget
 
         self.frame = nested_frame = Frame(master)
@@ -64,14 +68,17 @@ class SelectInputWrapper:
         # highlight style
         style = Style()
         style.configure("Highlight.TRadiobutton", background="lightyellow")
+        style.configure("Highlight.TCheckbutton", background="lightyellow")
 
         bg = style.lookup('TRadioButton', 'background')
         self.init_phase = True
         """ Becomes False few ms after mainloop """
 
         if tag.multiple:
-            raise NotImplementedError  # TODO
+            self.variable_wrapper = SetVar()
+            self.checkboxes(bg)
         else:
+            self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.choices})
             if len(self.choices) >= adaptor.options.combobox_since and AutoCombobox:
                 self.widget = self.combobox()
             else:
@@ -79,6 +86,34 @@ class SelectInputWrapper:
 
         # if radio_select_on_focus is True, we want to ignore the first FocusIn event
         nested_frame.after(200, self.end_init_phase)
+
+    def checkboxes(self, bg):
+        choices = self.choices
+        tag = self.tag
+        nested_frame = self.frame
+
+        vw = self.variable_wrapper
+
+        for i, (choice_label, choice_val, tip, tupled_key) in enumerate(choices):
+            var = BooleanVar(value=choice_val in tag.val)
+
+            def on_toggle(val=choice_val, var=var):
+                if var.get():
+                    vw.add(val)
+                else:
+                    vw.remove(val)
+                tag._last_ui_val = False
+                return tag._on_change_trigger(vw.get())
+
+            button = Checkbutton(nested_frame,
+                                 text=choice_label,
+                                 variable=var,
+                                 command=on_toggle,
+                                 style="Highlight.TCheckbutton" if tip else "",
+                                 #    takefocus=True
+                                 )
+
+            button.pack(anchor="w")
 
     def radio(self, bg):
         choices = self.choices
@@ -89,25 +124,25 @@ class SelectInputWrapper:
 
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(choices):
             is_selected = choice_val is tag.val
-            widget2 = Radiobutton(nested_frame,
-                                  text="",
-                                  variable=self.variable,
-                                  value=choice_label,
-                                  style="Highlight.TRadiobutton" if tip else "",
-                                  takefocus=is_selected)
+            rb = Radiobutton(nested_frame,
+                             text="",
+                             variable=self.variable,
+                             value=choice_label,
+                             style="Highlight.TRadiobutton" if tip else "",
+                             takefocus=is_selected)
             if adaptor.options.radio_select_on_focus:
-                widget2.bind("<FocusIn>",
-                             lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val),
-                             add='+')
+                rb.bind("<FocusIn>",
+                        lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val),
+                        add='+')
 
                 # Set the Tab to refocus the currently selected button when getting back to widget
                 # The default tkinter behaviour is that Tab iterates over all radio buttons
                 # which does not make sense.
-            widget2.bind("<FocusIn>",
-                         lambda _, rb=widget2, buttons=buttons: self.change_takefocus(rb, buttons),
-                         add='+')
-            widget2.grid(row=i, column=1, sticky="w")
-            buttons.append(widget2)
+            rb.bind("<FocusIn>",
+                    lambda _, rb=rb, buttons=buttons: self.change_takefocus(rb, buttons),
+                    add='+')
+            rb.grid(row=i, column=1, sticky="w")
+            buttons.append(rb)
 
             # display labels
             labs = []
@@ -128,7 +163,7 @@ class SelectInputWrapper:
 
     def set_default_label(self):
         if k := self.tag._get_selected_key():
-            self.variable_dict.set(k)
+            self.variable_wrapper.set(k)
             return True
         return False
 

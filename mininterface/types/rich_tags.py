@@ -436,6 +436,11 @@ class EnumTag(Tag):
                 return k
         return None
 
+    def _get_selected_keys(self):
+        if not self.multiple:
+            raise AttributeError
+        return [k for k, val, *_ in self._get_choices() if val in self.val]
+
     @classmethod
     def _repr_val(cls, v):
         if cls._is_a_callable_val(v):
@@ -520,10 +525,9 @@ class EnumTag(Tag):
 
         if self.multiple:
             vals = set(ch.values())
-            for v in ui_value:
-                if v not in vals:
-                    self.set_error_text(f"Must be one of {list(ch.keys())}")
-                    return False
+            if not all(v in vals for v in ui_value):
+                self.set_error_text(f"Must be one of {list(ch.keys())}")
+                return False
             return super().update(ui_value)
         else:
             if ui_value in ch.values():

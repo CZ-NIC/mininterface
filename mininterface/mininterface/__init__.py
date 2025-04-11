@@ -240,8 +240,9 @@ class Mininterface(Generic[EnvClass]):
             launch: If the chosen value is a callback, we directly call it and return its return value.
 
         Returns:
-            The chosen value. Or chosen values in the case of multiple choice.
-            If launch=True and the chosen value is a callback, we call it and return its result.
+            TagValue: The chosen value.
+            list: If multiple=True, return chosen values.
+            Any: If launch=True and the chosen value is a callback, we call it and return its result.
 
         !!! info
             To tackle a more detailed form, see [`EnumTag.choices`][mininterface.types.EnumTag.choices].
