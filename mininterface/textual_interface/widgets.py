@@ -2,7 +2,7 @@ import sys
 from typing import TYPE_CHECKING, Optional
 from textual import events
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Input, RadioSet, SelectionList
+from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, SelectionList
 
 
 from ..tag import Tag, TagValue
@@ -59,6 +59,12 @@ class MyCheckbox(TagWidget, Checkbox):
         return self.trigger_change()
 
 
+class MyRadioButton(RadioButton):
+    def __init__(self, ref_ui,  *args, **kwargs):
+        self.ref_ui = ref_ui
+        super().__init__(*args, **kwargs)
+
+
 class MyRadioSet(TagWidget, RadioSet):
     def on_radio_set_changed(self):
         return self.trigger_change()
@@ -78,8 +84,8 @@ class MyRadioSet(TagWidget, RadioSet):
 
     def get_ui_value(self):
         if self.pressed_button:
-            # TODO tady to může být .value ... ale co tkinterface a textinterface?
-            return str(self.pressed_button.label)
+            self.pressed_button: MyRadioButton
+            return self.pressed_button.ref_ui
         else:
             return None
 

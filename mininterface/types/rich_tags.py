@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from enum import Enum
+from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
+import unicodedata
 from warnings import warn
 
 from ..auxiliary import common_iterables
 from ..tag import ChoiceLabel, ChoicesType, RichChoiceLabel, Tag, TagValue
+
+ChoicesReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 
 
 @dataclass
@@ -424,35 +428,29 @@ class EnumTag(Tag):
             return cls._get_tag_val(v.val)
         return v
 
-    def _tupled_keys(self) -> list[tuple[ChoiceLabel]] | None:
-        """ If the choice has tupled keys instead of single, returns their list.
-        (Of the same lenght as the _get_choices.)
-        Otherwise None.
-        By default, tupled keys are processed here in _build_choices,
-        and joined with a dash but some interfaces (Tk) might want to do
-        the keys into the table processing on their own.
-        """
-        if isinstance(self.choices, dict) and isinstance(next(iter(self.choices)), tuple):
-            return list(self.choices)
+    def _get_selected_key(self):
+        if self.multiple:
+            raise AttributeError
+        for k, val, *_ in self._get_choices():
+            if val is self.val:
+                return k
+        return None
+
+    @classmethod
+    def _repr_val(cls, v):
+        if cls._is_a_callable_val(v):
+            return v.__name__
+        if isinstance(v, Tag):
+            return v._get_name(True)
+        if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
+            return str(v.value)
+        return str(v)
 
     def _build_choices(self) -> dict[ChoiceLabel, TagValue]:
         """ Whereas self.choices might have different format, this returns a canonic dict. """
 
         if self.choices is None:
             return {}
-        if tupled := self._tupled_keys():
-            # Span key tuple into a table
-            # Ex: [ ("one", "two"), ("hello", "world") ]
-            # one   - two
-            # hello - world"
-            col_widths = [max(len(row[i]) for row in tupled) for i in range(len(tupled[0]))]
-            keys = (" - ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row)) for row in tupled)
-            try:
-                return {key: self._get_tag_val(v) for key, v in zip(keys, self.choices.values())}
-            except IndexError:
-                # different lengths, table does not work
-                # Ex: [ ("one", "two", "three"), ("hello", "world") ]
-                return {" - ".join(key): self._get_tag_val(v) for key, v in self.choices.items()}
         if isinstance(self.choices, dict):
             return {key: self._get_tag_val(v) for key, v in self.choices.items()}
         if isinstance(self.choices, Iterable):
@@ -462,25 +460,62 @@ class EnumTag(Tag):
 
         warn(f"Not implemented choices: {self.choices}")
 
-    def _get_choices(self) -> list[tuple[ChoiceLabel, TagValue], bool]:
-        """ Return a list of tuples (label, choice value, is tip) """
+    def _get_choices(self, delim=" - ") -> ChoicesReturnType:
+        """ Return a list of tuples (label, choice value, is tip, tupled-label).
 
-        if not self.tips:
-            return list((k, v, False) for k, v in self._build_choices().items())
+        User has the possibility to write tuples instead of labels. We should produce a table then.
+        In label, we are sure the keys are strings (possibly joined with a dash)
+        but some interfaces (Tk) want to do the keys into the table processing on their own.
+        So they use tupled-label when they are guaranteed to find a tuple.
 
-        index = set(self.tips)
+        The interface should display label or tupled-label, hightlight choices with is tip
+        and keep the choice value invisible under the hood. When the user makes the choice,
+        call tag.update() with the invisible choice value.
+
+        Args:
+            delim: Delimit the 1th argument with the chars. (If label are tuples.)
+        """
+
+        index = set(self.tips or tuple())
         front = []
         back = []
-        for k, v in self._build_choices().items():
+
+        choices = self._build_choices()
+
+        keys = choices.keys()
+        labels: Iterable[tuple[str, tuple[str]]]
+        """ First is the str-label, second is guaranteed to be a tupled label"""
+
+        if len(choices) and isinstance(next(iter(choices)), tuple):
+            labels = self._span_to_lengths(keys, delim)
+        else:
+            labels = ((key, (key,)) for key in keys)
+
+        for (label, tupled), v in zip(labels, choices.values()):
+            tupled: tuple[str]
             if v in index:
-                front.append((k, v, True))
+                front.append((label, v, True, tupled))
             else:
-                back.append((k, v, False))
+                back.append((label, v, False, tupled))
         return front + back
 
+    def _span_to_lengths(self, keys: Iterable[tuple[str]], delim=" - "):
+        """ Span key tuple into a table
+        Ex: [ ("one", "two"), ("hello", "world") ]
+            one   - two
+            hello - world"
+        """
+        a_key = next(iter(keys))
+        col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
+        try:
+            return [(delim.join(cell.ljust(col_widths[i]) for i, cell in enumerate(key)), key) for key in keys]
+        except IndexError:
+            # different lengths, table does not work
+            # Ex: [ ("one", "two", "three"), ("hello", "world") ]
+            return [(delim.join(key), key) for key in keys]
+
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:
-        """ For self.multiple, UI is the value.
-            For not self.multiple, UI value is the label. We store the key. """
+        """ ui_value is one of the self.choices values  """
         ch = self._build_choices()
 
         if self.multiple:
@@ -491,8 +526,8 @@ class EnumTag(Tag):
                     return False
             return super().update(ui_value)
         else:
-            if ui_value in ch:
-                return super().update(ch[ui_value])
+            if ui_value in ch.values():
+                return super().update(ui_value)
             else:
                 self.set_error_text(f"Must be one of {list(ch.keys())}")
                 return False

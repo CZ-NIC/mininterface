@@ -2,6 +2,7 @@ import warnings
 
 from simple_term_menu import TerminalMenu
 
+from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface import Tag
@@ -40,14 +41,16 @@ class TextAdaptor(BackendAdaptor):
             case BoolWidget():
                 return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
             case EnumTag():
+                tag: EnumTag
                 if tag.multiple:
                     raise NotImplementedError  # TODO
                 else:
-                    choices = [k for k, *_ in tag._get_choices()]
+                    choices, values = zip(*((label + (" <--" if tip else " "), v)
+                                          for label, v, tip, _ in tag._get_choices(delim=" - ")))
                     if only_label:
-                        return tag.val or f"({len(choices)} options)"
+                        return tag._get_selected_key() or f"({len(choices)} options)"
                     else:
-                        return choices[self._choose(choices, title=tag.name)]
+                        return values[self._choose(choices, title=tag.name)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)
@@ -91,7 +94,7 @@ class TextAdaptor(BackendAdaptor):
                 self._run_dialog(form, title, submit)
             except Submit:
                 pass
-            if not self.submit_done():
+            if not Tag._submit_values((tag, tag.val) for tag in flatten(form)) or not self.submit_done():
                 continue
             break
         return form
@@ -106,25 +109,23 @@ class TextAdaptor(BackendAdaptor):
             if single:
                 key = next(iter(form))
             else:
-                try:
-                    index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
-                                         val in form.items()], append_ok=True)
-                except Cancelled:
-                    break
+                index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
+                                      val in form.items()], append_ok=True)
                 key = list(form)[index]
             match form[key]:
                 case dict() as submenu:
                     try:
                         self._run_dialog(submenu, key, submit)
                     except (KeyboardInterrupt, Cancelled):
-                        continue
+                        break
                 case Tag() as tag:
                     while True:
                         try:
-                            if tag.update(self.widgetize(tag)):
+                            ui_val = self.widgetize(tag)
+                            tag._on_change_trigger(ui_val)
+                            if tag.update(ui_val):
                                 break
-                        except KeyboardInterrupt:
-                            print()
+                        except (KeyboardInterrupt, Cancelled):
                             break
                 case _:
                     warnings.warn(f"Unsupported item {key}")
@@ -156,6 +157,6 @@ class TextAdaptor(BackendAdaptor):
             raise Cancelled
         if append_ok:
             if index == 0:
-                raise Cancelled
+                raise Submit
             index -= 1
         return index

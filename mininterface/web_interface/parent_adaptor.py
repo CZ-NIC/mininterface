@@ -63,7 +63,7 @@ class WebParentAdaptor(TextualAdaptor):
                     t.facet = self.facet
 
                 self.button_app = False
-                self.facet._fetch_from_adaptor(form)  # TODO rather use run_dialog
+                self.facet._fetch_from_adaptor(form)
             case SerCommand.BUTTONS, data:
                 data: ButtonAppType
                 self._build_buttons(*data)

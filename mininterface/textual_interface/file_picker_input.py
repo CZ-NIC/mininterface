@@ -11,7 +11,7 @@ from textual.widgets.tree import TreeNode
 from ..types import PathTag
 from .widgets import TagWidgetWithInput
 
-if TYPE_CHECKING:  # TODO
+if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
 
 

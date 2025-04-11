@@ -32,15 +32,8 @@ class WebParentApp(TextualApp):
 
     def action_confirm(self):
         if self.adaptor.button_app:
-            def w(*text):
-                from pathlib import Path
-                f = Path("/tmp/ram/log").open("a")
-                f.write(" ".join(str(s) for s in text) + "\n")
-                f.close()
-            w("35: self.adaptor._get_buttons_val()", self.adaptor._get_buttons_val())  # TODO
             self.adaptor.send(self.adaptor._get_buttons_val())
         else:
-            # TODO self.adaptor.facet._form
             self.adaptor.send(self.adaptor._serialize_vals(self.app))
         self.on_mount(first_call=False)
 

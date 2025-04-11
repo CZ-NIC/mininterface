@@ -1,12 +1,8 @@
-from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
+from tkinter import LEFT, Button, Entry, TclError, Variable, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames
-from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style, Widget, Label
+from tkinter.ttk import Checkbutton, Combobox, Radiobutton, Widget
 from typing import TYPE_CHECKING
 
-try:
-    from autocombobox import AutoCombobox
-except ImportError:
-    AutoCombobox = None
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
@@ -19,6 +15,7 @@ from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag, EnumTag
+from .select_input import SelectInputWrapper, VariableDictWrapper
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
@@ -63,18 +60,6 @@ class AnyVariable(Variable):
         return self.val
 
 
-def ready_to_replace(widget: Widget,
-                     variable: Variable,
-                     field_form: FieldForm) -> tuple[Widget, dict]:
-    if widget.winfo_manager() == 'grid':
-        grid_info = widget.grid_info()
-        widget.grid_forget()
-        field_form.variable = variable
-        return grid_info
-    else:
-        raise ValueError(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")
-
-
 def choose_file_handler(variable: Variable, tag: PathTag):
     def _(*_):
         if tag.multiple:
@@ -85,7 +70,7 @@ def choose_file_handler(variable: Variable, tag: PathTag):
     return _
 
 
-def on_change_handler(variable: Variable, tag: Tag):
+def on_change_handler(variable: Variable | VariableDictWrapper, tag: Tag):
     """ Closure handler """
     def _(*_):
         try:
@@ -107,8 +92,15 @@ def _set_true(variable: Variable, tag: Tag):
 
 
 def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
-    def _fetch(variable):
-        return ready_to_replace(widget, variable, field_form)
+    def replace_variable(variable):
+        """ On form submit, tkinter_form will return the output of this variable. """
+        if widget.winfo_manager() == 'grid':
+            grid_info = widget.grid_info()
+            widget.grid_forget()
+            field_form.variable = variable
+            return grid_info
+        else:
+            raise ValueError(f"GuiInterface: Cannot tackle the form, unknown winfo_manager {widget.winfo_manager()}.")
 
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
@@ -119,75 +111,23 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         label1: Widget = field_form.label
         widget: Widget = field_form.widget
         variable = field_form.variable
-        subwidgets = []
         master = widget.master
         widget.pack_forget()
+        enum_tag = False
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
             case EnumTag():
-                tag: EnumTag
-                # Replace with radio buttons
-                chosen_val = tag._get_ui_val()
-                variable = Variable()
-                grid_info = _fetch(variable)
-
-                nested_frame = Frame(master)
-                nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
-
-                # highlight style
-                style = Style()
-                style.configure("Custom.TRadiobutton", background="lightyellow", font=("Courier", 12))
-
-                style2 = Style()
-                style2.configure("Custom2.TRadiobutton")  # , font=("Courier", 12))
-
-                choices = tag._get_choices()
-                tupled_keys = tag._tupled_keys() or choices.keys()
-
-                if tag.multiple:
-                    raise NotImplementedError  # TODO
-                else:
-                    if len(choices) >= adaptor.options.combobox_since and AutoCombobox:
-                        widget = AutoCombobox(nested_frame, textvariable=variable)
-                        widget['values'] = [k for k, *_ in choices]
-                        widget.pack()
-                        widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
-                        if chosen_val is not None:
-                            variable.set(chosen_val)
-
-                    else:
-                        def change_takefocus(rb: Radiobutton, buttons: list[Radiobutton]):
-                            """ Tab will jump on the next form element (not on the next radiobutton). """
-                            [b.configure(takefocus=0) for b in buttons]
-                            rb.configure(takefocus=1)
-
-                        for i, ((choice_label, choice_val, tip), tupled_key) in enumerate(zip(choices, tupled_keys)):
-                            selected = choice_val is tag.val
-                            widget2 = Radiobutton(nested_frame,
-                                                  text="",
-                                                  variable=variable,
-                                                  value=choice_label,
-                                                  style="Custom.TRadiobutton" if tip else "Custom2.TRadiobutton",
-                                                  takefocus=selected)
-                            if adaptor.options.radio_select_on_focus:
-                                widget2.bind("<FocusIn>",
-                                             lambda _, var=variable, val=choice_label: var.set(val),
-                                             add='+')
-                            # Getting here with Tab will refocus the currently selected button
-                            widget2.bind("<FocusIn>",
-                                         lambda _, self=widget2, buttons=subwidgets: change_takefocus(self, buttons),
-                                         add='+')
-                            widget2.grid(row=i, column=1, sticky="w")
-                            subwidgets.append(widget2)
-                            if selected:
-                                variable.set(choice_label)
-
-                            # display labels
-                            for i2, col in enumerate(tupled_key):
-                                label1_widget = Label(nested_frame, text=col)
-                                label1_widget.grid(row=i, column=1+1+i2, sticky="w")
-                                label1_widget.bind("<Button-1>", lambda _, rb=widget: rb.select())
+                grid_info = widget.grid_info()
+                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor)
+                enum_tag = True
+                variable = wrapper.variable_dict
+                # since tkinter variables do not allow objects,
+                # and choice values can be objects (ex. callbacks)
+                # we use out special variable_dict instead
+                replace_variable(variable)
+                widget.grid_forget()
+                widget = wrapper.widget
 
             case PathTag():
                 grid_info = widget.grid_info()
@@ -211,33 +151,36 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
 
             # Special type: Submit button
             case SubmitButtonWidget():  # NOTE EXPERIMENTAL
-                variable, widget = create_button(master, _fetch, tag, label1)
+                variable, widget = create_button(master, replace_variable, tag, label1)
                 widget.config(command=_set_true(variable, tag))
             case FacetButtonWidget():  # NOTE EXPERIMENTAL
                 # Special type: FacetCallback button
-                variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: tag.val(tag.facet))
+                variable, widget = create_button(master, replace_variable, tag, label1,
+                                                 lambda tag=tag: tag.val(tag.facet))
 
             case CallbackButtonWidget():
                 # Replace with a callback button
                 def inner(tag: Tag):
                     tag.facet.submit(_post_submit=tag._run_callable)
-                variable, widget = create_button(master, _fetch, tag, label1, lambda tag=tag: inner(tag))
+                variable, widget = create_button(master, replace_variable, tag, label1, lambda tag=tag: inner(tag))
             case _:
-                grid_info = _fetch(variable)
+                grid_info = replace_variable(variable)
+                # Reposition to the grid so that the Tab order is restored.
+                # (As we replace some widgets with ex. custom DateEntry, these new would have Tab order broken.)
                 widget.grid(row=grid_info['row'], column=grid_info['column'])
 
         # Add event handler
         tag._last_ui_val = variable.get()
-        for w in subwidgets + [widget]:
-            h = on_change_handler(variable, tag)
-            if isinstance(w, Combobox):
-                w.bind("<<ComboboxSelected>>", h)
-            elif isinstance(w, (Entry, Spinbox)):
-                w.bind("<FocusOut>", h)
-            elif isinstance(w, Checkbutton):
-                w.configure(command=h)
-            elif isinstance(w, Radiobutton):
-                variable.trace_add("write", h)
+        w = widget
+        h = on_change_handler(variable, tag)
+        if enum_tag:  # isinstance(w, Radiobutton):
+            variable.trace_add("write", h)
+        elif isinstance(w, Combobox):
+            w.bind("<<ComboboxSelected>>", h)
+        elif isinstance(w, (Entry, Spinbox)):
+            w.bind("<FocusOut>", h)
+        elif isinstance(w, Checkbutton):
+            w.configure(command=h)
 
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself

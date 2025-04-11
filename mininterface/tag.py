@@ -571,11 +571,8 @@ class Tag:
             self._src_obj.append(src)
 
     def set_error_text(self, s):
-        self._original_desc = o = self.description
-        self._original_name = n = self.name
-
-        self.description = f"{s} {o}"
-        if self.name:
+        self.description = f"{s} {self._original_desc}"
+        if n := self._original_name:
             # Why checking self.name?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
             self.name = f"* {n}"
@@ -642,16 +639,6 @@ class Tag:
                 # Ex. tolerate_hour: int | tuple[int, int] | bool = False
                 continue
         return self.val
-
-    @classmethod
-    def _repr_val(cls, v):
-        if cls._is_a_callable_val(v):
-            return v.__name__
-        if isinstance(v, Tag):
-            return v._get_name(True)
-        if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
-            return str(v.value)
-        return str(v)
 
     def _validate(self, out_value) -> TagValue:
         """ Runs

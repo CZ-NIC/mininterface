@@ -34,11 +34,11 @@ class WebInterface(TextualInterface):
                  _env: EnvClass | SimpleNamespace | None = None,
                  cmd: Optional[str] = None, port=64646, **kwargs):
         # TODO
-        # * Yes/no/alert support (ButtonApp).
         # * lambda, print, on_change, layout, SubmitTrue support
-        # * ex. validation does not work
         # * Docs image.
         # * Port should be set from a config file too.
+        # * DONE Yes/no/alert support (ButtonApp).
+        # * DONE ex. validation does not work
 
         # This is a nifty solution.
         # Common use of textual application is that everything is wrapped inside, the textual library is used

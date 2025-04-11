@@ -1133,11 +1133,13 @@ class TestEnumTag(TestAbstract):
 
         # dict is the input
         t = EnumTag(1, choices={"one": 1, "two": 2})
-        self.assertTrue(t.update("two"))
+        self.assertFalse(t.update("two"))
+        self.assertEqual(1, t.val)
+        self.assertTrue(t.update(2))
         self.assertEqual(2, t.val)
-        self.assertFalse(t.update("three"))
+        self.assertFalse(t.update(3))
         self.assertEqual(2, t.val)
-        self.assertTrue(t.update("one"))
+        self.assertTrue(t.update(1))
         self.assertEqual(1, t.val)
         self.assertFalse(t.multiple)
 
@@ -1145,31 +1147,31 @@ class TestEnumTag(TestAbstract):
         t1 = Tag(1, name="one")
         t2 = Tag(2, name="two")
         t = EnumTag(1, choices=[t1, t2])
-        self.assertTrue(t.update("two"))
-        self.assertEqual(t2.val, t.val)  # TODO
-        self.assertFalse(t.update("three"))
+        self.assertTrue(t.update(2))
         self.assertEqual(t2.val, t.val)
-        self.assertTrue(t.update("one"))
+        self.assertFalse(t.update(3))
+        self.assertEqual(t2.val, t.val)
+        self.assertTrue(t.update(1))
         self.assertEqual(t1.val, t.val)
         self.assertFalse(t.multiple)
 
     def test_choice_enum(self):
         # Enum type supported
         t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
-        t1.update(str(ColorEnum.BLUE.value))
+        t1.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE, t1.val)
 
         # list of enums supported
         t2 = EnumTag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
         self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._build_choices())
-        t2.update(str(ColorEnum.BLUE.value))
+        t2.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE, t2.val)
 
         # Enum type supported even without explicit definition
         t3 = EnumTag(ColorEnum.GREEN)
         self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
         self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._build_choices())
-        t3.update(str(ColorEnum.BLUE.value))
+        t3.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
         self.assertEqual(ColorEnum.BLUE, t3.val)
 
@@ -1185,18 +1187,26 @@ class TestEnumTag(TestAbstract):
         [self.assertFalse(t.multiple) for t in (t1, t2, t3, t5)]
 
     def test_tips(self):
-        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)  # , tips=ColorEnum.BLUE)
+        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
         self.assertListEqual([
-            ('1', ColorEnum.RED, False),
-            ('2', ColorEnum.GREEN, False),
-            ('3', ColorEnum.BLUE, False),
+            ('1', ColorEnum.RED, False, ('1', )),
+            ('2', ColorEnum.GREEN, False, ('2', )),
+            ('3', ColorEnum.BLUE, False, ('3', )),
         ], t1._get_choices())
 
         t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum, tips=[ColorEnum.BLUE])
         self.assertListEqual([
-            ('3', ColorEnum.BLUE, True),
-            ('1', ColorEnum.RED, False),
-            ('2', ColorEnum.GREEN, False),
+            ('3', ColorEnum.BLUE, True, ('3', )),
+            ('1', ColorEnum.RED, False, ('1', )),
+            ('2', ColorEnum.GREEN, False, ('2', )),
+        ], t1._get_choices())
+
+    def test_tupled_label(self):
+        t1 = EnumTag(choices={("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33})
+        self.assertListEqual([
+            ('one    - half', 11, False, ('one', 'half')),
+            ('second - half', 22, False, ('second', 'half')),
+            ('third  - half', 33, False, ('third', 'half')),
         ], t1._get_choices())
 
     def test_multiple(self):
@@ -1235,7 +1245,7 @@ class TestEnumTag(TestAbstract):
         self.assertDictEqual({"one": 1, "two": 2}, t._build_choices())
 
         t.choices = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
-        self.assertDictEqual({"one   - col2   ": 1, "three - column3": 3}, t._build_choices())
+        self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_choices())
 
 
 if __name__ == '__main__':

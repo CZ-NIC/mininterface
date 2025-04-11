@@ -16,9 +16,6 @@ from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
-if TYPE_CHECKING:
-    from . import TkInterface
-
 
 class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
     """ An editing Tk window. """
@@ -114,10 +111,21 @@ class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
             tip, keysym = ("Enter", "<Return>")
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
             self._bind_event(keysym, self._ok)
+
+            # submit button styling
+            # self.form.button.grid_configure(sticky="", pady=15)
+            # self.form.button.config(width=15)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
         recursive_set_focus(self.form)
+
+        # status bar would look like this
+        # status_var = StringVar()
+        # status_var.set("F1 – help")
+        # status_label = Label(self.frame, textvariable=status_var, relief="sunken", anchor="w", padx=5)
+        # status_label.pack(side="bottom", fill="x", pady=(20, 0))
+
         return self.mainloop(lambda: self.validate(form, title, submit))
 
     def validate(self, form: TagDict, title: str, submit) -> TagDict:

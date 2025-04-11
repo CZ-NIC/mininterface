@@ -76,7 +76,6 @@ class SerializedChildAdaptor(TextualAdaptor):
         return  # TODO
 
     def buttons(self, text: str, buttons: ButtonAppType, focused: int = 1):
-        # TODO
         return self.send(SerCommand.BUTTONS, text, buttons, focused)
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
