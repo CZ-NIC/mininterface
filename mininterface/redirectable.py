@@ -41,7 +41,7 @@ class Redirectable:
     #     print("First")
     #     sleep(1)
     #     print("Second")
-    #     m.is_yes("Was it shown continuously?")
+    #     m.confirm("Was it shown continuously?")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -79,7 +79,7 @@ Check out several useful methods to handle user dialogues. Here we bound the int
 ```python
 with run(Env) as m:
     print(f"Your important number is {m.env.my_number}")
-    boolean = m.is_yes("Is that alright?")
+    boolean = m.confirm("Is that alright?")
 ```
 
 ![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")
@@ -150,7 +150,7 @@ These projects have the code base reduced thanks to the mininterface:
 Take a look at the following example.
 1. We define any Env class.
 2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
-3. Then, we use various dialog methods, like [`is_yes`][mininterface.Mininterface.is_yes], [`choice`][mininterface.Mininterface.choice] or [`form`][mininterface.Mininterface.form].
+3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`choice`][mininterface.Mininterface.choice] or [`form`][mininterface.Mininterface.form].
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
@@ -175,8 +175,8 @@ if __name__ == "__main__":
       print("The file contents:", m.env.my_file.read_text())
 
       # You can use various dialog methods,
-      # like `is_yes` for bool
-      if m.is_yes("Do you want to continue?"):
+      # like `confirm` for bool
+      if m.confirm("Do you want to continue?"):
 
         # or `choice` for choosing a value
         fruit = m.choice(("apple", "banana", "sirup"), "Choose a fruit")

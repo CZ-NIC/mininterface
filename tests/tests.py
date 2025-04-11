@@ -147,17 +147,16 @@ class TestInteface(TestAbstract):
                 self.assertEqual(1, m1.ask_number("Number"))
 
         with patch('builtins.input', side_effect=["", "", "y", "Y", "n", "n", "N", "y", "hello"]):
-            # TODO is_no must be deprecated as it is counterintuitive
-            self.assertTrue(m1.is_yes(""))
-            self.assertFalse(m1.is_no(""))
+            self.assertTrue(m1.confirm(""))
+            self.assertFalse(m1.confirm("", False))
 
-            self.assertTrue(m1.is_yes(""))
-            self.assertTrue(m1.is_yes(""))
-            self.assertFalse(m1.is_yes(""))
+            self.assertTrue(m1.confirm(""))
+            self.assertTrue(m1.confirm(""))
+            self.assertFalse(m1.confirm(""))
 
-            self.assertFalse(m1.is_no(""))
-            self.assertFalse(m1.is_no(""))
-            self.assertTrue(m1.is_no(""))
+            self.assertFalse(m1.confirm("", False))
+            self.assertFalse(m1.confirm("", False))
+            self.assertTrue(m1.confirm("", False))
 
             self.assertEqual("hello", m1.ask(""))
 

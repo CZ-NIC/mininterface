@@ -415,20 +415,30 @@ class Mininterface(Generic[EnvClass]):
             return self.env
         raise ValueError(f"Unknown form input {_form}")
 
-    def is_yes(self, text: str) -> bool:
-        """ Display confirm box, focusing yes.
+    def confirm(self, text: str, default: bool = True) -> bool:
+        """ Display confirm box and returns bool.
 
         ```python
         m = run()
-        print(m.is_yes("Is that alright?"))  # True/False
+        print(m.confirm("Is that alright?"))  # True/False
         ```
 
         ![Is yes window](asset/is_yes.avif "A prompted dialog")
+
+        Args:
+            text: Displayed text.
+            default: Focused button.
+
+        Returns:
+            bool: Whether the user has chosen the Yes button.
+
         """
-        print("Asking yes:", text)
+        print(f"Asking {'yes' if default else 'no'}:", text)
         return True
 
+    def is_yes(self, text: str) -> bool:
+        raise NotImplementedError("Method `is_yes` removed. Use `.confirm(text)` instead.")
+
     def is_no(self, text: str) -> bool:
-        """ Display confirm box, focusing no. """
-        print("Asking no:", text)
-        return False
+        raise NotImplementedError(
+            "Method `is_no` removed as it was counterintuitive. Use `.confirm(text, False)` instead.")

@@ -38,7 +38,7 @@ class Start:
             if target.exists():
                 m.alert(f"Destination {target} already exists. Exit.")
                 return
-            if m.is_yes(f"We generate the bash completion into {target}"):
+            if m.confirm(f"We generate the bash completion into {target}"):
                 run(["sudo", "-E", sys.argv[0], "--tyro-write-completion", "bash", target])
                 m.alert(f"Integration completed. Start a bash session to see whether bash completion is working.")
                 return

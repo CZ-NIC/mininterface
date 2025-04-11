@@ -12,11 +12,8 @@ class ButtonMixin(Mininterface):
         """ Display the OK dialog with text. """
         self._adaptor.buttons(text, [("Ok", None)])
 
-    def is_yes(self, text) -> bool:
-        return self._adaptor.yes_no(text, False)
-
-    def is_no(self, text) -> bool:
-        return self._adaptor.yes_no(text, True)
+    def confirm(self, text, default: bool = True) -> bool:
+        return self._adaptor.yes_no(text, not default)
 
 
 class ButtonAdaptorMixin(ABC):

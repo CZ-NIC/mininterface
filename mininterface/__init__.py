@@ -141,7 +141,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
 
     with run(Env) as m:
         print(f"Your important number is {m.env.my_number}")
-        boolean = m.is_yes("Is that alright?")
+        boolean = m.confirm("Is that alright?")
     ```
 
     ![Small window with the text 'Your important number'](asset/hello-with-statement.webp "With statement to redirect the output")

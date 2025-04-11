@@ -39,7 +39,7 @@ class TextAdaptor(BackendAdaptor):
         match tag._recommend_widget():
             # NOTE: PathTag, DatetimeTag not implemented
             case BoolWidget():
-                return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
+                return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
             case EnumTag():
                 tag: EnumTag
                 choices, values = zip(*((label + (" <--" if tip else " "), v)

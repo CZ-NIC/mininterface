@@ -136,14 +136,12 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                 except ValueError:
                     print("This is not a number")
 
-    def is_yes(self, text: str):
+    def confirm(self, text: str, default: bool = True):
         with StdinTTYWrapper():
-            return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
-
-    def is_no(self, text):
-        # TODO is_no seems counterintuitive!
-        with StdinTTYWrapper():
-            return self.ask(text=text + " y/[n]").lower() not in ("n", "no", "")
+            if default:
+                return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
+            else:
+                return self.ask(text=text + " y/[n]").lower() not in ("n", "no", "")
 
 
 class ReplInterface(TextInterface):
