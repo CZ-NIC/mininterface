@@ -7,7 +7,7 @@ from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface import Tag
 from ..mininterface.adaptor import BackendAdaptor
-from ..options import TextOptions
+from ..settings import TextSettings
 from ..types.internal import (BoolWidget, CallbackButtonWidget,
                               SubmitButtonWidget)
 from ..types.rich_tags import EnumTag, SecretTag
@@ -21,7 +21,7 @@ class Submit(StopIteration):
 class TextAdaptor(BackendAdaptor):
 
     facet: TextFacet
-    options: TextOptions
+    settings: TextSettings
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """

@@ -18,7 +18,7 @@ from .app import SerCommand
 from ..facet import Facet
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
-from ..options import WebOptions
+from ..settings import WebSettings
 from ..tag import Tag
 from ..textual_interface.facet import TextualFacet
 from ..textual_interface.widgets import TagWidget
@@ -31,10 +31,10 @@ class SerializedChildAdaptor(TextualAdaptor):
     """ Serialized output, piped to the parent process. """
 
     facet: TextualFacet  # TODO?
-    options: WebOptions
+    settings: WebSettings
 
-    def __init__(self, interface: "Mininterface", options):
-        super().__init__(interface, options)
+    def __init__(self, interface: "Mininterface", settings):
+        super().__init__(interface, settings)
         self._original_stdout = sys.stdout
         self._redirected = sys.stdout = TextIOWrapper(BytesIO())
 

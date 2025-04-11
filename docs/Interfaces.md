@@ -27,7 +27,7 @@ When a GUI is not available (GuiInterface), nor the rich TUI is available (Textu
 
 A tkinter window.
 
-It inherits from [`GuiOptions`][mininterface.options.GuiOptions]
+It inherits from [`GuiSettings`][mininterface.settings.GuiSettings]
 
 # `TuiInterface` or 'tui'
 

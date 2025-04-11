@@ -15,7 +15,7 @@ from ..auxiliary import flatten
 
 from ..textual_interface.facet import TextualFacet
 
-from ..options import WebOptions
+from ..settings import WebSettings
 
 from ..facet import Facet
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class WebParentAdaptor(TextualAdaptor):
 
     facet: TextualFacet  # NOTE proper facet
-    options: WebOptions
+    settings: WebSettings
 
     def __init__(self, *args, environ=None, app=None):
         super().__init__(*args)

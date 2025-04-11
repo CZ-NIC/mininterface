@@ -1,6 +1,14 @@
 # Changelog
 
 ## unreleased
+* CHANGED – renamed:
+    * Mininterface.is_yes -> m.confirm
+    * Mininterface.is_no -> m.confirm(..., False)
+    * Mininterface.choice -> Mininterface.select
+    * Choices alias -> Options alias
+    * MininterfaceOptions -> MininterfaceSettings
+    * TODO EnumTag -> SelectTag
+    * TODO choices= -> options=
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation

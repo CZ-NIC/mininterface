@@ -16,7 +16,7 @@ def SecretInputFactory(adaptor: "TextualAdaptor", tag: SecretTag, **kwargs):
     class SecretInput(TagWidgetWithInput, Horizontal):
         """A custom widget that combines an input field with a visibility toggle button."""
 
-        BINDINGS = [Binding(adaptor.options.toggle_widget, "toggle_visibility", "Toggle visibility")]
+        BINDINGS = [Binding(adaptor.settings.toggle_widget, "toggle_visibility", "Toggle visibility")]
 
         DEFAULT_CSS = """
         SecretInput {

@@ -8,7 +8,7 @@ from ..types.rich_tags import EnumTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
 
-from ..options import MininterfaceOptions, UiOptions
+from ..settings import MininterfaceSettings, UiSettings
 
 from ..exceptions import Cancelled
 
@@ -57,7 +57,7 @@ class Mininterface(Generic[EnvClass]):
 
     def __init__(self,
                  title: str = "",
-                 options: Optional[UiOptions] = None,
+                 settings: Optional[UiSettings] = None,
                  _env: EnvClass | SimpleNamespace | None = None
                  ):
         self.title = title or "Mininterface"
@@ -91,7 +91,7 @@ class Mininterface(Generic[EnvClass]):
 
         """
 
-        self._adaptor = self.__annotations__["_adaptor"](self, options)
+        self._adaptor = self.__annotations__["_adaptor"](self, settings)
 
         if isinstance(self.env, Command):
             self.env.run()

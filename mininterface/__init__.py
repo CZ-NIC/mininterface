@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
-from .options import MininterfaceOptions
+from .settings import MininterfaceSettings
 
 from .types.alias import Choices, Validation
 
@@ -44,7 +44,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         # We do not use InterfaceType as a type here because we want the documentation to show full alias:
         interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | None = None,
         args: Optional[Sequence[str]] = None,
-        options: Optional[MininterfaceOptions] = None,
+        settings: Optional[MininterfaceSettings] = None,
         **kwargs) -> Mininterface[EnvClass]:
     """ The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
@@ -120,7 +120,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
             see the full [list](Interfaces.md) of possible interfaces.
             If not set, we look also for an environment variable MININTERFACE_INTERFACE and in the config file.
         args: Parse arguments from a sequence instead of the command line.
-        options: Default options. These might be further modified by the 'mininterface' section in the config file.
+        settings: Default settings. These might be further modified by the 'mininterface' section in the config file.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
 
@@ -194,7 +194,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         start.choose_subcommand(env_or_list)
     else:
         # Parse CLI arguments, possibly merged from a config file.
-        kwargs, options = parse_config_file(env_or_list or _Empty, config_file, options, **kwargs)
+        kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
         if env_or_list:
             # Load configuration from CLI and a config file
             env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbosity, ask_for_missing, args)
@@ -204,7 +204,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     # Build the interface
     if os.environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
-    m = get_interface(interface, title, options, env)
+    m = get_interface(interface, title, settings, env)
 
     # Empty CLI → GUI edit
     if ask_for_missing and wrong_fields:

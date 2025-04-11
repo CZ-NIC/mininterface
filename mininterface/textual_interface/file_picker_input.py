@@ -342,7 +342,7 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
     class FilePickerInput(TagWidgetWithInput, Horizontal):
         """A custom widget that combines an input field with a file picker button."""
 
-        BINDINGS = [Binding(adaptor.options.toggle_widget, "on_button_pressed", "Toggle picker")]
+        BINDINGS = [Binding(adaptor.settings.toggle_widget, "on_button_pressed", "Toggle picker")]
 
         def action_on_button_pressed(self):
             self.button.press()

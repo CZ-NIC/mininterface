@@ -11,7 +11,7 @@ from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..mininterface.adaptor import BackendAdaptor
 from ..mininterface.mixin import ButtonAdaptorMixin
-from ..options import GuiOptions
+from ..settings import GuiSettings
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
@@ -21,7 +21,7 @@ class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
     """ An editing Tk window. """
 
     facet: TkFacet
-    options: GuiOptions
+    settings: GuiSettings
 
     def __init__(self, *args):
         BackendAdaptor.__init__(self, *args)
@@ -106,7 +106,7 @@ class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
         # Add radio etc.
         replace_widgets(self, self.form.fields, form)
 
-        # Set the submit and exit options
+        # Set the submit and exit settings
         if self.form.button:
             tip, keysym = ("Enter", "<Return>")
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear

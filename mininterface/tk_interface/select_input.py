@@ -79,7 +79,7 @@ class SelectInputWrapper:
             self.checkboxes(bg)
         else:
             self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.choices})
-            if len(self.choices) >= adaptor.options.combobox_since and AutoCombobox:
+            if len(self.choices) >= adaptor.settings.combobox_since and AutoCombobox:
                 self.widget = self.combobox()
             else:
                 self.radio(bg)
@@ -130,7 +130,7 @@ class SelectInputWrapper:
                              value=choice_label,
                              style="Highlight.TRadiobutton" if tip else "",
                              takefocus=is_selected)
-            if adaptor.options.radio_select_on_focus:
+            if adaptor.settings.radio_select_on_focus:
                 rb.bind("<FocusIn>",
                         lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val),
                         add='+')

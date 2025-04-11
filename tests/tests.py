@@ -20,7 +20,7 @@ from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
                      SimpleEnv, Subcommand1, Subcommand2, callback_raw,
                      callback_tag, callback_tag2)
-from dumb_options import GuiOptions, MininterfaceOptions, TextOptions, TextualOptions, TuiOptions, UiOptions as UiDumb, WebOptions
+from tests.dumb_settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings
 from mininterface.tag_factory import tag_assure_type
 from mininterface.types.rich_tags import EnumTag
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
@@ -28,11 +28,11 @@ from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from mininterface import EnvClass, Mininterface, run
 from mininterface.interfaces import TextInterface
 from mininterface.auxiliary import flatten, matches_annotation, subclass_matches_annotation
-from mininterface.cli_parser import _merge_options, parse_cli, parse_config_file
+from mininterface.cli_parser import _merge_settings, parse_cli, parse_config_file
 from mininterface.exceptions import Cancelled
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
-from mininterface.options import UiOptions
+from mininterface.settings import UiSettings
 from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import Tag
@@ -609,49 +609,49 @@ class TestRun(TestAbstract):
                 r(model)
                 self.assertIn("Unknown fields in the configuration file", str(w[0].message))
 
-    def test_options(self):
+    def test_settings(self):
         # NOTE
-        # The options had little params at the moment of the test writing.
-        # when there is more options, use the actual objects instead of the dumb ones here.
-        # Then, you might get rid of the dumb_options.py and _def_fact factory parameter in _merge_options.
+        # The settings had little params at the moment of the test writing.
+        # when there is more settings, use the actual objects instead of the dumb ones here.
+        # Then, you might get rid of the dumb_settings.py and _def_fact factory parameter in _merge_settings.
 
-        opt1 = MininterfaceOptions(gui=GuiOptions(combobox_since=1))
-        opt2 = MininterfaceOptions(gui=GuiOptions(combobox_since=10))
-        self.assertEqual(opt1, _merge_options(None, {'gui': {'combobox_since': 1}}, MininterfaceOptions))
+        opt1 = MininterfaceSettings(gui=GuiSettings(combobox_since=1))
+        opt2 = MininterfaceSettings(gui=GuiSettings(combobox_since=10))
+        self.assertEqual(opt1, _merge_settings(None, {'gui': {'combobox_since': 1}}, MininterfaceSettings))
 
-        # config file options are superior to the program-given options
-        self.assertEqual(opt1, _merge_options(opt2, {'gui': {'combobox_since': 1}}, MininterfaceOptions))
+        # config file settings are superior to the program-given settings
+        self.assertEqual(opt1, _merge_settings(opt2, {'gui': {'combobox_since': 1}}, MininterfaceSettings))
 
-        opt3 = MininterfaceOptions(
+        opt3 = MininterfaceSettings(
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
-            gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
-            tui=TuiOptions(foo=3, p_config=2, p_dynamic=0),
-            textual=TextualOptions(foo=3, p_config=1, p_dynamic=0, foobar=74),
-            text=TextOptions(foo=3, p_config=2, p_dynamic=0),
-            web=WebOptions(foo=3, p_config=1, p_dynamic=0, foobar=74), interface=None)
+            gui=GuiSettings(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
+            tui=TuiSettings(foo=3, p_config=2, p_dynamic=0),
+            textual=TextualSettings(foo=3, p_config=1, p_dynamic=0, foobar=74),
+            text=TextSettings(foo=3, p_config=2, p_dynamic=0),
+            web=WebSettings(foo=3, p_config=1, p_dynamic=0, foobar=74), interface=None)
 
         def conf():
             return {'textual': {'p_config': 1}, 'tui': {'p_config': 2}, 'ui': {'foo': 3}}
-        self.assertEqual(opt3, _merge_options(None, conf(), MininterfaceOptions))
+        self.assertEqual(opt3, _merge_settings(None, conf(), MininterfaceSettings))
 
-        opt4 = MininterfaceOptions(text=TextOptions(p_dynamic=200),
-                                   tui=TuiOptions(p_dynamic=100, p_config=100, foo=100))
+        opt4 = MininterfaceSettings(text=TextSettings(p_dynamic=200),
+                                    tui=TuiSettings(p_dynamic=100, p_config=100, foo=100))
 
-        res4 = MininterfaceOptions(
+        res4 = MininterfaceSettings(
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
-            gui=GuiOptions(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
-            tui=TuiOptions(foo=100, p_config=2, p_dynamic=100),
-            textual=TextualOptions(foo=100, p_config=1, p_dynamic=100, foobar=74),
-            text=TextOptions(foo=100, p_config=2, p_dynamic=200),
-            web=WebOptions(foo=100, p_config=1, p_dynamic=100, foobar=74), interface=None)
-        self.assertEqual(res4, _merge_options(opt4, conf(), MininterfaceOptions))
+            gui=GuiSettings(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
+            tui=TuiSettings(foo=100, p_config=2, p_dynamic=100),
+            textual=TextualSettings(foo=100, p_config=1, p_dynamic=100, foobar=74),
+            text=TextSettings(foo=100, p_config=2, p_dynamic=200),
+            web=WebSettings(foo=100, p_config=1, p_dynamic=100, foobar=74), interface=None)
+        self.assertEqual(res4, _merge_settings(opt4, conf(), MininterfaceSettings))
 
-    def test_options_inheritance(self):
-        """ The interface gets the relevant options section, not whole MininterfaceOptions """
-        opt1 = MininterfaceOptions(gui=GuiOptions(combobox_since=1))
-        m = run(options=opt1, interface=Mininterface)
+    def test_settings_inheritance(self):
+        """ The interface gets the relevant settings section, not whole MininterfaceSettings """
+        opt1 = MininterfaceSettings(gui=GuiSettings(combobox_since=1))
+        m = run(settings=opt1, interface=Mininterface)
         self.assertIsInstance(m, Mininterface)
-        self.assertIsInstance(m._adaptor.options, UiOptions)
+        self.assertIsInstance(m._adaptor.settings, UiSettings)
 
 
 class TestValidators(TestAbstract):

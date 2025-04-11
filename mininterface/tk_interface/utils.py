@@ -36,7 +36,7 @@ def recursive_set_focus(widget: Widget):
                 # We've set takefocus=0 to all radios that are not selected.
                 # But proper way would be to compare the real value, if the radio box is checked.
                 # If no radio in group is checked, focus the first.
-                # But attention, if adaptor.options.radio_select_on_focus,
+                # But attention, if adaptor.settings.radio_select_on_focus,
                 # the focusing must not trigger the var setting – radio box should stay unchecked.
                 continue
             child.focus_set()

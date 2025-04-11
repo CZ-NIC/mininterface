@@ -12,7 +12,7 @@ from ..exceptions import InterfaceNotAvailable
 from ..form_dict import DataClass, FormDict
 from ..mininterface import EnvClass, Mininterface
 from ..mininterface.mixin import ButtonMixin
-from ..options import GuiOptions
+from ..settings import GuiSettings
 from ..redirectable import Redirectable
 from .adaptor import TkAdaptor
 from .redirect_text_tkinter import RedirectTextTkinter

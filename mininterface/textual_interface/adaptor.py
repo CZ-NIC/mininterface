@@ -11,7 +11,7 @@ from .secret_input import SecretInputFactory
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
-from ..options import TextualOptions
+from ..settings import TextualSettings
 from ..tag import Tag, UiValue
 from ..types import EnumTag, PathTag, SecretTag
 from ..types.internal import (BoolWidget, CallbackButtonWidget,
@@ -31,7 +31,7 @@ ValsType = Iterable[tuple[Tag, UiValue]]
 class TextualAdaptor(BackendAdaptor):
 
     facet: TextualFacet
-    options: TextualOptions
+    settings: TextualSettings
     interface: "TextualInterface"
 
     def __init__(self, *args):

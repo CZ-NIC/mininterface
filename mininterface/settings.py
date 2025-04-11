@@ -8,14 +8,14 @@ InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["
 
 
 @dataclass
-class UiOptions:
+class UiSettings:
     toggle_widget: str = "f4"
     """ Shortcuts to toggle ex. calendar or file picker. """
 
 
 @dataclass
-class GuiOptions(UiOptions):
-    # If multiple Gui interfaces exist, this had to be TkOptions instead.
+class GuiSettings(UiSettings):
+    # If multiple Gui interfaces exist, this had to be TkSettings instead.
 
     combobox_since: int = 5
     """ The threshold to switch from radio buttons to a combobox. """
@@ -25,35 +25,35 @@ class GuiOptions(UiOptions):
 
 
 @dataclass
-class TuiOptions(UiOptions):
+class TuiSettings(UiSettings):
     ...
 
 
 @dataclass
-class TextualOptions(TuiOptions):
+class TextualSettings(TuiSettings):
     ...
 
 
 @dataclass
-class TextOptions(TuiOptions):
+class TextSettings(TuiSettings):
     ...
 
 
 @dataclass
-class WebOptions(TextualOptions):
+class WebSettings(TextualSettings):
     ...
 
 
 # NOTE elaborate in the docs when more examples exist
-# TuiOptions works as a default for TextOptions and TextualOptions
+# TuiSettings works as a default for TextSettings and TextualSettings
 
 @dataclass
-class MininterfaceOptions:
-    ui: UiOptions = field(default_factory=UiOptions)
-    gui: GuiOptions = field(default_factory=GuiOptions)
-    tui: TuiOptions = field(default_factory=TuiOptions)
-    textual: TextualOptions = field(default_factory=TextualOptions)
-    text: TextOptions = field(default_factory=TextOptions)
-    web: WebOptions = field(default_factory=WebOptions)
+class MininterfaceSettings:
+    ui: UiSettings = field(default_factory=UiSettings)
+    gui: GuiSettings = field(default_factory=GuiSettings)
+    tui: TuiSettings = field(default_factory=TuiSettings)
+    textual: TextualSettings = field(default_factory=TextualSettings)
+    text: TextSettings = field(default_factory=TextSettings)
+    web: WebSettings = field(default_factory=WebSettings)
     interface: Optional[InterfaceName] = None
     """ Enforce an interface. By default, we choose automatically. """

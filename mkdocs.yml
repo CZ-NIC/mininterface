@@ -60,7 +60,7 @@ nav:
           - Tag-aliases.md
           - Prepared-annotations.md
   - Extras:
-      - Options.md
+      - Settings.md
       - Exceptions.md
       - Interfaces.md
       - Standalone.md

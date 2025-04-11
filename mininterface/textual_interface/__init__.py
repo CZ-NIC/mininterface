@@ -4,7 +4,7 @@ from typing import Optional, Type
 
 from ..mininterface.mixin import ButtonMixin
 
-from ..options import TextualOptions
+from ..settings import TextualSettings
 
 try:
     from textual.app import App as _ImportCheck
