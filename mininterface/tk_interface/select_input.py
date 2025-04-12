@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from .. import Optional
 
 
-from ..types.rich_tags import ChoicesReturnType, EnumTag
+from ..types.tags import OptionsReturnType, SelectTag
 
 try:
     from autocombobox import AutoCombobox
@@ -54,11 +54,11 @@ class SetVar(set):
 
 class SelectInputWrapper:
 
-    def __init__(self, master, tag: EnumTag, grid_info, widget: Widget, adaptor: "TkAdaptor"):
+    def __init__(self, master, tag: SelectTag, grid_info, widget: Widget, adaptor: "TkAdaptor"):
         # Replace with radio buttons
         self.tag = tag
         self.adaptor = adaptor
-        self.choices: ChoicesReturnType = tag._get_choices()
+        self.options: OptionsReturnType = tag._get_options()
         self.variable = Variable()
         self.widget = widget
 
@@ -78,8 +78,8 @@ class SelectInputWrapper:
             self.variable_wrapper = SetVar()
             self.checkboxes(bg)
         else:
-            self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.choices})
-            if len(self.choices) >= adaptor.settings.combobox_since and AutoCombobox:
+            self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.options})
+            if len(self.options) >= adaptor.settings.combobox_since and AutoCombobox:
                 self.widget = self.combobox()
             else:
                 self.radio(bg)
@@ -88,13 +88,13 @@ class SelectInputWrapper:
         nested_frame.after(200, self.end_init_phase)
 
     def checkboxes(self, bg):
-        choices = self.choices
+        options = self.options
         tag = self.tag
         nested_frame = self.frame
 
         vw = self.variable_wrapper
 
-        for i, (choice_label, choice_val, tip, tupled_key) in enumerate(choices):
+        for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
             var = BooleanVar(value=choice_val in tag.val)
 
             def on_toggle(val=choice_val, var=var):
@@ -116,13 +116,13 @@ class SelectInputWrapper:
             button.pack(anchor="w")
 
     def radio(self, bg):
-        choices = self.choices
+        options = self.options
         tag = self.tag
         adaptor = self.adaptor
         nested_frame = self.frame
         buttons = []
 
-        for i, (choice_label, choice_val, tip, tupled_key) in enumerate(choices):
+        for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
             is_selected = choice_val is tag.val
             rb = Radiobutton(nested_frame,
                              text="",
@@ -168,9 +168,9 @@ class SelectInputWrapper:
         return False
 
     def combobox(self):
-        choices = self.choices
+        options = self.options
         widget = AutoCombobox(self.frame, textvariable=self.variable)
-        widget['values'] = [k for k, *_ in choices]
+        widget['values'] = [k for k, *_ in options]
         widget.pack()
         widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
 

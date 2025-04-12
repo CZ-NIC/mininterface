@@ -17,11 +17,11 @@ Source of `program.py`, we have one single attribute `foo`:
 ```python
 from typing import Annotated
 from dataclasses import dataclass
-from mininterface import run, Choices
+from mininterface import run, Options
 
 @dataclass
 class Env:
-    foo: Annotated["str", Choices("one", "two")] = "one"
+    foo: Annotated["str", Options("one", "two")] = "one"
 
 m = run(Env)
 m.form()

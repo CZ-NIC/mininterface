@@ -4,7 +4,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Button, Input
 
-from ..types.rich_tags import SecretTag
+from ..types.tags import SecretTag
 from .widgets import TagWidgetWithInput
 
 if TYPE_CHECKING:

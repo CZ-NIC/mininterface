@@ -10,7 +10,7 @@ from ..mininterface.adaptor import BackendAdaptor
 from ..settings import TextSettings
 from ..types.internal import (BoolWidget, CallbackButtonWidget,
                               SubmitButtonWidget)
-from ..types.rich_tags import EnumTag, SecretTag
+from ..types.tags import SelectTag, SecretTag
 from .facet import TextFacet
 
 
@@ -40,20 +40,20 @@ class TextAdaptor(BackendAdaptor):
             # NOTE: PathTag, DatetimeTag not implemented
             case BoolWidget():
                 return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
-            case EnumTag():
-                tag: EnumTag
-                choices, values = zip(*((label + (" <--" if tip else " "), v)
-                                        for label, v, tip, _ in tag._get_choices(delim=" - ")))
+            case SelectTag():
+                tag: SelectTag
+                options, values = zip(*((label + (" <--" if tip else " "), v)
+                                        for label, v, tip, _ in tag._get_options(delim=" - ")))
                 if tag.multiple:
                     if only_label:
-                        return tag._get_selected_keys() or f"({len(choices)} options)"
+                        return tag._get_selected_keys() or f"({len(options)} options)"
                     else:
-                        return [values[i] for i in self._choose(choices, title=tag.name, multiple=True)]
+                        return [values[i] for i in self._choose(options, title=tag.name, multiple=True)]
                 else:
                     if only_label:
-                        return tag._get_selected_key() or f"({len(choices)} options)"
+                        return tag._get_selected_key() or f"({len(options)} options)"
                     else:
-                        return values[self._choose(choices, title=tag.name)]
+                        return values[self._choose(options, title=tag.name)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)

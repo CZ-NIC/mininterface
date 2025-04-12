@@ -54,13 +54,13 @@ ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
-ChoiceLabel = str
-RichChoiceLabel = ChoiceLabel | tuple[ChoiceLabel]
-ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichChoiceLabel,
+OptionLabel = str
+RichOptionLabel = OptionLabel | tuple[OptionLabel]
+OptionsType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichOptionLabel,
                                                                       TagValue] | list[Enum] | Type[Enum]
-""" You can denote the choices in many ways.
+""" You can denote the options in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
-Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(ChoicesType)` to illustrate the examples.
+Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(OptionsType)` to illustrate the examples.
 
 ## Iterables like list
 
@@ -72,7 +72,7 @@ m = run()
 m.choice([1, 2])
 ```
 
-![Choices as a list](asset/choices_list.avif)
+![Options as a list](asset/choices_list.avif)
 
 ## Dict for labels
 
@@ -100,7 +100,7 @@ Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
 m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
 ```
 
-![Choices with labels](asset/choices_labels.avif)
+![Options with labels](asset/choices_labels.avif)
 
 ## Enums
 
@@ -115,7 +115,7 @@ class Color(Enum):
 m.choice(Color)
 ```
 
-![Choices from enum](asset/choice_enum_type.avif)
+![Options from enum](asset/choice_enum_type.avif)
 
 Alternatively, you may use an Enum instance. (Which means the default value is already selected.)
 
@@ -128,7 +128,7 @@ class Color(Enum):
 m.choice(Color.BLUE)
 ```
 
-![Choices from enum](asset/choice_enum_instance.avif)
+![Options from enum](asset/choice_enum_instance.avif)
 
 Alternatively, you may use an Enum instances list.
 
@@ -136,11 +136,11 @@ Alternatively, you may use an Enum instances list.
 m.choice([Color.GREEN, Color.BLUE])
 ```
 
-![Choices from enum list](asset/choice_enum_list.avif)
+![Options from enum list](asset/choice_enum_list.avif)
 
 ## Further examples
 
-See [mininterface.choice][mininterface.Mininterface.choice] or [`EnumTag.choices`][mininterface.types.EnumTag.choices] for further usage.
+See [mininterface.choice][mininterface.Mininterface.choice] or [`SelectTag.options`][mininterface.types.tags.SelectTag.options] for further usage.
 """
 
 
@@ -245,7 +245,7 @@ class Tag:
 
     ```python
     from mininterface import run
-    from mininterface.types import EnumTag
+    from mininterface.types import SelectTag
 
     def callback(tag: Tag):
         tag.facet.set_title(f"Value changed to {tag.val}")
@@ -253,7 +253,7 @@ class Tag:
     m = run()
     m.facet.set_title("Click the checkbox")
     m.form({
-        "My choice": EnumTag(choices=["one", "two"], on_change=callback)
+        "My choice": SelectTag(options=["one", "two"], on_change=callback)
     })
     ```
 
@@ -347,7 +347,7 @@ class Tag:
             if isinstance(self.val, Enum) or (isinstance(self.val, type) and issubclass(self.val, Enum)):
                 self.annotation = Enum
             else:
-                # When having choices with None default self.val, this would impose self.val be of a NoneType,
+                # When having options with None default self.val, this would impose self.val be of a NoneType,
                 # preventing it to set a value.
                 # Why checking self.val is not None? We do not want to end up with
                 # annotated as a NoneType.
@@ -404,7 +404,7 @@ class Tag:
         """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
         """
-        # TODO what about children? Like 'choices' is not fetched from.
+        # TODO what about children? Like 'options' is not fetched from.
         for attr in ('val', 'annotation', 'name', 'validation', 'on_change', "facet",
                      "_src_obj", "_src_key", "_src_class",
                      "_original_desc", "_original_name", "original_val"):

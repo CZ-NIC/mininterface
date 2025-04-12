@@ -22,7 +22,7 @@ from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      callback_tag, callback_tag2)
 from tests.dumb_settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings
 from mininterface.tag_factory import tag_assure_type
-from mininterface.types.rich_tags import EnumTag
+from mininterface.types.tags import SelectTag
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
@@ -210,45 +210,45 @@ class TestInteface(TestAbstract):
 
     def test_choice_single(self):
         m = run(interface=Mininterface)
-        self.assertEqual(1, m.choice([1]))
-        self.assertEqual(1, m.choice({"label": 1}))
-        self.assertEqual(ColorEnumSingle.ORANGE, m.choice(ColorEnumSingle))
+        self.assertEqual(1, m.select([1]))
+        self.assertEqual(1, m.select({"label": 1}))
+        self.assertEqual(ColorEnumSingle.ORANGE, m.select(ColorEnumSingle))
 
     def test_choice_multiple(self):
         m = run(interface=Mininterface)
-        self.assertEqual([1], m.choice([1], multiple=True))
-        self.assertEqual([1], m.choice({"label": 1}, multiple=True))
-        self.assertEqual([ColorEnumSingle.ORANGE], m.choice(ColorEnumSingle, multiple=True))
+        self.assertEqual([1], m.select([1], multiple=True))
+        self.assertEqual([1], m.select({"label": 1}, multiple=True))
+        self.assertEqual([ColorEnumSingle.ORANGE], m.select(ColorEnumSingle, multiple=True))
 
-        self.assertEqual([1], m.choice([1], default=[1]))
-        self.assertEqual([1], m.choice({"label": 1}, default=[1]))
-        self.assertEqual([ColorEnumSingle.ORANGE], m.choice(ColorEnumSingle, default=[ColorEnumSingle.ORANGE]))
+        self.assertEqual([1], m.select([1], default=[1]))
+        self.assertEqual([1], m.select({"label": 1}, default=[1]))
+        self.assertEqual([ColorEnumSingle.ORANGE], m.select(ColorEnumSingle, default=[ColorEnumSingle.ORANGE]))
 
     def test_choice_callback(self):
         m = run(interface=Mininterface)
-        form = """Asking the form {'My choice': EnumTag(val=None, description='', annotation=None, name=None, choices=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
+        form = """Asking the form {'My choice': SelectTag(val=None, description='', annotation=None, name=None, options=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
         with self.assertOutputs(form):
-            m.form({"My choice": EnumTag(choices=[
+            m.form({"My choice": SelectTag(options=[
                 callback_raw,
                 CallbackTag(callback_tag),
                 # This case works here but is not supported as such form cannot be submit in GUI:
                 Tag(callback_tag2, annotation=CallbackTag)
             ])})
 
-        choices = {
+        options = {
             "My choice1": callback_raw,
             "My choice2": CallbackTag(callback_tag),
             # Not supported: "My choice3": Tag(callback_tag, annotation=CallbackTag),
         }
 
-        form = """Asking the form {'Choose': EnumTag(val=None, description='', annotation=None, name=None, choices=['My choice1', 'My choice2'])}"""
+        form = """Asking the form {'Choose': SelectTag(val=None, description='', annotation=None, name=None, options=['My choice1', 'My choice2'])}"""
         with self.assertOutputs(form):
-            m.choice(choices)
+            m.select(options)
 
-        self.assertEqual(50, m.choice(choices, default=callback_raw))
+        self.assertEqual(50, m.select(options, default=callback_raw))
 
         # NOTE This test does not work. We have to formalize the callback.
-        # self.assertEqual(100, m.choice(choices, default=choices["My choice2"]))
+        # self.assertEqual(100, m.select(options, default=options["My choice2"]))
 
 
 class TestConversion(TestAbstract):
@@ -970,23 +970,23 @@ class TestTagAnnotation(TestAbstract):
 
     def test_choice_method(self):
         m = run(interface=Mininterface)
-        self.assertIsNone(None, m.choice((1, 2, 3)))
-        self.assertEqual(2, m.choice((1, 2, 3), default=2))
-        self.assertEqual(2, m.choice((1, 2, 3), default=2))
-        self.assertEqual(2, m.choice({"one": 1, "two": 2}, default=2))
-        self.assertEqual(2, m.choice([Tag(1, name="one"), Tag(2, name="two")], default=2))
+        self.assertIsNone(None, m.select((1, 2, 3)))
+        self.assertEqual(2, m.select((1, 2, 3), default=2))
+        self.assertEqual(2, m.select((1, 2, 3), default=2))
+        self.assertEqual(2, m.select({"one": 1, "two": 2}, default=2))
+        self.assertEqual(2, m.select([Tag(1, name="one"), Tag(2, name="two")], default=2))
 
         # Enum type
-        self.assertEqual(ColorEnum.GREEN, m.choice(ColorEnum, default=ColorEnum.GREEN))
+        self.assertEqual(ColorEnum.GREEN, m.select(ColorEnum, default=ColorEnum.GREEN))
 
         # list of enums
-        self.assertEqual(ColorEnum.GREEN, m.choice([ColorEnum.BLUE, ColorEnum.GREEN], default=ColorEnum.GREEN))
-        self.assertEqual(ColorEnum.BLUE, m.choice([ColorEnum.BLUE]))
+        self.assertEqual(ColorEnum.GREEN, m.select([ColorEnum.BLUE, ColorEnum.GREEN], default=ColorEnum.GREEN))
+        self.assertEqual(ColorEnum.BLUE, m.select([ColorEnum.BLUE]))
         # this works but I'm not sure whether it is good to guarantee None
-        self.assertEqual(None, m.choice([ColorEnum.RED, ColorEnum.GREEN]))
+        self.assertEqual(None, m.select([ColorEnum.RED, ColorEnum.GREEN]))
 
         # Enum instance signify the default
-        self.assertEqual(ColorEnum.RED, m.choice(ColorEnum.RED))
+        self.assertEqual(ColorEnum.RED, m.select(ColorEnum.RED))
 
     def test_dynamic_description(self):
         """ This is an undocumented feature.
@@ -1117,9 +1117,9 @@ class TestSecretTag(TestAbstract):
         self.assertEqual(str, secret.annotation)
 
 
-class TestEnumTag(TestAbstract):
-    def test_choices_param(self):
-        t = EnumTag("one", choices=["one", "two"])
+class TestSelectTag(TestAbstract):
+    def test_options_param(self):
+        t = SelectTag("one", options=["one", "two"])
         t.update("two")
         self.assertEqual(t.val, "two")
         t.update("three")
@@ -1127,11 +1127,11 @@ class TestEnumTag(TestAbstract):
 
         m = run(ConstrainedEnv)
         d = dataclass_to_tagdict(m.env)
-        self.assertFalse(d[""]["choices"].update(""))
-        self.assertTrue(d[""]["choices"].update("two"))
+        self.assertFalse(d[""]["options"].update(""))
+        self.assertTrue(d[""]["options"].update("two"))
 
         # dict is the input
-        t = EnumTag(1, choices={"one": 1, "two": 2})
+        t = SelectTag(1, options={"one": 1, "two": 2})
         self.assertFalse(t.update("two"))
         self.assertEqual(1, t.val)
         self.assertTrue(t.update(2))
@@ -1145,7 +1145,7 @@ class TestEnumTag(TestAbstract):
         # list of Tags are the input
         t1 = Tag(1, name="one")
         t2 = Tag(2, name="two")
-        t = EnumTag(1, choices=[t1, t2])
+        t = SelectTag(1, options=[t1, t2])
         self.assertTrue(t.update(2))
         self.assertEqual(t2.val, t.val)
         self.assertFalse(t.update(3))
@@ -1156,20 +1156,20 @@ class TestEnumTag(TestAbstract):
 
     def test_choice_enum(self):
         # Enum type supported
-        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
+        t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum)
         t1.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE, t1.val)
 
         # list of enums supported
-        t2 = EnumTag(ColorEnum.GREEN, choices=[ColorEnum.BLUE, ColorEnum.GREEN])
-        self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._build_choices())
+        t2 = SelectTag(ColorEnum.GREEN, options=[ColorEnum.BLUE, ColorEnum.GREEN])
+        self.assertEqual({str(v.value): v for v in [ColorEnum.BLUE, ColorEnum.GREEN]}, t2._build_options())
         t2.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE, t2.val)
 
         # Enum type supported even without explicit definition
-        t3 = EnumTag(ColorEnum.GREEN)
+        t3 = SelectTag(ColorEnum.GREEN)
         self.assertEqual(ColorEnum.GREEN.value, t3._get_ui_val())
-        self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._build_choices())
+        self.assertEqual({str(v.value): v for v in list(ColorEnum)}, t3._build_options())
         t3.update(ColorEnum.BLUE)
         self.assertEqual(ColorEnum.BLUE.value, t3._get_ui_val())
         self.assertEqual(ColorEnum.BLUE, t3.val)
@@ -1178,43 +1178,43 @@ class TestEnumTag(TestAbstract):
         t4 = Tag(ColorEnum)
         # But the Tag itself does not work with the Enum, so it does not reset the value.
         self.assertIsNotNone(t4.val)
-        # Raising a form will automatically invoke the EnumTag instead of the Tag.
+        # Raising a form will automatically invoke the SelectTag instead of the Tag.
         t5 = tag_assure_type(t4)
-        # The EnumTag resets the value.
+        # The SelectTag resets the value.
         self.assertIsNone(t5.val)
 
         [self.assertFalse(t.multiple) for t in (t1, t2, t3, t5)]
 
     def test_tips(self):
-        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum)
+        t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum)
         self.assertListEqual([
             ('1', ColorEnum.RED, False, ('1', )),
             ('2', ColorEnum.GREEN, False, ('2', )),
             ('3', ColorEnum.BLUE, False, ('3', )),
-        ], t1._get_choices())
+        ], t1._get_options())
 
-        t1 = EnumTag(ColorEnum.GREEN, choices=ColorEnum, tips=[ColorEnum.BLUE])
+        t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum, tips=[ColorEnum.BLUE])
         self.assertListEqual([
             ('3', ColorEnum.BLUE, True, ('3', )),
             ('1', ColorEnum.RED, False, ('1', )),
             ('2', ColorEnum.GREEN, False, ('2', )),
-        ], t1._get_choices())
+        ], t1._get_options())
 
     def test_tupled_label(self):
-        t1 = EnumTag(choices={("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33})
+        t1 = SelectTag(options={("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33})
         self.assertListEqual([
             ('one    - half', 11, False, ('one', 'half')),
             ('second - half', 22, False, ('second', 'half')),
             ('third  - half', 33, False, ('third', 'half')),
-        ], t1._get_choices())
+        ], t1._get_options())
 
     def test_multiple(self):
-        choices = {("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33}
-        t1 = EnumTag(choices=choices)
-        t2 = EnumTag(11, choices=choices)
-        t3 = EnumTag([11], choices=choices)
-        t4 = EnumTag([11, 33], choices=choices)
-        t5 = EnumTag(choices=choices, multiple=True)
+        options = {("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33}
+        t1 = SelectTag(options=options)
+        t2 = SelectTag(11, options=options)
+        t3 = SelectTag([11], options=options)
+        t4 = SelectTag([11, 33], options=options)
+        t5 = SelectTag(options=options, multiple=True)
 
         [self.assertTrue(t.multiple) for t in (t3, t4, t5)]
         [self.assertFalse(t.multiple) for t in (t1, t2)]
@@ -1230,21 +1230,21 @@ class TestEnumTag(TestAbstract):
         self.assertTrue(t4.update([22, 11]))
         self.assertListEqual([22, 11], t4.val)
 
-    def test_build_choices(self):
-        t = EnumTag()
-        self.assertDictEqual({}, t._build_choices())
+    def test_build_options(self):
+        t = SelectTag()
+        self.assertDictEqual({}, t._build_options())
 
-        t.choices = {"one": 1}
-        self.assertDictEqual({"one": 1}, t._build_choices())
+        t.options = {"one": 1}
+        self.assertDictEqual({"one": 1}, t._build_options())
 
-        t.choices = {"one": Tag(1, name="one")}
-        self.assertDictEqual({"one": 1}, t._build_choices())
+        t.options = {"one": Tag(1, name="one")}
+        self.assertDictEqual({"one": 1}, t._build_options())
 
-        t.choices = [Tag(1, name="one"), Tag(2, name="two")]
-        self.assertDictEqual({"one": 1, "two": 2}, t._build_choices())
+        t.options = [Tag(1, name="one"), Tag(2, name="two")]
+        self.assertDictEqual({"one": 1, "two": 2}, t._build_options())
 
-        t.choices = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
-        self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_choices())
+        t.options = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
+        self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_options())
 
 
 if __name__ == '__main__':

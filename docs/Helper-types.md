@@ -17,7 +17,7 @@
       show_root_heading: true
       show_labels: false
 
-::: mininterface.tag.ChoicesType
+::: mininterface.tag.OptionsType
     options:
       show_root_full_path: false
       show_root_heading: true

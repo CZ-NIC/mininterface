@@ -6,7 +6,7 @@ from typing import Literal, Optional, Sequence, Type
 
 from .settings import MininterfaceSettings
 
-from .types.alias import Choices, Validation
+from .types.alias import Options, Validation
 
 from .exceptions import Cancelled, InterfaceNotAvailable
 
@@ -218,5 +218,5 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
 
 
 __all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
-           "Validation", "Choices", "PathTag",
+           "Validation", "Options", "PathTag",
            "Mininterface"]

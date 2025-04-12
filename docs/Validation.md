@@ -1,4 +1,4 @@
-We recommend to use the dataclass and validate with the `Annotated` keyword. We use a [Validation][mininterface.types.Validation] type here.
+We recommend to use the dataclass and validate with the `Annotated` keyword. We use a [Validation][mininterface.types.alias.Validation] type here.
 
 ```python3
 from typing import Annotated

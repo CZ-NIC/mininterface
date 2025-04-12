@@ -13,7 +13,7 @@ from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
 from ..tag import Tag, UiValue
-from ..types import EnumTag, PathTag, SecretTag
+from ..types import SelectTag, PathTag, SecretTag
 from ..types.internal import (BoolWidget, CallbackButtonWidget,
                               SubmitButtonWidget)
 from .facet import TextualFacet
@@ -51,15 +51,15 @@ class TextualAdaptor(BackendAdaptor):
             # NOTE: DatetimeTag not implemented
             case BoolWidget():
                 o = MyCheckbox(tag, tag.name or "", v)
-            case EnumTag():
-                tag: EnumTag
+            case SelectTag():
+                tag: SelectTag
                 if tag.multiple:
                     selected = set(tag.val)
                     o = MySelectionList(tag, *((label, val, val in selected)
-                                        for label, val, *_ in tag._get_choices()))
+                                        for label, val, *_ in tag._get_options()))
                 else:
                     radio_buttons = [MyRadioButton(val, label, value=val == tag.val, classes="enum-highlight" if tip else None)
-                                     for label, val, tip, _ in tag._get_choices(" | ")]
+                                     for label, val, tip, _ in tag._get_options(" | ")]
                     o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
                 o = FilePickerInputFactory(self, tag, placeholder=tag.name or "")

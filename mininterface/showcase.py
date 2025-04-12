@@ -7,9 +7,9 @@ from tyro.conf import Positional
 
 from .exceptions import ValidationFail
 from .subcommands import Command, SubcommandPlaceholder
-from .types.rich_tags import SecretTag, EnumTag
+from .types.tags import SecretTag, SelectTag
 
-from . import run, Choices
+from . import run, Options
 from .interfaces import InterfaceName
 from .types.alias import Validation
 from .validators import not_empty
@@ -82,7 +82,7 @@ class Env:
     my_time: datetime = datetime.now()
     """ Nice date handling """
 
-    my_choice: Annotated[str, Choices("one", "two", "three")] = "two"
+    my_choice: Annotated[str, Options("one", "two", "three")] = "two"
     """ Choose between values """
 
 

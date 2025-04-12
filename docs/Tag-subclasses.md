@@ -1,1 +1,1 @@
-::: mininterface.types.rich_tags
+::: mininterface.types.tags

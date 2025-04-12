@@ -9,8 +9,8 @@ from tyro.conf import Positional, arg
 from mininterface import Tag
 from mininterface.subcommands import Command
 from mininterface.types import CallbackTag, PathTag
-from mininterface.types.alias import Choices, Validation
-from mininterface.types.rich_tags import EnumTag
+from mininterface.types.alias import Options, Validation
+from mininterface.types.tags import SelectTag
 from mininterface.validators import not_empty
 
 
@@ -147,7 +147,7 @@ class ConstrainedEnv:
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
 
-    choices: Annotated[str, EnumTag(choices=("one", "two"))] = "one"
+    options: Annotated[str, SelectTag(options=("one", "two"))] = "one"
 
 
 @dataclass

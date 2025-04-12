@@ -4,7 +4,7 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Generic, Literal, Optional, Type, TypeVar, overload
 
-from ..types.rich_tags import EnumTag
+from ..types.tags import SelectTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
 
@@ -17,7 +17,7 @@ from ..subcommands import Command
 from ..facet import Facet
 from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                          dict_to_tagdict, formdict_resolve)
-from ..tag import ChoicesType, Tag, TagValue
+from ..tag import OptionsType, Tag, TagValue
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -199,21 +199,21 @@ class Mininterface(Generic[EnvClass]):
         return 0
 
     @overload
-    def choice(self, choices: list[T], multiple: Literal[True], **kwargs) -> list[T]: ...
+    def select(self, options: list[T], multiple: Literal[True], **kwargs) -> list[T]: ...
 
     @overload
-    def choice(self, choices: list[T], multiple: Literal[False], **kwargs) -> T: ...
+    def select(self, options: list[T], multiple: Literal[False], **kwargs) -> T: ...
 
     @overload
-    def choice(self, choices: list[T], default: list[T],  **kwargs) -> list[T]: ...
+    def select(self, options: list[T], default: list[T],  **kwargs) -> list[T]: ...
 
     @overload
-    def choice(self, choices: list[T], default: T,  **kwargs) -> T: ...
+    def select(self, options: list[T], default: T,  **kwargs) -> T: ...
 
-    def choice(self, choices: ChoicesType,
+    def select(self, options: OptionsType,
                title: str = "",
                default: str | TagValue | list[str] | list[TagValue] | None = None,
-               tips: ChoicesType | None = None,
+               tips: OptionsType | None = None,
                multiple: Optional[bool] = None,
                skippable: bool = True,
                launch: bool = True
@@ -221,20 +221,20 @@ class Mininterface(Generic[EnvClass]):
         """ Prompt the user to select. Useful for a menu creation.
 
         Args:
-            choices:
-                You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as labels.
+            options:
+                You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as labels.
                 You can also use tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
-                See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
+                See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
             title: Form title
             default: The value of the checked choice.
 
                 ```python
-                m.choice({"one": 1, "two": 2}, default=2)  # returns 2
+                m.select({"one": 1, "two": 2}, default=2)  # returns 2
                 ```
                 ![Default choice](asset/choices_default.avif)
 
                 If the list is given, this imply multiple choice.
-            tips: Choices to be highlighted. Use the list of choice values to denote which one the user might prefer.
+            tips: Options to be highlighted. Use the list of choice values to denote which one the user might prefer.
             multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
             launch: If the chosen value is a callback, we directly call it and return its return value.
@@ -245,36 +245,36 @@ class Mininterface(Generic[EnvClass]):
             Any: If launch=True and the chosen value is a callback, we call it and return its result.
 
         !!! info
-            To tackle a more detailed form, see [`EnumTag.choices`][mininterface.types.EnumTag.choices].
+            To tackle a more detailed form, see [`SelectTag.options`][mininterface.types.tags.SelectTag.options].
         """
         # NOTE to build a nice menu, I need this
         # Args:
         # multiple: Multiple choice.
         # Returns: If multiple=True, list of the chosen values.
         #
-        # * Check: When inputing choices as Tags, make sure the original Tag.val changes too.
+        # * Check: When inputing options as Tags, make sure the original Tag.val changes too.
         #
         # NOTE UserWarning: GuiInterface: Cannot tackle the form, unknown winfo_manager .
         #   (possibly because the lambda hides a part of GUI)
         # m = run(Env)
-        # tag = Tag(x, choices=["one", "two", x])
+        # tag = Tag(x, options=["one", "two", x])
         if isinstance(default, list):
             multiple = True
 
-        if skippable and isinstance(choices, Enum):  # Enum instance, ex: val=ColorEnum.RED
-            default = choices
-            choices = choices.__class__
+        if skippable and isinstance(options, Enum):  # Enum instance, ex: val=ColorEnum.RED
+            default = options
+            options = options.__class__
 
-        if skippable and len(choices) == 1:  # Directly choose the answer
-            if isinstance(choices, type) and issubclass(choices, Enum):  # Enum type, ex: val=ColorEnum
-                out = list(choices)[0]
-            elif isinstance(choices, dict):
-                out = next(iter(choices.values()))
+        if skippable and len(options) == 1:  # Directly choose the answer
+            if isinstance(options, type) and issubclass(options, Enum):  # Enum type, ex: val=ColorEnum
+                out = list(options)[0]
+            elif isinstance(options, dict):
+                out = next(iter(options.values()))
             else:
-                out = choices[0]
+                out = options[0]
             tag = Tag([out] if multiple else out)
         else:  # Trigger the dialog
-            tag = EnumTag(val=default, choices=choices, tips=tips, multiple=multiple)
+            tag = SelectTag(val=default, options=options, tips=tips, multiple=multiple)
             key = title or "Choose"
             self.form({key: tag})[key]
 
@@ -282,7 +282,7 @@ class Mininterface(Generic[EnvClass]):
             if tag._is_a_callable():  # NOTE this does not work for multiple choice
                 return tag._run_callable()
             if isinstance(tag.val, Tag) and tag.val._is_a_callable():
-                # Nested Tag: `m.choice([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
+                # Nested Tag: `m.select([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
                 return tag.val._run_callable()
         return tag.val
     # TODO possibility to un/check all (shortcut)

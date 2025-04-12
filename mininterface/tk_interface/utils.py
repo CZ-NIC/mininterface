@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
-from ..types.rich_tags import EnumTag
+from ..types.tags import SelectTag
 
 from ..types.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
@@ -14,7 +14,7 @@ from ..auxiliary import flatten
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag, SecretTag, EnumTag
+from ..types import DatetimeTag, PathTag, SecretTag, SelectTag
 from .select_input import SelectInputWrapper, VariableAnyWrapper
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():
         if not child.winfo_manager():
-            # This is a hidden widget. Ex. Tkinter_form generates Entry for EnumTag
-            # which we hide and put our own EnumTag widget over its place.
+            # This is a hidden widget. Ex. Tkinter_form generates Entry for SelectTag
+            # which we hide and put our own SelectTag widget over its place.
             continue
         if isinstance(child, (Entry, Checkbutton, Combobox, Radiobutton)):
             if isinstance(child, Radiobutton) and child.cget("takefocus") == 0:
@@ -121,7 +121,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
-            case EnumTag():
+            case SelectTag():
                 grid_info = widget.grid_info()
                 wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor)
                 enum_tag = True

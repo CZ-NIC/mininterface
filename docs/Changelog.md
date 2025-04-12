@@ -2,22 +2,22 @@
 
 ## unreleased
 * CHANGED – renamed:
-    * Mininterface.is_yes -> m.confirm
-    * Mininterface.is_no -> m.confirm(..., False)
-    * Mininterface.choice -> Mininterface.select
-    * Choices alias -> Options alias
-    * MininterfaceOptions -> MininterfaceSettings
-    * TODO EnumTag -> SelectTag
-    * TODO choices= -> options=
+    * Mininterface.is_yes -> [.confirm][mininterface.Mininterface.confirm]
+    * Mininterface.is_no -> .confirm(..., False) (because .is_no was counterintuitive)
+    * Mininterface.choice -> [.select][mininterface.Mininterface.select] (as HTML counterpart)
+    * EnumTag(options=) -> [SelectTag(options=)][mininterface.types.tags.SelectTag]
+    * Choices alias -> [Options][mininterface.types.alias.Options] alias
+    * MininterfaceOptions -> [MininterfaceSettings][mininterface.settings.MininterfaceSettings] (to not meddle with the SelectTag)
+    * mininterface.types.rich_tags -> [mininterface.types.tags][mininterface.types.tags]
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation
 
 ## 0.8.0 (2025-04-01)
-* CHANGED: [EnumTag][mininterface.types.rich_tags.EnumTag] instead of Tag(choices=)
+* CHANGED: [EnumTag][mininterface.types.tags.SelectTag] instead of Tag(options=)
 * [WebInterface](Interfaces.md#webinterface-or-web) (working draft)
 * much better [TextInterface](Interfaces.md#textinterface)
-* [SecretTag][mininterface.types.rich_tags.SecretTag]
+* [SecretTag][mininterface.types.tags.SecretTag]
 * PathTag UI in TextualInterface
 * UI options available from the program
 * Mininterface.choice [tips][mininterface.Mininterface.choice] parameter
@@ -40,7 +40,7 @@
 ## 0.7.1 (2024-11-27)
 * GUI scrollbars if window is bigger than the screen
 * [non-interactive][mininterface.Mininterface.__enter__] session support
-* [datetime][mininterface.types.DatetimeTag] support
+* [datetime][mininterface.types.tags.DatetimeTag] support
 * nested generics support (a tuple in a list)
 
 ## 0.7.0 (2024-11-08)

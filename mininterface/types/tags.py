@@ -8,9 +8,9 @@ import unicodedata
 from warnings import warn
 
 from ..auxiliary import common_iterables
-from ..tag import ChoiceLabel, ChoicesType, RichChoiceLabel, Tag, TagValue
+from ..tag import OptionLabel, OptionsType, RichOptionLabel, Tag, TagValue
 
-ChoicesReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
+OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 
 
 @dataclass
@@ -48,7 +48,7 @@ class CallbackTag(Tag):
     Via form, we receive the function handler:
     ```python
     out = m.form({
-        "My choice": Tag(choices=[callback_raw, CallbackTag(callback_tag)])
+        "My choice": Tag(options=[callback_raw, CallbackTag(callback_tag)])
     })
     print(out)  # {'My choice': <function callback_raw at 0x7ae5b3e74ea0>}
     ```
@@ -56,13 +56,13 @@ class CallbackTag(Tag):
     Via choice, we receive the function output:
 
     ```python
-    out = m.choice({
+    out = m.select({
         "My choice1": callback_raw,
         "My choice2": CallbackTag(callback_tag),
         # Not supported: "My choice3": Tag(callback_tag, annotation=CallbackTag),
     })
     print(out)  # output of callback0 or callback_tag, ex:
-    #    Printing <class 'mininterface.types.CallbackTag'>
+    #    Printing <class 'mininterface.types.tags.CallbackTag'>
     #    100
     ```
 
@@ -321,36 +321,36 @@ class SecretTag(Tag):
 
 
 @dataclass(repr=False)
-class EnumTag(Tag):
-    """ Handle choices – radio buttons / select box.
+class SelectTag(Tag):
+    """ Handle options – radio buttons / select box.
     The value serves as the initially selected choice.
-    It is constrained to those defined in the `choices` attribute.
+    It is constrained to those defined in the `options` attribute.
     """
 
-    choices: ChoicesType | None = None
+    options: OptionsType | None = None
     """ The possible values.
 
 
     ```python
-    m.form({"My restrained": EnumTag(choices=("one", "two"))})
+    m.form({"My restrained": SelectTag(options=("one", "two"))})
     ```
 
-    You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
+    You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
 
-    Here we focus at the `EnumTag` itself and its [`Choices`][mininterface.types.Choices] alias. It can be used to annotate a default value in a dataclass.
+    Here we focus at the `SelectTag` itself and its [`Options`][mininterface.types.alias.Options] alias. It can be used to annotate a default value in a dataclass.
 
     ```python
     from dataclasses import dataclass
     from typing import Annotated
-    from mininterface import run, Choices
-    from mininterface.types import EnumTag
+    from mininterface import run, Options
+    from mininterface.types import SelectTag
 
     @dataclass
     class Env:
-        foo: Annotated["str", Choices("one", "two")] = "one"
-        # `Choices` is an alias for `EnumTag(choices=)`
+        foo: Annotated["str", Options("one", "two")] = "one"
+        # `Options` is an alias for `SelectTag(options=)`
         #   so the same would be:
-        # foo: Annotated["str", EnumTag(choices=("one", "two"))] = "one"
+        # foo: Annotated["str", SelectTag(options=("one", "two"))] = "one"
 
     m = run(Env)
     m.form()  # prompts a dialog
@@ -358,12 +358,12 @@ class EnumTag(Tag):
     ![Form choice](asset/tag_choices.avif)
 
     !!! Tip
-        When dealing with a simple use case, use the [mininterface.choice][mininterface.Mininterface.choice] dialog.
+        When dealing with a simple use case, use the [mininterface.select][mininterface.Mininterface.select] dialog.
     """
     # NOTE we should support (maybe it is done)
     # * Enums: Tag(enum) # no `choice` param`
     # * more date types (now only str possible)
-    # * mininterface.choice `def choice(choices=, guesses=)`
+    # * mininterface.select `def choice(options=, guesses=)`
 
     multiple: Optional[bool] = None
 
@@ -371,10 +371,10 @@ class EnumTag(Tag):
     # TODO choice changelog, docs
     # TODO choice multiple tk and text notimplemented
 
-    tips: ChoicesType | None = None
+    tips: OptionsType | None = None
 
     def __repr__(self):
-        return super().__repr__()[:-1] + f", choices={[k for k, *_ in self._get_choices()]})"
+        return super().__repr__()[:-1] + f", options={[k for k, *_ in self._get_options()]})"
 
     def __post_init__(self):
         # Determine multiple
@@ -405,12 +405,12 @@ class EnumTag(Tag):
         if self.val is None and self.multiple:
             self.val = []
 
-        # Determine choices
-        if not self.choices:
+        # Determine options
+        if not self.options:
             if isinstance(candidate, Enum):  # Enum instance, ex: val=ColorEnum.RED
-                self.choices = candidate.__class__
+                self.options = candidate.__class__
             elif isinstance(candidate, type) and issubclass(candidate, Enum):  # Enum type, ex: val=ColorEnum
-                self.choices = self.val
+                self.options = self.val
                 self.val = None
 
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
@@ -421,7 +421,7 @@ class EnumTag(Tag):
         """ TagValue can be anything, except the Tag. The nested Tag returns its value instead.
 
         # TODO test
-        Ex: EnumTag(choices=[Tag(1, name='A'), ...])._build_choices() -> {"A": 1}
+        Ex: SelectTag(options=[Tag(1, name='A'), ...])._build_options() -> {"A": 1}
 
         """
         if isinstance(v, Tag):
@@ -431,7 +431,7 @@ class EnumTag(Tag):
     def _get_selected_key(self):
         if self.multiple:
             raise AttributeError
-        for k, val, *_ in self._get_choices():
+        for k, val, *_ in self._get_options():
             if val is self.val:
                 return k
         return None
@@ -439,7 +439,7 @@ class EnumTag(Tag):
     def _get_selected_keys(self):
         if not self.multiple:
             raise AttributeError
-        return [k for k, val, *_ in self._get_choices() if val in self.val]
+        return [k for k, val, *_ in self._get_options() if val in self.val]
 
     @classmethod
     def _repr_val(cls, v):
@@ -451,21 +451,21 @@ class EnumTag(Tag):
             return str(v.value)
         return str(v)
 
-    def _build_choices(self) -> dict[ChoiceLabel, TagValue]:
-        """ Whereas self.choices might have different format, this returns a canonic dict. """
+    def _build_options(self) -> dict[OptionLabel, TagValue]:
+        """ Whereas self.options might have different format, this returns a canonic dict. """
 
-        if self.choices is None:
+        if self.options is None:
             return {}
-        if isinstance(self.choices, dict):
-            return {key: self._get_tag_val(v) for key, v in self.choices.items()}
-        if isinstance(self.choices, Iterable):
-            return {self._repr_val(v): self._get_tag_val(v) for v in self.choices}
-        if isinstance(self.choices, type) and issubclass(self.choices, Enum):  # Enum type, ex: choices=ColorEnum
-            return {str(v.value): self._get_tag_val(v) for v in list(self.choices)}
+        if isinstance(self.options, dict):
+            return {key: self._get_tag_val(v) for key, v in self.options.items()}
+        if isinstance(self.options, Iterable):
+            return {self._repr_val(v): self._get_tag_val(v) for v in self.options}
+        if isinstance(self.options, type) and issubclass(self.options, Enum):  # Enum type, ex: options=ColorEnum
+            return {str(v.value): self._get_tag_val(v) for v in list(self.options)}
 
-        warn(f"Not implemented choices: {self.choices}")
+        warn(f"Not implemented options: {self.options}")
 
-    def _get_choices(self, delim=" - ") -> ChoicesReturnType:
+    def _get_options(self, delim=" - ") -> OptionsReturnType:
         """ Return a list of tuples (label, choice value, is tip, tupled-label).
 
         User has the possibility to write tuples instead of labels. We should produce a table then.
@@ -473,7 +473,7 @@ class EnumTag(Tag):
         but some interfaces (Tk) want to do the keys into the table processing on their own.
         So they use tupled-label when they are guaranteed to find a tuple.
 
-        The interface should display label or tupled-label, hightlight choices with is tip
+        The interface should display label or tupled-label, hightlight options with is tip
         and keep the choice value invisible under the hood. When the user makes the choice,
         call tag.update() with the invisible choice value.
 
@@ -485,18 +485,18 @@ class EnumTag(Tag):
         front = []
         back = []
 
-        choices = self._build_choices()
+        options = self._build_options()
 
-        keys = choices.keys()
+        keys = options.keys()
         labels: Iterable[tuple[str, tuple[str]]]
         """ First is the str-label, second is guaranteed to be a tupled label"""
 
-        if len(choices) and isinstance(next(iter(choices)), tuple):
+        if len(options) and isinstance(next(iter(options)), tuple):
             labels = self._span_to_lengths(keys, delim)
         else:
             labels = ((key, (key,)) for key in keys)
 
-        for (label, tupled), v in zip(labels, choices.values()):
+        for (label, tupled), v in zip(labels, options.values()):
             tupled: tuple[str]
             if v in index:
                 front.append((label, v, True, tupled))
@@ -520,8 +520,8 @@ class EnumTag(Tag):
             return [(delim.join(key), key) for key in keys]
 
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:
-        """ ui_value is one of the self.choices values  """
-        ch = self._build_choices()
+        """ ui_value is one of the self.options values  """
+        ch = self._build_options()
 
         if self.multiple:
             vals = set(ch.values())
@@ -537,7 +537,7 @@ class EnumTag(Tag):
                 return False
 
     def _validate(self, out_value):
-        vals = self._build_choices().values()
+        vals = self._build_options().values()
 
         if self.multiple:
             if all(v in vals for v in out_value):
