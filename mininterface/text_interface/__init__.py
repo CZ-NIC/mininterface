@@ -88,17 +88,11 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                     txt = input(text + ": ") if text else input()
                 except EOFError:
                     raise Cancelled(".. cancelled")
-                # try:
                 t = tag_assure_type(Tag(txt, annotation=annotation))
                 if t.update(txt):
                     return t.val
                 else:
                     print(f"Must be {annotation}")
-                    # return annotation(txt)  # e.g., str(txt), float(txt), ...
-                    # TODO
-                # except ValueError:
-                #     print(f"Must be {annotation}")
-                #     return self.ask(text, annotation)
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,

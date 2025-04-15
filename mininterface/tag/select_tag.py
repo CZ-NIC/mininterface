@@ -224,7 +224,9 @@ class SelectTag(Tag):
         if self.options is None:
             return {}
         if isinstance(self.options, dict):
-            return {key: self._get_tag_val(v) for key, v in self.options.items()}
+            # assure the key is a str or their tuple
+            return {(tuple(str(k) for k in key) if isinstance(key, tuple) else str(key)): self._get_tag_val(v)
+                    for key, v in self.options.items()}
         if isinstance(self.options, Iterable):
             return {self._repr_val(v): self._get_tag_val(v) for v in self.options}
         if isinstance(self.options, type) and issubclass(self.options, Enum):  # Enum type, ex: options=ColorEnum
@@ -278,8 +280,8 @@ class SelectTag(Tag):
             hello - world"
         """
         a_key = next(iter(keys))
-        col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
         try:
+            col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
             return [(delim.join(cell.ljust(col_widths[i]) for i, cell in enumerate(key)), key) for key in keys]
         except IndexError:
             # different lengths, table does not work

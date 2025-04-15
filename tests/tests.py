@@ -1212,6 +1212,15 @@ class TestSelectTag(TestAbstract):
             ('third  - half', 33, False, ('third', 'half')),
         ], t1._get_options())
 
+    def test_label_resilience(self):
+        """ Convert the labels to str. """
+        # In this test, we are using a type as label.
+        t1 = SelectTag(options={("one", ColorEnum): 11, ("second", "half"): 22, ("third", "half", "another"): 33})
+        self.assertListEqual([("one - <enum 'ColorEnum'>", 11, False, ('one', "<enum 'ColorEnum'>")),
+                              ('second - half', 22, False, ('second', 'half')),
+                              ('third - half - another', 33, False, ('third', 'half', 'another'))],
+                             t1._get_options())
+
     def test_multiple(self):
         options = {("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33}
         t1 = SelectTag(options=options)

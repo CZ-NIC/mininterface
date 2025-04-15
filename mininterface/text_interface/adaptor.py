@@ -95,6 +95,8 @@ class TextAdaptor(BackendAdaptor):
         while True:
             try:
                 self._run_dialog(form, title, submit)
+            except KeyboardInterrupt:
+                raise Cancelled(".. cancelled")  # prevent being stuck in value type check
             except Submit:
                 pass
             if not Tag._submit_values((tag, tag.val) for tag in flatten(form)) or not self.submit_done():
@@ -115,25 +117,22 @@ class TextAdaptor(BackendAdaptor):
                 index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
                                       val in form.items()], append_ok=True)
                 key = list(form)[index]
+
             match form[key]:
                 case dict() as submenu:
-                    try:
-                        self._run_dialog(submenu, key, submit)
-                    except (KeyboardInterrupt, Cancelled):
-                        break
+                    self._run_dialog(submenu, key, submit)
                 case Tag() as tag:
                     while True:
                         try:
                             ui_val = self.widgetize(tag)
-                            tag._on_change_trigger(ui_val)
-                            if tag.update(ui_val):
-                                break
-                        except (KeyboardInterrupt, Cancelled):
-                            # print("TODO, brek")
-                            # import ipdb
-                            # ipdb.set_trace()  # TODO
-                            # break
-                            raise
+                        except KeyboardInterrupt:
+                            if single:
+                                raise Cancelled(".. cancelled")
+                            print()
+                            break
+                        tag._on_change_trigger(ui_val)
+                        if tag.update(ui_val):
+                            break
                 case _:
                     warnings.warn(f"Unsupported item {key}")
             if single:
