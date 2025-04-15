@@ -79,7 +79,6 @@ class Start:
             for cf in common_fields:
                 local = tags[""].pop(cf)
                 forms[cf]._fetch_from(local)._src_obj_add(local)
-
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
                 tags[""][name] = Tag(lambda form=form: form.run())

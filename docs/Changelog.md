@@ -1,30 +1,33 @@
 # Changelog
 
 ## unreleased
-* CHANGED – renamed:
+* CHANGED – renamed: API is becoming stable but we have to rename several things.
     * Mininterface.is_yes -> [.confirm][mininterface.Mininterface.confirm]
     * Mininterface.is_no -> .confirm(..., False) (because .is_no was counterintuitive)
     * Mininterface.choice -> [.select][mininterface.Mininterface.select] (as HTML counterpart)
-    * EnumTag(options=) -> [SelectTag(options=)][mininterface.types.tags.SelectTag]
-    * Choices alias -> [Options][mininterface.types.alias.Options] alias
+    * EnumTag(choices=) -> [SelectTag(options=)][mininterface.tag.SelectTag]
+    * Choices alias -> Options alias
     * MininterfaceOptions -> [MininterfaceSettings][mininterface.settings.MininterfaceSettings] (to not meddle with the SelectTag)
-    * mininterface.types.rich_tags -> [mininterface.types.tags][mininterface.types.tags]
+    * mininterface.types.rich_tags -> [mininterface.tag.*][mininterface.tag.SelectTag]
+    * Tag attribute order, swap `name` and `validation`
+    * Mininterface.ask_number -> ask(..., int)
+    * Mininterface.ask does not return None anymore but forces the type
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation
 
 ## 0.8.0 (2025-04-01)
-* CHANGED: [EnumTag][mininterface.types.tags.SelectTag] instead of Tag(options=)
+* CHANGED: [EnumTag][mininterface.tag.SelectTag] instead of Tag(options=)
 * [WebInterface](Interfaces.md#webinterface-or-web) (working draft)
 * much better [TextInterface](Interfaces.md#textinterface)
-* [SecretTag][mininterface.types.tags.SecretTag]
+* [SecretTag][mininterface.tag.SecretTag]
 * PathTag UI in TextualInterface
 * UI options available from the program
 * Mininterface.choice [tips][mininterface.Mininterface.choice] parameter
 * better annotated fetching
 
 ## 0.7.5 (2025-01-29)
-* UI [options](Options.md)
+* UI [options](Settings.md)
 * experimental [Facet._layout](Facet.md#layout)
 
 ## 0.7.4 (2025-01-27)
@@ -40,7 +43,7 @@
 ## 0.7.1 (2024-11-27)
 * GUI scrollbars if window is bigger than the screen
 * [non-interactive][mininterface.Mininterface.__enter__] session support
-* [datetime][mininterface.types.tags.DatetimeTag] support
+* [datetime][mininterface.tag.DatetimeTag] support
 * nested generics support (a tuple in a list)
 
 ## 0.7.0 (2024-11-08)

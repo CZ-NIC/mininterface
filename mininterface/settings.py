@@ -12,6 +12,21 @@ class UiSettings:
     toggle_widget: str = "f4"
     """ Shortcuts to toggle ex. calendar or file picker. """
 
+    # NOTE should be used in tkinter
+    # But we have to convert textual shortcut to tkinter shortcut with something like this
+    # mods = {
+    #     "ctrl": "Control",
+    #     "alt": "Alt",
+    #     "shift": "Shift",
+    # }
+
+    # parts = shortcut.lower().split("+")
+    # keys = [mods.get(p, p) for p in parts]
+    # modifiers = keys[:-1]
+    # key = keys[-1]
+
+    # return f"<{'-'.join(modifiers + [key])}>"
+
 
 @dataclass
 class GuiSettings(UiSettings):

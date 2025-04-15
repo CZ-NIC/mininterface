@@ -1,11 +1,9 @@
 
-from io import BytesIO, StringIO, TextIOWrapper
+from io import BytesIO, TextIOWrapper
 import pickle
 import struct
 import sys
 from typing import TYPE_CHECKING
-
-from textual.widget import Widget
 
 from ..auxiliary import flatten
 
@@ -15,7 +13,6 @@ from ..textual_interface.adaptor import ButtonAppType, ValsType
 
 from .app import SerCommand
 
-from ..facet import Facet
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..settings import WebSettings
@@ -28,9 +25,15 @@ if TYPE_CHECKING:
 
 
 class SerializedChildAdaptor(TextualAdaptor):
-    """ Serialized output, piped to the parent process. """
+    """ Serialized output, piped to the parent process.
 
-    facet: TextualFacet  # TODO?
+    Even though this is a TextualAdaptor,
+    it is missing .widgetize method.
+    Because instead of being processed by Textual,
+    it is sent to parent.
+    """
+
+    facet: TextualFacet
     settings: WebSettings
 
     def __init__(self, interface: "Mininterface", settings):
@@ -66,14 +69,6 @@ class SerializedChildAdaptor(TextualAdaptor):
         self._original_stdout.buffer.write(response_data)
         self._original_stdout.buffer.flush()
         return self.receive()
-
-    def widgetize(self, tag: Tag) -> Widget | TagWidget:
-        """ Wrap Tag to a textual widget. """
-        return  # TODO. Why does this work.
-
-    def header(self, text: str):
-        """ Generates a section header """
-        return  # TODO
 
     def buttons(self, text: str, buttons: ButtonAppType, focused: int = 1):
         return self.send(SerCommand.BUTTONS, text, buttons, focused)

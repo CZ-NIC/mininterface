@@ -78,7 +78,7 @@ def limit(minimum: int, maximum: int, lt: float | None = None, gt: float | None 
     ...
 
 
-def limit(maxOrMin: int | None = None, max_: int | None = None, lt: float | None = None, gt: float | None = None, transform:bool=False):
+def limit(maxOrMin: int | None = None, max_: int | None = None, lt: float | None = None, gt: float | None = None, transform: bool = False):
     """ Limit a number range or a string length.
 
     Either use as `limit(maximum)` or `limit(minimum, maximum)`.

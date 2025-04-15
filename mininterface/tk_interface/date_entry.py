@@ -8,7 +8,7 @@ try:
 except ImportError:
     Calendar = None
 
-from ..types import DatetimeTag
+from ..tag.datetime_tag import DatetimeTag
 if TYPE_CHECKING:
     from mininterface.tk_interface.adaptor import TkAdaptor
 
@@ -56,7 +56,7 @@ class DateEntryFrame(tk.Frame):
 
     def create_spinbox(self, variable: tk.Variable):
         spinbox = tk.Spinbox(self, wrap=True, textvariable=variable)
-        spinbox.grid()
+        spinbox.grid(sticky="we")
         if not variable.get():
             spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
         spinbox.focus_set()

@@ -4,9 +4,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Type, get_type_hints
 
-from .tag import Tag
+from . import DatetimeTag, SelectTag, Tag
+from .callback_tag import CallbackTag
+from .path_tag import PathTag
 from .type_stubs import TagCallback
-from .types import CallbackTag, DatetimeTag, PathTag, SelectTag
 
 
 def _get_annotation_from_class_hierarchy(cls, key):

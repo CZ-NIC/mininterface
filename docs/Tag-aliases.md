@@ -1,1 +1,2 @@
-::: mininterface.types.alias
+::: mininterface.Validation
+::: mininterface.Options

@@ -1,15 +1,18 @@
 
 import sys
 from pprint import pprint
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, TypeVar
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
-from ..form_dict import DataClass, EnvClass, FormDict
+from ..form_dict import DataClass, EnvClass, FormDict, tag_assure_type
 from ..mininterface import Mininterface
+from ..tag.tag import Tag, TagValue
 from .adaptor import TextAdaptor
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self, Type
+
+T = TypeVar("T")
 
 
 class AssureInteractiveTerminal:
@@ -76,17 +79,26 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
         with StdinTTYWrapper():
             input(text + " Hit any key.")
 
-    def ask(self, text: str = None):
+    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
                 return super().ask(text)
-            try:
-                txt = input(text + ": ") if text else input()
-            except EOFError:
-                txt = "x"
-            if txt == "x":
-                raise Cancelled(".. cancelled")
-            return txt
+            while True:
+                try:
+                    txt = input(text + ": ") if text else input()
+                except EOFError:
+                    raise Cancelled(".. cancelled")
+                # try:
+                t = tag_assure_type(Tag(txt, annotation=annotation))
+                if t.update(txt):
+                    return t.val
+                else:
+                    print(f"Must be {annotation}")
+                    # return annotation(txt)  # e.g., str(txt), float(txt), ...
+                    # TODO
+                # except ValueError:
+                #     print(f"Must be {annotation}")
+                #     return self.ask(text, annotation)
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,
@@ -121,20 +133,6 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                 import pdb
                 pdb.set_trace()
             return form
-
-    def ask_number(self, text):
-        """
-        Let user write number. Empty input = 0.
-        """
-        with StdinTTYWrapper():
-            while True:
-                try:
-                    t = self.ask(text=text)
-                    if not t:
-                        return 0
-                    return int(t)
-                except ValueError:
-                    print("This is not a number")
 
     def confirm(self, text: str, default: bool = True):
         with StdinTTYWrapper():

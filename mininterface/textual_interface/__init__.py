@@ -2,7 +2,7 @@
 import sys
 from typing import Optional, Type
 
-from ..mininterface.mixin import ButtonMixin
+from ..mininterface.mixin import RichUiMixin
 
 from ..settings import TextualSettings
 
@@ -21,7 +21,7 @@ from .adaptor import TextualAdaptor
 from .button_contents import ButtonContents
 
 
-class TextualInterface(ButtonMixin, Redirectable, Mininterface):
+class TextualInterface(RichUiMixin, Redirectable, Mininterface):
 
     _adaptor: TextualAdaptor
 
@@ -39,17 +39,3 @@ class TextualInterface(ButtonMixin, Redirectable, Mininterface):
             # non-terminal (cron) -> Mininterface
             raise InterfaceNotAvailable
         super().__init__(*args, **kwargs)
-
-    def ask(self, text: str = None):
-        return self.form({text: ""})[text]
-
-    def form(self,
-             form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = "",
-             *,
-             submit: str | bool = True,
-             ) -> FormDict | DataClass | EnvClass:
-        return self._form(form, title, self._adaptor, submit=submit)
-
-    def ask_number(self, text: str):
-        return self.form({text: Tag("", "", int, text)})[text]

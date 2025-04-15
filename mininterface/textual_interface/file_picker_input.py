@@ -8,7 +8,7 @@ from textual.widgets import Button, Input, Tree, Static
 from textual.widgets.tree import TreeNode
 
 
-from ..types import PathTag
+from ..tag.path_tag import PathTag
 from .widgets import TagWidgetWithInput
 
 if TYPE_CHECKING:

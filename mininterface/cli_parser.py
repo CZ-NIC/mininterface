@@ -23,7 +23,7 @@ from .auxiliary import yield_annotations,  dataclass_asdict_no_defaults, merge_d
 from .settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, WebSettings
 from .form_dict import EnvClass, MissingTagValue
 from .tag import Tag
-from .tag_factory import tag_factory
+from .tag.tag_factory import tag_factory
 from .validators import not_empty
 
 # Pydantic is not a project dependency, that is just an optional integration

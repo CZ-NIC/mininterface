@@ -1,5 +1,5 @@
-from .tags import SelectTag
-from ..tag import Tag, TagValue, ValidationResult
+from .select_tag import SelectTag
+from .tag import Tag, TagValue, ValidationResult
 
 from typing import Callable
 
@@ -24,6 +24,13 @@ def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResul
 
 
 def Options(*options: list[str]):
-    """ An alias, see [`SelectTag.options`][mininterface.types.tags.SelectTag.options]
+    """ An alias, see [`SelectTag.options`][mininterface.tag.SelectTag.options]
+
+    Example:
+    ```python
+    @dataclass
+    class Env:
+        foo: Annotated["str", Options("one", "two")] = "one"
+    ```
     """
     return SelectTag(options=options)

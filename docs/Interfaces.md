@@ -11,12 +11,16 @@ How to invoke a specific interface.
 from mininterface.interfaces import TuiInterface
 
 with TuiInterface("My program") as m:
-    number = m.ask_number("Returns number")
+    number = m.ask("Returns number", int)
 ```
 
 Or you may use the `get_interface` function to ensure the interface is available.
 
 ::: mininterface.interfaces.get_interface
+
+
+!!! info
+    Performance boost: Only interfaces that are being used are loaded into memory for faster start.
 
 # `Mininterface`
 

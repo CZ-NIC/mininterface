@@ -1,23 +1,23 @@
 # Helper types
-::: mininterface.tag.ValidationResult
+::: mininterface.tag.tag.ValidationResult
     options:
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
 
-::: mininterface.tag.ErrorMessage
+::: mininterface.tag.tag.ErrorMessage
     options:
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
 
-::: mininterface.tag.TagValue
+::: mininterface.tag.tag.TagValue
     options:
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
 
-::: mininterface.tag.OptionsType
+::: mininterface.tag.select_tag.OptionsType
     options:
       show_root_full_path: false
       show_root_heading: true

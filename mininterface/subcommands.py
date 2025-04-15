@@ -80,7 +80,7 @@ class Command(ABC):
 
     Let's start the program, passing there common flags, all HTML files in a folder and setting `--common` to 7.
     ```bash
-    $ program.py  subcommand *.html  --common 7
+    $ program.py subcommand *.html  --common 7
     ```
 
     ![Subcommand](asset/subcommands-1.avif)

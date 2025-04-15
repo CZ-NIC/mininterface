@@ -5,7 +5,7 @@ from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, SelectionList
 
 
-from ..tag import Tag, TagValue
+from ..tag.tag import Tag, TagValue
 
 
 class TagWidget:

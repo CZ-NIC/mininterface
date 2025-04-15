@@ -56,7 +56,11 @@ nav:
       - Facet.md
       - Subcommands.md
       - Custom types:
-          - Tag-subclasses.md
+          - CallbackTag.md
+          - DatetimeTag.md
+          - PathTag.md
+          - SecretTag.md
+          - SelectTag.md
           - Tag-aliases.md
           - Prepared-annotations.md
   - Extras:

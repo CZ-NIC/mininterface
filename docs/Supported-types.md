@@ -124,7 +124,7 @@ with run(Env) as m:
 
 ### Enums
 
-To constraint a value, either pass an enum object or use handy additional type [SelectTag][mininterface.types.tags.SelectTag] that might speed you up a bit.
+To constraint a value, either pass an enum object or use handy additional type [SelectTag][mininterface.tag.SelectTag] that might speed you up a bit.
 
 ### Well-known objects
 

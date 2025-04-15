@@ -10,14 +10,14 @@ from tkinter_form import Form, Value
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import TagDict, formdict_to_widgetdict
 from ..mininterface.adaptor import BackendAdaptor
-from ..mininterface.mixin import ButtonAdaptorMixin
+from ..mininterface.mixin import RichUiAdaptor
 from ..settings import GuiSettings
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
 
-class TkAdaptor(Tk, ButtonAdaptorMixin, BackendAdaptor):
+class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     """ An editing Tk window. """
 
     facet: TkFacet

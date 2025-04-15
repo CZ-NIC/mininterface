@@ -2,6 +2,10 @@ from typing import TYPE_CHECKING, Any, Iterable
 from textual.widget import Widget
 from textual.widgets import Label, RadioButton, Rule
 
+from ..tag.path_tag import PathTag
+
+from ..tag.select_tag import SelectTag
+
 from .button_contents import ButtonContents
 
 from .button_contents import ButtonAppType
@@ -12,10 +16,10 @@ from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
-from ..tag import Tag, UiValue
-from ..types import SelectTag, PathTag, SecretTag
-from ..types.internal import (BoolWidget, CallbackButtonWidget,
-                              SubmitButtonWidget)
+from ..tag.tag import Tag, UiValue
+from ..tag.secret_tag import SecretTag
+from ..tag.internal import (BoolWidget, CallbackButtonWidget,
+                            SubmitButtonWidget)
 from .facet import TextualFacet
 from .file_picker_input import FilePickerInputFactory
 from .textual_app import TextualApp
@@ -45,14 +49,10 @@ class TextualAdaptor(BackendAdaptor):
         """ Wrap Tag to a textual widget. """
 
         v = tag._get_ui_val()
-        w = tag._recommend_widget()
 
-        match w:
+        match tag:
             # NOTE: DatetimeTag not implemented
-            case BoolWidget():
-                o = MyCheckbox(tag, tag.name or "", v)
             case SelectTag():
-                tag: SelectTag
                 if tag.multiple:
                     selected = set(tag.val)
                     o = MySelectionList(tag, *((label, val, val in selected)
@@ -65,22 +65,26 @@ class TextualAdaptor(BackendAdaptor):
                 o = FilePickerInputFactory(self, tag, placeholder=tag.name or "")
             case SecretTag():
                 o = SecretInputFactory(self, tag, placeholder=tag.name or "", type="text")
-            case SubmitButtonWidget():
-                # Special type: Submit button
-                # NOTE EXPERIMENTAL
-                o = MySubmitButton(tag)
-            case CallbackButtonWidget():
-                o = MyButton(tag)
             case _:
-                if not isinstance(v, (float, int, str)):
-                    v = str(v)
-                if tag._is_subclass(int):
-                    type_ = "integer"
-                elif tag._is_subclass(float):
-                    type_ = "number"
-                else:
-                    type_ = "text"
-                o = MyInput(tag, str(v), placeholder=tag.name or "", type=type_)
+                match tag._recommend_widget():
+                    case BoolWidget():
+                        o = MyCheckbox(tag, tag.name or "", v)
+                    case SubmitButtonWidget():
+                        # Special type: Submit button
+                        # NOTE EXPERIMENTAL
+                        o = MySubmitButton(tag)
+                    case CallbackButtonWidget():
+                        o = MyButton(tag)
+                    case _:
+                        if not isinstance(v, (float, int, str)):
+                            v = str(v)
+                        if tag._is_subclass(int):
+                            type_ = "integer"
+                        elif tag._is_subclass(float):
+                            type_ = "number"
+                        else:
+                            type_ = "text"
+                        o = MyInput(tag, str(v), placeholder=tag.name or "", type=type_)
 
         tag._last_ui_val = o.get_ui_value()
         return o

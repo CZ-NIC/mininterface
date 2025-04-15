@@ -6,15 +6,21 @@ from typing import TYPE_CHECKING
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
-from ..types.tags import SelectTag
+from ..tag.datetime_tag import DatetimeTag
 
-from ..types.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
+from ..tag.path_tag import PathTag
+
+from ..tag.select_tag import SelectTag
+
+from ..tag.select_tag import SelectTag
+
+from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
 from ..auxiliary import flatten
 from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
-from ..types import DatetimeTag, PathTag, SecretTag, SelectTag
+from ..tag.secret_tag import SecretTag
 from .select_input import SelectInputWrapper, VariableAnyWrapper
 from .date_entry import DateEntryFrame
 from .external_fix import __create_widgets_monkeypatched
@@ -74,8 +80,6 @@ def on_change_handler(variable: Variable | VariableAnyWrapper, tag: Tag):
     """ Closure handler """
     def _(*_):
         try:
-            # import ipdb
-            # ipdb.set_trace()  # TODO
             return tag._on_change_trigger(variable.get())
         except TclError:
             # Ex: putting there an empty value to an input entry,
@@ -117,14 +121,15 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         widget.pack_forget()
         process_change_handler = True
         """ If False, you process _last_ui_val and launch _on_change_trigger. """
-        enum_tag = False
+        select_tag = False
+        # NOTE this variable exists due to poor design
 
         # We implement some of the types the tkinter_form don't know how to handle
-        match tag._recommend_widget():
+        match tag:
             case SelectTag():
                 grid_info = widget.grid_info()
                 wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor)
-                enum_tag = True
+                select_tag = True
                 variable = wrapper.variable_wrapper
                 # since tkinter variables do not allow objects,
                 # and choice values can be objects (ex. callbacks)
@@ -144,7 +149,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 grid_info = widget.grid_info()
                 widget.grid_forget()
                 nested_frame = DateEntryFrame(master, adaptor, tag, variable)
-                nested_frame.grid(row=grid_info['row'], column=grid_info['column'])
+                nested_frame.grid(row=grid_info['row'], column=grid_info['column'], sticky="w")
                 widget = nested_frame.spinbox
             case SecretTag():
                 grid_info = widget.grid_info()
@@ -154,32 +159,34 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 widget = wrapper.entry
                 # Add shortcut to the central shortcuts set
                 adaptor.shortcuts.add("Ctrl+T: Toggle visibility of password field")
-
-            # Special type: Submit button
-            case SubmitButtonWidget():  # NOTE EXPERIMENTAL
-                variable, widget = create_button(master, replace_variable, tag, label1)
-                widget.config(command=_set_true(variable, tag))
-            case FacetButtonWidget():  # NOTE EXPERIMENTAL
-                # Special type: FacetCallback button
-                variable, widget = create_button(master, replace_variable, tag, label1,
-                                                 lambda tag=tag: tag.val(tag.facet))
-
-            case CallbackButtonWidget():
-                # Replace with a callback button
-                def inner(tag: Tag):
-                    tag.facet.submit(_post_submit=tag._run_callable)
-                variable, widget = create_button(master, replace_variable, tag, label1, lambda tag=tag: inner(tag))
             case _:
-                grid_info = replace_variable(variable)
-                # Reposition to the grid so that the Tab order is restored.
-                # (As we replace some widgets with ex. custom DateEntry, these new would have Tab order broken.)
-                widget.grid(row=grid_info['row'], column=grid_info['column'])
+                match tag._recommend_widget():
+                    # Special type: Submit button
+                    case SubmitButtonWidget():  # NOTE EXPERIMENTAL
+                        variable, widget = create_button(master, replace_variable, tag, label1)
+                        widget.config(command=_set_true(variable, tag))
+                    case FacetButtonWidget():  # NOTE EXPERIMENTAL
+                        # Special type: FacetCallback button
+                        variable, widget = create_button(master, replace_variable, tag, label1,
+                                                         lambda tag=tag: tag.val(tag.facet))
+
+                    case CallbackButtonWidget():
+                        # Replace with a callback button
+                        def inner(tag: Tag):
+                            tag.facet.submit(_post_submit=tag._run_callable)
+                        variable, widget = create_button(master, replace_variable, tag,
+                                                         label1, lambda tag=tag: inner(tag))
+                    case _:
+                        grid_info = replace_variable(variable)
+                        # Reposition to the grid so that the Tab order is restored.
+                        # (As we replace some widgets with ex. custom DateEntry, these new would have Tab order broken.)
+                        widget.grid(row=grid_info['row'], column=grid_info['column'], sticky="we")
 
         # Add event handler
         if process_change_handler:
             tag._last_ui_val = variable.get()
             h = on_change_handler(variable, tag)
-            if enum_tag:  # isinstance(w, Radiobutton):
+            if select_tag:  # isinstance(w, Radiobutton):
                 variable.trace_add("write", h)  # TODO
                 # pass
             elif isinstance(widget, Combobox):

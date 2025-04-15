@@ -2,10 +2,8 @@ from tkinter import BooleanVar, Variable, Widget
 from tkinter.ttk import Checkbutton, Frame, Label, Radiobutton, Style
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from .. import Optional
 
-
-from ..types.tags import OptionsReturnType, SelectTag
+from ..tag.select_tag import SelectTag, OptionsReturnType
 
 try:
     from autocombobox import AutoCombobox

@@ -5,13 +5,15 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
+from .tag.select_tag import SelectTag
+
 from .exceptions import ValidationFail
 from .subcommands import Command, SubcommandPlaceholder
-from .types.tags import SecretTag, SelectTag
+from .tag.secret_tag import SecretTag
 
 from . import run, Options
 from .interfaces import InterfaceName
-from .types.alias import Validation
+from .tag.alias import Validation
 from .validators import not_empty
 
 
@@ -86,10 +88,8 @@ class Env:
     """ Choose between values """
 
 
-def showcase(interface: ChosenInterface, case: int):
-    if interface == "all":
-        interface = None
-    kw = {"args": [], "interface": interface}
+def showcase(case: int):
+    kw = {"args": []}
     if case == 1:
         m = run(Env, title="My program", **kw)
         m.form()

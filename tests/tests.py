@@ -1,44 +1,48 @@
-from dataclasses import dataclass
 import logging
 import os
 import sys
+import warnings
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
-from datetime import datetime, date
+from dataclasses import dataclass
+from datetime import date, datetime
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import NoneType, SimpleNamespace
 from typing import Optional, Type, get_type_hints
 from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
-import warnings
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
-                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass, DynamicDescription, FurtherEnv2,
-                     InheritedAnnotatedClass, MissingPositional,
-                     MissingUnderscore, MissingNonscalar, NestedDefaultedEnv, NestedMissingEnv,
-                     OptionalFlagEnv, ParametrizedGeneric, PathTagClass,
-                     SimpleEnv, Subcommand1, Subcommand2, callback_raw,
-                     callback_tag, callback_tag2)
-from tests.dumb_settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings
-from mininterface.tag_factory import tag_assure_type
-from mininterface.types.tags import SelectTag
+                     ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
+                     DynamicDescription, FurtherEnv2, InheritedAnnotatedClass,
+                     MissingNonscalar, MissingPositional, MissingUnderscore,
+                     NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
+                     ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
+                     Subcommand2, callback_raw, callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
-from mininterface.interfaces import TextInterface
-from mininterface.auxiliary import flatten, matches_annotation, subclass_matches_annotation
-from mininterface.cli_parser import _merge_settings, parse_cli, parse_config_file
+from mininterface.auxiliary import (flatten, matches_annotation,
+                                    subclass_matches_annotation)
+from mininterface.cli_parser import (_merge_settings, parse_cli,
+                                     parse_config_file)
 from mininterface.exceptions import Cancelled
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
+from mininterface.interfaces import TextInterface
 from mininterface.settings import UiSettings
 from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
-from mininterface.tag import Tag
+from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag
+from mininterface.tag.secret_tag import SecretTag
+from mininterface.tag.select_tag import SelectTag
+from mininterface.tag.tag_factory import tag_assure_type
 from mininterface.text_interface import AssureInteractiveTerminal
-from mininterface.types import CallbackTag, DatetimeTag, PathTag, SecretTag
 from mininterface.validators import limit, not_empty
+from dumb_settings import (GuiSettings, MininterfaceSettings,
+                           TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings)
+
 
 SYS_ARGV = None  # To be redirected
 
@@ -135,16 +139,16 @@ class TestInteface(TestAbstract):
     @mock_interactive_terminal
     def test_ask(self):
         m0 = run(NestedDefaultedEnv, interface=Mininterface, prog="My application")
-        self.assertEqual(0, m0.ask_number("Test input"))
+        self.assertEqual(0, m0.ask("Test input", int))
 
         m1: TextInterface = run(NestedDefaultedEnv, interface=TextInterface, prog="My application")
         with patch('builtins.input', return_value=5):
-            self.assertEqual(5, m1.ask_number("Number"))
+            self.assertEqual(5, m1.ask("Number", int))
         with patch('builtins.input', side_effect=["invalid", 1]):
-            self.assertEqual(1, m1.ask_number("Number"))
+            self.assertEqual(1, m1.ask("Number", int))
         with patch('builtins.input', side_effect=["invalid", EOFError]):
             with self.assertRaises(Cancelled):
-                self.assertEqual(1, m1.ask_number("Number"))
+                self.assertEqual(1, m1.ask("Number", int))
 
         with patch('builtins.input', side_effect=["", "", "y", "Y", "n", "n", "N", "y", "hello"]):
             self.assertTrue(m1.confirm(""))
@@ -1245,6 +1249,9 @@ class TestSelectTag(TestAbstract):
 
         t.options = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
         self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_options())
+
+        t.options = [Tag(1, name='A')]
+        self.assertDictEqual({"A": 1}, t._build_options())
 
 
 if __name__ == '__main__':

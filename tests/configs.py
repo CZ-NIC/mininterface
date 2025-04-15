@@ -8,9 +8,10 @@ from tyro.conf import Positional, arg
 
 from mininterface import Tag
 from mininterface.subcommands import Command
-from mininterface.types import CallbackTag, PathTag
-from mininterface.types.alias import Options, Validation
-from mininterface.types.tags import SelectTag
+from mininterface.tag.callback_tag import CallbackTag
+from mininterface.tag.path_tag import PathTag
+from mininterface.tag.alias import Options, Validation
+from mininterface.tag.select_tag import SelectTag
 from mininterface.validators import not_empty
 
 

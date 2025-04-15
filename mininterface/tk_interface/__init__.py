@@ -9,16 +9,17 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from ..exceptions import InterfaceNotAvailable
-from ..form_dict import DataClass, FormDict
-from ..mininterface import EnvClass, Mininterface
-from ..mininterface.mixin import ButtonMixin
+
+from ..mininterface import EnvClass, Mininterface, TagValue
+from ..mininterface.mixin import RichUiMixin
+from ..tag import Tag
 from ..settings import GuiSettings
 from ..redirectable import Redirectable
 from .adaptor import TkAdaptor
 from .redirect_text_tkinter import RedirectTextTkinter
 
 
-class TkInterface(Redirectable, ButtonMixin, Mininterface):
+class TkInterface(Redirectable, RichUiMixin, Mininterface):
     """ When used in the with statement, the GUI window does not vanish between dialogues. """
 
     _adaptor: TkAdaptor
@@ -32,16 +33,8 @@ class TkInterface(Redirectable, ButtonMixin, Mininterface):
         # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
         self._adaptor.destroy()
 
-    def ask(self, text: str) -> str:
-        return self.form({text: ""})[text]
-
-    def form(self,
-             form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = "",
-             *,
-             submit: str | bool = True
-             ) -> FormDict | DataClass | EnvClass:
-        return self._form(form, title, self._adaptor, submit=submit)
-
-    def ask_number(self, text: str) -> int:
-        return self.form({text: 0})[text]
+    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
+        if annotation is int:
+            # without 0, tkinter_form would create a mere text Entry
+            return self.form({text: 0})[text]
+        return self.form({text: Tag(annotation=annotation)})[text]

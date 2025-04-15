@@ -4,22 +4,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
-from .settings import MininterfaceSettings
-
-from .types.alias import Options, Validation
-
+from .cli_parser import assure_args, parse_cli, parse_config_file
 from .exceptions import Cancelled, InterfaceNotAvailable
-
-from .interfaces import get_interface
-
-from . import validators
-from .cli_parser import parse_config_file, assure_args, parse_cli
-from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import DataClass, EnvClass
+from .interfaces import get_interface
 from .mininterface import EnvClass, Mininterface
+from .settings import MininterfaceSettings
 from .start import Start
+from .subcommands import Command, SubcommandPlaceholder
 from .tag import Tag
-from .types import PathTag
+from .tag.alias import Options, Validation
 
 # NOTE:
 # ask_for_missing does not work with tyro Positional, stays missing.
@@ -217,6 +211,6 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     return m
 
 
-__all__ = ["run", "Tag", "validators", "InterfaceNotAvailable", "Cancelled",
-           "Validation", "Options", "PathTag",
-           "Mininterface"]
+__all__ = ["run", "Mininterface", "Tag",
+           "InterfaceNotAvailable", "Cancelled",
+           "Validation", "Options"]

@@ -2,15 +2,17 @@ import warnings
 
 from simple_term_menu import TerminalMenu
 
+from ..tag.select_tag import SelectTag
+
 from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface import Tag
 from ..mininterface.adaptor import BackendAdaptor
 from ..settings import TextSettings
-from ..types.internal import (BoolWidget, CallbackButtonWidget,
-                              SubmitButtonWidget)
-from ..types.tags import SelectTag, SecretTag
+from ..tag.internal import (BoolWidget, CallbackButtonWidget,
+                            SubmitButtonWidget)
+from ..tag.secret_tag import SecretTag
 from .facet import TextFacet
 
 
@@ -25,7 +27,6 @@ class TextAdaptor(BackendAdaptor):
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """
-        # NOTE some field does not return description
 
         if not only_label:
             label = tag.name
@@ -36,12 +37,9 @@ class TextAdaptor(BackendAdaptor):
 
         v = tag._get_ui_val()
 
-        match tag._recommend_widget():
+        match tag:
             # NOTE: PathTag, DatetimeTag not implemented
-            case BoolWidget():
-                return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
             case SelectTag():
-                tag: SelectTag
                 options, values = zip(*((label + (" <--" if tip else " "), v)
                                         for label, v, tip, _ in tag._get_options(delim=" - ")))
                 if tag.multiple:
@@ -57,26 +55,28 @@ class TextAdaptor(BackendAdaptor):
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)
-            case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
-                if only_label:
-                    return "(submit button)"
-                else:
-                    tag.update(True)
-                    tag.facet.submit()
-                    raise Submit
-            case CallbackButtonWidget():  # Replace with a callback button
-                if only_label:
-                    return "(submit)"
-                else:
-                    tag.facet.submit(_post_submit=tag._run_callable)
-                    raise Submit
             case _:
-                if only_label:
-                    return v
-                elif tag._is_subclass((int, float)):
-                    return self.interface.ask_number(label)
-                else:
-                    return self.interface.ask(label)
+                match tag._recommend_widget():
+                    case BoolWidget():
+                        return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
+                    case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
+                        if only_label:
+                            return "(submit button)"
+                        else:
+                            tag.update(True)
+                            tag.facet.submit()
+                            raise Submit
+                    case CallbackButtonWidget():  # Replace with a callback button
+                        if only_label:
+                            return "(submit)"
+                        else:
+                            tag.facet.submit(_post_submit=tag._run_callable)
+                            raise Submit
+                    case _:
+                        if only_label:
+                            return v
+                        else:
+                            return self.interface.ask(label, tag.annotation)
 
     def _get_tag_val(self, val: Tag | dict):
         match val:
@@ -129,7 +129,11 @@ class TextAdaptor(BackendAdaptor):
                             if tag.update(ui_val):
                                 break
                         except (KeyboardInterrupt, Cancelled):
-                            break
+                            # print("TODO, brek")
+                            # import ipdb
+                            # ipdb.set_trace()  # TODO
+                            # break
+                            raise
                 case _:
                     warnings.warn(f"Unsupported item {key}")
             if single:

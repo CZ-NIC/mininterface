@@ -33,20 +33,39 @@ BlankTrue = Annotated[
 """
 When left blank, this flag produces True.
 
-Return boolean for 0/false/off/1/true/on.
 
-Else raises ValueError.
+Returns:
+    bool: for `0/false/off/1/true/on` in the parameter
+    True: When parameter is left blank.
+
+Raises:
+    ValueError: Raised on an unknown parameter.
 
 !!! Warning
-    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
+    Experimental.
 
 """
+# NOTE untested
 
 
 T = TypeVar("T")
 
 
 class Blank:
+    """
+    When left blank, this flag produces True.
+        Return boolean for True|False.
+        Return None if the flag is omitted.
+        Else returns T created from the input value.
+
+    Note that you can not use 'True' or 'False' for values, as the parameter becomes a bool.
+
+    !!! Warning
+        Experimental.
+
+    """
+    # NOTE untested
+
     def __class_getitem__(cls, item_type: type[T]) -> Any:
         def instance_from_str(args: list[str]) -> T | bool:
             if not args:
@@ -77,17 +96,3 @@ class Blank:
                 str_from_instance=str_from_instance,
             )
         ]
-
-
-"""
-When left blank, this flag produces True.
-    Return boolean for True|False.
-    Return None if the flag is omitted.
-    Else returns T created from the input value.
-
-Note that you can not use 'True' or 'False' for values, as the parameter becomes a bool.
-
-!!! Warning
-    NOTE Experimental. Undocumented, untested, does not work in the UI. Great for CLI.
-
-"""
