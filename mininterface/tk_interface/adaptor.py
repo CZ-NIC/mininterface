@@ -1,6 +1,6 @@
 import sys
 from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 from ..options import GuiOptions
 
@@ -16,9 +16,6 @@ from ..form_dict import TagDict, formdict_to_widgetdict
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
-
-if TYPE_CHECKING:
-    from . import TkInterface
 
 
 class TkAdaptor(Tk, BackendAdaptor):
@@ -112,9 +109,22 @@ class TkAdaptor(Tk, BackendAdaptor):
 
         # Set the submit and exit options
         if self.form.button:
-            tip, keysym = ("Enter", "<Return>")
+            tip = "Enter (when button focused)"
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
-            self._bind_event(keysym, self._ok)
+
+            # Bind Enter to the button with focus
+            self.form.button.bind("<Return>", lambda event: self._ok())
+
+            # Also bind Enter to the form, but check focus first
+            def handle_form_enter(event):
+                focused = self.focus_get()
+                if focused == self.form.button:
+                    self._ok()
+                    return "break"
+                return None
+
+            self._bind_event("<Return>", handle_form_enter)
+
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run

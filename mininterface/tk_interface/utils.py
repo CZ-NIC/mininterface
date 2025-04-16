@@ -1,6 +1,6 @@
-from tkinter import LEFT, Button, Entry, TclError, Variable, Widget, Spinbox
-from tkinter.filedialog import askopenfilename, askopenfilenames
-from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style, Widget
+from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
+from tkinter.filedialog import askopenfilename, askopenfilenames, askdirectory
+from tkinter.ttk import Checkbutton, Combobox, Frame, Radiobutton, Style
 from typing import TYPE_CHECKING
 
 try:
@@ -10,17 +10,14 @@ except ImportError:
 
 from tkinter_form.tkinter_form import FieldForm, Form
 
-from ..types.rich_tags import EnumTag
 
 from ..types.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
 from ..auxiliary import flatten
-from ..experimental import FacetCallback, SubmitButton
 from ..form_dict import TagDict
 from ..tag import Tag
 from ..types import DatetimeTag, PathTag, SecretTag, EnumTag
 from .date_entry import DateEntryFrame
-from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
 
 if TYPE_CHECKING:
@@ -64,12 +61,83 @@ def ready_to_replace(widget: Widget,
 
 
 def choose_file_handler(variable: Variable, tag: PathTag):
+    """Handler for file/directory selection on PathTag"""
     def _(*_):
-        if tag.multiple:
-            out = str(list(askopenfilenames(title="Choose files")))
+        # Check whether this is a directory selection
+        if tag.is_dir:
+            # Directory selection using askdirectory
+            selected_dir = askdirectory(title="Select Directory")
+            if not selected_dir:  # User cancelled
+                return
+
+            if tag.multiple:
+                # Handle multiple selection for directories
+                try:
+                    current_val = variable.get()
+                    if current_val and current_val.strip() and current_val != '[]':
+                        # Parse existing list
+                        import ast
+                        try:
+                            dirs_list = ast.literal_eval(current_val)
+                            if not isinstance(dirs_list, list):
+                                dirs_list = [dirs_list]  # Convert to list if not already
+
+                            # Add the new directory if not already in list
+                            if selected_dir not in dirs_list:
+                                dirs_list.append(selected_dir)
+
+                            variable.set(str(dirs_list))
+                        except (SyntaxError, ValueError):
+                            # If parsing fails, start a new list
+                            variable.set(str([selected_dir]))
+                    else:
+                        # No current value, set a new list
+                        variable.set(str([selected_dir]))
+                except (TclError, TypeError):
+                    # Fallback
+                    variable.set(str([selected_dir]))
+            else:
+                # Simple single directory selection
+                variable.set(selected_dir)
         else:
-            out = askopenfilename(title="Choose a file")
-        variable.set(out)
+            # File selection
+            if tag.multiple:
+                # Multiple file selection
+                try:
+                    current_val = variable.get()
+                    current_files = []
+                    if current_val and current_val.strip() and current_val != '[]':
+                        # Parse existing list
+                        import ast
+                        try:
+                            current_files = ast.literal_eval(current_val)
+                            if not isinstance(current_files, list):
+                                current_files = [current_files]
+                        except (SyntaxError, ValueError):
+                            current_files = []
+
+                    # Select new files
+                    new_files = list(askopenfilenames(title="Select Files"))
+                    if not new_files:  # User cancelled
+                        return
+
+                    # Add new files to existing list without duplicates
+                    for new_file in new_files:
+                        if new_file not in current_files:
+                            current_files.append(new_file)
+
+                    # Save updated list
+                    variable.set(str(current_files))
+                except (SyntaxError, ValueError, TclError, TypeError):
+                    files = list(askopenfilenames(title="Select Files"))
+                    if files:
+                        variable.set(str(files))
+            else:
+                # Single file selection
+                selected_file = askopenfilename(title="Select File")
+                if selected_file:
+                    variable.set(selected_file)
+
     return _
 
 
@@ -102,6 +170,13 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
+
+    # Prevent Enter key in an input field from submitting the form
+    # But do not interfere with Tab navigation
+    def prevent_submit(event):
+        # Only prevent form submission, don't affect Tab navigation
+        return "break"
+
     for tag, field_form in zip(flatten(form), flatten(nested_widgets)):
         tag: Tag
         field_form: FieldForm
@@ -110,6 +185,12 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         variable = field_form.variable
         subwidgets = []
         master = widget.master
+
+        # Prevent Enter key in any regular input field from submitting the form
+        # But still allow Tab key to work normally
+        if isinstance(widget, Entry):
+            # Only bind the Enter key, not Tab key
+            widget.bind('<Return>', prevent_submit)
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag._recommend_widget():
@@ -147,8 +228,17 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
             case PathTag():
                 grid_info = widget.grid_info()
 
-                widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
+                # Create button for file/directory selection with appropriate icon
+                file_handler = choose_file_handler(variable, tag)
+                button_text = "📁" if tag.is_dir else "…"  # Folder icon for directories
+                widget2 = Button(master, text=button_text, command=file_handler)
                 widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+
+                # Bind Enter key to button to open file dialog when button is focused
+                widget2.bind('<Return>', lambda event: file_handler())
+
+                # For input field, just prevent form submission on Enter without opening file dialog
+                widget.bind('<Return>', prevent_submit)
             case DatetimeTag():
                 grid_info = widget.grid_info()
                 widget.grid_forget()
