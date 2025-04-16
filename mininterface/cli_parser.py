@@ -1,18 +1,20 @@
 #
 # CLI and config file parsing.
 #
-from dataclasses import dataclass, fields, asdict
+from dataclasses import Field, dataclass, field, fields, asdict, make_dataclass
 import logging
 import sys
 import warnings
 from argparse import Action, ArgumentParser
+import argparse
 from contextlib import ExitStack
 from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional, Sequence, Type, Union
+from typing import Any, Optional, Sequence, Type, Union
 from unittest.mock import patch
 
+from tyro.conf import Positional
 import yaml
 from tyro import cli
 from tyro._argparse_formatter import TyroArgumentParser
@@ -21,7 +23,7 @@ from tyro.extras import get_parser
 
 from .auxiliary import yield_annotations,  dataclass_asdict_no_defaults, merge_dicts
 from .settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, WebSettings
-from .form_dict import EnvClass, MissingTagValue
+from .form_dict import DataClass, EnvClass, MissingTagValue
 from .tag import Tag
 from .tag.tag_factory import tag_factory
 from .validators import not_empty
@@ -139,6 +141,7 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
             res = cli(type_form, args=args, **kwargs)
             if res is MISSING_NONPROP:
+                # NOTE not true any more, I've implemented and might go furhter:
                 # NOTE tyro does not work if a required positional is missing tyro.cli()
                 # returns just NonpropagatingMissingType (MISSING_NONPROP).
                 # If this is supported, I might set other attributes like required (date, time).
@@ -152,10 +155,24 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
             wf = {}
-            for arg in _fetch_eavesdrop_args():
-                treat_missing(type_form, kwargs, parser, wf, arg)
 
-            # Second attempt to parse CLI
+            if "--" in eavesdrop:
+                # Case with required optional arguments
+                # `the following arguments are required: --foo, --bar`
+                for arg in _fetch_eavesdrop_args():
+                    if argument := identify_required(type_form, kwargs, parser,  arg):
+                        register_wrong_field(type_form, kwargs, wf, argument)
+            else:
+                # Case of Positional arguments
+                # `The following arguments are required: PATH, INT, STR`
+                for arg, argument in zip(_fetch_eavesdrop_args(), (p for p in parser._actions if p.default != argparse.SUPPRESS)):
+                    register_wrong_field(type_form, kwargs, wf, argument)
+
+            # Second attempt to parse CLI.
+            # We have just put a default values for missing fields so that tyro will not fail.
+            # If we succeeded (no exotic case), this will pass through.
+            # Then, we impose the user to fill the missing values.
+            #
             # Why catching warnings? All the meaningful warnings
             # have been produces during the first attempt.
             # Now, when we defaulted all the missing fields with None,
@@ -168,8 +185,12 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         raise
 
 
-def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg: str):
-    """ See the [mininterface.subcommands.SubcommandPlaceholder] for CLI expectation """
+def identify_required(env_class, kwargs: dict, parser: ArgumentParser, arg: str) -> None | Action:
+    """
+    Identifies the original field_name as it was edited by tyro.
+
+    See the [mininterface.subcommands.SubcommandPlaceholder] for CLI expectation.
+    """
     if arg.startswith("{"):
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
         return
@@ -184,29 +205,41 @@ def treat_missing(env_class, kwargs: dict, parser: ArgumentParser, wf: dict, arg
         # (with a graceful message from tyro)
         return
     else:
-        # get the original attribute name (argparse uses dash instead of underscores)
-        # Why using mro? Find the field in the dataclass and all of its parents.
-        # Useful when handling subcommands, they share a common field.
-        field_name = argument.dest
-        if not any(field_name in ann for ann in yield_annotations(env_class)):
-            field_name = field_name.replace("-", "_")
-        if not any(field_name in ann for ann in yield_annotations(env_class)):
-            raise ValueError(f"Cannot find {field_name} in the configuration object")
+        return argument
 
-        # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
-        # However, the UI then is not able to use ex. the number filtering capabilities.
-        # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
-        tag = wf[field_name] = tag_factory(MissingTagValue(),
-                                           argument.help.replace("(required)", ""),
-                                           validation=not_empty,
-                                           _src_class=env_class,
-                                           _src_key=field_name
-                                           )
-        # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
-        # A None would be enough because Mininterface will ask for the missing values
-        # promply, however, Pydantic model would fail.
-        # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
-        set_default(kwargs, field_name, tag._make_default_value())
+
+def argument_to_field_name(env_class: EnvClass, argument: Action):
+    # get the original attribute name (argparse uses dash instead of underscores)
+    # Why using mro? Find the field in the dataclass and all of its parents.
+    # Useful when handling subcommands, they share a common field.
+    field_name = argument.dest
+    if not any(field_name in ann for ann in yield_annotations(env_class)):
+        field_name = field_name.replace("-", "_")
+    if not any(field_name in ann for ann in yield_annotations(env_class)):
+        raise ValueError(f"Cannot find {field_name} in the configuration object")
+    return field_name
+
+
+def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action):
+    """ The field is missing.
+    We prepare it to the list of wrong fields to be filled up
+    and make a temporary default value so that tyro will not fail.
+    """
+    field_name = argument_to_field_name(env_class, argument)
+    # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
+    # However, the UI then is not able to use ex. the number filtering capabilities.
+    # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
+    tag = wf[field_name] = tag_factory(MissingTagValue(),
+                                       argument.help.replace("(required)", ""),
+                                       validation=not_empty,
+                                       _src_class=env_class,
+                                       _src_key=field_name
+                                       )
+    # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
+    # A None would be enough because Mininterface will ask for the missing values
+    # promply, however, Pydantic model would fail.
+    # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
+    set_default(kwargs, field_name, tag._make_default_value())
 
 
 def _fetch_eavesdrop_args():
@@ -365,3 +398,62 @@ def _process_dataclass(env, disk):
         else:
             v = MISSING_NONPROP
         yield f.name, v
+
+
+def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass:
+    """ Note that in contrast to the argparse, we create default values.
+    When an optional flag is not used, argparse put None, we have a default value.
+
+    This does make sense for most values and should not pose problems for truthy-values.
+    Ex. checking `if namespace.my_int` still returns False for both argparse-None and our-0.
+
+    Be aware that for Path this might pose a big difference:
+    parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
+    """
+    subparser_fields: list[tuple[str, type]] = []
+    normal_fields: list[tuple[str, type, Field]] = []
+    pos_fields: list[tuple[str, type, Field]] = []
+
+    for action in parser._actions:
+        if isinstance(action, argparse._HelpAction):
+            continue
+
+        if isinstance(action, argparse._SubParsersAction):
+            for subname, subparser in action.choices.items():
+                sub_dc = parser_to_dataclass(subparser, name=subname.capitalize())
+                subparser_fields.append((subname, sub_dc))  # required, no default
+            continue
+
+        opt = {}
+        if isinstance(action, argparse._AppendAction):
+            arg_type = list[action.type or str]
+            opt["default_factory"] = list
+        else:
+            if isinstance(action, (argparse._StoreTrueAction, argparse._StoreFalseAction)):
+                arg_type = bool
+            elif isinstance(action, argparse._StoreConstAction):
+                arg_type = type(action.const)
+            elif isinstance(action, argparse._CountAction):
+                arg_type = int
+            else:
+                arg_type = action.type or str
+                if action.default is None:
+                    # parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
+                    # By default, argparse put None if not used in the CLI.
+                    # Which makes tyro output the warning: annotated with type `<class 'str'>`, but the default value `None`
+                    # We either make None an option by `arg_type |= None`
+                    # or else we default the value.
+                    # This creates a slightly different behaviour, however, the behaviour is slightly different
+                    # nevertheless.
+                    # Ex. parser.add_argument("--time", type=time) -> does work poorly in argparse.
+                    action.default = Tag(annotation=arg_type)._make_default_value()
+            opt["default"] = action.default if action.default != argparse.SUPPRESS else None
+
+        # build a dataclass field, either optional, or positional
+        met = {"metadata": {"help": action.help}}
+        if action.option_strings:
+            normal_fields.append((action.dest, arg_type, field(**opt, **met)))
+        else:
+            pos_fields.append((action.dest, Positional[arg_type], field(**met)))
+
+    return make_dataclass(name, subparser_fields + pos_fields + normal_fields)

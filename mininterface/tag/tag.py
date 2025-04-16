@@ -654,11 +654,6 @@ class Tag:
                 except (SyntaxError, ValueError):
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
-            elif self._is_subclass((time, date)):
-                try:
-                    out_value = self.annotation.fromisoformat(ui_value)
-                except ValueError:
-                    pass
 
             if not self._is_right_instance(out_value) and isinstance(out_value, str):
                 try:

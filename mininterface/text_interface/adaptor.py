@@ -83,7 +83,9 @@ class TextAdaptor(BackendAdaptor):
             case Tag() as tag:
                 s = f": {self.widgetize(tag, only_label=True) or '(empty)'}"
                 if d := tag.description:
-                    return s + f" \\| {d}"
+                    s = s + f" | {d}"
+                    # sanitize chars that TerminalMenu does not handle well
+                    return s.replace("|", "\\|").replace("\n", " ").replace("\r", " ")
                 return s
             case dict() as d:
                 return f"... ({len(d)}×)"
@@ -94,13 +96,14 @@ class TextAdaptor(BackendAdaptor):
         """
         while True:
             try:
-                self._run_dialog(form, title, submit)
+                try:
+                    self._run_dialog(form, title, submit)
+                except Submit:
+                    pass
+                if not Tag._submit_values((tag, tag.val) for tag in flatten(form)) or not self.submit_done():
+                    continue
             except KeyboardInterrupt:
                 raise Cancelled(".. cancelled")  # prevent being stuck in value type check
-            except Submit:
-                pass
-            if not Tag._submit_values((tag, tag.val) for tag in flatten(form)) or not self.submit_done():
-                continue
             break
         return form
 
@@ -120,7 +123,11 @@ class TextAdaptor(BackendAdaptor):
 
             match form[key]:
                 case dict() as submenu:
-                    self._run_dialog(submenu, key, submit)
+                    try:
+                        self.run_dialog(submenu, key, submit)
+                    except Cancelled:
+                        if single:
+                            raise
                 case Tag() as tag:
                     while True:
                         try:

@@ -50,6 +50,7 @@ def get_terminal_size():
         # echo "434" | convey -f base64  --debug
         # stty: 'standard input': Inappropriate ioctl for device
         # I do not know how to suppress this warning.
+        # NOTE why not using os.get_terminal_size()
         height, width = (int(s) for s in os.popen('stty size', 'r').read().split())
         return height, width
     except (OSError, ValueError):

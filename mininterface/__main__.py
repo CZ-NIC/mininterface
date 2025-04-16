@@ -51,7 +51,7 @@ class CliInteface:
     """ Display confirm box, focusing 'yes'. """
     confirm_default_no: str = ""
     """ Display confirm box, focusing 'no'. """
-    choice: list = field(default_factory=list)
+    select: list = field(default_factory=list)
     """ Prompt the user to select. """
 
     showcase: Optional[Showcase] = None
@@ -74,7 +74,9 @@ def main():
         for method, label in vars(m.env).items():
             if method in ["web", "showcase"]:  # processed later
                 continue
-            if method == "ask" and label:
+            if method == "select" and label:
+                result.append(m.select(options=label))
+            elif method == "ask" and label:
                 if isinstance(label, tuple):
                     arg, type_ = label[0], resolve_type(label[1])
                     if not type_:

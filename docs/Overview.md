@@ -14,7 +14,7 @@ graph LR
 ```
 
 ## Basic usage
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user with methods like [`m.confirm("Is that alright?")`][mininterface.Mininterface.confirm].
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), an argparse [`ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user with methods like [`m.confirm("Is that alright?")`][mininterface.Mininterface.confirm].
 
 There are a lot of supported [types](Supported-types.md) you can use, not only scalars and well-known objects (`Path`, `datetime`), but also functions, iterables (like `list[Path]`) and union types (like `int | None`). To do even more advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its [subclasses](Supported-types.md#additional). Ex. for a validation only, use its [`Validation alias`][mininterface.tag.alias.Validation].
 

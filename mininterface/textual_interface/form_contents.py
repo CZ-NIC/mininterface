@@ -19,7 +19,7 @@ class FormContents(Static):
     def __init__(self, adaptor: "TextualAdaptor", widgets: "WidgetList", focusable_: "WidgetList"):
         super().__init__()
         self.app: "TextualApp"
-        self.title = adaptor.facet._title  # TODO – rather here?
+        self.title = adaptor.facet._title  # NOTE where the title should be – rather here?
         self.widgets = widgets
         self.focusable_ = focusable_
         """ A subset of self.widgets"""

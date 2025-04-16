@@ -131,9 +131,17 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
     def confirm(self, text: str, default: bool = True):
         with StdinTTYWrapper():
             if default:
-                return self.ask(text=text + " [y]/n").lower() in ("y", "yes", "")
+                t = text + " [y]/n"
             else:
-                return self.ask(text=text + " y/[n]").lower() not in ("n", "no", "")
+                t = text + " y/[n]"
+            val = self.ask(text=t).lower()
+            if not val:
+                return bool(default)
+            if val in ("y", "yes", ""):
+                return True
+            if val in ("n", "no", ""):
+                return False
+            return self.confirm(text, default)
 
 
 class ReplInterface(TextInterface):

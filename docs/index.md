@@ -39,7 +39,9 @@ if __name__ == "__main__":
 - [Installation](#installation)
 - [Docs](#docs)
 - [Gallery](#gallery)
-- [Hello world](#hello-world)
+- [Examples](#examples)
+    * [Hello world](#hello-world)
+    * [Goodbye argparse world](#goodbye-argparse-world)
 
 ## You got CLI
 It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI/web, you receive powerful YAML-configurable CLI parsing.
@@ -89,15 +91,21 @@ with run(Env) as m:
 
 Wrapper between various libraries that provide a user interface.
 
-Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. `Mininterface` is here to help.
+Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. *Mininterface* is here to help.
 
 The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of [tyro](https://github.com/brentyi/tyro) does not require any overhead (as its `argparse` alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:
 
 * Call it as `program.py --help` to display full help.
 * Use any flag in CLI: `program.py --my-flag`  causes `env.my_flag` be set to `True`.
-* The main benefit: Launch it without parameters as `program.py` to get a full working window with all the flags ready to be edited.
+* The main benefit: Launch it without parameters as `program.py` to get a fully working window with all the flags ready to be edited.
 * Running on a remote machine? Automatic regression to the text interface.
 * Or access your program via [web browser](http://127.0.0.1:8000/Interfaces/#webinterface-or-web).
+
+## Can I use my old ArgumentParse
+
+Yes,
+
+
 
 # Installation
 
@@ -113,7 +121,7 @@ There are various bundles. We mark the bundles with GPL3 dependencies.
 
 | bundle | size | licence | description |
 | ------ | ---- | ----------- | ---- |
-| mininterface | 30 MB | LGPL | standard (GUI, TUI) |
+| *minimal* | 30 MB | LGPL | only CLI + text |
 | mininterface | 36 MB | LGPL | standard (GUI, TUI) |
 | mininterface[web] | 36 MB | | including [WebInterface](Interfaces.md#webinterface-or-web) |
 | mininterface[img] | | | images |
@@ -145,9 +153,11 @@ These projects have the code base reduced thanks to the mininterface:
 * **[deduplidog](https://github.com/CZ-NIC/deduplidog/)** – Find duplicates in a scattered directory structure
 * **[touch-timestamp](https://github.com/CZ-NIC/touch-timestamp/)** – A powerful dialog to change the files' timestamp
 
-# Hello world
+# Examples
+## Hello world
 
 Take a look at the following example.
+
 1. We define any Env class.
 2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
 3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`choice`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
@@ -226,3 +236,67 @@ usage: program.py [-h] [OPTIONS]
 │ --my-number INT        (default: 4)                                    │
 ╰────────────────────────────────────────────────────────────────────────╯
 ```
+
+## Goodbye argparse world
+
+You want to try out the Mininterface with your current [`ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser)?
+
+You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the [`run`][mininterface.run] method.
+
+```python3
+#!/usr/bin/env python3
+from argparse import ArgumentParser
+from datetime import time
+from pathlib import Path
+
+from mininterface import run
+
+parser = ArgumentParser()
+parser.add_argument("input_file", type=Path, help="Path to the input file.")
+parser.add_argument("--time", type=time, help="Given time")
+subparsers = parser.add_subparsers(dest="command", required=True)
+sub1 = subparsers.add_parser("build", help="Build something.")
+sub1.add_argument("--optimize", action="store_true", help="Enable optimizations.")
+
+m = run(parser)
+m.form()
+```
+
+Now, the help text looks much better. Try it in the terminal to see the colours.
+
+```
+$ ./program.py --help
+usage: program.py [-h] [OPTIONS] PATH
+
+╭─ positional arguments ──────────────────────────────────────────────────╮
+│ PATH                    Path to the input file. (required)              │
+╰─────────────────────────────────────────────────────────────────────────╯
+╭─ options ───────────────────────────────────────────────────────────────╮
+│ -h, --help              show this help message and exit                 │
+│ -v, --verbose           Verbosity level. Can be used twice to increase. │
+│ --time HH:MM[:SS[…]]    Given time (default: 00:00:00)                  │
+╰─────────────────────────────────────────────────────────────────────────╯
+╭─ build options ─────────────────────────────────────────────────────────╮
+│ --build.optimize, --build.no-optimize                                   │
+│                         Enable optimizations. (default: False)          │
+╰─────────────────────────────────────────────────────────────────────────╯
+```
+
+And what happens when you launch the program? First, *Mininterface* asks you to provide the missing required arguments. Note the button to raise a file picker dialog.
+
+![Positional fields](asset/argparse_required.avif)
+
+Then, a `.form()` call will create a dialog with all the fields.
+
+![Whole form](asset/argparse_form.avif)
+
+You will access the arguments through [`m.env`][mininterface.Mininterface.env]
+
+```python
+print(m.env.time)  # -> 14:21
+```
+
+If you're sure enough to start using *Mininterface*, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.
+
+!!! warning
+    Be aware that in contrast to the argparse, we create default values. This does make sense for most values and but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.

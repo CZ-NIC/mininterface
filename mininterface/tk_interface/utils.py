@@ -186,9 +186,8 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         if process_change_handler:
             tag._last_ui_val = variable.get()
             h = on_change_handler(variable, tag)
-            if select_tag:  # isinstance(w, Radiobutton):
-                variable.trace_add("write", h)  # TODO
-                # pass
+            if select_tag:
+                variable.trace_add("write", h)
             elif isinstance(widget, Combobox):
                 widget.bind("<<ComboboxSelected>>", h)
             elif isinstance(widget, (Entry, Spinbox)):

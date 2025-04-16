@@ -1,8 +1,6 @@
-from . import Tag
-
-
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from .tag import Tag, UiValue
 
 
 @dataclass(repr=False)
@@ -74,11 +72,30 @@ class DatetimeTag(Tag):
     def __post_init__(self):
         super().__post_init__()
         if self.annotation:
-            self.date = issubclass(self.annotation, date)
-            self.time = issubclass(self.annotation, time) or issubclass(self.annotation, datetime)
+            self.date = self._is_subclass(date)
+            self.time = self._is_subclass(time) or self._is_subclass(datetime)
 
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
     def _make_default_value(self):
         return datetime.now()
+
+    def update(self, ui_value: UiValue) -> bool:
+        if isinstance(ui_value, str):
+            match self.date, self.time:
+                case True, True:
+                    caster = datetime
+                case True, False:
+                    caster = date
+                case False, True:
+                    caster = time
+                case _:
+                    raise ValueError("Could not parse value %s", ui_value)
+            try:
+                ui_value = caster.fromisoformat(ui_value)
+            except ValueError:
+                # allow annotations like `time | None`
+                # Empty input will still have chance to be resolved further.
+                pass
+        return super().update(ui_value)

@@ -5,8 +5,6 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
-from .tag.select_tag import SelectTag
-
 from .exceptions import ValidationFail
 from .subcommands import Command, SubcommandPlaceholder
 from .tag.secret_tag import SecretTag

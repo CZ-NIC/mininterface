@@ -1,10 +1,11 @@
+from argparse import ArgumentParser
 import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
-from .cli_parser import assure_args, parse_cli, parse_config_file
+from .cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
 from .exceptions import Cancelled, InterfaceNotAvailable
 from .form_dict import DataClass, EnvClass
 from .interfaces import get_interface
@@ -29,7 +30,7 @@ class _Empty:
     pass
 
 
-def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
+def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | None = None,
         ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
@@ -52,6 +53,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
         env_or_list:
             * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
             * `list` of [Commands][mininterface.subcommands.Command] let you create multiple commands within a single program, each with unique options.
+            * `argparse.ArgumentParser` Not as powerful as the `dataclass` but should you need to try out whether to use the Mininterface instead of the old [`argparse`](https://docs.python.org/3/library/argparse.html), this is the way to go.
             * `None` You need just the dialogs, no CLI/config file parsing.
 
 
@@ -174,6 +176,10 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | None = None,
     if not interface:
         interface = os.environ.get("MININTERFACE_INTERFACE")
     start = Start(title, interface)
+
+    # Convert argparse
+    if isinstance(env_or_list, ArgumentParser):
+        env_or_list = parser_to_dataclass(env_or_list)
 
     # Hidden meta-commands in args
     args = assure_args(args)

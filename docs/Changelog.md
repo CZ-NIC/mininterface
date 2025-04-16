@@ -15,6 +15,7 @@
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation
+* argparse support
 
 ## 0.8.0 (2025-04-01)
 * CHANGED: [EnumTag][mininterface.tag.SelectTag] instead of Tag(options=)
