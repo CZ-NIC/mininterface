@@ -23,6 +23,8 @@ from .secret_entry import SecretEntryWrapper
 if TYPE_CHECKING:
     from mininterface.tk_interface.adaptor import TkAdaptor
 
+import os
+
 
 def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():
@@ -63,10 +65,13 @@ def ready_to_replace(widget: Widget,
 def choose_file_handler(variable: Variable, tag: PathTag):
     """Handler for file/directory selection on PathTag"""
     def _(*_):
+        initialdir = os.getcwd()
+
         # Check whether this is a directory selection
         if tag.is_dir:
             # Directory selection using askdirectory
-            selected_dir = askdirectory(title="Select Directory")
+            kwargs = {"title": "Select Directory", "initialdir": initialdir}
+            selected_dir = askdirectory(**kwargs)
             if not selected_dir:  # User cancelled
                 return
 
@@ -116,8 +121,9 @@ def choose_file_handler(variable: Variable, tag: PathTag):
                         except (SyntaxError, ValueError):
                             current_files = []
 
-                    # Select new files
-                    new_files = list(askopenfilenames(title="Select Files"))
+                    # Select new files with initial directory
+                    kwargs = {"title": "Select Files", "initialdir": initialdir}
+                    new_files = list(askopenfilenames(**kwargs))
                     if not new_files:  # User cancelled
                         return
 
@@ -129,12 +135,14 @@ def choose_file_handler(variable: Variable, tag: PathTag):
                     # Save updated list
                     variable.set(str(current_files))
                 except (SyntaxError, ValueError, TclError, TypeError):
-                    files = list(askopenfilenames(title="Select Files"))
+                    kwargs = {"title": "Select Files", "initialdir": initialdir}
+                    files = list(askopenfilenames(**kwargs))
                     if files:
                         variable.set(str(files))
             else:
                 # Single file selection
-                selected_file = askopenfilename(title="Select File")
+                kwargs = {"title": "Select File", "initialdir": initialdir}
+                selected_file = askopenfilename(**kwargs)
                 if selected_file:
                     variable.set(selected_file)
 
