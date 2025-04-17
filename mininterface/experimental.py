@@ -21,7 +21,7 @@ class SubmitButton:
             "Append now": SubmitButton()
         },
         "Duplicate": {
-            "Method": Tag("twice", choices=["twice", "thrice"]),
+            "Method": Tag("twice", options=["twice", "thrice"]),
             "Duplicate now": SubmitButton()
         }
     })

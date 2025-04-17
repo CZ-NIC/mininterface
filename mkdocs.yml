@@ -7,6 +7,8 @@ theme:
   name: "material"
   features: navigation.expand
 
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js
 plugins:
   - search
   - mermaid2
@@ -53,9 +55,16 @@ nav:
       - Tag.md
       - Facet.md
       - Subcommands.md
-      - Types.md
+      - Custom types:
+          - CallbackTag.md
+          - DatetimeTag.md
+          - PathTag.md
+          - SecretTag.md
+          - SelectTag.md
+          - Tag-aliases.md
+          - Prepared-annotations.md
   - Extras:
-      - Options.md
+      - Settings.md
       - Exceptions.md
       - Interfaces.md
       - Standalone.md

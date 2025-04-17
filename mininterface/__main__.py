@@ -1,21 +1,32 @@
-import sys
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+import importlib
+from typing import Literal, Optional, TypeVar
 
-from tyro.conf import FlagConversionOff
+from . import run
+from .showcase import showcase
 
-from . import Mininterface, run
-from .exceptions import DependencyRequired
-from .showcase import ChosenInterface, showcase
+from typing import get_args, get_origin, Optional, Union, List, Dict
 
 __doc__ = """Simple GUI/TUI dialog. Outputs the value the user entered. See the full docs at: https://cz-nic.github.io/mininterface/"""
+
+TYPE_MAP = ({
+    "int": int,
+    "str": str,
+    "float": float,
+})
+
+
+def resolve_type(type_str: str):
+    try:
+        return TYPE_MAP[type_str]
+    except KeyError:
+        print(f"Unknown type {type_str}")
+        quit()
 
 
 @dataclass
 class Web:
-    """Launch a miniterface program, while the TextualInterface will be exposed to the web.
-
-    NOTE Experimenal undocumented feature. """
+    """Launch a miniterface program, while the TextualInterface will be exposed to the web. """
 
     cmd: str = ""
     """Path to a program, using mininterface."""
@@ -31,19 +42,23 @@ class CliInteface:
     web: Web
     alert: str = ""
     """ Display the OK dialog with text. """
-    ask: str = ""
-    """ Prompt the user to input a text.  """
-    ask_number: str = ""
-    """ Prompt the user to input a number. Empty input = 0. """
-    is_yes: str = ""
+    ask: str | tuple[str, str] = ""
+    """ Prompt the user to input a value.
+    By default, we input a str, by the second parameter, you can infer a type,
+    ex. `mininterface --ask 'My heading' int`
+    """
+    confirm: str = ""
     """ Display confirm box, focusing 'yes'. """
-    is_no: str = ""
+    confirm_default_no: str = ""
     """ Display confirm box, focusing 'no'. """
     choice: list = field(default_factory=list)
     """ Prompt the user to select. """
 
-    showcase: Optional[tuple[ChosenInterface, Showcase]] = None
-    """ Prints various form just to show what's possible."""
+    showcase: Optional[Showcase] = None
+    """ Prints various form just to show what's possible.
+    Choose the interface by MININTERFACE_INTERFACE=...
+    Ex. MININTERFACE_INTERFACE=tui mininterface --showcase 2
+    """
 
 
 def web(env: Web):
@@ -59,7 +74,18 @@ def main():
         for method, label in vars(m.env).items():
             if method in ["web", "showcase"]:  # processed later
                 continue
-            if label:
+            if method == "ask" and label:
+                if isinstance(label, tuple):
+                    arg, type_ = label[0], resolve_type(label[1])
+                    if not type_:
+                        print(f"Unknown type {type_}")
+                        quit()
+                    result.append(m.ask(arg, type_))
+                else:
+                    m.ask(label)
+            elif method == "confirm_default_no" and label:
+                result.append(m.confirm(label, False))
+            elif label:
                 result.append(getattr(m, method)(label))
 
     # Displays each result on a new line. Currently, this is an undocumented feature.
@@ -70,7 +96,7 @@ def main():
     if m.env.web.cmd:
         web(m.env.web)
     if m.env.showcase:
-        showcase(*m.env.showcase)
+        showcase(m.env.showcase)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from ..exceptions import ValidationFail
 from ..facet import Facet
 from ..form_dict import TagDict
-from ..options import UiOptions
+from ..settings import UiSettings
 from ..tag import Tag
 
 
@@ -19,12 +19,12 @@ class BackendAdaptor(ABC):
     facet: Facet
     post_submit_action: Optional[Callable] = None
     interface: "Mininterface"
-    options: UiOptions
+    settings: UiSettings
 
-    def __init__(self, interface: "Mininterface", options: UiOptions | None):
+    def __init__(self, interface: "Mininterface", settings: UiSettings | None):
         self.interface = interface
         self.facet = interface.facet = self.__annotations__["facet"](self, interface.env)
-        self.options = options or self.__annotations__["options"]()
+        self.settings = settings or self.__annotations__["settings"]()
 
     @abstractmethod
     def widgetize(self, tag: Tag):
@@ -50,7 +50,7 @@ class BackendAdaptor(ABC):
 
 class MinAdaptor(BackendAdaptor):
     facet: Facet
-    options: UiOptions
+    settings: UiSettings
 
     def widgetize(self, tag: Tag):
         pass

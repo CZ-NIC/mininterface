@@ -2,14 +2,17 @@ import warnings
 
 from simple_term_menu import TerminalMenu
 
+from ..tag.select_tag import SelectTag
+
+from ..auxiliary import flatten
 from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface import Tag
 from ..mininterface.adaptor import BackendAdaptor
-from ..options import TextOptions
-from ..types.internal import (BoolWidget, CallbackButtonWidget,
-                              SubmitButtonWidget)
-from ..types.rich_tags import EnumTag, SecretTag
+from ..settings import TextSettings
+from ..tag.internal import (BoolWidget, CallbackButtonWidget,
+                            SubmitButtonWidget)
+from ..tag.secret_tag import SecretTag
 from .facet import TextFacet
 
 
@@ -20,11 +23,10 @@ class Submit(StopIteration):
 class TextAdaptor(BackendAdaptor):
 
     facet: TextFacet
-    options: TextOptions
+    settings: TextSettings
 
     def widgetize(self, tag: Tag, only_label=False):
         """ Represent Tag in a text form """
-        # NOTE some field does not return description
 
         if not only_label:
             label = tag.name
@@ -35,39 +37,46 @@ class TextAdaptor(BackendAdaptor):
 
         v = tag._get_ui_val()
 
-        match tag._recommend_widget():
+        match tag:
             # NOTE: PathTag, DatetimeTag not implemented
-            case BoolWidget():
-                return ("✓" if v else "×") if only_label else self.interface.is_yes(tag.name)
-            case EnumTag():
-                choices = [k for k, *_ in tag._get_choices()]
-                if only_label:
-                    return tag.val or f"({len(choices)} options)"
+            case SelectTag():
+                options, values = zip(*((label + (" <--" if tip else " "), v)
+                                        for label, v, tip, _ in tag._get_options(delim=" - ")))
+                if tag.multiple:
+                    if only_label:
+                        return tag._get_selected_keys() or f"({len(options)} options)"
+                    else:
+                        return [values[i] for i in self._choose(options, title=tag.name, multiple=True)]
                 else:
-                    return choices[self._choose(choices, title=tag.name)]
+                    if only_label:
+                        return tag._get_selected_key() or f"({len(options)} options)"
+                    else:
+                        return values[self._choose(options, title=tag.name)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)
-            case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
-                if only_label:
-                    return "(submit button)"
-                else:
-                    tag.update(True)
-                    tag.facet.submit()
-                    raise Submit
-            case CallbackButtonWidget():  # Replace with a callback button
-                if only_label:
-                    return "(submit)"
-                else:
-                    tag.facet.submit(_post_submit=tag._run_callable)
-                    raise Submit
             case _:
-                if only_label:
-                    return v
-                elif tag._is_subclass((int, float)):
-                    return self.interface.ask_number(label)
-                else:
-                    return self.interface.ask(label)
+                match tag._recommend_widget():
+                    case BoolWidget():
+                        return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
+                    case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
+                        if only_label:
+                            return "(submit button)"
+                        else:
+                            tag.update(True)
+                            tag.facet.submit()
+                            raise Submit
+                    case CallbackButtonWidget():  # Replace with a callback button
+                        if only_label:
+                            return "(submit)"
+                        else:
+                            tag.facet.submit(_post_submit=tag._run_callable)
+                            raise Submit
+                    case _:
+                        if only_label:
+                            return v
+                        else:
+                            return self.interface.ask(label, tag.annotation)
 
     def _get_tag_val(self, val: Tag | dict):
         match val:
@@ -88,7 +97,7 @@ class TextAdaptor(BackendAdaptor):
                 self._run_dialog(form, title, submit)
             except Submit:
                 pass
-            if not self.submit_done():
+            if not Tag._submit_values((tag, tag.val) for tag in flatten(form)) or not self.submit_done():
                 continue
             break
         return form
@@ -103,45 +112,48 @@ class TextAdaptor(BackendAdaptor):
             if single:
                 key = next(iter(form))
             else:
-                try:
-                    index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
-                                         val in form.items()], append_ok=True)
-                except Cancelled:
-                    break
+                index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
+                                      val in form.items()], append_ok=True)
                 key = list(form)[index]
             match form[key]:
                 case dict() as submenu:
                     try:
                         self._run_dialog(submenu, key, submit)
                     except (KeyboardInterrupt, Cancelled):
-                        continue
+                        break
                 case Tag() as tag:
                     while True:
                         try:
-                            if tag.update(self.widgetize(tag)):
+                            ui_val = self.widgetize(tag)
+                            tag._on_change_trigger(ui_val)
+                            if tag.update(ui_val):
                                 break
-                        except KeyboardInterrupt:
-                            print()
-                            break
+                        except (KeyboardInterrupt, Cancelled):
+                            # print("TODO, brek")
+                            # import ipdb
+                            # ipdb.set_trace()  # TODO
+                            # break
+                            raise
                 case _:
                     warnings.warn(f"Unsupported item {key}")
             if single:
                 break
         return form
 
-    def _choose(self, items: list, title=None, append_ok=False) -> int:
+    def _choose(self, items: list, title=None, append_ok=False, multiple: bool = False) -> int | tuple[int]:
         it = items
-        if len(items) < 10:
-            it = [f"[{i+1}] {item}" for i, item in enumerate(items)]
-            kwargs = {}
-        else:
-            kwargs = {"show_search_hint": True}
+        kwargs = {}
+        if not multiple:
+            if len(items) < 10:
+                it = [f"[{i+1}] {item}" for i, item in enumerate(items)]
+            else:
+                kwargs = {"show_search_hint": True}
 
         if append_ok:
             it = ["ok"] + it
         while True:
             try:
-                menu = TerminalMenu(it, title=title, **kwargs)
+                menu = TerminalMenu(it, title=title, multi_select=multiple, **kwargs)
                 index = menu.show()
                 break
             except ValueError:
@@ -151,8 +163,17 @@ class TextAdaptor(BackendAdaptor):
                 pass
         if index is None:
             raise Cancelled
-        if append_ok:
-            if index == 0:
-                raise Cancelled
-            index -= 1
+
+        if multiple:
+            index: tuple[int]
+            if append_ok:
+                if 0 in index:
+                    raise Submit
+                index = tuple(i-1 for i in index)
+        else:
+            index: int
+            if append_ok:
+                if index == 0:
+                    raise Submit
+                index -= 1
         return index

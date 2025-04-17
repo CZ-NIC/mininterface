@@ -5,13 +5,15 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
+from .tag.select_tag import SelectTag
+
 from .exceptions import ValidationFail
 from .subcommands import Command, SubcommandPlaceholder
-from .types.rich_tags import SecretTag, EnumTag
+from .tag.secret_tag import SecretTag
 
-from . import run, Choices
+from . import run, Options
 from .interfaces import InterfaceName
-from .types.alias import Validation
+from .tag.alias import Validation
 from .validators import not_empty
 
 
@@ -82,14 +84,12 @@ class Env:
     my_time: datetime = datetime.now()
     """ Nice date handling """
 
-    my_choice: Annotated[str, Choices("one", "two", "three")] = "two"
+    my_choice: Annotated[str, Options("one", "two", "three")] = "two"
     """ Choose between values """
 
 
-def showcase(interface: ChosenInterface, case: int):
-    if interface == "all":
-        interface = None
-    kw = {"args": [], "interface": interface}
+def showcase(case: int):
+    kw = {"args": []}
     if case == 1:
         m = run(Env, title="My program", **kw)
         m.form()

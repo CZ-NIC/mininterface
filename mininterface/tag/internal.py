@@ -1,3 +1,6 @@
+from typing import Any, TypeVar
+
+
 RecommendedWidget = type('BoolWidget', (), {})
 BoolWidget = type('BoolWidget', (RecommendedWidget,), {})
 CallbackButtonWidget = type('CallableWidget', (RecommendedWidget,), {})

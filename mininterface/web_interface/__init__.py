@@ -8,7 +8,7 @@ from ..mininterface.adaptor import MinAdaptor
 
 from ..form_dict import EnvClass
 
-from ..options import UiOptions
+from ..settings import UiSettings
 
 from ..textual_interface import TextualInterface
 from .child_adaptor import SerializedChildAdaptor
@@ -30,15 +30,15 @@ class WebInterface(TextualInterface):
 
     def __init__(self,
                  title: str = "",
-                 options: Optional[UiOptions] = None,
+                 settings: Optional[UiSettings] = None,
                  _env: EnvClass | SimpleNamespace | None = None,
                  cmd: Optional[str] = None, port=64646, **kwargs):
         # TODO
-        # * Yes/no/alert support (ButtonApp).
         # * lambda, print, on_change, layout, SubmitTrue support
-        # * ex. validation does not work
         # * Docs image.
         # * Port should be set from a config file too.
+        # * DONE Yes/no/alert support (ButtonApp).
+        # * DONE ex. validation does not work
 
         # This is a nifty solution.
         # Common use of textual application is that everything is wrapped inside, the textual library is used
@@ -62,17 +62,15 @@ class WebInterface(TextualInterface):
         #     m.form({"hello": 1})  # the app ends here
         #     m.form({"hello": 2})  # we never get here
 
-        super().__init__(title, options, _env, need_atty=False, **kwargs)
+        super().__init__(title, settings, _env, need_atty=False, **kwargs)
         match os.environ.get("MININTERFACE_ENFORCED_WEB"):
             case '_web-child-serialized':
-                self._adaptor = SerializedChildAdaptor(self, options)
+                self._adaptor = SerializedChildAdaptor(self, settings)
                 return
             case '_web-parent':
                 envir = os.environ.copy()
                 envir["MININTERFACE_ENFORCED_WEB"] = '_web-child-serialized'
-                self._adaptor = WebParentAdaptor(self, options, environ=envir)
-                self._adaptor.app = self.app = app = WebParentApp(self._adaptor, submit=True)
-                app.run()
+                self._adaptor = WebParentAdaptor(self, settings, environ=envir)
                 self._adaptor.disconnect()
                 quit()
             case _:

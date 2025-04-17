@@ -2,13 +2,13 @@ import logging
 from dataclasses import is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Optional, Type, TypeVar, overload
 
-from ..types.rich_tags import EnumTag
+from ..tag.select_tag import OptionsType, SelectTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
 
-from ..options import MininterfaceOptions, UiOptions
+from ..settings import MininterfaceSettings, UiSettings
 
 from ..exceptions import Cancelled
 
@@ -17,7 +17,7 @@ from ..subcommands import Command
 from ..facet import Facet
 from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                          dict_to_tagdict, formdict_resolve)
-from ..tag import ChoicesType, Tag, TagValue
+from ..tag.tag import Tag, TagValue
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -55,7 +55,7 @@ class Mininterface(Generic[EnvClass]):
 
     def __init__(self,
                  title: str = "",
-                 options: Optional[UiOptions] = None,
+                 settings: Optional[UiSettings] = None,
                  _env: EnvClass | SimpleNamespace | None = None
                  ):
         self.title = title or "Mininterface"
@@ -89,7 +89,7 @@ class Mininterface(Generic[EnvClass]):
 
         """
 
-        self._adaptor = self.__annotations__["_adaptor"](self, options)
+        self._adaptor = self.__annotations__["_adaptor"](self, settings)
 
         if isinstance(self.env, Command):
             self.env.run()
@@ -122,7 +122,7 @@ class Mininterface(Generic[EnvClass]):
         ```python3
         # $ ./program.py
         with run() as m:
-            m.ask_number("What number")
+            m.ask("What number", int)
         ```
 
         ![Asking number](asset/ask-number.avif)
@@ -134,7 +134,7 @@ class Mininterface(Generic[EnvClass]):
         piped_in = int(sys.stdin.read())
 
         with run(interface="tui") as m:
-            result = m.ask_number("What number") + piped_in
+            result = m.ask("What number", int) + piped_in
         print(result)
         ```
 
@@ -151,7 +151,7 @@ class Mininterface(Generic[EnvClass]):
         piped_in = int(sys.stdin.read())
 
         m = run(interface="tui")
-        result = m.ask_number("What number") + piped_in
+        result = m.ask("What number", int) + piped_in
         print(result)
         ```
 
@@ -171,100 +171,142 @@ class Mininterface(Generic[EnvClass]):
         print("Alert text", text)
         return
 
-    def ask(self, text: str) -> str:
-        """ Prompt the user to input a text. """
-        print("Asking:", text)
-        return ""
+    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
+        """ Prompt the user to input a value – text, number, ...
 
-    def ask_number(self, text: str) -> int:
-        """ Prompt the user to input a number. Empty input = 0.
 
         ```python
         m = run()  # receives a Mininterface object
-        m.ask_number("What's your age?")
+        m.ask("What's your age?", int)
         ```
 
         ![Ask number dialog](asset/standalone_number.avif)
 
         Args:
             text: The question text.
+            annotation: The return type.
 
         Returns:
-            Number
+            The type from the `annotation`.For str = '', for int = 0, ...
+        """
+        # NOTE Add validation: Callable | None = None. But what should be the callable parameter, tag, or the value?
+
+        if annotation is int:
+            print("Asking number:", text)
+        else:
+            print("Asking:", text)
+        return annotation()
+
+    def confirm(self, text: str, default: bool = True) -> bool:
+        """ Display confirm box and returns bool.
+
+        ```python
+        m = run()
+        print(m.confirm("Is that alright?"))  # True/False
+        ```
+
+        ![Is yes window](asset/is_yes.avif "A prompted dialog")
+
+        Args:
+            text: Displayed text.
+            default: Focused button.
+
+        Returns:
+            bool: Whether the user has chosen the Yes button.
 
         """
-        print("Asking number:", text)
-        return 0
+        # NOTE cancel=False parameter to add a cancel button
+        print(f"Asking {'yes' if default else 'no'}:", text)
+        return True
 
-    def choice(self, choices: ChoicesType,
+    @overload
+    def select(self, options: list[TagValue], multiple: Literal[True], **kwargs) -> list[TagValue]: ...
+
+    @overload
+    def select(self, options: list[TagValue], multiple: Literal[False], **kwargs) -> TagValue: ...
+
+    @overload
+    def select(self, options: list[TagValue], default: list[TagValue],  **kwargs) -> list[TagValue]: ...
+
+    @overload
+    def select(self, options: list[TagValue], default: TagValue,  **kwargs) -> TagValue: ...
+
+    @overload
+    def select(self, options: list[TagValue], **kwargs) -> TagValue: ...
+
+    def select(self, options: OptionsType,
                title: str = "",
-               default: str | TagValue | None = None,
-               tips: ChoicesType | None = None,
-               _multiple=False,
+               default: str | TagValue | list[str] | list[TagValue] | None = None,
+               tips: OptionsType | None = None,
+               multiple: Optional[bool] = None,
                skippable: bool = True,
                launch: bool = True
                ) -> TagValue | list[TagValue] | Any:
         """ Prompt the user to select. Useful for a menu creation.
 
         Args:
-            choices:
-                You can denote the choices in many ways. Either put options in an iterable, or to a dict with keys as labels.
-                You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
-                See the [`ChoicesType`][mininterface.tag.ChoicesType] for more details.
+            options:
+                You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as labels.
+                You can also use tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
+                See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
             title: Form title
             default: The value of the checked choice.
 
                 ```python
-                m.choice({"one": 1, "two": 2}, default=2)  # returns 2
+                m.select({"one": 1, "two": 2}, default=2)  # returns 2
                 ```
                 ![Default choice](asset/choices_default.avif)
 
-            tips: Choices to be highlighted. Use the list of choice values to denote which one the user might prefer.
+                If the list is given, this imply multiple choice.
+            tips: Options to be highlighted. Use the list of choice values to denote which one the user might prefer.
+            multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
             launch: If the chosen value is a callback, we directly call it and return its return value.
 
         Returns:
-            The chosen value.
-            If launch=True and the chosen value is a callback, we call it and return its result.
+            TagValue: The chosen value.
+            list: If multiple=True, return chosen values.
+            Any: If launch=True and the chosen value is a callback, we call it and return its result.
 
         !!! info
-            To tackle a more detailed form, see [`EnumTag.choices`][mininterface.types.EnumTag.choices].
+            To tackle a more detailed form, see [`SelectTag.options`][mininterface.tag.SelectTag.options].
         """
         # NOTE to build a nice menu, I need this
         # Args:
-        # multiple: Multiple choice.
-        # Returns: If multiple=True, list of the chosen values.
-        #
-        # * Check: When inputing choices as Tags, make sure the original Tag.val changes too.
+        # * Check: When inputing options as Tags, make sure the original Tag.val changes too.
         #
         # NOTE UserWarning: GuiInterface: Cannot tackle the form, unknown winfo_manager .
         #   (possibly because the lambda hides a part of GUI)
         # m = run(Env)
-        # tag = Tag(x, choices=["one", "two", x])
-        if skippable and isinstance(choices, Enum):  # Enum instance, ex: val=ColorEnum.RED
-            default = choices
-            choices = choices.__class__
+        # tag = Tag(x, options=["one", "two", x])
+        if isinstance(default, list):
+            multiple = True
 
-        if skippable and len(choices) == 1:  # Directly choose the answer
-            if isinstance(choices, type) and issubclass(choices, Enum):  # Enum type, ex: val=ColorEnum
-                out = list(choices)[0]
-            elif isinstance(choices, dict):
-                out = next(iter(choices.values()))
+        if skippable and isinstance(options, Enum):  # Enum instance, ex: val=ColorEnum.RED
+            default = options
+            options = options.__class__
+
+        if skippable and len(options) == 1:  # Directly choose the answer
+            if isinstance(options, type) and issubclass(options, Enum):  # Enum type, ex: val=ColorEnum
+                out = list(options)[0]
+            elif isinstance(options, dict):
+                out = next(iter(options.values()))
             else:
-                out = choices[0]
-            tag = Tag(out)
+                out = options[0]
+            tag = Tag([out] if multiple else out)
         else:  # Trigger the dialog
-            tag = EnumTag(val=default, choices=choices, tips=tips)
+            tag = SelectTag(val=default, options=options, tips=tips, multiple=multiple)
             key = title or "Choose"
             self.form({key: tag})[key]
 
         if launch:
-            if tag._is_a_callable():
+            if tag._is_a_callable():  # NOTE this does not work for multiple choice
                 return tag._run_callable()
             if isinstance(tag.val, Tag) and tag.val._is_a_callable():
-                # Nested Tag: `m.choice([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
+                # Nested Tag: `m.select([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
                 return tag.val._run_callable()
         return tag.val
+    # NOTE possibility to un/check all (shortcut)
 
     @overload
     def form(self, form: None = None, title: str = "") -> EnvClass: ...
@@ -395,19 +437,8 @@ class Mininterface(Generic[EnvClass]):
         raise ValueError(f"Unknown form input {_form}")
 
     def is_yes(self, text: str) -> bool:
-        """ Display confirm box, focusing yes.
-
-        ```python
-        m = run()
-        print(m.is_yes("Is that alright?"))  # True/False
-        ```
-
-        ![Is yes window](asset/is_yes.avif "A prompted dialog")
-        """
-        print("Asking yes:", text)
-        return True
+        raise NotImplementedError("Method `is_yes` removed. Use `.confirm(text)` instead.")
 
     def is_no(self, text: str) -> bool:
-        """ Display confirm box, focusing no. """
-        print("Asking no:", text)
-        return False
+        raise NotImplementedError(
+            "Method `is_no` removed as it was counterintuitive. Use `.confirm(text, False)` instead.")

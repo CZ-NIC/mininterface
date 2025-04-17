@@ -1,18 +1,19 @@
-from typing import Optional
+import sys
+from typing import TYPE_CHECKING, Optional
 from textual import events
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Input, RadioSet
-from textual.binding import Binding
-from textual.containers import Horizontal
-from textual.app import ComposeResult
-
-from ..types.rich_tags import SecretTag, EnumTag
-
-from ..tag import Tag, TagValue
+from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, SelectionList
 
 
-class Changeable:
-    """ Widget that can implement on_change method. """
+from ..tag.tag import Tag, TagValue
+
+
+class TagWidget:
+    """ Widget that has a tag inside, this can implement on_change method etc. """
+    # Since every TagWidget has two parent, continue from the constructor to the other brach via `super`.
+    # For an unknown reason, the TagWidget cannot inherit directly from Widget, as
+    # `MyInput(TagWidget, Input)` would not work would continue here directly to `Widget`, skipping the `Input`.
+    # MRO seems fine but instead of the Input, a mere text is shown.
 
     tag: Tag
     _arbitrary: Optional[Widget] = None
@@ -23,22 +24,16 @@ class Changeable:
         super().__init__(*args, **kwargs)
 
     def trigger_change(self):
-        if tag := self.tag:
-            tag._on_change_trigger(self.get_ui_value())
+        self.tag._on_change_trigger(self.get_ui_value())
 
     def get_ui_value(self):
-        if isinstance(self, RadioSet):
-            if self.pressed_button:
-                return str(self.pressed_button.label)
-            else:
-                return None
-        elif isinstance(self, Button):
+        if isinstance(self, Button):  # NOTE: I suspect this is not used as Button already implement get_ui_value
             return None
         else:
             return self.value
 
 
-class ChangeableWithInput(Changeable):
+class TagWidgetWithInput(TagWidget):
     """Base class for widgets that contain an input element"""
 
     def __init__(self, tag: Tag, *args, **kwargs):
@@ -53,33 +48,61 @@ class ChangeableWithInput(Changeable):
         self.input.focus()
 
 
-class MyInput(Changeable, Input):
+class MyInput(TagWidget, Input):
 
     async def on_blur(self):
         return self.trigger_change()
 
 
-class MyCheckbox(Changeable, Checkbox):
+class MyCheckbox(TagWidget, Checkbox):
     def on_checkbox_changed(self):
         return self.trigger_change()
 
 
-class MyRadioSet(Changeable, RadioSet):
+class MyRadioButton(RadioButton):
+    def __init__(self, ref_ui,  *args, **kwargs):
+        self.ref_ui = ref_ui
+        super().__init__(*args, **kwargs)
+
+
+class MyRadioSet(TagWidget, RadioSet):
     def on_radio_set_changed(self):
         return self.trigger_change()
 
     def on_key(self, event: events.Key) -> None:
+        # if event.key == "down":
+        #     return False
         if event.key == "enter":
             # If the radio button is not selected, select it and prevent default
             # (which is form submittion).
             # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
-                event.stop()
                 self.action_toggle_button()
+                # TODO: If it is the only tag, we submit the form. But this should be implemented at the Tag level.
+                if len(self.tag.facet._form) > 1 or self.tag is not next(iter(self.tag.facet._form.values())):
+                    event.stop()
+
+    def get_ui_value(self):
+        if self.pressed_button:
+            self.pressed_button: MyRadioButton
+            return self.pressed_button.ref_ui
+        else:
+            return None
 
 
-class MyButton(Changeable, Button):
+class MySelectionList(TagWidget, SelectionList):
+    def on_selection_changed(self):
+        return self.trigger_change()
+
+    def get_ui_value(self):
+        return self.selected
+
+
+class MyButton(TagWidget, Button):
     _val: TagValue
+
+    def __init__(self, tag, *args, **kwargs):
+        super().__init__(tag, tag.name, *args, **kwargs)
 
     def on_button_pressed(self, event):
         self.tag.facet.submit(_post_submit=self.tag._run_callable)
@@ -89,66 +112,14 @@ class MyButton(Changeable, Button):
 
 
 class MySubmitButton(MyButton):
+    def __init__(self, *args, **kwargs):
+        self._val = None
+        super().__init__(*args, **kwargs)
 
     def on_button_pressed(self, event):
         event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
         self.tag.facet.submit()
 
-
-class MySecretInput(ChangeableWithInput, Horizontal):
-    """A custom widget that combines an input field with a visibility toggle button."""
-
-    BINDINGS = [Binding("ctrl+t", "toggle_visibility", "Toggle visibility")]
-
-    DEFAULT_CSS = """
-    MySecretInput {
-        layout: horizontal;
-        height: auto;
-        width: 100%;
-    }
-
-    MySecretInput Input {
-        width: 80%;
-        margin: 1;
-    }
-
-    MySecretInput Button {
-        width: 20%;
-        margin: 1;
-        background: $accent;
-        color: $text;
-    }
-    """
-
-    def __init__(self, tag: SecretTag, **kwargs):
-        super().__init__(tag)
-
-        initial_value = tag._get_ui_val()
-        self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""), password=tag._masked)
-        self.button = Button("👁", variant="primary", id="toggle_visibility")
-
-    def compose(self) -> ComposeResult:
-        """Compose the widget layout."""
-        yield self.input
-        yield self.button
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press event."""
-        if event.button.id == "toggle_visibility":
-            self.action_toggle_visibility()
-
-    def action_toggle_visibility(self):
-        """Toggle password visibility.
-
-        This action method is called when:
-        1. User presses the visibility toggle button
-        2. User presses Ctrl+T keyboard shortcut
-        """
-        is_masked = self.tag.toggle_visibility()
-        self.input.password = is_masked
-        self.button.label = "🙈" if is_masked else "👁"
-
     def get_ui_value(self):
-        """Get the current value of the input field."""
-        return self.input.value
+        return self._val  # TODO use self.value instead?

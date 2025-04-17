@@ -3,22 +3,24 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, Type, TypeVar, Union, get_args, get_origin
+from typing import (TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar,
+                    Union, get_args, get_origin)
 from warnings import warn
 
-from .types.internal import BoolWidget, CallbackButtonWidget,  FacetButtonWidget, RecommendedWidget, SubmitButtonWidget
-
+from ..auxiliary import (common_iterables, flatten, guess_type,
+                         matches_annotation, serialize_structure,
+                         subclass_matches_annotation)
+from ..experimental import FacetCallback, SubmitButton
+from .internal import (BoolWidget, CallbackButtonWidget, FacetButtonWidget,
+                       RecommendedWidget, SubmitButtonWidget)
 from .type_stubs import TagCallback
 
-from .experimental import FacetCallback, SubmitButton
-
-
-from .auxiliary import common_iterables, flatten, guess_type, matches_annotation, serialize_structure, subclass_matches_annotation
-
 if TYPE_CHECKING:
-    from .facet import Facet
-    from .form_dict import TagDict
-    from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from typing import \
+        Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+
+    from ..facet import Facet
+    from ..form_dict import TagDict
 else:
     # NOTE this is needed for tyro dataclass serialization (which still does not work
     # as Tag is not a frozen object, you cannot use it as an annotation)
@@ -40,7 +42,7 @@ except ImportError:
 
 
 UiValue = TypeVar("UiValue")
-""" Candidate for the TagValue. """
+""" Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str."""
 TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
@@ -54,94 +56,6 @@ ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
-ChoiceLabel = str
-RichChoiceLabel = ChoiceLabel | tuple[ChoiceLabel]
-ChoicesType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichChoiceLabel,
-                                                                      TagValue] | list[Enum] | Type[Enum]
-""" You can denote the choices in many ways.
-Either put options in an iterable or to a dict `{labels: value}`.
-Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(ChoicesType)` to illustrate the examples.
-
-## Iterables like list
-
-Either put options in an iterable:
-
-```python
-from mininterface import run
-m = run()
-m.choice([1, 2])
-```
-
-![Choices as a list](asset/choices_list.avif)
-
-## Dict for labels
-
-Or to a dict `{name: value}`. Then name are used as labels.
-
-```python
-m.choice({"one": 1, "two": 2})  # returns 1
-```
-
-## Dict with tuples for table
-
-If you use tuple as the keys, they will be joined into a table.
-
-```python
-m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
-```
-
-![Table like](asset/choice_table_span.avif)
-
-## Tags for labels
-
-Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
-
-```python
-m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
-```
-
-![Choices with labels](asset/choices_labels.avif)
-
-## Enums
-
-Alternatively, you may use an Enum.
-
-```python
-class Color(Enum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-
-m.choice(Color)
-```
-
-![Choices from enum](asset/choice_enum_type.avif)
-
-Alternatively, you may use an Enum instance. (Which means the default value is already selected.)
-
-```python
-class Color(Enum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-
-m.choice(Color.BLUE)
-```
-
-![Choices from enum](asset/choice_enum_instance.avif)
-
-Alternatively, you may use an Enum instances list.
-
-```python
-m.choice([Color.GREEN, Color.BLUE])
-```
-
-![Choices from enum list](asset/choice_enum_list.avif)
-
-## Further examples
-
-See [mininterface.choice][mininterface.Mininterface.choice] or [`EnumTag.choices`][mininterface.types.EnumTag.choices] for further usage.
-"""
 
 
 class MissingTagValue:
@@ -195,8 +109,6 @@ class Tag:
     """ Used for validation (ex. to convert an empty string to None).
         If not set, will be determined automatically from the [val][mininterface.Tag.val] type.
     """
-    name: str | None = None
-    """ Name displayed in the UI. """
 
     validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
                                                            TagValue]] | None = None
@@ -236,6 +148,9 @@ class Tag:
     NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
     """
 
+    name: str | None = None
+    """ Name displayed in the UI. """
+
     on_change: Callable[["Tag"], Any] | None = None
     """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
     The callback runs while the dialog is still running.
@@ -245,7 +160,7 @@ class Tag:
 
     ```python
     from mininterface import run
-    from mininterface.types import EnumTag
+    from mininterface.tag import SelectTag
 
     def callback(tag: Tag):
         tag.facet.set_title(f"Value changed to {tag.val}")
@@ -253,7 +168,7 @@ class Tag:
     m = run()
     m.facet.set_title("Click the checkbox")
     m.form({
-        "My choice": EnumTag(choices=["one", "two"], on_change=callback)
+        "My choice": SelectTag(options=["one", "two"], on_change=callback)
     })
     ```
 
@@ -319,6 +234,8 @@ class Tag:
     _original_desc: Optional[str] = None
     _original_name: Optional[str] = None
     _last_ui_val: TagValue = None
+    """ This is the value as was in the current UI. Used by on_change_trigger
+        to determine whether the UI value changed. """
 
     def __post_init__(self):
         """ Determine annotation and fetch other information. """
@@ -345,7 +262,7 @@ class Tag:
             if isinstance(self.val, Enum) or (isinstance(self.val, type) and issubclass(self.val, Enum)):
                 self.annotation = Enum
             else:
-                # When having choices with None default self.val, this would impose self.val be of a NoneType,
+                # When having options with None default self.val, this would impose self.val be of a NoneType,
                 # preventing it to set a value.
                 # Why checking self.val is not None? We do not want to end up with
                 # annotated as a NoneType.
@@ -369,7 +286,6 @@ class Tag:
         self._original_name = self.name
         self.original_val = self.val
         self._last_ui_val = None
-        """ This is the value as was in the current UI. Used by on_change. """
 
     def __repr__(self):
         field_strings = []
@@ -403,7 +319,7 @@ class Tag:
         """ Fetches attributes from another instance.
         (Skips the attributes that are already set.)
         """
-        # TODO what about children? Like 'choices' is not fetched from.
+        # TODO what about children? Like 'options' is not fetched from.
         for attr in ('val', 'annotation', 'name', 'validation', 'on_change', "facet",
                      "_src_obj", "_src_key", "_src_class",
                      "_original_desc", "_original_name", "original_val"):
@@ -417,14 +333,14 @@ class Tag:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["facet"] = None  # TODO WebUi rather than deleting facet, try removing StdIO from it.
+        state["facet"] = None  # NOTE WebUi rather than deleting facet, try removing StdIO from it.
         state["_src_dict"] = None
         state["_src_obj"] = None
         state["_src_class"] = None
         return state
 
     def __setstate__(self, state):
-        # TODO check with WebUI.
+        # NOTE check with WebUI. If not needed, remove.
         self.__dict__.update(state)
         self._update_source(self.val)
 
@@ -450,16 +366,14 @@ class Tag:
 
     def _recommend_widget(self) -> RecommendedWidget | type["Self"] | None:
         """ Recommend a widget type.
-        Gives the information how the tag might be handled.
-        These are the types the interface should implement.
-        Returning None means the type is scalar or unknown (like mixed) and thus might default to str handling.
+        The tag should be handled this way:
+        1. according to the inheritace (Tag children like PathTag)
+        2. according to the result of this method
+        3. Returning None means the type is scalar or unknown (like mixed) and thus might default to str handling.
         """
         v = self._get_ui_val()
-        if self.annotation is bool or not self.annotation and (v is True or v is False):
+        if self.annotation is bool:
             return BoolWidget()
-        elif type(self) is not Tag:
-            # SecretTag, PathTag, DatetimeTag
-            return self
         elif self.annotation is SubmitButton:  # NOTE EXPERIMENTAL
             return SubmitButtonWidget()
         elif self._is_a_callable():
@@ -571,11 +485,8 @@ class Tag:
             self._src_obj.append(src)
 
     def set_error_text(self, s):
-        self._original_desc = o = self.description
-        self._original_name = n = self.name
-
-        self.description = f"{s} {o}"
-        if self.name:
+        self.description = f"{s} {self._original_desc}"
+        if n := self._original_name:
             # Why checking self.name?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
             self.name = f"* {n}"
@@ -619,7 +530,7 @@ class Tag:
             return self.annotation()
 
     def _get_ui_val(self):
-        """ Get values as suitable for UI.
+        """ Get values as suitable for UI. Adaptor should not read the value directly.
         Some values are not expected to be parsed by any UI.
         But we will reconstruct them in self.update later.
 
@@ -643,17 +554,7 @@ class Tag:
                 continue
         return self.val
 
-    @classmethod
-    def _repr_val(cls, v):
-        if cls._is_a_callable_val(v):
-            return v.__name__
-        if isinstance(v, Tag):
-            return v._get_name(True)
-        if isinstance(v, Enum):  # enum instances collection, ex: list(ColorEnum.RED, ColorEnum.BLUE)
-            return str(v.value)
-        return str(v)
-
-    def _validate(self, out_value) -> TagValue:
+    def _validate(self, out_value: TagValue) -> TagValue:
         """ Runs
             * self.validation callback
             * pydantic validation
@@ -710,7 +611,7 @@ class Tag:
         self._update_source(val)
         return self
 
-    def update(self, ui_value: TagValue) -> bool:
+    def update(self, ui_value: UiValue) -> bool:
         """ UI value → Tag value → original value. (With type conversion and checks.)
 
         Args:
@@ -729,9 +630,11 @@ class Tag:
         out_value = ui_value  # The proposed value, with fixed type.
 
         # Type conversion
-        # Even though GuiInterface does some type conversion (str → int) independently,
+        # Even though an interface might do some type conversion (str → int) independently,
         # other interfaces does not guarantee that. Hence, we need to do the type conversion too.
-        if self.annotation:
+        # When the ui_value is not a str, it seems the interface did retain the original type
+        # and no conversion is needed.
+        if self.annotation and isinstance(ui_value, str):
             if self.annotation == TagCallback:
                 return True  # NOTE, EXPERIMENTAL
             if ui_value == "" and NoneType in get_args(self.annotation):
@@ -836,7 +739,7 @@ class Tag:
         """ Returns whether the form is alright or whether we should revise it.
         Input is tuple of the Tags and their new values from the UI.
         """
-        # Why list? We need all the Tag values be updates from the UI.
+        # Why list? We need all the Tag values be updated from the UI.
         # If the revision is needed, the UI fetches the values from the Tag.
         # We need the keep the values so that the user does not have to re-write them.
         return all(list(tag.update(ui_value) for tag, ui_value in updater))

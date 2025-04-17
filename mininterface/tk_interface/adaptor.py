@@ -2,27 +2,26 @@ import sys
 from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
 from typing import Any, Callable
 
-from ..options import GuiOptions
-
-from ..exceptions import InterfaceNotAvailable
 from tkscrollableframe import ScrolledFrame
 from tktooltip import ToolTip
 
 from tkinter_form import Form, Value
 
-from ..exceptions import Cancelled
-from ..mininterface.adaptor import BackendAdaptor
+from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import TagDict, formdict_to_widgetdict
+from ..mininterface.adaptor import BackendAdaptor
+from ..mininterface.mixin import RichUiAdaptor
+from ..settings import GuiSettings
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
 
 
-class TkAdaptor(Tk, BackendAdaptor):
+class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     """ An editing Tk window. """
 
     facet: TkFacet
-    options: GuiOptions
+    settings: GuiSettings
 
     def __init__(self, *args):
         BackendAdaptor.__init__(self, *args)
@@ -107,7 +106,7 @@ class TkAdaptor(Tk, BackendAdaptor):
         # Add radio etc.
         replace_widgets(self, self.form.fields, form)
 
-        # Set the submit and exit options
+        # Set the submit and exit settings
         if self.form.button:
             tip = "Enter (when button focused)"
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
@@ -129,6 +128,13 @@ class TkAdaptor(Tk, BackendAdaptor):
 
         # focus the first element and run
         recursive_set_focus(self.form)
+
+        # status bar would look like this
+        # status_var = StringVar()
+        # status_var.set("F1 – help")
+        # status_label = Label(self.frame, textvariable=status_var, relief="sunken", anchor="w", padx=5)
+        # status_label.pack(side="bottom", fill="x", pady=(20, 0))
+
         return self.mainloop(lambda: self.validate(form, title, submit))
 
     def validate(self, form: TagDict, title: str, submit) -> TagDict:

@@ -29,7 +29,7 @@ class Start:
 
         NOTE: This is a basic and bash only integration. It might be easily expanded.
         """
-        m = get_interface(self.title, self.interface)
+        m = get_interface(self.interface, self.title)
         comp_dir = Path("/etc/bash_completion.d/")
         prog = Path(sys.argv[0]).name
         target = comp_dir/prog
@@ -38,7 +38,7 @@ class Start:
             if target.exists():
                 m.alert(f"Destination {target} already exists. Exit.")
                 return
-            if m.is_yes(f"We generate the bash completion into {target}"):
+            if m.confirm(f"We generate the bash completion into {target}"):
                 run(["sudo", "-E", sys.argv[0], "--tyro-write-completion", "bash", target])
                 m.alert(f"Integration completed. Start a bash session to see whether bash completion is working.")
                 return
@@ -46,7 +46,7 @@ class Start:
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
     def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None):
-        m = get_interface(self.title, self.interface)
+        m = get_interface(self.interface, self.title)
         forms: TagDict = defaultdict(Tag)
         args = args or []
         # remove placeholder as we do not want it to be in the form
@@ -79,7 +79,6 @@ class Start:
             for cf in common_fields:
                 local = tags[""].pop(cf)
                 forms[cf]._fetch_from(local)._src_obj_add(local)
-
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
                 tags[""][name] = Tag(lambda form=form: form.run())

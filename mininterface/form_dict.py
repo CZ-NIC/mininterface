@@ -10,8 +10,8 @@ from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
 
 
 from .auxiliary import get_description
-from .tag import MissingTagValue, Tag, TagValue
-from .tag_factory import tag_assure_type, tag_fetch, tag_factory
+from .tag.tag import MissingTagValue, Tag, TagValue
+from .tag.tag_factory import tag_assure_type, tag_fetch, tag_factory
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self

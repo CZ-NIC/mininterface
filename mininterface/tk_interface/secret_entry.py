@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import Button, Entry
-from ..types import SecretTag
+from ..tag.secret_tag import SecretTag
 
 
 class SecretEntryWrapper:
@@ -13,7 +13,7 @@ class SecretEntryWrapper:
         ]
         row = grid_info['row']
         col = grid_info['column']
-        self.entry.grid(row=row, column=col)
+        self.entry.grid(row=row, column=col, sticky="we")
 
         # Add Ctrl+T binding to the entry widget
         self.entry.bind('<Control-t>', self._on_toggle)

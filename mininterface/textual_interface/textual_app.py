@@ -1,30 +1,21 @@
 from typing import TYPE_CHECKING
 from textual import events
-from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll, Container
+from textual.app import App
+from textual.containers import Container
 from textual.widget import Widget
-from textual.widgets import (
-    Checkbox,
-    Footer,
-    Header,
-    Input,
-    Label,
-    Static,
-    Rule,
-    RadioSet
-)
+
+from .form_contents import FormContents
+
+from .button_contents import ButtonContents
 
 
-from .widgets import Changeable
+from .widgets import TagWidget
 
-from ..form_dict import formdict_to_widgetdict
-
-from ..auxiliary import flatten
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
 
-WidgetList = list[Widget | Changeable]
+WidgetList = list[Widget | TagWidget]
 
 
 class TextualApp(App[bool | None]):
@@ -33,30 +24,8 @@ class TextualApp(App[bool | None]):
     #     ("down", "go_up", "Go down"),
     # ]
 
-    DEFAULT_CSS = """
-    ImageViewer {
-        height: 20;
-    }
-
-    FilePickerInput {
-        layout: horizontal;
-        height: auto;
-        margin: 1;
-    }
-
-    FilePickerInput Input {
-        width: 80%;
-    }
-
-    FilePickerInput Button {
-        width: 20%;
-        margin-left: 1;
-    }
-    .enum-highlight {
-        text-style: bold;
-    }
-    """
-    """ Limit layout image size """
+    # We need to jump out of dir to allow children inherits (WebInterface)
+    CSS_PATH = "../textual_interface/style.tcss"
 
     def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True):
         super().__init__()
@@ -66,8 +35,13 @@ class TextualApp(App[bool | None]):
         self.submit = submit
 
         # Form confirmation
-        # enter w/o priority is still consumed by input fields (and recaught by on_key)
         if submit:
+            # enter w/o priority is still consumed by input fields (and recaught by on_key)
+            # Second thing:
+            # I know "Enter" is not a valid shortcut.
+            # But having writter 'enter' would mean it would be not shown in Input field.
+            # And I do want to send the form on enter.
+            # So the shortcut does not work but is handled at 'on_key'.
             self.bind("Enter", "confirm", description=submit if isinstance(submit, str) else "Ok")
         self.bind("escape", "exit", description="Cancel")
 
@@ -75,9 +49,15 @@ class TextualApp(App[bool | None]):
         self.contents = Container()
         yield self.contents
 
-    def on_mount(self):
+    def on_mount(self) -> None:
+        self.has_been_confirmed = False
+        # def on_mount(self, event: events.Mount) -> None:
         self.contents.remove_children()
-        self.contents.mount(MainContents(self.adaptor, self.widgets, self.focusable_))
+        if self.adaptor.button_app:
+            c = ButtonContents(self.adaptor, self.adaptor.button_app)
+        else:
+            c = FormContents(self.adaptor, self.widgets, self.focusable_)
+        self.contents.mount(c)
 
     def action_confirm(self):
         # next time, start on the same widget
@@ -87,94 +67,3 @@ class TextualApp(App[bool | None]):
 
     def action_exit(self):
         self.exit()
-
-
-class MainContents(Static):
-
-    def __init__(self, adaptor: "TextualAdaptor", widgets: WidgetList, focusable_: WidgetList):
-        super().__init__()
-        self.app: "TextualApp"
-        self.title = adaptor.facet._title  # TODO – rather here?
-        self.widgets = widgets
-        self.focusable_ = focusable_
-        """ A subset of self.widgets"""
-        self.focused_i: int = 0
-        self.adaptor = adaptor
-        self.output = Static("")
-
-    def compose(self) -> ComposeResult:
-        # prepare widgets
-        # since textual 1.0.0 we have to build widgets not earlier than the context app is ready
-
-        self.widgets.clear()
-        self.widgets.extend(flatten(formdict_to_widgetdict(
-            self.adaptor.facet._form, self.adaptor.widgetize), include_keys=self.adaptor.header))
-
-        # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
-        if len(self.widgets) and isinstance(self.widgets[0], Rule):
-            self.widgets.pop(0)
-
-        # start yielding widgets
-        if self.title:
-            yield Header()
-        yield self.output  # NOTE not used
-        yield Footer()
-        if text := self.adaptor.interface._redirected.join():
-            yield Label(text, id="buffered_text")
-        with VerticalScroll():
-            yield from self.adaptor.layout_elements
-            for i, fieldt in enumerate(self.widgets):
-                if isinstance(fieldt, Input):
-                    yield Label(fieldt.placeholder)
-                # TODO MyRadioSet not shown now: add name in widgetize and display here
-                # NOTE: has this something to do with the PathTag?
-                elif hasattr(fieldt, "tag") and fieldt.tag.name and not isinstance(fieldt, Input):
-                    yield Label(fieldt.tag.name)
-                yield fieldt
-                if isinstance(fieldt, Changeable) and (arb := fieldt._arbitrary):
-                    yield arb
-                if isinstance(fieldt, Changeable) and (desc := fieldt.tag.description):
-                    yield Label(desc)
-                yield Label("")
-        self.focusable_.clear()
-        self.focusable_.extend(w for w in self.widgets if isinstance(w, (Input, Changeable)))
-
-    def on_mount(self):
-        self.widgets[self.focused_i].focus()
-
-    def on_key(self, event: events.Key) -> None:
-        f = self.focusable_
-        ff = self.app.focused
-        try:
-            index = f.index(ff)
-        except ValueError:  # probably some other element were focused
-            return
-        match event.key:
-            # Go up and down the form.
-            # With the exception of the RadioSet, there keep the default behavior,
-            # traversing its elements, unless we are at the edge.
-            case "down":
-                if not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1:
-                    f[(index + 1) % len(f)].focus()
-                    event.stop()
-            case "up":
-                if not isinstance(ff, RadioSet) or ff._selected == 0:
-                    f[(index - 1) % len(f)].focus()
-                    event.stop()
-            case "enter":
-                # NOTE a multiline input might be
-                # isinstance(self.focused,
-                if self.app.submit:
-                    self.app.action_confirm()
-            case letter if len(letter) == 1:  # navigate by letters
-                for inp_ in f[index+1:] + f[:index]:
-                    match inp_:
-                        case Checkbox():
-                            label = inp_.label
-                        case Changeable():
-                            label = inp_.tag.name
-                        case _:
-                            label = ""
-                    if str(label).casefold().startswith(letter):
-                        inp_.focus()
-                        break

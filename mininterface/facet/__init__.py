@@ -75,7 +75,7 @@ class Facet(Generic[EnvClass]):
 
         m = run()
         out = m.form({
-            "My choice": Tag(choices=["one", "two"], on_change=callback)
+            "My choice": Tag(options=["one", "two"], on_change=callback)
         })
         # continue here immediately after clicking on a radio button
         ```

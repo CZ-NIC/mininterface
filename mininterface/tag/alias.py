@@ -1,5 +1,5 @@
-from .rich_tags import EnumTag
-from ..tag import Tag, TagValue, ValidationResult
+from .select_tag import SelectTag
+from .tag import Tag, TagValue, ValidationResult
 
 from typing import Callable
 
@@ -23,7 +23,14 @@ def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResul
     return Tag(validation=check)
 
 
-def Choices(*choices: list[str]):
-    """ An alias, see [`EnumTag.choices`][mininterface.types.EnumTag.choices]
+def Options(*options: list[str]):
+    """ An alias, see [`SelectTag.options`][mininterface.tag.SelectTag.options]
+
+    Example:
+    ```python
+    @dataclass
+    class Env:
+        foo: Annotated["str", Options("one", "two")] = "one"
+    ```
     """
-    return EnumTag(choices=choices)
+    return SelectTag(options=options)

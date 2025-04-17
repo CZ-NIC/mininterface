@@ -6,8 +6,8 @@ from os import isatty
 import sys
 from typing import Literal, Optional, Type
 
-from .mininterface import Mininterface
-from .options import MininterfaceOptions, InterfaceName
+from .mininterface import EnvClass, Mininterface
+from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
 InterfaceType = Type[Mininterface] | InterfaceName | None
@@ -48,19 +48,19 @@ def __getattr__(name):
             return None  # such attribute does not exist
 
 
-def _choose_options(type_: Mininterface, options: Optional[MininterfaceOptions]):
-    """ Pass only the relevant options section suitable for the given interface type """
+def _choose_settings(type_: Mininterface, settings: Optional[MininterfaceSettings]):
+    """ Pass only the relevant settings section suitable for the given interface type """
     opt = None
-    if options:
-        match type(type_):
+    if settings:
+        match type_.__name__:
             case "TkInterface":
-                opt = options.gui
+                opt = settings.gui
             case "TextualInterface":
-                opt = options.textual
+                opt = settings.textual
             case "TextInterface":
-                opt = options.text
+                opt = settings.text
             case "WebInterface":
-                opt = options.web
+                opt = settings.web
     return opt
 
 
@@ -78,18 +78,26 @@ def _get_interface_type(interface: InterfaceType = None):
             raise InterfaceNotAvailable
 
 
-def get_interface(title="", interface: InterfaceType = None, env=None, options: Optional[MininterfaceOptions] = None):
+def get_interface(interface: InterfaceType = None, title="", settings: Optional[MininterfaceSettings] = None, env: EnvClass = None) -> Mininterface[EnvClass]:
+    """ Returns the best available interface.
+
+    Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
+
+    Args:
+        interface: An interface type of preference.
+        title:
+        settings: [MininterfaceSettings][mininterface.settings.MininterfaceSettings] objects
+        env: You can specify the .env attribute of the returned object.
+    """
     def call(type_):
-        opt = _choose_options(type_, options)
+        opt = _choose_settings(type_, settings)
         return type_(title, opt, env)
 
-    interface = interface or (options.interface if options else None)
-
-    if isinstance(interface, type) and issubclass(interface, Mininterface):
-        # the user gave a specific interface, let them catch InterfaceNotAvailable then
-        return call(interface)
+    interface = interface or (settings.interface if settings else None)
 
     try:
+        if isinstance(interface, type) and issubclass(interface, Mininterface):
+            return call(interface)
         return call(_get_interface_type(interface))
     except InterfaceNotAvailable:
         pass
