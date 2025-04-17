@@ -17,7 +17,7 @@ from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
                      DynamicDescription, FurtherEnv2, InheritedAnnotatedClass,
-                     MissingNonscalar, MissingPositional, MissingUnderscore,
+                     MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
                      Subcommand2, callback_raw, callback_tag, callback_tag2)
@@ -309,10 +309,16 @@ class TestConversion(TestAbstract):
 
     def test_datetime(self):
         new_date = "2020-01-01 17:35"
-        tag = Tag(datetime.fromisoformat("2024-09-10 17:35:39.922044"))
+        tag2 = Tag(datetime.fromisoformat("2024-09-10 17:35:39.922044"))
+        # The user might put datetime into Tag but we need to use DatetimeTag.
+        # Calling a form will convert it automatically,
+        # while the original Tag is being updated.
+        d = dict_to_tagdict({"test": tag2})
+        tag = d["test"]
         self.assertFalse(tag.update("fail"))
         self.assertTrue(tag.update(new_date))
         self.assertEqual(datetime.fromisoformat(new_date), tag.val)
+        self.assertEqual(datetime.fromisoformat(new_date), tag2.val)
 
     def test_validation(self):
         def validate(tag: Tag):
@@ -590,6 +596,21 @@ class TestRun(TestAbstract):
             form = form.replace("pathlib._local.Path", "pathlib.Path")
         with self.assertOutputs(form):
             runm(MissingNonscalar)
+
+    def test_missing_required_fail(self):
+        m = run(MissingPositionalScalar, interface=Mininterface)
+        m.form()
+        # An attempt to reading from
+        with self.assertRaises(SystemExit):
+            str(m.env.file)
+        with self.assertRaises(SystemExit):
+            bool(m.env.file)
+
+        # Since the positional is list, we infer an empty list
+        # This might be not the desired behaviour, we might change it to fail too.
+        m2 = run(MissingPositional, interface=Mininterface)
+        m2.form()
+        self.assertListEqual([], m2.env.files)
 
     def test_run_config_file(self):
         os.chdir("tests")
@@ -896,7 +917,8 @@ class TestAnnotated(TestAbstract):
         d = dataclass_to_tagdict(m.env)[""]
         self.assertEqual(
             "{'files': PathTag(val=[], description='files ', annotation=list[pathlib.Path], name='files')}",
-            repr(d))
+            repr(d).replace("pathlib._local.Path", "pathlib.Path"))
+        # Why replacing _local? Since Python 3.13, there is a nomenclature change.
 
 
 class TestTagAnnotation(TestAbstract):

@@ -8,8 +8,8 @@ from .tag import Tag, TagValue
 OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 OptionLabel = str
 RichOptionLabel = OptionLabel | tuple[OptionLabel]
-OptionsType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichOptionLabel,
-                                                                      TagValue] | list[Enum] | Type[Enum]
+OptionsType = (list[TagValue] | tuple[TagValue, ...] | set[TagValue]
+               | dict[RichOptionLabel, TagValue] | Iterable[Enum] | Type[Enum])
 """ You can denote the options in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
 Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(OptionsType)` to illustrate the examples.

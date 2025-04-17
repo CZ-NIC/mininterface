@@ -2,7 +2,7 @@ import logging
 from dataclasses import is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Optional, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Optional, Type, TypeVar, overload, Iterable
 
 from ..tag.select_tag import OptionsType, SelectTag
 
@@ -219,25 +219,58 @@ class Mininterface(Generic[EnvClass]):
         print(f"Asking {'yes' if default else 'no'}:", text)
         return True
 
+    # default + multiple none -> single
     @overload
-    def select(self, options: list[TagValue], multiple: Literal[True], **kwargs) -> list[TagValue]: ...
-
-    @overload
-    def select(self, options: list[TagValue], multiple: Literal[False], **kwargs) -> TagValue: ...
-
-    @overload
-    def select(self, options: list[TagValue], default: list[TagValue],  **kwargs) -> list[TagValue]: ...
-
-    @overload
-    def select(self, options: list[TagValue], default: TagValue,  **kwargs) -> TagValue: ...
-
-    @overload
-    def select(self, options: list[TagValue], **kwargs) -> TagValue: ...
-
-    def select(self, options: OptionsType,
+    def select(self,
+               options: OptionsType[TagValue],
                title: str = "",
-               default: str | TagValue | list[str] | list[TagValue] | None = None,
-               tips: OptionsType | None = None,
+               default: None = ...,
+               tips: OptionsType[TagValue] | None = None,
+               multiple: None = ...,
+               skippable: bool = True,
+               launch: bool = True
+               ) -> TagValue: ...
+
+    # Multiple is True → list
+    @overload
+    def select(self,
+               options: OptionsType[TagValue],
+               title: str = "",
+               default: None = None,
+               tips: OptionsType[TagValue] | None = None,
+               multiple: Literal[True] = True,
+               skippable: bool = True,
+               launch: bool = True
+               ) -> list[TagValue]: ...
+
+    # default is iterable -> list
+    @overload
+    def select(self,
+               options: OptionsType[TagValue],
+               title: str = "",
+               default: OptionsType[TagValue] = ...,
+               tips: OptionsType[TagValue] | None = None,
+               multiple: None = None,
+               skippable: bool = True,
+               launch: bool = True
+               ) -> list[TagValue]: ...
+
+    # multiple is False or unspecified, default is singular → single
+    @overload
+    def select(self,
+               options: OptionsType[TagValue],
+               title: str = "",
+               default: TagValue = ...,
+               tips: OptionsType[TagValue] | None = None,
+               multiple: Literal[False] = False,
+               skippable: bool = True,
+               launch: bool = True
+               ) -> TagValue: ...
+
+    def select(self, options: OptionsType[TagValue],
+               title: str = "",
+               default: TagValue | OptionsType[TagValue] | None = None,
+               tips: OptionsType[TagValue] | None = None,
                multiple: Optional[bool] = None,
                skippable: bool = True,
                launch: bool = True

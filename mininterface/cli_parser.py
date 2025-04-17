@@ -151,8 +151,8 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                 #   files: Positional[list[Path]] = field(default_factory=list)
                 pass
             return res, {}
-    except BaseException as e:
-        if ask_for_missing and getattr(e, "code", None) == 2 and eavesdrop:
+    except BaseException as exception:
+        if ask_for_missing and getattr(exception, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
             wf = {}
 
@@ -161,12 +161,12 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                 # `the following arguments are required: --foo, --bar`
                 for arg in _fetch_eavesdrop_args():
                     if argument := identify_required(type_form, kwargs, parser,  arg):
-                        register_wrong_field(type_form, kwargs, wf, argument)
+                        register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
             else:
                 # Case of Positional arguments
                 # `The following arguments are required: PATH, INT, STR`
                 for arg, argument in zip(_fetch_eavesdrop_args(), (p for p in parser._actions if p.default != argparse.SUPPRESS)):
-                    register_wrong_field(type_form, kwargs, wf, argument)
+                    register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
 
             # Second attempt to parse CLI.
             # We have just put a default values for missing fields so that tyro will not fail.
@@ -220,7 +220,7 @@ def argument_to_field_name(env_class: EnvClass, argument: Action):
     return field_name
 
 
-def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action):
+def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action, exception: Exception, eavesdrop):
     """ The field is missing.
     We prepare it to the list of wrong fields to be filled up
     and make a temporary default value so that tyro will not fail.
@@ -229,8 +229,8 @@ def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument:
     # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
     # However, the UI then is not able to use ex. the number filtering capabilities.
     # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
-    tag = wf[field_name] = tag_factory(MissingTagValue(),
-                                       argument.help.replace("(required)", ""),
+    tag = wf[field_name] = tag_factory(MissingTagValue(exception, eavesdrop),
+                                       (argument.help or "").replace("(required)", ""),
                                        validation=not_empty,
                                        _src_class=env_class,
                                        _src_key=field_name
@@ -255,7 +255,7 @@ def set_default(kwargs, field_name, val):
 def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                       config_file: Path | None = None,
                       settings: Optional[MininterfaceSettings] = None,
-                      **kwargs) -> tuple[EnvClass | None, dict, WrongFields]:
+                      **kwargs) -> tuple[dict, MininterfaceSettings | None]:
     """ Fetches the config file into the program defaults kwargs["default"] and UI settings.
 
     Args:
@@ -295,7 +295,7 @@ def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     return kwargs, settings
 
 
-def _merge_settings(runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings):
+def _merge_settings(runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings) -> MininterfaceSettings:
     # Settings inheritance:
     # Config file > program-given through run(settings=) > the default settings (original dataclasses)
 

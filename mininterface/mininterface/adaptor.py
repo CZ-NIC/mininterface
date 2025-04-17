@@ -31,6 +31,7 @@ class BackendAdaptor(ABC):
         """ Wrap Tag to a UI widget. """
         pass
 
+    @abstractmethod
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """ Let the user edit the dict values.
 
@@ -38,7 +39,7 @@ class BackendAdaptor(ABC):
         """
         self.facet._fetch_from_adaptor(form)
 
-    def submit_done(self) -> str | Literal[True]:
+    def submit_done(self) -> bool:
         if self.post_submit_action:
             try:
                 self.post_submit_action()

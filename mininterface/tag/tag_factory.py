@@ -47,7 +47,7 @@ def tag_assure_type(tag: Tag):
     if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
         # I cannot use type_._fetch_from(tag) here as SelectTag.__post_init__
         # needs the self.val which would not be yet set.
-        return type_(**tag.__dict__)
+        return type_(**tag.__dict__)._src_obj_add(tag)
     return tag
 
 

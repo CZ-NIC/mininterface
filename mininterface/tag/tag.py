@@ -62,9 +62,29 @@ class MissingTagValue:
     """ The dataclass field has not received a value from the CLI.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
     """
+    # NOTE Use-case, positional argument is not filled up in CLI. Mininterface runs in a CRON.
+    # Should we fail in the moment of (faily) asking for the missing wrong fields?
+    # Should this object raise a value (current implementation), or return False on use?
+
+    def __init__(self, exception: Exception, eavesdrop):
+        self.exception = exception
+        self.eavesdrop = eavesdrop
 
     def __repr__(self):
         return "MISSING"
+
+    def fail(self):
+        print(self.eavesdrop)
+        raise self.exception
+
+    def __bool__(self):
+        self.fail()
+
+    def __str__(self):
+        self.fail()
+
+    def __int__(self):
+        self.fail()
 
 
 @dataclass
@@ -432,6 +452,14 @@ class Tag:
         try:
             if issubclass(self.annotation, class_type):
                 return True
+            if issubclass(class_type, self.annotation):
+                # Let me explain. DatetimeTag receives a date.
+                # In __post_init__, it resolves, whether it is self._is_subclass(datetime)
+                # to determine the time component.
+                # Later on, we call subclass_matches_annotation which swaps class_type and self.annotation
+                # in the 'scalar' part – I don't clearly see the use-case, we can identify it and limit it.
+                # Until then, this reverse check will do.
+                return False
         except TypeError:  # None, Union etc cast an error
             pass
         for origin, subtype in self._get_possible_types():
@@ -483,6 +511,7 @@ class Tag:
             self._src_obj = [self._src_obj, src]
         else:
             self._src_obj.append(src)
+        return self
 
     def set_error_text(self, s):
         self.description = f"{s} {self._original_desc}"

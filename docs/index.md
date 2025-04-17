@@ -101,12 +101,6 @@ The config variables needed by your program are kept in cozy dataclasses. Write 
 * Running on a remote machine? Automatic regression to the text interface.
 * Or access your program via [web browser](http://127.0.0.1:8000/Interfaces/#webinterface-or-web).
 
-## Can I use my old ArgumentParse
-
-Yes,
-
-
-
 # Installation
 
 Install with a single command from [PyPi](https://pypi.org/project/mininterface/).
