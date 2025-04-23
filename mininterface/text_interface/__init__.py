@@ -3,6 +3,8 @@ import sys
 from pprint import pprint
 from typing import TYPE_CHECKING, Type, TypeVar
 
+from ..tag.tag_factory import assure_tag
+
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import DataClass, EnvClass, FormDict, tag_assure_type
 from ..mininterface import Mininterface
@@ -79,7 +81,7 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
         with StdinTTYWrapper():
             input(text + " Hit any key.")
 
-    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
                 return super().ask(text)
@@ -88,11 +90,11 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                     txt = input(text + ": ") if text else input()
                 except EOFError:
                     raise Cancelled(".. cancelled")
-                t = tag_assure_type(Tag(txt, annotation=annotation))
+                t = assure_tag(annotation)
                 if t.update(txt):
                     return t.val
                 else:
-                    print(f"Must be {annotation}")
+                    print(t.description)
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,

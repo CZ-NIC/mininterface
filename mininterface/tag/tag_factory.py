@@ -2,9 +2,11 @@ from copy import copy
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
-from typing import Type, get_type_hints
+from typing import Any, Type, get_type_hints
+
 
 from . import DatetimeTag, SelectTag, Tag
+from .tag import TagValue
 from .callback_tag import CallbackTag
 from .path_tag import PathTag
 from .type_stubs import TagCallback
@@ -38,8 +40,11 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     return type(tag)
 
 
-def tag_fetch(tag: Tag, ref: dict | None, name: str):
-    return tag._fetch_from(Tag(**ref), name)
+def assure_tag(type_or_tag: Type[TagValue] | Tag) -> Tag:
+    if isinstance(type_or_tag, Tag):
+        return type_or_tag
+    else:
+        return tag_assure_type(Tag(annotation=type_or_tag))
 
 
 def tag_assure_type(tag: Tag):
@@ -47,7 +52,11 @@ def tag_assure_type(tag: Tag):
     if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
         # I cannot use type_._fetch_from(tag) here as SelectTag.__post_init__
         # needs the self.val which would not be yet set.
-        return type_(**tag.__dict__)._src_obj_add(tag)
+        # Hence we pass the attributes as a dict, while fixing the inheritance – we need to inherit
+        # directly from the source tag (not from its own ancestors).
+        info = {**tag.__dict__}
+        info["_src_obj"] = tag
+        return type_(**info)
     return tag
 
 

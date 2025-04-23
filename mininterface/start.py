@@ -45,9 +45,9 @@ class Start:
 
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
-    def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None):
+    def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None, ask_for_missing=True):
         m = get_interface(self.interface, self.title)
-        forms: TagDict = defaultdict(Tag)
+        forms: TagDict = {}
         args = args or []
         # remove placeholder as we do not want it to be in the form
         env_classes = [e for e in env_classes if e is not SubcommandPlaceholder]
@@ -59,6 +59,8 @@ class Start:
         common_bases = set.intersection(*(set(c for c in cl.__mro__ if is_dataclass(c)) for cl in env_classes))
         common_bases.discard(Command)  # no interesting fields and to prevent printing an empty --help with it
         common_fields = [field for cl in common_bases for field in cl.__annotations__]
+        common_fields_missing_defaults = {}
+        """ If a common field is missing, store its value here. """
 
         # Process help
         # The help should produce only shared arguments
@@ -68,7 +70,19 @@ class Start:
 
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
-            form, wf = parse_cli(env_class, {}, False, True, args=args)  # NOTE what to do with wf?
+            form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)  # NOTE what to do with wf?
+
+            if wf:  # We have some wrong fields.
+                if not common_fields_missing_defaults:
+                    # Store the values for the common fields
+                    common_fields_missing_defaults = m.form(wf)
+                else:  # As the common field appears multiple times, restore its value.
+                    for tag_name, val in common_fields_missing_defaults.items():
+                        wf[tag_name].set_val(val)
+                        del wf[tag_name]
+                    if wf:  # some other fields were missing too
+                        m.form(wf)
+
             name = form.__class__.__name__
             if isinstance(form, Command):  # even though we officially support only Command here, we tolerate other
                 form._facet = m.facet
@@ -76,9 +90,14 @@ class Start:
             tags = dataclass_to_tagdict(form)
 
             # Pull out common fields to the common level
+            # Ex. base class has the PathTag field `files`. Hence all subcommands have a copy of this field.
+            # We create a single PathTag tag and then source all children PathTags to it.
             for cf in common_fields:
                 local = tags[""].pop(cf)
-                forms[cf]._fetch_from(local)._src_obj_add(local)
+                if cf not in forms:
+                    forms[cf] = type(local)()
+                forms[cf]._fetch_from(local)
+
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
                 tags[""][name] = Tag(lambda form=form: form.run())

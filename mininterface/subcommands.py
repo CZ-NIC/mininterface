@@ -126,7 +126,10 @@ class Command(ABC):
 
     @abstractmethod
     def run(self):
-        """ This method is run automatically in CLI or by a button button it generates in a UI."""
+        """ This method is run automatically in CLI or by a button. (The button is generated in a UI.)
+        Raises:
+            ValidationFail – Do repeat the form.
+        """
         ...
 
 

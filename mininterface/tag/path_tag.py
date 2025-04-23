@@ -49,6 +49,9 @@ class PathTag(Tag):
     is_file: Optional[bool] = None
     """ If True, validates that the selected path is a file """
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __post_init__(self):
         # Determine annotation from multiple
         if not self.annotation and self.multiple is not None:
@@ -63,6 +66,8 @@ class PathTag(Tag):
             self.annotation = list[Path]
         if self.annotation == list:  # PathTag([])
             self.annotation = list[Path]
+        if self.annotation is None:  # the .val seems None but we need an annotation
+            self.annotation = Path
 
         # Determine multiple from annotation
         if self.multiple is None:

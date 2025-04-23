@@ -79,3 +79,6 @@ class CallbackTag(Tag):
 
     def _run_callable(self):
         return self.val(self)
+
+    def __hash__(self):
+        return super().__hash__()

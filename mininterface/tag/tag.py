@@ -65,8 +65,9 @@ class MissingTagValue:
     # NOTE Use-case, positional argument is not filled up in CLI. Mininterface runs in a CRON.
     # Should we fail in the moment of (faily) asking for the missing wrong fields?
     # Should this object raise a value (current implementation), or return False on use?
+    # I think we should fail immediately.
 
-    def __init__(self, exception: Exception, eavesdrop):
+    def __init__(self, exception: BaseException, eavesdrop):
         self.exception = exception
         self.eavesdrop = eavesdrop
 
@@ -264,8 +265,6 @@ class Tag:
         if isinstance(self.val, Tag):
             if self._src_obj or self._src_key:
                 raise ValueError("Wrong Tag inheritance, submit a bug report.")
-            self._src_obj = self.val
-            self._src_key = "val"
             self._fetch_from(self.val)
             self.val = self.val.val
 
@@ -335,16 +334,24 @@ class Tag:
         # Hence, I add a hash function with no intention yet.
         return hash(str(self))
 
-    def _fetch_from(self, tag: "Self", name: str = "") -> "Self":
-        """ Fetches attributes from another instance.
-        (Skips the attributes that are already set.)
+    def _fetch_from(self, tag: Union["Tag", dict], name: str = "") -> "Self":
+        """ Fetches attributes from another instance. (Skips the attributes that are already set.)
+        Register the fetched tag to be updated when we change.
         """
-        # TODO what about children? Like 'options' is not fetched from.
-        for attr in ('val', 'annotation', 'name', 'validation', 'on_change', "facet",
-                     "_src_obj", "_src_key", "_src_class",
-                     "_original_desc", "_original_name", "original_val"):
+        use_as_src = True
+        if isinstance(tag, dict):
+            tag = Tag(**tag)
+            use_as_src = False
+
+        ignored = {'description', '_src_dict', '_src_obj', '_src_key',
+                   '_src_class', '_pydantic_field', '_attrs_field', '_last_ui_val'}
+        for attr in tag.__dict__:
+            if attr in ignored:
+                continue
             if getattr(self, attr, None) is None:
                 setattr(self, attr, getattr(tag, attr))
+        if use_as_src:
+            self._src_obj_add(tag)
         if self.description == "":
             self.description = tag.description
         if name and self.name is None:
@@ -721,9 +728,7 @@ class Tag:
 
     def _update_source(self, out_value):
         # Store to the source user data
-        if self._src_dict:
-            self._src_dict[self._src_key] = out_value
-        elif self._src_obj:
+        if self._src_obj:
             _src_objs = [self._src_obj] if not isinstance(self._src_obj, list) else self._src_obj
             for src in _src_objs:
                 if isinstance(src, Tag):
@@ -731,6 +736,8 @@ class Tag:
                     src.set_val(out_value)
                 else:
                     setattr(src, self._src_key, out_value)
+        elif self._src_dict:
+            self._src_dict[self._src_key] = out_value
         else:
             # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass

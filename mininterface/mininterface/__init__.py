@@ -4,6 +4,8 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Optional, Type, TypeVar, overload, Iterable
 
+from ..tag.tag_factory import assure_tag
+
 from ..tag.select_tag import OptionsType, SelectTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
@@ -171,9 +173,17 @@ class Mininterface(Generic[EnvClass]):
         print("Alert text", text)
         return
 
-    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
         """ Prompt the user to input a value – text, number, ...
 
+        By default, it resembles the `input()` built-in.
+
+        ```python
+        m = run()  # receives a Mininterface object
+        m.ask("What's your name?")  # -> str
+        ```
+
+        You may specify the type:
 
         ```python
         m = run()  # receives a Mininterface object
@@ -182,20 +192,43 @@ class Mininterface(Generic[EnvClass]):
 
         ![Ask number dialog](asset/standalone_number.avif)
 
+        The type might be complex. This enforces a list of paths.
+
+        ```python
+        from mininterface import run
+        from pathlib import Path
+
+        m = run()
+        m.ask("Enlist input files", list[Path])
+        ```
+
+        Also, you can further specify the value with a Tag. This enforces an existing file:
+
+        ```python
+        from mininterface import run
+        from mininterface.tag import PathTag
+
+        m = run()
+        m.ask("Give me input file", PathTag(is_file=True))
+        ```
+
         Args:
             text: The question text.
             annotation: The return type.
 
         Returns:
-            The type from the `annotation`.For str = '', for int = 0, ...
+            The type from the `annotation`. For str = '', for int = 0, ...
         """
-        # NOTE Add validation: Callable | None = None. But what should be the callable parameter, tag, or the value?
+        # NOTE Add validation: Callable | annotated-types | None = None.
+        # But what should be the callable parameter, tag, or the value? The same as in the Tag(validation=).
+        # So that we can have `ask("My number", int, Gt(0))`
 
         if annotation is int:
             print("Asking number:", text)
         else:
             print("Asking:", text)
-        return annotation()
+
+        return assure_tag(annotation)._make_default_value()
 
     def confirm(self, text: str, default: bool = True) -> bool:
         """ Display confirm box and returns bool.
@@ -209,7 +242,7 @@ class Mininterface(Generic[EnvClass]):
 
         Args:
             text: Displayed text.
-            default: Focused button.
+            default: Focus the button with this value.
 
         Returns:
             bool: Whether the user has chosen the Yes button.

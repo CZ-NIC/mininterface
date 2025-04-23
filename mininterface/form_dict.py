@@ -11,7 +11,7 @@ from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
 
 from .auxiliary import get_description
 from .tag.tag import MissingTagValue, Tag, TagValue
-from .tag.tag_factory import tag_assure_type, tag_fetch, tag_factory
+from .tag.tag_factory import tag_assure_type, tag_factory
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -102,11 +102,11 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
         if isinstance(val, dict):  # nested config hierarchy
             fd[key] = dict_to_tagdict(val, mininterface)
         else:  # scalar or Tag value
-            d = {"facet": getattr(mininterface, "facet", None)}
+            d: dict = {"facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
                 tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
             else:
-                tag = tag_fetch(val, d, key)
+                tag = val._fetch_from(d, key)
             tag = tag_assure_type(tag)
             fd[key] = tag
     return fd
@@ -186,7 +186,7 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
             if not isinstance(val, Tag):
                 tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:
-                tag = tag_fetch(val, d, param)
-                tag = tag_assure_type(tag)
+                val._fetch_from(d, param)
+                tag = tag_assure_type(val)
             (subdict if _nested else main)[param] = tag
     return subdict

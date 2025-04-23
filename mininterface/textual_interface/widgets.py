@@ -78,7 +78,7 @@ class MyRadioSet(TagWidget, RadioSet):
             # If it is selected, do nothing, so the form will be submitted.
             if not self._nodes[self._selected].value:
                 self.action_toggle_button()
-                # TODO: If it is the only tag, we submit the form. But this should be implemented at the Tag level.
+                # NOTE: If it is the only tag, we submit the form. But this should be implemented at the Tag level.
                 if len(self.tag.facet._form) > 1 or self.tag is not next(iter(self.tag.facet._form.values())):
                     event.stop()
 
@@ -122,4 +122,4 @@ class MySubmitButton(MyButton):
         self.tag.facet.submit()
 
     def get_ui_value(self):
-        return self._val  # TODO use self.value instead?
+        return self._val  # NOTE use self.value instead?

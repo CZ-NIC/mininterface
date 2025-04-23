@@ -181,7 +181,6 @@ class PathTagClass:
 class DatetimeTagClass:
     p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
     p2: time = time.fromisoformat("17:35:39.922044")
-    # TODO
     p3: date = date.fromisoformat("2024-09-10")
     pAnnot: Annotated[date, Tag(name="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
 
@@ -194,6 +193,13 @@ class MissingPositional:
 @dataclass
 class MissingPositionalScalar:
     file: Positional[Path]
+
+
+@dataclass
+class MissingCombined:
+    file: Positional[Path]
+    foo: str
+    bar: str = "hello"
 
 
 @dataclass

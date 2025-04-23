@@ -4,13 +4,21 @@ from dataclasses import replace
 from importlib import import_module
 from os import isatty
 import sys
-from typing import Literal, Optional, Type
+from typing import TYPE_CHECKING, Literal, Optional, Type
 
 from .mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
 InterfaceType = Type[Mininterface] | InterfaceName | None
+
+if TYPE_CHECKING:
+    # static type checker does not see our dynamic interface import (performance reason)
+    TextInterface: Type[Mininterface]
+    TextualInterface: Type[Mininterface]
+    TkInterface: Type[Mininterface]
+    TuiInterface: Type[Mininterface]
+    GuiInterface: Type[Mininterface]
 
 
 def _load(name, mod, attr):

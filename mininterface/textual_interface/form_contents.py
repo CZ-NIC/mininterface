@@ -52,7 +52,7 @@ class FormContents(Static):
             for i, fieldt in enumerate(self.widgets):
                 if isinstance(fieldt, Input):
                     yield Label(fieldt.placeholder)
-                # TODO MyRadioSet not shown now: add name in widgetize and display here
+                # NOTE MyRadioSet not shown now: add name in widgetize and display here
                 # NOTE: has this something to do with the PathTag?
                 elif hasattr(fieldt, "tag") and fieldt.tag.name and not isinstance(fieldt, Input):
                     yield Label(fieldt.tag.name)

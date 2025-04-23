@@ -25,6 +25,8 @@ Adaptor --> Facet
 Facet --> Tags
 ```
 
+Programmer uses a value -> which is converted to Tag -> which is converted to a widget by an interface Adaptor.
+
 ## Adaptor
 
 ::: mininterface.mininterface.adaptor.BackendAdaptor

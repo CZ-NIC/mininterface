@@ -33,8 +33,8 @@ class TkInterface(Redirectable, RichUiMixin, Mininterface):
         # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
         self._adaptor.destroy()
 
-    def ask(self, text: str, annotation: Type[TagValue] = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
         if annotation is int:
             # without 0, tkinter_form would create a mere text Entry
             return self.form({text: 0})[text]
-        return self.form({text: Tag(annotation=annotation)})[text]
+        return super().ask(text, annotation)

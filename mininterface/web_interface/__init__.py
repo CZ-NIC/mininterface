@@ -33,7 +33,7 @@ class WebInterface(TextualInterface):
                  settings: Optional[UiSettings] = None,
                  _env: EnvClass | SimpleNamespace | None = None,
                  cmd: Optional[str] = None, port=64646, **kwargs):
-        # TODO
+        # NOTE missing
         # * lambda, print, on_change, layout, SubmitTrue support
         # * Docs image.
         # * Port should be set from a config file too.

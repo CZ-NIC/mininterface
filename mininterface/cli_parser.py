@@ -11,7 +11,7 @@ from contextlib import ExitStack
 from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Optional, Sequence, Type, Union
+from typing import Any, Optional, Sequence, Type, Union, get_origin, Annotated, get_args
 from unittest.mock import patch
 
 from tyro.conf import Positional
@@ -154,19 +154,21 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     except BaseException as exception:
         if ask_for_missing and getattr(exception, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
-            wf = {}
-
-            if "--" in eavesdrop:
-                # Case with required optional arguments
-                # `the following arguments are required: --foo, --bar`
-                for arg in _fetch_eavesdrop_args():
+            wf: dict[str, Tag] = {}
+            positionals = (p for p in parser._actions if p.default != argparse.SUPPRESS)
+            for arg in _fetch_eavesdrop_args():
+                # We handle both Positional and required arguments
+                # Ex: `The following arguments are required: PATH, --foo`
+                if "--" not in arg:
+                    # Positional
+                    # Ex: `The following arguments are required: PATH, INT, STR`
+                    argument = next(positionals)
+                    register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
+                else:
+                    # required arguments
+                    # Ex: `the following arguments are required: --foo, --bar`
                     if argument := identify_required(type_form, kwargs, parser,  arg):
                         register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
-            else:
-                # Case of Positional arguments
-                # `The following arguments are required: PATH, INT, STR`
-                for arg, argument in zip(_fetch_eavesdrop_args(), (p for p in parser._actions if p.default != argparse.SUPPRESS)):
-                    register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
 
             # Second attempt to parse CLI.
             # We have just put a default values for missing fields so that tyro will not fail.
@@ -181,7 +183,15 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                return cli(type_form, args=args, **kwargs), wf
+                env = cli(type_form, args=args, **kwargs)
+
+                # register all wrong fields to the object
+                # so that the object updated automatically while the wrong field is set
+                for f in wf.values():
+                    f._src_obj = env
+                return env, wf
+
+        # Parsing wrong fields failed. The program ends with a nice tyro message.
         raise
 
 
@@ -220,7 +230,7 @@ def argument_to_field_name(env_class: EnvClass, argument: Action):
     return field_name
 
 
-def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action, exception: Exception, eavesdrop):
+def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action, exception: BaseException, eavesdrop):
     """ The field is missing.
     We prepare it to the list of wrong fields to be filled up
     and make a temporary default value so that tyro will not fail.
@@ -324,6 +334,16 @@ def _merge_settings(runopt: MininterfaceSettings | None, confopt: dict, _def_fac
     return runopt
 
 
+def _unwrap_annotated(tp):
+    """
+    Annotated[Inner, ...] -> `Inner`,
+    """
+    if get_origin(tp) is Annotated:
+        inner, *_ = get_args(tp)
+        return inner
+    return tp
+
+
 def _create_with_missing(env, disk: dict):
     """
     Create a default instance of an Env object. This is due to provent tyro to spawn warnings about missing fields.
@@ -331,9 +351,24 @@ def _create_with_missing(env, disk: dict):
 
     The result contains MISSING_NONPROP on the places the original Env object must have a value.
     """
+    # NOTE a test is missing
+    # @dataclass
+    # class Test:
+    #     foo: str = "NIC"
+    # @dataclass
+    # class Env:
+    #     test: Test
+    #     mod: OmitArgPrefixes[EnablingModules]
+    # config.yaml:
+    # test:
+    #     foo: five
+    # mod:
+    #     whois: False
+    # m = run(FlagConversionOff[Env], config_file=...) would fail with
+    # `TypeError: issubclass() arg 1 must be a class` without _unwrap_annotated
 
     # Determine model
-    if pydantic and issubclass(env, BaseModel):
+    if pydantic and issubclass(_unwrap_annotated(env), BaseModel):
         m = _process_pydantic
     elif attr and attr.has(env):
         m = _process_attr
@@ -383,11 +418,11 @@ def _process_attr(env, disk):
 
 
 def _process_dataclass(env, disk):
-    for f in fields(env):
+    for f in fields(_unwrap_annotated(env)):
         if f.name.startswith("__"):
             continue
         elif f.name in disk:
-            if is_dataclass(f.type):
+            if is_dataclass(_unwrap_annotated(f.type)):
                 v = _create_with_missing(f.type, disk[f.name])
             else:
                 v = disk[f.name]

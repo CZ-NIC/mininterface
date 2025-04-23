@@ -16,7 +16,7 @@ from unittest.mock import DEFAULT, Mock, patch
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
 from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
-                     DynamicDescription, FurtherEnv2, InheritedAnnotatedClass,
+                     DynamicDescription, FurtherEnv2, InheritedAnnotatedClass, MissingCombined,
                      MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
@@ -164,6 +164,13 @@ class TestInteface(TestAbstract):
             self.assertTrue(m1.confirm("", False))
 
             self.assertEqual("hello", m1.ask(""))
+
+    def test_ask_param(self):
+        m0 = run(interface=Mininterface)
+        self.assertEqual(datetime.now().date(), m0.ask("Test input", DatetimeTag(date=True)))
+        # ignore microseconds
+        self.assertEqual(str(datetime.now())[:20], str(m0.ask("Test input", DatetimeTag()))[:20])
+        self.assertEqual(datetime.now().date(), m0.ask("Test input", date))
 
     @mock_interactive_terminal
     def test_ask_form(self):
@@ -439,7 +446,7 @@ class TestConversion(TestAbstract):
         t5.set_val(8)
         self.assertEqual(8, t0.val)
         self.assertEqual(8, t1.val)
-        self.assertEqual(5, t2.val)
+        self.assertEqual(8, t2.val)
         self.assertEqual(5, t3.val)
         self.assertEqual(5, t4.val)
         self.assertEqual(8, t5.val)  # from t2, we iherited the hook to t1
@@ -611,6 +618,20 @@ class TestRun(TestAbstract):
         m2 = run(MissingPositional, interface=Mininterface)
         m2.form()
         self.assertListEqual([], m2.env.files)
+
+    def test_missing_combined(self):
+        m = run(MissingCombined, interface=Mininterface)
+        m.form()
+        # An attempt to reading from
+        with self.assertRaises(SystemExit):
+            str(m.env.file)
+        with self.assertRaises(SystemExit):
+            str(m.env.foo)
+        self.assertEqual("hello", m.env.bar)
+
+        _, wf = parse_cli(MissingCombined, {})
+        r = """{'file': PathTag(val=MISSING, description='file ', annotation=<class 'pathlib.Path'>, name='file'), 'foo': Tag(val=MISSING, description='', annotation=<class 'str'>, name='foo')}"""
+        self.assertEqual(r, repr(wf))
 
     def test_run_config_file(self):
         os.chdir("tests")

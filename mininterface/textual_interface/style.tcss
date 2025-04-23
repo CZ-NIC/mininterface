@@ -20,7 +20,7 @@ FilePickerInput Button {
     margin-left: 1;
 }
 .enum-highlight {
-    text-style: bold;
+    text-style: bold italic;
 }
 
 

@@ -44,7 +44,10 @@ class BackendAdaptor(ABC):
             try:
                 self.post_submit_action()
             except ValidationFail as e:
-                self.interface.alert(str(e))
+                # NOTE I'd prefer self.facet.set_title(str(e))
+                # which is invisible in Subcommands
+                if v := str(e):
+                    self.interface.alert(v)
                 return False
         return True
 

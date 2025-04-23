@@ -16,12 +16,6 @@ from .subcommands import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
 
-# NOTE:
-# ask_for_missing does not work with tyro Positional, stays missing.
-# @dataclass
-# class Env:
-#   files: Positional[list[Path]]
-
 # NOTE: imgs missing in Interfaces.md
 
 
@@ -189,9 +183,9 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
 
     env, wrong_fields = None, {}
     if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-        start.choose_subcommand(env_or_list, args=args[1:])
+        start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
     elif isinstance(env_or_list, list) and not args:
-        start.choose_subcommand(env_or_list)
+        start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
     else:
         # Parse CLI arguments, possibly merged from a config file.
         kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
@@ -210,7 +204,6 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
     if ask_for_missing and wrong_fields:
         # Some fields must be set.
         m.form(wrong_fields)
-        {setattr(m.env, k, v.val) for k, v in wrong_fields.items()}
     elif ask_on_empty_cli and len(sys.argv) <= 1:
         m.form()
 

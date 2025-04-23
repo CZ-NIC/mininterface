@@ -57,8 +57,9 @@ class DateEntryFrame(tk.Frame):
     def create_spinbox(self, variable: tk.Variable):
         spinbox = tk.Spinbox(self, wrap=True, textvariable=variable)
         spinbox.grid(sticky="we")
-        if not variable.get():
-            spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
+        # The default val is handled by DatetimeTag
+        # if not variable.get():
+        #     spinbox.insert(0, datetime.now().strftime(self.datetimeformat))
         spinbox.focus_set()
         if (not self.tag.date and self.tag.time):
             spinbox.icursor(0)

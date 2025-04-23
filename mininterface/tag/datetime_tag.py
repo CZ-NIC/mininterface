@@ -74,15 +74,10 @@ class DatetimeTag(Tag):
         if self.annotation:
             self.date = self._is_subclass(date)
             self.time = self._is_subclass(time) or self._is_subclass(datetime)
+        elif not self.date and not self.time:
+            self.date = self.time = True
 
-    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
-        return super().__hash__()
-
-    def _make_default_value(self):
-        return datetime.now()
-
-    def update(self, ui_value: UiValue) -> bool:
-        if isinstance(ui_value, str):
+        if not self.annotation:
             match self.date, self.time:
                 case True, True:
                     caster = datetime
@@ -91,9 +86,29 @@ class DatetimeTag(Tag):
                 case False, True:
                     caster = time
                 case _:
-                    raise ValueError("Could not parse value %s", ui_value)
+                    raise ValueError("Could not determine annotation for %s", self)
+            self.annotation = caster
+        if self.val is None:
+            # I think it's a good idea to put a now-date instead of an empty string in dialogs like:
+            # m.ask(f"My date", DatetimeTag(date=True))
+            self.val = self._make_default_value()
+
+    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
+        return super().__hash__()
+
+    def _make_default_value(self):
+        if self.annotation is datetime:
+            return datetime.now()
+        if self.annotation is date:
+            return datetime.now().date()
+        if self.annotation is time:
+            return datetime.now().time().replace(second=0, microsecond=0)
+        raise ValueError("Could not determine the default value for %s", self)
+
+    def update(self, ui_value: UiValue) -> bool:
+        if isinstance(ui_value, str):
             try:
-                ui_value = caster.fromisoformat(ui_value)
+                ui_value = self.annotation.fromisoformat(ui_value)
             except ValueError:
                 # allow annotations like `time | None`
                 # Empty input will still have chance to be resolved further.

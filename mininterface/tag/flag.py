@@ -46,6 +46,7 @@ Raises:
 
 """
 # NOTE untested
+# NOTE Works good with static type checking.
 
 
 T = TypeVar("T")
@@ -65,6 +66,8 @@ class Blank:
 
     """
     # NOTE untested
+    # NOTE Works bad with static type checking. Because `Blank[str]` pylance never matches with 'my text'.
+    # We had to have Blank=Annotated instead, which would prevent instantianting str_from_instance and dynamic metavar.
 
     def __class_getitem__(cls, item_type: type[T]) -> Any:
         def instance_from_str(args: list[str]) -> T | bool:
@@ -73,9 +76,9 @@ class Blank:
             if len(args) > 1:
                 raise NotImplemented("Describe your use case in an issue please.")
             match args:
-                case "True":
+                case ("True",):
                     return True
-                case "False":
+                case ("False",):
                     return False
                 case _:
                     return item_type(*args)

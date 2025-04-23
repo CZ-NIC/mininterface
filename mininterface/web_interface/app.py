@@ -39,4 +39,4 @@ class WebParentApp(TextualApp):
 
     def action_exit(self):
         self.exit()
-        # TODO rather raise cancelled?
+        # NOTE rather raise cancelled?
