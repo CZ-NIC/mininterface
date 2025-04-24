@@ -1,6 +1,6 @@
 import sys
 from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from tkscrollableframe import ScrolledFrame
 from tktooltip import ToolTip
@@ -108,22 +108,13 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
 
         # Set the submit and exit settings
         if self.form.button:
-            tip = "Enter (when button focused)"
+            tip, keysym = ("Enter", "<Return>")
             ToolTip(self.form.button, msg=tip)  # NOTE is not destroyed in _clear
+            self._bind_event(keysym, self._ok)
 
-            # Bind Enter to the button with focus
-            self.form.button.bind("<Return>", lambda event: self._ok())
-
-            # Also bind Enter to the form, but check focus first
-            def handle_form_enter(event):
-                focused = self.focus_get()
-                if focused == self.form.button:
-                    self._ok()
-                    return "break"
-                return None
-
-            self._bind_event("<Return>", handle_form_enter)
-
+            # submit button styling
+            # self.form.button.grid_configure(sticky="", pady=15)
+            # self.form.button.config(width=15)
         self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
