@@ -1,4 +1,3 @@
-
 from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames, askdirectory
 from tkinter.ttk import Checkbutton, Combobox, Radiobutton
@@ -70,7 +69,7 @@ class AnyVariable(Variable):
 def choose_file_handler(variable: Variable, tag: PathTag):
     """Handler for file/directory selection on PathTag"""
     def _(*_):
-        initialdir = os.getcwd()
+        initialdir = tag.val if tag.val else os.getcwd()
 
         # Check whether this is a directory selection
         if tag.is_dir:
@@ -82,70 +81,28 @@ def choose_file_handler(variable: Variable, tag: PathTag):
 
             if tag.multiple:
                 # Handle multiple selection for directories
-                try:
-                    current_val = variable.get()
-                    if current_val and current_val.strip() and current_val != '[]':
-                        # Parse existing list
-                        import ast
-                        try:
-                            dirs_list = ast.literal_eval(current_val)
-                            if not isinstance(dirs_list, list):
-                                dirs_list = [dirs_list]  # Convert to list if not already
-
-                            # Add the new directory if not already in list
-                            if selected_dir not in dirs_list:
-                                dirs_list.append(selected_dir)
-
-                            variable.set(str(dirs_list))
-                        except (SyntaxError, ValueError):
-                            # If parsing fails, start a new list
-                            variable.set(str([selected_dir]))
-                    else:
-                        # No current value, set a new list
-                        variable.set(str([selected_dir]))
-                except (TclError, TypeError):
-                    # Fallback
-                    variable.set(str([selected_dir]))
+                current_dirs = tag.val if tag.val else []
+                if not isinstance(current_dirs, list):
+                    current_dirs = [current_dirs]
+                if selected_dir not in current_dirs:
+                    current_dirs.append(selected_dir)
+                variable.set(current_dirs)
             else:
-                # Simple single directory selection
                 variable.set(selected_dir)
         else:
             # File selection
             if tag.multiple:
-                # Multiple file selection
-                try:
-                    current_val = variable.get()
-                    current_files = []
-                    if current_val and current_val.strip() and current_val != '[]':
-                        # Parse existing list
-                        import ast
-                        try:
-                            current_files = ast.literal_eval(current_val)
-                            if not isinstance(current_files, list):
-                                current_files = [current_files]
-                        except (SyntaxError, ValueError):
-                            current_files = []
-
-                    # Select new files with initial directory
-                    kwargs = {"title": "Select Files", "initialdir": initialdir}
-                    new_files = list(askopenfilenames(**kwargs))
-                    if not new_files:  # User cancelled
-                        return
-
-                    # Add new files to existing list without duplicates
-                    for new_file in new_files:
-                        if new_file not in current_files:
-                            current_files.append(new_file)
-
-                    # Save updated list
-                    variable.set(str(current_files))
-                except (SyntaxError, ValueError, TclError, TypeError):
-                    kwargs = {"title": "Select Files", "initialdir": initialdir}
-                    files = list(askopenfilenames(**kwargs))
-                    if files:
-                        variable.set(str(files))
+                kwargs = {"title": "Select Files", "initialdir": initialdir}
+                selected_files = list(askopenfilenames(**kwargs))
+                if selected_files:
+                    current_files = tag.val if tag.val else []
+                    if not isinstance(current_files, list):
+                        current_files = [current_files]
+                    for file in selected_files:
+                        if file not in current_files:
+                            current_files.append(file)
+                    variable.set(current_files)
             else:
-                # Single file selection
                 kwargs = {"title": "Select File", "initialdir": initialdir}
                 selected_file = askopenfilename(**kwargs)
                 if selected_file:
