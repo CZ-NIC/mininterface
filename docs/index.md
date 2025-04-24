@@ -111,27 +111,18 @@ pip install mininterface[all]  # GPLv3 and compatible
 
 ## Bundles
 
-There are various bundles. We mark the bundles with GPL3 dependencies.
+There are various bundles. We mark the least permissive licence in the bundle.
 
 | bundle | size | licence | description |
 | ------ | ---- | ----------- | ---- |
-| *minimal* | 30 MB | LGPL | only CLI + text |
-| mininterface | 36 MB | LGPL | standard (GUI, TUI) |
-| mininterface[web] | 36 MB | | including [WebInterface](Interfaces.md#webinterface-or-web) |
-| mininterface[img] | | | images |
-| mininterface[tui] | | | images |
-| mininterface[gui] | | GPL | images, combobox, calendar |
-| mininterface[ui] | 100 MB | GPL | full installation |
-| mininterface[all] | 100 MB | GPL | full installation, same as `ui`, reserved for future use (big dependencies, optional interfaces) |
-
-## Minimal installation
-
-Should you need just the CLI part and you are happy with basic text dialogs, use these commands instead:
-
-```bash
-pip install --no-dependencies mininterface
-pip install tyro typing_extensions pyyaml simple_term_menu
-```
+| mininterface | 1 MB | LGPL | only text dialogs |
+| mininterface[basic] | 25 MB | LGPL | CLI, GUI, TUI |
+| mininterface[web] | 40 MB | LGPL | including [WebInterface](Interfaces.md#webinterface-or-web) |
+| mininterface[img] | 40 MB | LGPL | images |
+| mininterface[tui] | 40 MB | LGPL | images |
+| mininterface[gui] | 70 MB | GPL | images, combobox, calendar |
+| mininterface[ui] | 90 MB | GPL | full installation |
+| mininterface[all] | 90 MB | GPL | full installation, same as `ui`, reserved for future use (big dependencies, optional interfaces) |
 
 ## MacOS GUI
 

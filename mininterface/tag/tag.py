@@ -41,8 +41,6 @@ except ImportError:
     attr = None
 
 
-UiValue = TypeVar("UiValue")
-""" Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str."""
 TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
@@ -50,6 +48,9 @@ TK = TypeVar("TK")
 # Why TagValue bounded to Any? This might help in the future to allow a dataclass to have a Tag as the attribute value. (It is not frozen now.)
 TagValue = TypeVar("TagValue", bound=Any)
 """ Any value. It is being wrapped by a [Tag][mininterface.Tag]. """
+UiValue = TagValue | str
+""" Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str
+    (as the default input type for interfaces that do not implement the given type further)."""
 ErrorMessage = TypeVar("ErrorMessage")
 """ A string, callback validation error message. """
 ValidationResult = bool | ErrorMessage
