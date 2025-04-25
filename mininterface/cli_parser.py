@@ -1,32 +1,39 @@
 #
 # CLI and config file parsing.
 #
-from dataclasses import Field, dataclass, field, fields, asdict, make_dataclass
+import argparse
 import logging
 import sys
 import warnings
 from argparse import Action, ArgumentParser
-import argparse
 from contextlib import ExitStack
-from dataclasses import MISSING, fields, is_dataclass
+from dataclasses import (MISSING, Field, asdict, dataclass, field, fields,
+                         is_dataclass, make_dataclass)
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Optional, Sequence, Type, Union, get_origin, Annotated, get_args
+from typing import (Annotated, Any, Optional, Sequence, Type, Union, get_args,
+                    get_origin)
 from unittest.mock import patch
 
-from tyro.conf import Positional
-import yaml
-from tyro import cli
-from tyro._argparse_formatter import TyroArgumentParser
-from tyro._singleton import MISSING_NONPROP
-from tyro.extras import get_parser
-
-from .auxiliary import yield_annotations,  dataclass_asdict_no_defaults, merge_dicts
-from .settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, WebSettings
+from .auxiliary import (dataclass_asdict_no_defaults, merge_dicts,
+                        yield_annotations)
 from .form_dict import DataClass, EnvClass, MissingTagValue
+from .settings import MininterfaceSettings
 from .tag import Tag
 from .tag.tag_factory import tag_factory
 from .validators import not_empty
+
+try:
+    import yaml
+    from tyro import cli
+    from tyro._argparse_formatter import TyroArgumentParser
+    from tyro._singleton import MISSING_NONPROP
+    from tyro.conf import Positional
+    from tyro.extras import get_parser
+except ImportError:
+    from .exceptions import DependencyRequired
+    raise DependencyRequired("basic")
+
 
 # Pydantic is not a project dependency, that is just an optional integration
 try:  # Pydantic is not a dependency but integration

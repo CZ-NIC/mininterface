@@ -97,7 +97,7 @@ See [mininterface.choice][mininterface.Mininterface.choice] or [`SelectTag.optio
 
 
 @dataclass(repr=False)
-class SelectTag(Tag):
+class SelectTag(Tag[TagValue]):
     """ Handle options – radio buttons / select box.
     The value serves as the initially selected choice.
     It is constrained to those defined in the `options` attribute.

@@ -9,12 +9,17 @@ from warnings import warn
 
 from .auxiliary import flatten
 
-from .cli_parser import parse_cli
 from .subcommands import Command, SubcommandPlaceholder
 from .form_dict import EnvClass, DataClass, TagDict, dataclass_to_tagdict
 from .interfaces import get_interface
 from .mininterface import Mininterface
+from .exceptions import DependencyRequired
 from .tag import Tag
+
+try:
+    from .cli_parser import parse_cli
+except DependencyRequired as e:
+    parse_cli = e
 
 
 class Start:
@@ -66,11 +71,11 @@ class Start:
         # The help should produce only shared arguments
         if "--help" in args and len(common_bases):
             parse_cli(next(iter(common_bases)), {}, False, True, args=args)
-            raise NotImplemented("We should never come here. Help failed.")
+            raise NotImplementedError("We should never come here. Help failed.")
 
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
-            form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)  # NOTE what to do with wf?
+            form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)
 
             if wf:  # We have some wrong fields.
                 if not common_fields_missing_defaults:

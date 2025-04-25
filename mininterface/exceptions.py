@@ -16,15 +16,29 @@ class ValidationFail(ValueError):
     pass
 
 
-class DependencyRequired(ImportError):
+class InterfaceNotAvailable(ImportError):
+    """ Interface failed to init, ex. display not available in GUI. Or an underlying dependency was uninstalled. """
+    pass
+
+
+class DependencyRequired(InterfaceNotAvailable):
     def __init__(self, extras_name):
         super().__init__(extras_name)
         self.message = extras_name
 
     def __str__(self):
-        return f"Required dependency. Run: pip install mininterface[{self.message}]"
+        return f"Install the missing dependency by running: pip install mininterface[{self.message}]"
 
+    def __call__(self, *args, **kwargs):
+        """ This is an elagant way to handling missing functions. Consider this case.
 
-class InterfaceNotAvailable(ImportError):
-    """ Interface failed to init, ex. display not available in GUI. Or the underlying dependency was uninstalled. """
-    pass
+        ```python
+        try:
+            from ..cli_parser import parse_cli
+        except DependencyRequired as e:
+            parse_cli = e
+        ```
+
+        When the function is used, the original exception is raised.
+        """
+        raise self

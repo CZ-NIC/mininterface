@@ -56,12 +56,20 @@ def not_empty(tag: Tag):
         tag:
     """
     v = tag.val
-    if v == "":
+    if v == "" or v == b"" or v is None:
         return "Cannot be empty"
-    elif v is False:
+    elif isinstance(v, (int, float, bool)):
         return True
     try:
-        if not v != tag.annotation():
+        if not len(v):  # list etc.
+            return "Fill in some value"
+    except:
+        pass
+    try:
+        # Complex object are considered empty when the val is the same as their default value.
+        # We might to design the other way. Look, a DatetimeTag makes default value current time,
+        # hence passing `time() -> 00:00` would pass (if it's not midnight).
+        if v == tag._make_default_value():
             return "Fill in the value"
     except:
         pass

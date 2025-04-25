@@ -6,7 +6,15 @@ from argparse import ArgumentParser
 from types import UnionType
 from typing import Callable, Iterable, Optional, TypeVar, Union, get_args, get_origin
 
-from tyro.extras import get_parser
+try:
+    from tyro.extras import get_parser
+except ImportError:
+    get_parser = None
+
+try:
+    from humanize import naturalsize as naturalsize_
+except ImportError:
+    naturalsize_ = None
 
 T = TypeVar("T")
 KT = str
@@ -65,7 +73,14 @@ def get_descriptions(parser: ArgumentParser) -> dict:
 
 
 def get_description(obj, param: str) -> str:
-    return get_descriptions(get_parser(obj))[param]
+    if get_parser:
+        return get_descriptions(get_parser(obj))[param]
+    else:
+        # We are missing mininterface[basic] requirement. Tyro is missing.
+        # Without tyro, we are not able to evaluate the class: m.form(Env),
+        # we can still evaluate its instance: m.form(Env()).
+        # However, without descriptions.
+        return ""
 
 
 def yield_annotations(dataclass):
@@ -172,3 +187,10 @@ def merge_dicts(d1: dict, d2: dict):
         else:  # replace / insert value
             d1[key] = value
     return d1
+
+
+def naturalsize(value: float | str, *args) -> str:
+    """ For a bare interface, humanize might not be installed. """
+    if naturalsize_:
+        return naturalsize_(value, *args)
+    return str(value)

@@ -1,11 +1,11 @@
-from . import Tag
+from .tag import Tag, TagValue
 
 
 from dataclasses import dataclass
 
 
 @dataclass(repr=False)
-class SecretTag(Tag):
+class SecretTag(Tag[TagValue]):
     """
     Contains a secret value that should be masked in the UI.
 

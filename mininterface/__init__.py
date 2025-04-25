@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
-from .cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
-from .exceptions import Cancelled, InterfaceNotAvailable
+from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
 from .form_dict import DataClass, EnvClass
 from .interfaces import get_interface
 from .mininterface import EnvClass, Mininterface
@@ -15,6 +14,11 @@ from .start import Start
 from .subcommands import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
+
+try:
+    from .cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
+except DependencyRequired as e:
+    assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
 
 # NOTE: imgs missing in Interfaces.md
 
@@ -31,7 +35,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
         add_verbosity: bool = True,
         ask_for_missing: bool = True,
         # We do not use InterfaceType as a type here because we want the documentation to show full alias:
-        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | None = None,
+        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
         args: Optional[Sequence[str]] = None,
         settings: Optional[MininterfaceSettings] = None,
         **kwargs) -> Mininterface[EnvClass]:
@@ -170,6 +174,11 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
     if not interface:
         interface = os.environ.get("MININTERFACE_INTERFACE")
     start = Start(title, interface)
+
+    if isinstance(assure_args, DependencyRequired) and not env_or_list:
+        # Basic dependencies missing, we have no CLI capacities
+        # Since the user needs no CLI, we return a bare interface.
+        return get_interface(interface, title)
 
     # Convert argparse
     if isinstance(env_or_list, ArgumentParser):

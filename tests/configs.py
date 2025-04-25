@@ -205,12 +205,12 @@ class MissingCombined:
 @dataclass
 class AnnotatedClass:
     # NOTE some of the entries are not well supported
-    files1: list[Path]
-    # files2: Positional[list[Path]]  # raises error
+    files1: Positional[list[Path]]
+    files2: list[Path]
+    # files4: Positional[list[Path]] = field(default_factory=list)  # raises error
     # files7: Annotated[list[Path], None]
     # files8: Annotated[list[Path], Tag(annotation=str)]
     files3: list[Path] = field(default_factory=list)
-    # files4: Positional[list[Path]] = field(default_factory=list) # raises error
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
@@ -228,6 +228,14 @@ class AnnotatedClassInner:
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
+
+
+@dataclass
+class AnnotatedClass3:
+    foo1: Positional[int]
+    foo2: list[Path]
+    foo3: Annotated[list[Path], Validation(not_empty)]
+    foo4: Positional[list[bool]] = field(default_factory=list)  # raises error
 
 
 @dataclass
@@ -253,6 +261,26 @@ class Subcommand1(SharedArgs):
 @dataclass
 class Subcommand2(SharedArgs):
     b: int
+
+
+@dataclass
+class SharedArgsB(Command):
+    """ Class with a shared argument. """
+    foo: int = 7
+
+    def run(self):
+        pass
+
+
+@dataclass
+class SubcommandB1(SharedArgsB):
+    """ Class inheriting from SharedArgs. """
+    a: int = 1
+
+
+@dataclass
+class SubcommandB2(SharedArgsB):
+    b: int = 2
 
 
 dynamic_str = "My dynamic str"

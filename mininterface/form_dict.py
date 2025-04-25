@@ -176,6 +176,7 @@ def dataclass_to_tagdict(env: EnvClass | Type[EnvClass], mininterface: Optional[
 
     for param, val in iterate_attributes(env):
         if isinstance(val, MissingTagValue):
+            raise NotImplementedError("TODO I think we should come here no more")
             val = None  # need to convert as MissingTagValue has .__dict__ too
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # nested config hierarchy

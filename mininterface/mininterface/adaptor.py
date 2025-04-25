@@ -1,12 +1,14 @@
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Callable, Optional
+
+from ..cli_parser import MissingTagValue
+
+from ..auxiliary import flatten
 from ..exceptions import ValidationFail
 from ..facet import Facet
 from ..form_dict import TagDict
 from ..settings import UiSettings
-from ..tag import Tag
-
-
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Literal, Optional
+from ..tag.tag import Tag, ValsType
 
 if TYPE_CHECKING:
     from . import Mininterface
@@ -51,6 +53,9 @@ class BackendAdaptor(ABC):
                 return False
         return True
 
+    def _try_submit(self, vals: ValsType):
+        return Tag._submit_values(vals) and self.submit_done()
+
 
 class MinAdaptor(BackendAdaptor):
     facet: Facet
@@ -60,4 +65,16 @@ class MinAdaptor(BackendAdaptor):
         pass
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        tags = list(flatten(form))
+        if not self._try_submit((tag, tag.val) for tag in tags):
+            tyro_error = ""
+            # I think the eavesdrop is always the same text but to be sure, join them
+            eavesdrop = set(tag.val.eavesdrop for tag in tags if isinstance(tag.val, MissingTagValue))
+            if eavesdrop:
+                tyro_error = "\n" + "\n".join(s for s in eavesdrop)
+
+            validation_fails = "\n".join(f"{tag._original_name}: {tag._error_text}"
+                                         for tag in tags if tag._error_text)
+
+            raise SystemExit(validation_fails + tyro_error)
         return form

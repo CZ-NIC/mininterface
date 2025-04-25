@@ -2,10 +2,13 @@ import sys
 from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
 from typing import TYPE_CHECKING, Any, Callable
 
-from tkscrollableframe import ScrolledFrame
-from tktooltip import ToolTip
-
-from tkinter_form import Form, Value
+try:
+    from tkscrollableframe import ScrolledFrame
+    from tktooltip import ToolTip
+    from tkinter_form import Form, Value
+except ImportError:
+    from ..exceptions import DependencyRequired
+    raise DependencyRequired("basic")
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import TagDict, formdict_to_widgetdict

@@ -3,7 +3,7 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import (TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar,
+from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, TypeVar,
                     Union, get_args, get_origin)
 from warnings import warn
 
@@ -57,16 +57,15 @@ ValidationResult = bool | ErrorMessage
 """ Callback validation result is either boolean or an error message. """
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
+ValsType = Iterable[tuple["Tag", UiValue]]
 
 
 class MissingTagValue:
-    """ The dataclass field has not received a value from the CLI.
+    """ The dataclass field has not received a value from the CLI, and this value is required.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
+
+    If we fail to fill a value (ex. in a CRON), the program ends.
     """
-    # NOTE Use-case, positional argument is not filled up in CLI. Mininterface runs in a CRON.
-    # Should we fail in the moment of (faily) asking for the missing wrong fields?
-    # Should this object raise a value (current implementation), or return False on use?
-    # I think we should fail immediately.
 
     def __init__(self, exception: BaseException, eavesdrop):
         self.exception = exception
@@ -79,18 +78,9 @@ class MissingTagValue:
         print(self.eavesdrop)
         raise self.exception
 
-    def __bool__(self):
-        self.fail()
-
-    def __str__(self):
-        self.fail()
-
-    def __int__(self):
-        self.fail()
-
 
 @dataclass
-class Tag:
+class Tag(Generic[TagValue]):
     """ Wrapper around a value that encapsulates a description, validation etc.
         When you provide a value to an interface, you may instead use this object.
 
@@ -127,7 +117,7 @@ class Tag:
     description: str = ""
     """ The description displayed in the UI. """
 
-    annotation: type | None = None
+    annotation: type[TagValue] | None = None
     """ Used for validation (ex. to convert an empty string to None).
         If not set, will be determined automatically from the [val][mininterface.Tag.val] type.
     """
@@ -767,7 +757,7 @@ class Tag:
         #     return self.val
 
     @staticmethod
-    def _submit_values(updater: Iterable[tuple["Tag", UiValue]]) -> bool:
+    def _submit_values(updater: ValsType) -> bool:
         """ Returns whether the form is alright or whether we should revise it.
         Input is tuple of the Tags and their new values from the UI.
         """

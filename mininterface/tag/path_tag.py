@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Generic, Optional
 from ..auxiliary import common_iterables
-from . import Tag
+from .tag import Tag, TagValue
 
 
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 @dataclass(repr=False)
-class PathTag(Tag):
+class PathTag(Tag[Path | list[Path] | TagValue]):
     """
     Contains a Path or their list. Use this helper object to select files.
 

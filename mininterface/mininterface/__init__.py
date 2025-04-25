@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import logging
 from dataclasses import is_dataclass
 from enum import Enum
@@ -12,14 +13,18 @@ from .adaptor import BackendAdaptor, MinAdaptor
 
 from ..settings import MininterfaceSettings, UiSettings
 
-from ..exceptions import Cancelled
+from ..exceptions import Cancelled, DependencyRequired
 
-from ..cli_parser import parse_cli
 from ..subcommands import Command
 from ..facet import Facet
 from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                          dict_to_tagdict, formdict_resolve)
 from ..tag.tag import Tag, TagValue
+
+try:
+    from ..cli_parser import parse_cli
+except DependencyRequired as e:
+    parse_cli = e
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from typing import Self
@@ -173,7 +178,7 @@ class Mininterface(Generic[EnvClass]):
         print("Alert text", text)
         return
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag[TagValue] = str) -> TagValue:
         """ Prompt the user to input a value – text, number, ...
 
         By default, it resembles the `input()` built-in.
@@ -474,6 +479,10 @@ class Mininterface(Generic[EnvClass]):
                     m.form(original, f"Attempt {i}")
                     print("The result", original["my label"].val)
                 ```
+
+        !!! info
+            For minimal installation (`pip install mininterface` only), using Type[DataClass] like `m.form(Env)` will end up with `Install the missing dependency by running: pip install mininterface[basic]`.
+            However using a dataclass instance `m.form(Env())` will work. A lot of the stuff under the hood is needed to instantaniate a dataclass with all the checks.
         """
         f = self.env if form is None else form
         if isinstance(f, dict) and type(f) is not dict:

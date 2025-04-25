@@ -5,11 +5,13 @@ import struct
 import sys
 from typing import TYPE_CHECKING
 
+from ..tag.tag import ValsType
+
 from ..auxiliary import flatten
 
 from ..textual_interface import TextualAdaptor
 
-from ..textual_interface.adaptor import ButtonAppType, ValsType
+from ..textual_interface.adaptor import ButtonAppType
 
 from .app import SerCommand
 

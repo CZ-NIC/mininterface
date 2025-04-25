@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
-from .tag import Tag, UiValue
+from .tag import Tag, TagValue, UiValue
 
 
 @dataclass(repr=False)
-class DatetimeTag(Tag):
+class DatetimeTag(Tag[TagValue | date | time | datetime]):
     """
     Datetime, date and time types are supported.
 

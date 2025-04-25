@@ -12,10 +12,10 @@ homepage = "https://github.com/CZ-NIC/mininterface"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-# Minimal requirements (dialogs and dicts)
+# Minimal requirements (dialogs with partial .form support (m.form(dict) or m.form(dataclass_instance))
 python = "^3.10"
 simple_term_menu = "*"
-# Basic requirements (CLI and dataclasses)
+# Basic requirements (CLI and full .form support (m.form(dataclass_class))
 tyro = { version = "^0.9", optional = true }
 pyyaml = { version = "*", optional = true }
 humanize = { version = "*", optional = true }
@@ -37,7 +37,7 @@ basic = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
 ]
@@ -49,7 +49,7 @@ img = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     # proper
@@ -64,7 +64,7 @@ tui = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     # specific
@@ -75,7 +75,7 @@ gui = [ # basic
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     # specific
@@ -89,7 +89,7 @@ web = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     # specific
@@ -101,7 +101,7 @@ ui = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     # web, tui, gui
@@ -119,7 +119,7 @@ all = [
     "pyyaml",
     "humanize",
     "textual",
-    "tkinter",
+    "tkinter-tooltip",
     "tkinter_form",
     "tkscrollableframe",
     "textual-serve",

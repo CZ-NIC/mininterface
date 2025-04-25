@@ -4,8 +4,6 @@ from typing import Optional, Type
 
 from ..mininterface.mixin import RichUiMixin
 
-from ..settings import TextualSettings
-
 try:
     from textual.app import App as _ImportCheck
 except ImportError:
@@ -13,12 +11,9 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from ..exceptions import InterfaceNotAvailable
-from ..form_dict import DataClass, EnvClass, FormDict
 from ..redirectable import Redirectable
-from ..tag import Tag
 from ..mininterface import Mininterface
 from .adaptor import TextualAdaptor
-from .button_contents import ButtonContents
 
 
 class TextualInterface(RichUiMixin, Redirectable, Mininterface):

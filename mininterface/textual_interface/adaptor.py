@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 from textual.widget import Widget
-from textual.widgets import Label, RadioButton, Rule
+from textual.widgets import Label, Rule
 
 from ..tag.path_tag import PathTag
 
 from ..tag.select_tag import SelectTag
-
-from .button_contents import ButtonContents
 
 from .button_contents import ButtonAppType
 
@@ -16,7 +14,7 @@ from ..exceptions import Cancelled
 from ..form_dict import TagDict
 from ..mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
-from ..tag.tag import Tag, UiValue
+from ..tag.tag import Tag, ValsType
 from ..tag.secret_tag import SecretTag
 from ..tag.internal import (BoolWidget, CallbackButtonWidget,
                             SubmitButtonWidget)
@@ -28,8 +26,6 @@ from .widgets import (TagWidget, MyButton, MyCheckbox, MyInput, MyRadioSet, MyRa
 
 if TYPE_CHECKING:
     from . import TextualInterface
-
-ValsType = Iterable[tuple[Tag, UiValue]]
 
 
 class TextualAdaptor(BackendAdaptor):
@@ -116,10 +112,6 @@ class TextualAdaptor(BackendAdaptor):
             if button.get_ui_value():
                 return button.tag.val
         raise Cancelled
-
-    def _try_submit(self, vals):
-        # return not Tag._submit_values(vals) or not self.submit_done()
-        return Tag._submit_values(vals) and self.submit_done()
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         self.button_app: ButtonAppType = False

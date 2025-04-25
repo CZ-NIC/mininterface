@@ -22,11 +22,9 @@ if TYPE_CHECKING:
 
 
 def _load(name, mod, attr):
-    try:
-        globals()[name] = getattr(import_module(mod, __name__), attr)
-        return globals()[name]
-    except InterfaceNotAvailable:
-        return None
+    """ Raises: InterfaceNotAvailable """
+    globals()[name] = getattr(import_module(mod, __name__), attr)
+    return globals()[name]
 
 
 def __getattr__(name):

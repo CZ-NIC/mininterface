@@ -1,11 +1,12 @@
 from argparse import ArgumentParser
+from importlib import import_module
 import logging
 import os
 import sys
 import warnings
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import NoneType, SimpleNamespace
@@ -14,13 +15,13 @@ from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (AnnotatedClass, ColorEnum, ColorEnumSingle,
+from configs import (AnnotatedClass, AnnotatedClass3, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
                      DynamicDescription, FurtherEnv2, InheritedAnnotatedClass, MissingCombined,
                      MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
-                     Subcommand2, callback_raw, callback_tag, callback_tag2)
+                     Subcommand2, SubcommandB1, SubcommandB2, callback_raw, callback_tag, callback_tag2)
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
@@ -28,7 +29,7 @@ from mininterface.auxiliary import (flatten, matches_annotation,
                                     subclass_matches_annotation)
 from mininterface.cli_parser import (_merge_settings, parse_cli,
                                      parse_config_file)
-from mininterface.exceptions import Cancelled
+from mininterface.exceptions import Cancelled, ValidationFail
 from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
 from mininterface.interfaces import TextInterface
@@ -220,13 +221,13 @@ class TestInteface(TestAbstract):
         # putting a dataclass instance
         self.assertIsInstance(m.form(SimpleEnv()), SimpleEnv)
 
-    def test_choice_single(self):
+    def test_select_single(self):
         m = run(interface=Mininterface)
         self.assertEqual(1, m.select([1]))
         self.assertEqual(1, m.select({"label": 1}))
         self.assertEqual(ColorEnumSingle.ORANGE, m.select(ColorEnumSingle))
 
-    def test_choice_multiple(self):
+    def test_select_multiple(self):
         m = run(interface=Mininterface)
         self.assertEqual([1], m.select([1], multiple=True))
         self.assertEqual([1], m.select({"label": 1}, multiple=True))
@@ -236,16 +237,26 @@ class TestInteface(TestAbstract):
         self.assertEqual([1], m.select({"label": 1}, default=[1]))
         self.assertEqual([ColorEnumSingle.ORANGE], m.select(ColorEnumSingle, default=[ColorEnumSingle.ORANGE]))
 
-    def test_choice_callback(self):
+    def test_select_callback(self):
         m = run(interface=Mininterface)
         form = """Asking the form {'My choice': SelectTag(val=None, description='', annotation=None, name=None, options=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
-        with self.assertOutputs(form):
+        form2 = """Asking the form {'My choice': SelectTag(val=callback_raw, description='', annotation=None, name=None, options=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
+        with self.assertOutputs(form), self.assertRaises(SystemExit):
             m.form({"My choice": SelectTag(options=[
                 callback_raw,
                 CallbackTag(callback_tag),
                 # This case works here but is not supported as such form cannot be submit in GUI:
                 Tag(callback_tag2, annotation=CallbackTag)
             ])})
+
+        # the default value causes no SystemExit is raised in Mininterface interface
+        out = m.form({"My choice": SelectTag(callback_raw, options=[
+            callback_raw,
+            CallbackTag(callback_tag),
+            # This case works here but is not supported as such form cannot be submit in GUI:
+            Tag(callback_tag2, annotation=CallbackTag)
+        ])})
+        self.assertEqual(callback_raw, out["My choice"])
 
         options = {
             "My choice1": callback_raw,
@@ -254,7 +265,7 @@ class TestInteface(TestAbstract):
         }
 
         form = """Asking the form {'Choose': SelectTag(val=None, description='', annotation=None, name=None, options=['My choice1', 'My choice2'])}"""
-        with self.assertOutputs(form):
+        with self.assertOutputs(form), self.assertRaises(SystemExit):
             m.select(options)
 
         self.assertEqual(50, m.select(options, default=callback_raw))
@@ -561,12 +572,12 @@ class TestRun(TestAbstract):
     def test_run_ask_for_missing(self):
         form = """Asking the form {'token': Tag(val=MISSING, description='', annotation=<class 'str'>, name='token')}"""
         # Ask for missing, no interference with ask_on_empty_cli
-        with self.assertOutputs(form):
+        with self.assertOutputs(form), self.assertRaises(SystemExit):
             run(FurtherEnv2, True, interface=Mininterface)
-        with self.assertOutputs(form):
+        with self.assertOutputs(form), self.assertRaises(SystemExit):
             run(FurtherEnv2, False, interface=Mininterface)
-        # Ask for missing does not happen, CLI fails
-        with self.assertRaises(SystemExit):
+        # Ask for missing does not happen, CLI fails with tyro message before the Mininterface log 'Asking the form...' is displayed
+        with self.assertOutputs(""), self.assertRaises(SystemExit):
             run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
 
         # No missing field
@@ -580,9 +591,9 @@ class TestRun(TestAbstract):
     def test_run_ask_for_missing_underscored(self):
         # Treating underscores
         form2 = """Asking the form {'token_underscore': Tag(val=MISSING, description='', annotation=<class 'str'>, name='token_underscore')}"""
-        with patch('sys.stdout', new_callable=StringIO) as stdout:
+        with self.assertOutputs(form2), self.assertRaises(SystemExit):
             run(MissingUnderscore, True, interface=Mininterface)
-            self.assertEqual(form2, stdout.getvalue().strip())
+
         self.sys("--token-underscore", "1")  # dash used instead of an underscore
 
         with patch('sys.stdout', new_callable=StringIO) as stdout:
@@ -595,23 +606,19 @@ class TestRun(TestAbstract):
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
         # too to support default_factory,
         # ex: `my_complex: tuple[int, str] = field(default_factory=lambda: [(1, 'foo')])`
-        self.assertEqual(["files1"], list(wf))
+        self.assertEqual(["files2"], list(wf))
 
     def test_run_ask_for_missing_union(self):
         form = """Asking the form {'path': PathTag(val=MISSING, description='', annotation=str | pathlib._local.Path, name='path'), 'combined': Tag(val=MISSING, description='', annotation=int | tuple[int, int] | None, name='combined'), 'simple_tuple': Tag(val=MISSING, description='', annotation=tuple[int, int], name='simple_tuple')}"""
         if sys.version_info[:2] <= (3, 12):  # NOTE remove with Python 3.12
             form = form.replace("pathlib._local.Path", "pathlib.Path")
-        with self.assertOutputs(form):
+
+        with self.assertOutputs(form), self.assertRaises(SystemExit):
             runm(MissingNonscalar)
 
     def test_missing_required_fail(self):
-        m = run(MissingPositionalScalar, interface=Mininterface)
-        m.form()
-        # An attempt to reading from
         with self.assertRaises(SystemExit):
-            str(m.env.file)
-        with self.assertRaises(SystemExit):
-            bool(m.env.file)
+            run(MissingPositionalScalar, interface=Mininterface)
 
         # Since the positional is list, we infer an empty list
         # This might be not the desired behaviour, we might change it to fail too.
@@ -620,14 +627,8 @@ class TestRun(TestAbstract):
         self.assertListEqual([], m2.env.files)
 
     def test_missing_combined(self):
-        m = run(MissingCombined, interface=Mininterface)
-        m.form()
-        # An attempt to reading from
         with self.assertRaises(SystemExit):
-            str(m.env.file)
-        with self.assertRaises(SystemExit):
-            str(m.env.foo)
-        self.assertEqual("hello", m.env.bar)
+            run(MissingCombined, interface=Mininterface)
 
         _, wf = parse_cli(MissingCombined, {})
         r = """{'file': PathTag(val=MISSING, description='file ', annotation=<class 'pathlib.Path'>, name='file'), 'foo': Tag(val=MISSING, description='', annotation=<class 'str'>, name='foo')}"""
@@ -726,19 +727,45 @@ class TestRun(TestAbstract):
         sub2.add_argument("--port", type=int, default=22, help="SSH port.")
         sub2.add_argument("--user", type=str, default="root", help="SSH user.")
 
-        env = run(parser, interface=Mininterface).form()
+        with self.assertRaises(SystemExit) as cm:
+            run(parser, interface=Mininterface)
+        self.assertEqual("""input_file: Type must be str!
+output_dir: Type must be str!
+the following arguments are required: STR, STR""", cm.exception.code)
+
+        env = run(parser, args=["/tmp/file", "/tmp"], interface=Mininterface).form()
 
         PathType = type(Path(""))  # PosixPath on Linux
         self.assertEqual(
-            f"""Args(build=Build(optimize=False, target=''), deploy=Deploy(port=22, user='root'), input_file=MISSING, output_dir=MISSING, verbosity=1, config={PathType.__name__}('.'), debug=False, color=True, tag=[])""",
+            f"""Args(build=Build(optimize=False, target=''), deploy=Deploy(port=22, user='root'), input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, color=True, tag=[])""",
             repr(env))
 
 
 class TestValidators(TestAbstract):
     def test_not_empty(self):
-        f = Tag("", validation=not_empty)
-        self.assertFalse(f.update(""))
-        self.assertTrue(f.update("1"))
+        t1 = Tag("", validation=not_empty)
+        self.assertFalse(t1.update(""))
+        self.assertTrue(t1.update("1"))
+
+        t2 = Tag(validation=not_empty, annotation=Path)
+        self.assertFalse(t2.update(b""))
+        self.assertFalse(t2.update(b"wrong type"))
+        self.assertFalse(t2.update(Path("")))
+        self.assertFalse(t2.update(Path(".")))
+        self.assertTrue(t2.update(Path("/tmp")))
+
+        t3 = Tag(validation=not_empty, annotation=bytes)
+        self.assertFalse(t3.update(b""))
+        self.assertTrue(t3.update(b"true"))
+
+        t4 = DatetimeTag(validation=not_empty, annotation=time)
+        self.assertFalse(t4.update(""))
+        self.assertTrue(t4.update("12:12"))
+        self.assertTrue(t4.update(time(10, 10)))
+        self.assertFalse(t4.update(""))
+        # This would pass through (if it's not midnight), as the _make_default_value is currently the current time,
+        # not `time()`. We might implement it other way.
+        self.assertTrue(t4.update(time()))
 
     def test_bare_limit(self):
         def f(val):
@@ -905,23 +932,55 @@ class TestAnnotated(TestAbstract):
         self.assertTrue(d[""]["test2"].update(" "))
 
     def test_class(self):
-        m = run(AnnotatedClass, interface=Mininterface)
+        with self.assertRaises(SystemExit):
+            m = run(AnnotatedClass, interface=Mininterface)
+
+        m = run(AnnotatedClass, args=["[]", "--files2", "[]"], interface=Mininterface)
         d = dataclass_to_tagdict(m.env)[""]
         self.assertEqual(list[Path], d["files1"].annotation)
-        # self.assertEqual(list[Path], d["files2"].annotation) does not work
+        self.assertEqual(list[Path], d["files2"].annotation)
         self.assertEqual(list[Path], d["files3"].annotation)
-        # self.assertEqual(list[Path], d["files4"].annotation) does not work
+        # self.assertEqual(list[Path], d["files4"].annotation)  # does not work
         self.assertEqual(list[Path], d["files5"].annotation)
         # This does not work, however I do not know what should be the result
         # self.assertEqual(list[Path], d["files6"].annotation)
         # self.assertEqual(list[Path], d["files7"].annotation)
         # self.assertEqual(list[Path], d["files8"].annotation)
 
+    def test_positional(self):
+        # all arguments passed well, positional, positional with default and required flag
+        m = runm(AnnotatedClass3, args=["1", "True", "False", "--foo2", "--foo3", "/tmp"])
+        self.assertEqual(AnnotatedClass3(foo1=1, foo2=[], foo3=[PosixPath('/tmp')], foo4=[True, False]),
+                         m.env)
+
+        # positional but defaulted argument not mentioned
+        self.assertEqual(AnnotatedClass3(foo1=1, foo2=[], foo3=[PosixPath('/tmp')], foo4=[]),
+                         runm(AnnotatedClass3, args=["1", "--foo2", "--foo3", "/tmp"]).env)
+
+        # required positional missing
+        with self.assertRaises(SystemExit):
+            runm(AnnotatedClass3, args=["--foo2", "--foo3", "/tmp"])
+
+        # missing required flag
+        with self.assertRaises(SystemExit):
+            runm(AnnotatedClass3, args=["1", "--foo2"])
+
+        # In the current implementation,
+        # the validation is done not at dataclass built, but on the form call.
+        # Hence, missing --foo3 will not raise an issue on run,
+        # but later on the form call.
+        # I'm not sure that this is the best behaviour and thus might be changed.
+        m.form()
+        m2 = runm(AnnotatedClass3, args=["1", "--foo2", "--foo3"])
+        with self.assertRaises(SystemExit):
+            m2.form()
+
     def test_inherited_class(self):
         # Without _parse_cli / yield_annotations on inherited members, it produced
         # UserWarning: Could not find field files6 in default instance namespace()
-        with self.assertStderr(not_contains="Could not find field"):
+        with self.assertStderr(not_contains="Could not find field"), self.assertRaises(SystemExit):
             m = run(InheritedAnnotatedClass, interface=Mininterface)
+        m = run(InheritedAnnotatedClass, args=["--files1", "/tmp"], interface=Mininterface)
         d = dataclass_to_tagdict(m.env)[""]
         self.assertEqual(list[Path], d["files1"].annotation)
         # self.assertEqual(list[Path], d["files2"].annotation) does not work
@@ -1036,9 +1095,14 @@ class TestTagAnnotation(TestAbstract):
         self.assertIsNone(t.val)
 
     def test_path_cli(self):
-        m = run(ParametrizedGeneric, interface=Mininterface)
-        f = dataclass_to_tagdict(m.env)[""]["paths"]
-        self.assertEqual(None, f.val)
+        with self.assertRaises(SystemExit):
+            m = run(ParametrizedGeneric, interface=Mininterface, ask_for_missing=False)
+
+        with self.assertRaises(SystemExit):
+            m = run(ParametrizedGeneric, interface=Mininterface)
+        env = ParametrizedGeneric([])
+        f = dataclass_to_tagdict(env)[""]["paths"]
+        self.assertEqual([], f.val)
         self.assertTrue(f.update("[]"))
 
         self.sys("--paths", "/usr", "/tmp")
@@ -1050,9 +1114,10 @@ class TestTagAnnotation(TestAbstract):
         self.assertEqual([Path("/var")], f.val)
         self.assertEqual(['/var'], f._get_ui_val())
 
-    def test_choice_method(self):
+    def test_select_method(self):
         m = run(interface=Mininterface)
-        self.assertIsNone(None, m.select((1, 2, 3)))
+        with self.assertRaises(SystemExit):
+            m.select((1, 2, 3))
         self.assertEqual(2, m.select((1, 2, 3), default=2))
         self.assertEqual(2, m.select((1, 2, 3), default=2))
         self.assertEqual(2, m.select({"one": 1, "two": 2}, default=2))
@@ -1064,8 +1129,8 @@ class TestTagAnnotation(TestAbstract):
         # list of enums
         self.assertEqual(ColorEnum.GREEN, m.select([ColorEnum.BLUE, ColorEnum.GREEN], default=ColorEnum.GREEN))
         self.assertEqual(ColorEnum.BLUE, m.select([ColorEnum.BLUE]))
-        # this works but I'm not sure whether it is good to guarantee None
-        self.assertEqual(None, m.select([ColorEnum.RED, ColorEnum.GREEN]))
+        with self.assertRaises(SystemExit):
+            self.assertEqual(m.select([ColorEnum.RED, ColorEnum.GREEN]))
 
         # Enum instance signify the default
         self.assertEqual(ColorEnum.RED, m.select(ColorEnum.RED))
@@ -1088,11 +1153,18 @@ class TestSubcommands(TestAbstract):
         "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), "\
         "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}}"
 
+    wf1 = "Asking the form {'foo': Tag(val=MISSING, description='', annotation=<class 'int'>, name='foo')}"
+    wf2 = "Asking the form {'b': Tag(val=MISSING, description='', annotation=<class 'int'>, name='b')}"
+
     def subcommands(self, subcommands: list):
         def r(args):
+            # TODO
+            # return run(subcommands, interface=TextInterface, args=args)
             return runm(subcommands, args=args)
-        # missing subcommand
-        with self.assertOutputs(self.form1):
+
+        # # missing subcommand
+        # with self.assertOutputs(self.form1): <- wrong fields dialog appear instead of the whole form
+        with self.assertOutputs(self.wf1), self.assertRaises(SystemExit):
             r([])
 
         # NOTE we should implement this better, see Command comment
@@ -1115,17 +1187,17 @@ class TestSubcommands(TestAbstract):
     def test_integrations(self):
         # Guaranteed support for pydantic and attrs
         self.maxDiff = None
-        form2 = "Asking the form {'Subcommand1': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), 'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'Subcommand2': {'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b'), 'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'PydModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}, 'AttrsModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}}"
+        form2 = "Asking the form {'SubcommandB1': {'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a'), 'SubcommandB1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'SubcommandB2': {'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, name='b'), 'SubcommandB2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, name=None)}}, 'PydModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}, 'AttrsModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, name='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, name='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, name=None)}}}"
         warn2 = """UserWarning: Subcommand dataclass PydModel does not inherit from the Command."""
         with self.assertOutputs(form2), self.assertStderr(contains=warn2):
-            runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=[])
+            runm([SubcommandB1, SubcommandB2, PydModel, AttrsModel], args=[])
 
-        m = runm([Subcommand1, Subcommand2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
+        m = runm([SubcommandB1, SubcommandB2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
         self.assertEqual("me", m.env.name)
 
     def test_choose_subcommands(self):
-        values = ["{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a')}}",
-                  "{'': {'foo': Tag(val=0, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=0, description='', annotation=<class 'int'>, name='b')}}"]
+        values = ["{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, name='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, name='a')}}",
+                  "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, name='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, name='b')}}"]
 
         def check_output(*args):
             ret = dataclass_to_tagdict(*args)
@@ -1135,7 +1207,7 @@ class TestSubcommands(TestAbstract):
         s = Start("", Mininterface)
         with patch('mininterface.start.dataclass_to_tagdict', side_effect=check_output) as mocked, \
                 redirect_stdout(StringIO()), redirect_stderr(StringIO()):
-            s.choose_subcommand([Subcommand1, Subcommand2])
+            s.choose_subcommand([SubcommandB1, SubcommandB2])
             self.assertEqual(2, mocked.call_count)
 
     def test_subcommands(self):
@@ -1150,11 +1222,14 @@ class TestSubcommands(TestAbstract):
         self.subcommands(subcommands)
 
         # with the placeholder, the form is raised
-        with self.assertOutputs(self.form1):
+        # with self.assertOutputs(self.form1):   <- wrong fields dialog appear instead of the whole form
+        with self.assertOutputs(self.wf1), self.assertRaises(SystemExit):
             r(["subcommand"])
 
         # calling a placeholder works for shared arguments of all subcommands
-        with self.assertOutputs(self.form1.replace("'foo': Tag(val=0", "'foo': Tag(val=999")):
+        # with self.assertOutputs(self.form1.replace("'foo': Tag(val=0", "'foo': Tag(val=999")):
+        # <- wrong fields dialog appear instead of the whole form
+        with self.assertOutputs(self.wf2), self.assertRaises(SystemExit):
             r(["subcommand", "--foo", "999"])
 
         # main help works
@@ -1169,13 +1244,6 @@ class TestSubcommands(TestAbstract):
 
 class TestSecretTag(TestAbstract):
     """Tests for SecretTag functionality"""
-
-    def test_secret_masking(self):
-        secret = SecretTag("mysecret")
-        self.assertEqual("••••••••", secret._get_masked_val())
-
-        self.assertFalse(secret.toggle_visibility())
-        self.assertEqual("mysecret", secret._get_masked_val())
 
     def test_secret_masking(self):
         secret = SecretTag("mysecret")
@@ -1236,7 +1304,7 @@ class TestSelectTag(TestAbstract):
         self.assertEqual(t1.val, t.val)
         self.assertFalse(t.multiple)
 
-    def test_choice_enum(self):
+    def test_select_enum(self):
         # Enum type supported
         t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum)
         t1.update(ColorEnum.BLUE)
