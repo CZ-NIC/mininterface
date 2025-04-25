@@ -4,6 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Callable, Optional
 
+from annotated_types import Gt, Le, Len, Lt
 from tyro.conf import Positional, arg
 
 from mininterface import Tag
@@ -284,6 +285,35 @@ class SubcommandB2(SharedArgsB):
 
 
 dynamic_str = "My dynamic str"
+
+
+def validation1(tag: Tag):
+    if tag.val < 10:
+        return True
+    if tag.val < 50:
+        return True, tag.val*2
+    if tag.val < 90:
+        return False
+    return "too big"
+
+
+@dataclass
+class AnnotatedTypes:
+    age: Annotated[int, Gt(18)] = 20                        # Valid: 19, 20, ...
+    # Invalid: 17, 18, "19", 19.0, ...
+    my_list: Annotated[list[int], Len(0, 10)] = field(default_factory=lambda: []
+                                                      )          # Valid: [], [10, 20, 30, 40, 50]
+    # Invalid: (1, 2), ["abc"], [0] * 20
+    percent: Annotated[int, Gt(0), Le(100)] = 5
+    percent_fl: Annotated[float, Gt(0), Le(100)] = 5
+
+
+@dataclass
+class AnnotatedTypesCombined:
+    combined1: Annotated[int, Tag(validation=validation1), Gt(-100), Lt(95)] = 5
+    combined2: Annotated[int, Gt(-100), Tag(validation=validation1), Lt(95)] = 5
+    combined3: Annotated[int, Lt(95), Gt(-100), Tag(validation=validation1)] = 5
+    combined4: Annotated[int, Tag(validation=(validation1, Lt(95), Gt(-100)))] = 5
 
 
 @dataclass

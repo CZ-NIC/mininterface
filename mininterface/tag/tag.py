@@ -7,9 +7,11 @@ from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, T
                     Union, get_args, get_origin)
 from warnings import warn
 
+from annotated_types import BaseMetadata, GroupedMetadata
+
 from ..auxiliary import (common_iterables, flatten, guess_type,
                          matches_annotation, serialize_structure,
-                         subclass_matches_annotation)
+                         subclass_matches_annotation, validate_annotated_type)
 from ..experimental import FacetCallback, SubmitButton
 from .internal import (BoolWidget, CallbackButtonWidget, FacetButtonWidget,
                        RecommendedWidget, SubmitButtonWidget)
@@ -58,6 +60,8 @@ ValidationResult = bool | ErrorMessage
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 ValsType = Iterable[tuple["Tag", UiValue]]
+ValidationCallback = Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]] | BaseMetadata
+""" See [Tag.validation][mininterface.Tag.validation] """
 
 
 class MissingTagValue:
@@ -122,23 +126,28 @@ class Tag(Generic[TagValue]):
         If not set, will be determined automatically from the [val][mininterface.Tag.val] type.
     """
 
-    validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
-                                                           TagValue]] | None = None
-    """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
+    validation: Iterable[ValidationCallback] | ValidationCallback | None = None
+    """ When the user submits the form, the values are validated (and possibly transformed) with a callback [ValidationCallback][mininterface.tag.tag.ValidationCallback] function.
         If the validation fails, user is prompted to edit the value.
-        Return True if validation succeeded or False or an error message when it failed.
 
-    [ValidationResult][mininterface.tag.ValidationResult] is a bool or the error message (that implicitly means it has failed).
+    # The function to do the work
 
+    Either use a custom callback function, mininterface.validators, or an [annotated-types predicate](https://github.com/annotated-types/annotated-types?#documentation). (You can use multiple validation callbacks combined into an itarable.)
+
+    ## Custom function
+
+    Handles the Tag.
 
     ```python
-    def check(tag: Tag):
-        if tag.val < 10:
-            return "The value must be at least 10"
-    m.form({"number", Tag(12, validation=check)})
+    from mininterface.tag import Tag
+
+    def my_validation(tag: Tag):
+        return tag.val > 50
+
+    m.form({"number", Tag("", validation=my_validation)})
     ```
 
-    Either use a custom callback function or mininterface.validators.
+    ## mininterface.validators template
 
     ```python
     from mininterface.validators import not_empty
@@ -151,13 +160,68 @@ class Tag(Generic[TagValue]):
     from mininterface import Tag, Validation
     @dataclass
     class Env:
-        my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
+        my_text: Annotated[str, Validation(not_empty)] = "will not be emtpy"
 
         # which is an alias for:
         # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
     ```
 
-    NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
+    ## annotated-types predicate.
+
+    The [annotated-types](https://github.com/annotated-types/annotated-types?#documentation) are de-facto standard for types restraining.
+
+    Currently, `Gt, Ge, Lt, Le, MultipleOf and Len` are supported.
+
+    ```python
+    from dataclasses import dataclass
+    from annotated_types import Ge
+    from mininterface import run
+
+    @dataclass
+    class AnnotatedTypes:
+        age: Annotated[int, Ge(18)]
+
+    run(AnnotatedTypes).env.age  # guaranteed to be >= 18
+    ```
+
+    !!! info
+        The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.
+
+        ```python
+        @dataclass
+        class AnnotatedTypes:
+            age: Annotated[int, Ge(18), Tag(validation=custom)]
+
+        # -> age: Annotated[int, Tag(validation=[Ge(18), custom])]
+        ```
+
+    # The result output
+
+    [ValidationResult][mininterface.tag.tag.ValidationResult] is a bool or the error message (that implicitly means it has failed) as shows the following table.
+    Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
+
+    | return | description |
+    |--|--|
+    | bool | True if validation succeeded or False if validation failed. |
+    | str | Error message if the validation failed. |
+    | tuple[bool\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
+
+    This example shows the str error message:
+
+    ```python
+    def check(tag: Tag):
+        if tag.val < 10:
+            return "The value must be at least 10"
+    m.form({"number", Tag(12, validation=check)})
+    ```
+
+    This example shows the value transformation. For `val=50+`, the validation fails.
+
+    ```python
+    def check(tag: Tag):
+        return True, tag.val * 2
+    m.form({"number", Tag(12, validation=(check, Lt(100)))})
+    ```
     """
 
     name: str | None = None
@@ -596,16 +660,32 @@ class Tag(Generic[TagValue]):
         if self.validation:
             last = self.val
             self.val = out_value
-            res = self.validation(self)
-            if isinstance(res, tuple):
-                passed, out_value = res
-                self.val = out_value
-            else:
-                passed = res
-                self.val = last
-            if passed is not True:  # we did not pass, there might be an error message in passed
-                self.set_error_text(passed or f"Validation fail")
-                raise ValueError
+
+            validation = self.validation
+            if not isinstance(validation, Iterable):
+                validation = (validation,)
+
+            for vald in validation:
+                if isinstance(vald, (BaseMetadata, GroupedMetadata)):
+                    try:
+                        res = validate_annotated_type(vald, out_value)
+                    except TypeError:
+                        # Ex. putting "2.0" into an int.
+                        # It would generate type problem later here in the method,
+                        # but even now comparison failed Ex. TypeError("2.0" > 0)
+                        self.set_error_text(f"Type must be {self._repr_annotation()}!")
+                        raise ValueError
+                else:
+                    res = vald(self)
+                    if isinstance(res, tuple):
+                        passed, out_value = res
+                        self.val = out_value
+                    else:
+                        passed = res
+                        self.val = last
+                    if passed is not True:  # we did not pass, there might be an error message in passed
+                        self.set_error_text(passed or f"Validation fail")
+                        raise ValueError
 
         # pydantic_check
         if self._pydantic_field:

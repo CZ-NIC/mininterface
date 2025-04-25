@@ -2,13 +2,14 @@ from copy import copy
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
-from typing import Any, Type, get_type_hints
+from typing import Any, Iterable, Type, get_type_hints
 
+from annotated_types import BaseMetadata, GroupedMetadata
 
 from . import DatetimeTag, SelectTag, Tag
-from .tag import TagValue
 from .callback_tag import CallbackTag
 from .path_tag import PathTag
+from .tag import TagValue
 from .type_stubs import TagCallback
 
 
@@ -69,6 +70,8 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
         else:
             _src_class = _src_obj.__class__
     kwargs |= {"_src_obj": _src_obj, "_src_key": _src_key, "_src_class": _src_class}
+    validators = []
+    tag = None
     if _src_class:
         if not annotation:  # when we have _src_class, we assume to have _src_key too
             annotation = get_type_hint_from_class_hierarchy(_src_class, _src_key)
@@ -92,5 +95,20 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                                     # Annotated[ **origin** list[Path], Tag(...)]
                                     new.annotation = annotation or field_type.__origin__
                                 # Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...) -> DatetimeTag(date=True)
-                                return tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
-    return tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
+                                tag = tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
+                            elif isinstance(metadata, (BaseMetadata, GroupedMetadata)):
+                                validators.append(metadata)
+    if not tag:
+        tag = tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
+
+    if validators:
+        # We prepend annotated_types validators to the current validator.
+        if tag.validation is None:
+            tag.validation = validators
+        elif isinstance(tag.validation, Iterable):
+            validators.extend(tag.validation)
+            tag.validation = validators
+        else:
+            validators.append(tag.validation)
+            tag.validation = validators
+    return tag

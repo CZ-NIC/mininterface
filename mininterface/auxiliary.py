@@ -6,6 +6,8 @@ from argparse import ArgumentParser
 from types import UnionType
 from typing import Callable, Iterable, Optional, TypeVar, Union, get_args, get_origin
 
+from annotated_types import Gt, Ge, Lt, Le, MultipleOf, Len
+
 try:
     from tyro.extras import get_parser
 except ImportError:
@@ -194,3 +196,31 @@ def naturalsize(value: float | str, *args) -> str:
     if naturalsize_:
         return naturalsize_(value, *args)
     return str(value)
+
+
+def validate_annotated_type(meta, value) -> bool:
+    """ Raises: ValueError, NotImplementedError """
+    if isinstance(meta, Gt):
+        if not value > meta.gt:
+            raise ValueError(f"Value {value} must be > {meta.gt}")
+    elif isinstance(meta, Ge):
+        if not value >= meta.ge:
+            raise ValueError(f"Value {value} must be ≥ {meta.ge}")
+    elif isinstance(meta, Lt):
+        if not value < meta.lt:
+            raise ValueError(f"Value {value} must be < {meta.lt}")
+    elif isinstance(meta, Le):
+        if not value <= meta.le:
+            raise ValueError(f"Value {value} must be ≤ {meta.le}")
+    elif isinstance(meta, MultipleOf):
+        if value % meta.multiple_of != 0:
+            raise ValueError(f"Value {value} must be a multiple of {meta.multiple_of}")
+    elif isinstance(meta, Len):
+        if meta.max_length is None:
+            if not (meta.min_length <= len(value)):
+                raise ValueError(f"Length {len(value)} must be at least {meta.min_length}")
+        elif not (meta.min_length <= len(value) <= meta.max_length):
+            raise ValueError(f"Length {len(value)} must be between {meta.min_length} and {meta.max_length}")
+    else:
+        raise NotImplementedError(f"Unknown predicated {meta}")
+    return True

@@ -15,7 +15,7 @@ from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (AnnotatedClass, AnnotatedClass3, ColorEnum, ColorEnumSingle,
+from configs import (AnnotatedClass, AnnotatedClass3, AnnotatedTypes, AnnotatedTypesCombined, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
                      DynamicDescription, FurtherEnv2, InheritedAnnotatedClass, MissingCombined,
                      MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore,
@@ -534,7 +534,7 @@ class TestInheritedTag(TestAbstract):
 
     def test_path_class(self):
         m = runm(PathTagClass, ["/tmp"])  # , "--files2", "/usr"])
-        d = dataclass_to_tagdict(m.env)[""]
+        d: dict[str, PathTag | Tag] = dataclass_to_tagdict(m.env)[""]
 
         [self.assertEqual(PathTag, type(v)) for v in d.values()]
         self.assertEqual(d["files"].name, "files")
@@ -550,13 +550,13 @@ class TestInheritedTag(TestAbstract):
 class TestTypes(TestAbstract):
     def test_datetime_tag(self):
         m = runm(DatetimeTagClass)
-        d = dataclass_to_tagdict(m.env)[""]
+        d: TagDict = dataclass_to_tagdict(m.env)[""]
         d["extern"] = dict_to_tagdict({"extern": date.fromisoformat("2024-09-10")})["extern"]
 
         for key, expected_date, expected_time in [("p1", True, True), ("p2", False, True), ("p3", True, False),
                                                   ("pAnnot", True, False),
                                                   ("extern", True, False)]:
-            tag = d[key]
+            tag: DatetimeTag = d[key]
             self.assertIsInstance(tag, DatetimeTag)
             self.assertEqual(expected_date, tag.date)
             self.assertEqual(expected_time, tag.time)
@@ -795,6 +795,51 @@ class TestValidators(TestAbstract):
         self.assertFalse(t2.update(11))
         self.assertEqual(10, t2.val)
 
+    def test_annotated_types(self):
+        d: TagDict = dataclass_to_tagdict(AnnotatedTypes())[""]
+
+        for i in ("19", 1000):
+            self.assertTrue(d["age"].update(i))
+
+        for i in (18, 18.0, "18.1", 19.5, False, "str"):
+            self.assertFalse(d["age"].update(i))
+
+        for i in (1, 2, 100):
+            self.assertTrue(d["percent"].update(i))
+        for i in (-1, 0, 101, 99.9):
+            self.assertFalse(d["percent"].update(i))
+
+        for i in (0.1, 1.0, "1", "2", "100", 99.9):
+            self.assertTrue(d["percent_fl"].update(i), i)
+        for i in (0.0, 1, 2):
+            self.assertFalse(d["percent_fl"].update(i), i)
+
+        for i in (0, 9, 10):
+            self.assertTrue(d["my_list"].update([0]*i), i)
+
+        for i in (11, 100):
+            self.assertFalse(d["my_list"].update([0]*i), i)
+
+    def test_annotated_types_combined(self):
+        d: TagDict = dataclass_to_tagdict(AnnotatedTypesCombined())[""]
+
+        for i in (-99, 0, 2, 40):
+            self.assertTrue(d["combined1"].update(i), i)
+            self.assertTrue(d["combined2"].update(i), i)
+            self.assertTrue(d["combined3"].update(i), i)
+
+        for i in (-1000, -100, 60, 90, 100):
+            self.assertFalse(d["combined1"].update(i), i)
+            self.assertFalse(d["combined2"].update(i), i)
+            self.assertFalse(d["combined3"].update(i), i)
+
+        # transforming funcion is before the annotated-types
+        i = 49
+        self.assertTrue(d["combined1"].update(i), i)
+        self.assertTrue(d["combined2"].update(i), i)
+        self.assertTrue(d["combined3"].update(i), i)
+        self.assertFalse(d["combined4"].update(i), i)
+
 
 class TestLog(TestAbstract):
     @staticmethod
@@ -872,7 +917,7 @@ class TestPydanticIntegration(TestAbstract):
         m = run(PydNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_tagdict(m.env)["inner"]["name"]
+        f: Tag = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -910,7 +955,7 @@ class TestAttrsIntegration(TestAbstract):
         m = run(AttrsNestedRestraint, interface=Mininterface)
         self.assertEqual("hello", m.env.inner.name)
 
-        f = dataclass_to_tagdict(m.env)["inner"]["name"]
+        f: Tag = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
         self.assertEqual("Restrained name ", f.description)
         self.assertFalse(f.update("long words"))
@@ -925,11 +970,11 @@ class TestAnnotated(TestAbstract):
 
     def test_annotated(self):
         m = run(ConstrainedEnv)
-        d = dataclass_to_tagdict(m.env)
-        self.assertFalse(d[""]["test"].update(""))
-        self.assertFalse(d[""]["test2"].update(""))
-        self.assertTrue(d[""]["test"].update(" "))
-        self.assertTrue(d[""]["test2"].update(" "))
+        d: TagDict = dataclass_to_tagdict(m.env)[""]
+        self.assertFalse(d["test"].update(""))
+        self.assertFalse(d["test2"].update(""))
+        self.assertTrue(d["test"].update(" "))
+        self.assertTrue(d["test2"].update(" "))
 
     def test_class(self):
         with self.assertRaises(SystemExit):
@@ -1158,8 +1203,6 @@ class TestSubcommands(TestAbstract):
 
     def subcommands(self, subcommands: list):
         def r(args):
-            # TODO
-            # return run(subcommands, interface=TextInterface, args=args)
             return runm(subcommands, args=args)
 
         # # missing subcommand

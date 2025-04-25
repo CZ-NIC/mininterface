@@ -15,6 +15,7 @@ readme = "README.md"
 # Minimal requirements (dialogs with partial .form support (m.form(dict) or m.form(dataclass_instance))
 python = "^3.10"
 simple_term_menu = "*"
+annotated-types = "*"
 # Basic requirements (CLI and full .form support (m.form(dataclass_class))
 tyro = { version = "^0.9", optional = true }
 pyyaml = { version = "*", optional = true }
