@@ -200,8 +200,64 @@ class FileBrowser(Vertical):
 
     def action_select(self) -> None:
         """Select the currently focused node."""
-        if self._tree and self._tree.cursor_node:
-            self.on_tree_node_selected(Tree.NodeSelected(self._tree, self._tree.cursor_node))
+        if not self._tree or not self._tree.cursor_node:
+            return
+        self.on_tree_node_selected(Tree.NodeSelected(node=self._tree.cursor_node))
+
+    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+        if self._is_quick_search:
+            return
+
+        node = event.node
+        if not node.data:
+            return
+
+        path = node.data
+        if not isinstance(path, Path):
+            try:
+                path = Path(str(path))
+            except Exception:
+                return
+
+        # Handle directories
+        if path.is_dir():
+            if self.tag.is_dir:
+                # Directory selection mode: select the directory
+                if self.tag.multiple:
+                    if path in self.selected_paths:
+                        self.selected_paths.remove(path)
+                    else:
+                        self.selected_paths.append(path)
+                    self._update_status()
+                    if hasattr(self.parent, "input"):
+                        self.parent._update_value_from_browser(self.selected_paths)
+                else:
+                    if hasattr(self.parent, "input"):
+                        self.parent._update_value_from_browser(path)
+                    self.remove()
+            else:
+                # File selection mode: navigate into directory
+                self._start_path = path
+                self._update_status()
+                self._tree.clear()
+                self._tree.root.expand()
+                self._add_directory(path, self._tree.root)
+            return
+
+        # Handle files (only in file selection mode)
+        if not self.tag.is_dir:
+            if self.tag.multiple:
+                if path in self.selected_paths:
+                    self.selected_paths.remove(path)
+                else:
+                    self.selected_paths.append(path)
+                self._update_status()
+                if hasattr(self.parent, "input"):
+                    self.parent._update_value_from_browser(self.selected_paths)
+            else:
+                if hasattr(self.parent, "input"):
+                    self.parent._update_value_from_browser(path)
+                self.remove()
 
     def action_close(self) -> None:
         """Close the file browser."""
@@ -252,47 +308,6 @@ class FileBrowser(Vertical):
                 self._tree.scroll_to_node(node)
                 self._is_quick_search = False
                 break
-
-    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
-        """Called when a node is selected."""
-        # Skip selection logic if this is a quick search focus change
-        if self._is_quick_search:
-            return
-
-        node = event.node
-        if not node.data:
-            return
-
-        path = node.data
-        if not isinstance(path, Path):
-            try:
-                path = Path(str(path))
-            except Exception:
-                return
-
-        if path.is_dir():
-            self._start_path = path
-            self._update_status()
-            self.refresh()
-
-        if not self.tag.is_dir and path.is_dir():
-            return
-
-        if self.tag.is_dir and not path.is_dir():
-            return
-
-        if self.tag.multiple:
-            if path in self.selected_paths:
-                self.selected_paths.remove(path)
-            else:
-                self.selected_paths.append(path)
-            self._update_status()
-            if hasattr(self.parent, "input"):
-                self.parent._update_value_from_browser(self.selected_paths)
-        else:
-            if hasattr(self.parent, "input"):
-                self.parent._update_value_from_browser(path)
-            self.remove()
 
     def _reset_search(self) -> None:
         """Reset the search prefix after a timeout."""
