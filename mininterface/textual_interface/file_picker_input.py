@@ -431,6 +431,9 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             """Focus the tree widget after it's mounted."""
             if self.browser and self.browser._tree:
                 self.browser._tree.focus()
+                # Select the first node if it exists
+                if self.browser._tree.root.children:
+                    self.browser._tree.select_node(self.browser._tree.root.children[0])
 
         def get_ui_value(self):
             """Get the current value of the input field."""
