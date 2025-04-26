@@ -239,9 +239,10 @@ class FileBrowser(Vertical):
                 # File selection mode: navigate into directory
                 self._start_path = path
                 self._update_status()
-                self._tree.clear()
-                self._tree.root.expand()
-                self._add_directory(path, self._tree.root)
+                if not node.is_expanded:
+                    node.expand()
+                    if not node.children:
+                        self._add_directory(path, node)
             return
 
         # Handle files (only in file selection mode)
@@ -393,6 +394,16 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
             self.button = Button("...", variant="primary", id="file_picker")
             self.browser = None
+            # Store selected paths at the input widget level
+            self.selected_paths = []
+            if tag.multiple and tag._get_ui_val():
+                # Initialize selected paths from existing value
+                try:
+                    paths = eval(str(tag._get_ui_val()))
+                    if isinstance(paths, list):
+                        self.selected_paths = [Path(p) for p in paths]
+                except (ValueError, SyntaxError):
+                    pass
 
         def compose(self) -> ComposeResult:
             """Compose the widget layout."""
@@ -404,10 +415,14 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             if event.button.id == "file_picker":
                 if not self.browser:
                     self.browser = FileBrowser(self.tag)
+                    # Pass the current selections to the browser
+                    self.browser.selected_paths = self.selected_paths.copy()
                     self.mount(self.browser)
                     self.refresh()
                     self.set_timer(0.1, self._focus_tree)
                 else:
+                    # Store the current selections before closing
+                    self.selected_paths = self.browser.selected_paths.copy()
                     self.browser.remove()
                     self.browser = None
                     self.refresh()
@@ -424,6 +439,8 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
         def _update_value_from_browser(self, path_value):
             """Update the value from browser selection directly, bypassing validation."""
             if isinstance(path_value, list):
+                # Update our stored selections
+                self.selected_paths = path_value.copy()
                 self.input.value = str([str(p) for p in path_value])
             else:
                 self.input.value = str(path_value)
