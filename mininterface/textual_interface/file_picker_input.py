@@ -172,12 +172,16 @@ class FileBrowser(Vertical):
                 try:
                     if item.is_dir():
                         branch = node.add(f"📁 {item.name}", data=item, expand=False)
-                        if next(item.iterdir(), None) is not None:
-                            branch.add("Loading...")
+                        try:
+                            if next(item.iterdir(), None) is not None:
+                                branch.add("Loading...")
+                        except (PermissionError, OSError):
+                            pass
                     else:
                         if not self.tag.is_dir:
-                            node.add(f"📄 {item.name}", data=item)
-                except PermissionError:
+                            # Add file nodes as non-expandable
+                            node.add(f"📄 {item.name}", data=item, expand=False).allow_expand = False
+                except (PermissionError, OSError):
                     continue
 
         except PermissionError:
