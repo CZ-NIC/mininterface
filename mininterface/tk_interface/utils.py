@@ -198,14 +198,14 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself
         # as the user expects the consistency – the original one in the dict.
-        if tag.name:
-            label1.config(text=tag.name)
+        if tag.label:
+            label1.config(text=tag.label)
 
 
-def create_button(master, _fetch, tag, label1, command=None):
+def create_button(master, _fetch, tag: Tag, label1, command=None):
     variable = AnyVariable(tag.val)
     grid_info = _fetch(variable)
-    widget2 = Button(master, text=tag.name, command=command)
+    widget2 = Button(master, text=tag.label, command=command)
     widget2.grid(row=grid_info['row'], column=grid_info['column'])
     label1.grid_forget()
     return variable, widget2

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from ..auxiliary import flatten
-from ..form_dict import formdict_to_widgetdict
+from ..form_dict import tagdict_to_widgetdict
 from .widgets import TagWidget
 
 
@@ -32,7 +32,7 @@ class FormContents(Static):
         # since textual 1.0.0 we have to build widgets not earlier than the context app is ready
 
         self.widgets.clear()
-        self.widgets.extend(flatten(formdict_to_widgetdict(
+        self.widgets.extend(flatten(tagdict_to_widgetdict(
             self.adaptor.facet._form, self.adaptor.widgetize), include_keys=self.adaptor.header))
 
         # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
@@ -54,8 +54,8 @@ class FormContents(Static):
                     yield Label(fieldt.placeholder)
                 # NOTE MyRadioSet not shown now: add name in widgetize and display here
                 # NOTE: has this something to do with the PathTag?
-                elif hasattr(fieldt, "tag") and fieldt.tag.name and not isinstance(fieldt, Input):
-                    yield Label(fieldt.tag.name)
+                elif hasattr(fieldt, "tag") and fieldt.tag.label and not isinstance(fieldt, Input):
+                    yield Label(fieldt.tag.label)
                 yield fieldt
                 if isinstance(fieldt, TagWidget) and (arb := fieldt._arbitrary):
                     yield arb
@@ -102,7 +102,7 @@ class FormContents(Static):
                         case Checkbox():
                             label = inp_.label
                         case TagWidget():
-                            label = inp_.tag.name
+                            label = inp_.tag.label
                         case _:
                             label = ""
                     if str(label).casefold().startswith(letter):

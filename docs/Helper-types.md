@@ -40,3 +40,9 @@
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
+
+::: mininterface.form_dict.FormDict
+    options:
+      show_root_full_path: false
+      show_root_heading: true
+      show_labels: false

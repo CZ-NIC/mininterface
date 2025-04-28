@@ -58,13 +58,13 @@ class TextualAdaptor(BackendAdaptor):
                                      for label, val, tip, _ in tag._get_options(" | ")]
                     o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
-                o = FilePickerInputFactory(self, tag, placeholder=tag.name or "")
+                o = FilePickerInputFactory(self, tag, placeholder=tag.label or "")
             case SecretTag():
-                o = SecretInputFactory(self, tag, placeholder=tag.name or "", type="text")
+                o = SecretInputFactory(self, tag, placeholder=tag.label or "", type="text")
             case _:
                 match tag._recommend_widget():
                     case BoolWidget():
-                        o = MyCheckbox(tag, tag.name or "", v)
+                        o = MyCheckbox(tag, tag.label or "", v)
                     case SubmitButtonWidget():
                         # Special type: Submit button
                         # NOTE EXPERIMENTAL
@@ -80,7 +80,7 @@ class TextualAdaptor(BackendAdaptor):
                             type_ = "number"
                         else:
                             type_ = "text"
-                        o = MyInput(tag, str(v), placeholder=tag.name or "", type=type_)
+                        o = MyInput(tag, str(v), placeholder=tag.label or "", type=type_)
 
         tag._last_ui_val = o.get_ui_value()
         return o
@@ -104,7 +104,7 @@ class TextualAdaptor(BackendAdaptor):
 
     def _build_buttons(self, text, buttons, focused):
         self.button_app = (text,
-                           [(MySubmitButton(Tag(value, facet=self.facet, name=label)), i == focused-1)
+                           [(MySubmitButton(Tag(value, facet=self.facet, label=label)), i == focused-1)
                                for i, (label, value) in enumerate(buttons)])
 
     def _get_buttons_val(self):

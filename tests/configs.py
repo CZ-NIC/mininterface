@@ -144,7 +144,7 @@ class OptionalFlagEnv:
 class ConstrainedEnv:
     """Set of options."""
 
-    test: Annotated[str, Tag(validation=not_empty, name="Better name")] = "hello"
+    test: Annotated[str, Tag(validation=not_empty, label="Better name")] = "hello"
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
@@ -172,7 +172,7 @@ class PathTagClass:
     files: Positional[list[Path]] = field(default_factory=list)
 
     # This becomes PathTag(multiple=True)
-    files2: Annotated[list[Path], Tag(name="Custom name")] = field(default_factory=list)
+    files2: Annotated[list[Path], Tag(label="Custom name")] = field(default_factory=list)
 
     # NOTE this should become PathTag(multiple=True)
     # files3: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
@@ -183,7 +183,7 @@ class DatetimeTagClass:
     p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
     p2: time = time.fromisoformat("17:35:39.922044")
     p3: date = date.fromisoformat("2024-09-10")
-    pAnnot: Annotated[date, Tag(name="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
+    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
 
 
 @dataclass
@@ -318,4 +318,4 @@ class AnnotatedTypesCombined:
 
 @dataclass
 class DynamicDescription:
-    foo: Annotated[str, Tag(name="Foo"), arg(help=dynamic_str)] = "hello"
+    foo: Annotated[str, Tag(label="Foo"), arg(help=dynamic_str)] = "hello"

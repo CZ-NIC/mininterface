@@ -102,7 +102,7 @@ class MyButton(TagWidget, Button):
     _val: TagValue
 
     def __init__(self, tag, *args, **kwargs):
-        super().__init__(tag, tag.name, *args, **kwargs)
+        super().__init__(tag, tag.label, *args, **kwargs)
 
     def on_button_pressed(self, event):
         self.tag.facet.submit(_post_submit=self.tag._run_callable)

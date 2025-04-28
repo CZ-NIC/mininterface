@@ -49,7 +49,7 @@ from dumb_settings import (GuiSettings, MininterfaceSettings,
 
 SYS_ARGV = None  # To be redirected
 
-MISSING = MissingTagValue(None, None)
+MISSING = MissingTagValue(BaseException(), None)
 
 
 def runm(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None, args=None, **kwargs) -> Mininterface[EnvClass]:
@@ -130,6 +130,9 @@ class TestAbstract(TestCase):
         finally:
             # Po testu všechno vrátíš zpět
             globals()['Mininterface'] = original_interface
+
+    def assertReprEqual(self, a, b):
+        return self.assertEqual(repr(a), repr(b))
 
 
 class TestCli(TestAbstract):
@@ -223,7 +226,7 @@ class TestInteface(TestAbstract):
         with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
 
-        self.assertEqual(repr({"my label": Tag(True, "my description", name="my label"),
+        self.assertEqual(repr({"my label": Tag(True, "my description", label="my label"),
                          "nested": {"inner": "another"}}), repr(dict1))
 
         # Empty form invokes editing self.env, which is empty
@@ -455,11 +458,11 @@ class TestConversion(TestAbstract):
         # self.assertIs(ConstrainedEnv.__annotations__.get("test").__metadata__[0], d["test"])
 
         # name is correctly determined from the dataclass attribute name
-        self.assertEqual("test2", d["test2"].name)
+        self.assertEqual("test2", d["test2"].label)
         # but the tag in the annotation stays intact
-        self.assertIsNone(ConstrainedEnv.__annotations__.get("test2").__metadata__[0].name)
+        self.assertIsNone(ConstrainedEnv.__annotations__.get("test2").__metadata__[0].label)
         # name is correctly fetched from the dataclass annotation
-        self.assertEqual("Better name", d["test"].name)
+        self.assertEqual("Better name", d["test"].label)
 
         # a change via set_val propagates
         self.assertEqual("hello", d["test"].val)
@@ -480,16 +483,16 @@ class TestConversion(TestAbstract):
 
     def test_nested_tag(self):
         t0 = Tag(5)
-        t1 = Tag(t0, name="Used name")
-        t2 = Tag(t1, name="Another name")
-        t3 = Tag(t1, name="Unused name")
+        t1 = Tag(t0, label="Used name")
+        t2 = Tag(t1, label="Another name")
+        t3 = Tag(t1, label="Unused name")
         t4 = Tag()._fetch_from(t2)
-        t5 = Tag(name="My name")._fetch_from(t2)
+        t5 = Tag(label="My name")._fetch_from(t2)
 
-        self.assertEqual("Used name", t1.name)
-        self.assertEqual("Another name", t2.name)
-        self.assertEqual("Another name", t4.name)
-        self.assertEqual("My name", t5.name)
+        self.assertEqual("Used name", t1.label)
+        self.assertEqual("Another name", t2.label)
+        self.assertEqual("Another name", t4.label)
+        self.assertEqual("My name", t5.label)
 
         self.assertEqual(5, t1.val)
         self.assertEqual(5, t2.val)
@@ -510,6 +513,13 @@ class TestConversion(TestAbstract):
         outer = Tag(Tag(Tag(inner)))
         outer.update(3)
         self.assertEqual(3, inner.val)
+
+    def test_label(self):
+        """ Dict labels do not have to be str,
+        but Tag.labels have to. (Ex. TuiInterface would fail.) """
+        self.assertReprEqual({1: Tag("a", label='1'),
+                              45: Tag("b", label='45')},
+                             dict_to_tagdict({1: "a", 45: "b"}))
 
 
 class TestTag(TestAbstract):
@@ -580,13 +590,13 @@ class TestInheritedTag(TestAbstract):
         d: dict[str, PathTag | Tag] = dataclass_to_tagdict(m.env)[""]
 
         [self.assertEqual(PathTag, type(v)) for v in d.values()]
-        self.assertEqual(d["files"].name, "files")
+        self.assertEqual(d["files"].label, "files")
         self.assertTrue(d["files"].multiple)
 
-        self.assertEqual(d["files2"].name, "Custom name")
+        self.assertEqual(d["files2"].label, "Custom name")
         self.assertTrue(d["files2"].multiple)
 
-        # self.assertEqual(d["files3"].name, "Custom name")
+        # self.assertEqual(d["files3"].label, "Custom name")
         # self.assertTrue(d["files3"].multiple)
 
 
@@ -674,8 +684,9 @@ class TestRun(TestAbstract):
             run(MissingCombined, interface=Mininterface)
 
         _, wf = parse_cli(MissingCombined, {})
-        r = """{'file': PathTag(val=MISSING, description='file ', annotation=<class 'pathlib.Path'>, name='file'), 'foo': Tag(val=MISSING, description='', annotation=<class 'str'>, name='foo')}"""
-        self.assertEqual(r, repr(wf))
+        r = {'file': PathTag(val=MISSING, description='file ', annotation=Path, label='file'),
+             'foo': Tag(val=MISSING, description='', annotation=str, label='foo')}
+        self.assertEqual(repr(r), repr(wf))
 
     def test_run_config_file(self):
         os.chdir("tests")
@@ -1209,7 +1220,7 @@ class TestTagAnnotation(TestAbstract):
         self.assertEqual(2, m.select((1, 2, 3), default=2))
         self.assertEqual(2, m.select((1, 2, 3), default=2))
         self.assertEqual(2, m.select({"one": 1, "two": 2}, default=2))
-        self.assertEqual(2, m.select([Tag(1, name="one"), Tag(2, name="two")], default=2))
+        self.assertEqual(2, m.select([Tag(1, label="one"), Tag(2, label="two")], default=2))
 
         # Enum type
         self.assertEqual(ColorEnum.GREEN, m.select(ColorEnum, default=ColorEnum.GREEN))
@@ -1328,7 +1339,7 @@ class TestSubcommands(TestAbstract):
             r(["subcommand", "--help"])
 
     def test_common_field_annotation(self):
-        with self.assertForms([({'paths': PathTag(val=MISSING, description='', annotation=list[Path], name='paths')}, {"paths": "['/tmp']"})]):
+        with self.assertForms([({'paths': PathTag(val=MISSING, description='', annotation=list[Path], label='paths')}, {"paths": "['/tmp']"})]):
             run([ParametrizedGeneric, ParametrizedGeneric], interface=Mininterface)
             # TODO
             # runm([ParametrizedGeneric, ParametrizedGeneric])
@@ -1385,8 +1396,8 @@ class TestSelectTag(TestAbstract):
         self.assertFalse(t.multiple)
 
         # list of Tags are the input
-        t1 = Tag(1, name="one")
-        t2 = Tag(2, name="two")
+        t1 = Tag(1, label="one")
+        t2 = Tag(2, label="two")
         t = SelectTag(1, options=[t1, t2])
         self.assertTrue(t.update(2))
         self.assertEqual(t2.val, t.val)
@@ -1488,16 +1499,16 @@ class TestSelectTag(TestAbstract):
         t.options = {"one": 1}
         self.assertDictEqual({"one": 1}, t._build_options())
 
-        t.options = {"one": Tag(1, name="one")}
+        t.options = {"one": Tag(1, label="one")}
         self.assertDictEqual({"one": 1}, t._build_options())
 
-        t.options = [Tag(1, name="one"), Tag(2, name="two")]
+        t.options = [Tag(1, label="one"), Tag(2, label="two")]
         self.assertDictEqual({"one": 1, "two": 2}, t._build_options())
 
-        t.options = {("one", "col2"): Tag(1, name="one"), ("three", "column3"): 3}
+        t.options = {("one", "col2"): Tag(1, label="one"), ("three", "column3"): 3}
         self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_options())
 
-        t.options = [Tag(1, name='A')]
+        t.options = [Tag(1, label='A')]
         self.assertDictEqual({"A": 1}, t._build_options())
 
 

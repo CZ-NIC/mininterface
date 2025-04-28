@@ -424,12 +424,18 @@ class Mininterface(Generic[EnvClass]):
         Args:
             form: We accept a dataclass type, a dataclass instance, a dict or None.
 
+                * A dataclass type is resolved to a dataclass instance that is returned.
+
+                * A dataclass instance is updated by the form and returned.
+
                 * If dict, we expect a dict of `{labels: value}`.
                 The form widget infers from the default value type.
                 The dict can be nested, it can contain a subgroup.
                 The value might be a [`Tag`][mininterface.Tag] that allows you to add descriptions.
 
                 A checkbox example: `{"my label": Tag(True, "my description")}`
+
+                The original dict values are updated and a new dict (where all Tags are resolved to their values) is returned.
 
                 * If None, the `self.env` is being used as a form, allowing the user to edit whole configuration.
                     (Previously fetched from CLI and config file.)
@@ -481,7 +487,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
 
         !!! info
-            For minimal installation (`pip install mininterface` only), using Type[DataClass] like `m.form(Env)` will end up with `Install the missing dependency by running: pip install mininterface[basic]`.
+            For minimal installation (`pip install mininterface` only), using `Type[DataClass]` like `m.form(Env)` will end up with `Install the missing dependency by running: pip install mininterface[basic]`.
             However using a dataclass instance `m.form(Env())` will work. A lot of the stuff under the hood is needed to instantaniate a dataclass with all the checks.
         """
         f = self.env if form is None else form
@@ -498,8 +504,14 @@ class Mininterface(Generic[EnvClass]):
               submit: str | bool = True
               ) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
+        import ipdb
+        ipdb.set_trace()  # TODO
         if isinstance(_form, dict):
-            return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
+            try:
+                return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
+            except:
+                import ipdb
+                ipdb.post_mortem()  # TODO
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = parse_cli(_form, {}, False, False, args=[])  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)

@@ -11,7 +11,7 @@ except ImportError:
     raise DependencyRequired("basic")
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
-from ..form_dict import TagDict, formdict_to_widgetdict
+from ..form_dict import TagDict, tagdict_to_widgetdict
 from ..mininterface.adaptor import BackendAdaptor
 from ..mininterface.mixin import RichUiAdaptor
 from ..settings import GuiSettings
@@ -100,7 +100,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
 
         self.form = Form(self.frame,
                          name_form="",
-                         form_dict=formdict_to_widgetdict(form, self.widgetize),
+                         form_dict=tagdict_to_widgetdict(form, self.widgetize),
                          name_button=submit if isinstance(submit, str) else "Ok",
                          button_command=self._ok if submit else None
                          )

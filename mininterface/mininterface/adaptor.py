@@ -73,7 +73,7 @@ class MinAdaptor(BackendAdaptor):
             if eavesdrop:
                 tyro_error = "\n" + "\n".join(s for s in eavesdrop)
 
-            validation_fails = "\n".join(f"{tag._original_name}: {tag._error_text}"
+            validation_fails = "\n".join(f"{tag._original_label}: {tag._error_text}"
                                          for tag in tags if tag._error_text)
 
             raise SystemExit(validation_fails + tyro_error)

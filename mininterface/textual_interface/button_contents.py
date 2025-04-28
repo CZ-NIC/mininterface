@@ -53,11 +53,11 @@ class ButtonContents(Center):
                 self.move_focus(-1)
             case "n":
                 for button, _ in self._buttons:
-                    if button.tag.name == "No":
+                    if button.tag.label == "No":
                         button.press()
             case "y":
                 for button, _ in self._buttons:
-                    if button.tag.name == "Yes":
+                    if button.tag.label == "Yes":
                         button.press()
 
     def move_focus(self, direction: int) -> None:

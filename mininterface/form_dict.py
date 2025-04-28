@@ -5,7 +5,7 @@ import logging
 from warnings import warn
 from dataclasses import fields, is_dataclass
 from types import FunctionType, MethodType, SimpleNamespace
-from typing import (TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar,
+from typing import (TYPE_CHECKING, Any, Callable, Hashable, Optional, Type, TypeVar,
                     Union, get_args, get_type_hints)
 
 
@@ -34,36 +34,34 @@ DataClass = TypeVar("DataClass")
 """ Any dataclass. Or a pydantic model or attrs. """
 EnvClass = TypeVar("EnvClass", bound=DataClass)
 """ Any dataclass. Its instance will be available through [miniterface.env] after CLI parsing. """
-FormDict = dict[str, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
-""" Nested form that can have descriptions (through Tag) instead of plain values.
-
-Attention to programmers. Should we to change this type, check these IDE suggestions are still the same.
-It is easy to mess it up because it is partly unclear and fragile.
-
-```
-from dataclasses import dataclass
-from mininterface import run, Tag
-
-@dataclass
-class Env:
-    test:int = 1
-    pass
-
-m = run(Env)
-o1 = {"test1": "str", "test2": Tag(True)}
-r1 = m.form(o1)
-r1  # dict[str, Any] | Env
-o2 = {"test1": "str"}
-r2 = m.form(o2)
-r2  # dict[str, str] | Env
-o3 = {"test2": Tag(True)}
-r3 = m.form(o3)
-r3  # dict[str, Tag] | Env
-r4 = m.form()
-r4  # Env
-```
-"""
-TagDict = dict[str, Union["Self", Tag]]
+FormDict = dict[Hashable, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
+""" Nested dict that can have descriptions (through Tag) instead of plain values."""
+# Attention to programmers. Should we to change FormDict type, check these IDE suggestions are still the same.
+# It is easy to mess it up because it is partly unclear and fragile.
+#
+# ```python
+# from dataclasses import dataclass
+# from mininterface import run, Tag
+#
+# @dataclass
+# class Env:
+#     test:int = 1
+#     pass
+#
+# m = run(Env)
+# o1 = {"test1": "str", "test2": Tag(True)}
+# r1 = m.form(o1)
+# r1  # dict[str, Any] | Env
+# o2 = {"test1": "str"}
+# r2 = m.form(o2)
+# r2  # dict[str, str] | Env
+# o3 = {"test2": Tag(True)}
+# r3 = m.form(o3)
+# r3  # dict[str, Tag] | Env
+# r4 = m.form()
+# r4  # Env
+# ```
+TagDict = dict[Hashable, Union["Self", Tag]]
 """ Strict FormDict where the values are just recursive TagDicts or tags. """
 
 # NOTE: In the future, allow `FormDict , EnvClass`, a dataclass (or its instance)
@@ -104,7 +102,7 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
         else:  # scalar or Tag value
             d: dict = {"facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
-                tag = Tag(val, "", name=key, _src_dict=data, _src_key=key, **d)
+                tag = Tag(val, "", label=str(key), _src_dict=data, _src_key=key, **d)
             else:
                 tag = val._fetch_from(d, key)
             tag = tag_assure_type(tag)
@@ -112,12 +110,12 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
     return fd
 
 
-def formdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key=None):
+def tagdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key=None):
     if isinstance(d, dict):
-        return {k: formdict_to_widgetdict(v, widgetize_callback, k) for k, v in d.items()}
+        return {k: tagdict_to_widgetdict(v, widgetize_callback, k) for k, v in d.items()}
     elif isinstance(d, Tag):
-        if not d.name:  # restore the name from the user provided dict
-            d.name = _key
+        if not d.label:  # restore the name from the user provided dict
+            d.label = _key
         return widgetize_callback(d)
     else:
         return d

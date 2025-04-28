@@ -108,7 +108,7 @@ class Tag(Generic[TagValue]):
     ![Image title](asset/tag_val.avif)
 
     The encapsulated value is `True`, `tag.description` is 'This is my boolean',
-    `tag.annotation` is `bool` and 'My boolean' is used as `tag.name`.
+    `tag.annotation` is `bool` and 'My boolean' is used as `tag.label`.
 
     !!! tip
         If the Tag is nested, the info is fetched to the outer Tag.
@@ -224,8 +224,20 @@ class Tag(Generic[TagValue]):
     ```
     """
 
-    name: str | None = None
-    """ Name displayed in the UI. """
+    label: str | None = None
+    """ Name displayed in the UI. If not set, it is taken from the dict key or the field name.
+
+    ```python
+    m.form({"label": ...})
+    ```
+
+    ```python
+    @dataclass
+    class Form:
+        my_field: str
+    m.form(Form)  # label=my_field
+    ```
+    """
 
     on_change: Callable[["Tag"], Any] | None = None
     """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
@@ -308,7 +320,7 @@ class Tag(Generic[TagValue]):
     _pydantic_field: PydanticFieldInfo = None
     _attrs_field: AttrsFieldInfo = None
     _original_desc: Optional[str] = None
-    _original_name: Optional[str] = None
+    _original_label: Optional[str] = None
     _last_ui_val: TagValue = None
     """ This is the value as was in the current UI. Used by on_change_trigger
         to determine whether the UI value changed. """
@@ -345,19 +357,19 @@ class Tag(Generic[TagValue]):
         if self.annotation is SubmitButton:
             self.val = False
 
-        if not self.name:
+        if not self.label:
             if self._src_key:
-                self.name = self._src_key
+                self.label = self._src_key
             # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
             # We are using get_name() instead.
             # if self._is_a_callable():
-                #     self.name = self.val.__name__
+                #     self.label = self.val.__name__
         if not self.description and self._is_a_callable():
             # NOTE does not work, do a test, there is `(fixed to` instead
             self.description = self.val.__doc__
 
         self._original_desc = self.description
-        self._original_name = self.name
+        self._original_label = self.label
         self.original_val = self.val
         self._last_ui_val = None
 
@@ -416,8 +428,8 @@ class Tag(Generic[TagValue]):
             self._src_obj_add(tag)
         if self.description == "":
             self.description = tag.description
-        if name and self.name is None:
-            self._original_name = self.name = name
+        if name and self.label is None:
+            self._original_label = self.label = name
         return self
 
     def __getstate__(self):
@@ -584,15 +596,15 @@ class Tag(Generic[TagValue]):
 
     def set_error_text(self, s):
         self.description = f"{s} {self._original_desc}"
-        if n := self._original_name:
-            # Why checking self.name?
+        if n := self._original_label:
+            # Why checking self._original_label?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
-            self.name = f"* {n}"
+            self.label = f"* {n}"
         self._error_text = s
 
     def remove_error_text(self):
         self.description = self._original_desc
-        self.name = self._original_name
+        self.label = self._original_label
         self._error_text = None
 
     def _get_name(self, make_effort=False):
@@ -600,9 +612,9 @@ class Tag(Generic[TagValue]):
         When used as a form button, we prefer to use the dict key.
         However, when used as a choice, this might be the only way to get the name.
         """
-        if make_effort and not self.name and self._is_a_callable():
+        if make_effort and not self.label and self._is_a_callable():
             return self.val.__name__
-        return self.name
+        return self.label
 
     def _repr_annotation(self):
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):

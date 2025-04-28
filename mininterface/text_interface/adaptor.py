@@ -29,7 +29,7 @@ class TextAdaptor(BackendAdaptor):
         """ Represent Tag in a text form """
 
         if not only_label:
-            label = tag.name
+            label = tag.label
             if v := self.widgetize(tag, only_label=True):
                 label += f" {v}"
             if d := tag.description:
@@ -46,19 +46,19 @@ class TextAdaptor(BackendAdaptor):
                     if only_label:
                         return tag._get_selected_keys() or f"({len(options)} options)"
                     else:
-                        return [values[i] for i in self._choose(options, title=tag.name, multiple=True)]
+                        return [values[i] for i in self._choose(options, title=tag.label, multiple=True)]
                 else:
                     if only_label:
                         return tag._get_selected_key() or f"({len(options)} options)"
                     else:
-                        return values[self._choose(options, title=tag.name)]
+                        return values[self._choose(options, title=tag.label)]
             case SecretTag():
                 # NOTE the input should be masked (according to tag._masked)
                 return tag._get_masked_val() if only_label else self.interface.ask(label)
             case _:
                 match tag._recommend_widget():
                     case BoolWidget():
-                        return ("✓" if v else "×") if only_label else self.interface.confirm(tag.name)
+                        return ("✓" if v else "×") if only_label else self.interface.confirm(tag.label)
                     case SubmitButtonWidget():  # NOTE EXPERIMENTAL and not implemented here
                         if only_label:
                             return "(submit button)"

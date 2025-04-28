@@ -164,13 +164,13 @@ class SelectTag(Tag[TagValue]):
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
         self.annotation = type(self)
-        reset_name = not self.name
+        reset_name = not self.label
         super().__post_init__()
         if reset_name:
             # Inheriting the name of the default value in self.val (done in post_init)
             # does not make sense to me. Let's reset here so that we receive
             # the dict key or the dataclass attribute name as the name in form_dict.py .
-            self.name = None
+            self.label = None
         self.annotation = None
 
         # Assure list val for multiple selection
