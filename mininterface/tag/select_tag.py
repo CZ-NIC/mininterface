@@ -92,7 +92,7 @@ m.choice([Color.GREEN, Color.BLUE])
 
 ## Further examples
 
-See [mininterface.choice][mininterface.Mininterface.choice] or [`SelectTag.options`][mininterface.tag.SelectTag.options] for further usage.
+See [mininterface.select][mininterface.Mininterface.select] or [`SelectTag.options`][mininterface.tag.SelectTag.options] for further usage.
 """
 
 

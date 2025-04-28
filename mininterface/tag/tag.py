@@ -204,7 +204,7 @@ class Tag(Generic[TagValue]):
     |--|--|
     | bool | True if validation succeeded or False if validation failed. |
     | str | Error message if the validation failed. |
-    | tuple[bool\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
+    | tuple[bool\\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
 
     This example shows the str error message:
 
@@ -392,6 +392,13 @@ class Tag(Generic[TagValue]):
     def _fetch_from(self, tag: Union["Tag", dict], name: str = "") -> "Self":
         """ Fetches attributes from another instance. (Skips the attributes that are already set.)
         Register the fetched tag to be updated when we change.
+
+        Note that without the parameters, __post_init__ might end up with a default and wrong annotation.
+        Hence consider setting annotation on Tag init instead of fetching it later.
+        ```python
+        p = PathTag() .. -> annotation = Path
+        p._fetch_from(PathTag(annotation=list[Path])) # still annotation = Path
+        ```
         """
         use_as_src = True
         if isinstance(tag, dict):

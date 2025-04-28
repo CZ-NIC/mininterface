@@ -22,6 +22,7 @@ from configs import (AnnotatedClass, AnnotatedClass3, AnnotatedTypes, AnnotatedT
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
                      Subcommand2, SubcommandB1, SubcommandB2, callback_raw, callback_tag, callback_tag2)
+from mininterface.mininterface import MinAdaptor
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
@@ -30,7 +31,7 @@ from mininterface.auxiliary import (flatten, matches_annotation,
 from mininterface.cli_parser import (_merge_settings, parse_cli,
                                      parse_config_file)
 from mininterface.exceptions import Cancelled, ValidationFail
-from mininterface.form_dict import (TagDict, dataclass_to_tagdict,
+from mininterface.form_dict import (MissingTagValue, TagDict, dataclass_to_tagdict,
                                     dict_to_tagdict, formdict_resolve)
 from mininterface.interfaces import TextInterface
 from mininterface.settings import UiSettings
@@ -47,6 +48,8 @@ from dumb_settings import (GuiSettings, MininterfaceSettings,
 
 
 SYS_ARGV = None  # To be redirected
+
+MISSING = MissingTagValue(None, None)
 
 
 def runm(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None, args=None, **kwargs) -> Mininterface[EnvClass]:
@@ -87,6 +90,46 @@ class TestAbstract(TestCase):
 
     def assertStderr(self, expected_output=None, contains=None, not_contains=None):
         return self._assertRedirect(redirect_stderr, expected_output, contains, not_contains)
+
+    @contextmanager
+    def assertForms(self, check: list[dict | None | tuple[dict | None, dict | None]]):
+        """ Intercepts every form call, checks it and possibly modify it (simulating the user input).
+
+        Args:
+            check: tuple of model and setter (or just model). (If the list is shorter then the form call count, it's okay.)
+                Model is compared to the form call.
+                Values from setter are taken and injected into the form call, simulating the user input.
+        """
+        # normalize - assure items are tuples
+        check_ = iter(it if isinstance(it, tuple) else (it, None) for it in check)
+        this = self
+
+        class MockAdaptor(MinAdaptor):
+            def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+                try:
+                    model, setter = next(check_)
+                    if model:
+                        this.assertEqual(repr(form), repr(model))
+                    if setter:
+                        for k, v in setter.items():
+                            form[k].val = v
+                except StopIteration:
+                    # further form calls are without checks
+                    pass
+
+                return super().run_dialog(form, title, submit)
+
+        class MockInterface(Mininterface[EnvClass]):
+            _adaptor: MockAdaptor
+
+        # Před spuštěním kódu nastavíš správný interface
+        original_interface = Mininterface
+        try:
+            globals()['Mininterface'] = MockInterface
+            yield
+        finally:
+            # Po testu všechno vrátíš zpět
+            globals()['Mininterface'] = original_interface
 
 
 class TestCli(TestAbstract):
@@ -1283,6 +1326,12 @@ class TestSubcommands(TestAbstract):
         # placeholder help works and shows shared arguments of other subcommands
         with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
             r(["subcommand", "--help"])
+
+    def test_common_field_annotation(self):
+        with self.assertForms([({'paths': PathTag(val=MISSING, description='', annotation=list[Path], name='paths')}, {"paths": "['/tmp']"})]):
+            run([ParametrizedGeneric, ParametrizedGeneric], interface=Mininterface)
+            # TODO
+            # runm([ParametrizedGeneric, ParametrizedGeneric])
 
 
 class TestSecretTag(TestAbstract):

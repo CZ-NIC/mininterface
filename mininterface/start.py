@@ -98,10 +98,10 @@ class Start:
             # Ex. base class has the PathTag field `files`. Hence all subcommands have a copy of this field.
             # We create a single PathTag tag and then source all children PathTags to it.
             for cf in common_fields:
-                local = tags[""].pop(cf)
+                local: Tag = tags[""].pop(cf)
                 if cf not in forms:
-                    forms[cf] = type(local)()
-                forms[cf]._fetch_from(local)
+                    forms[cf] = type(local)(**local.__dict__)
+                forms[cf]._src_obj_add(local)
 
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
