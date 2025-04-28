@@ -172,12 +172,16 @@ class FileBrowser(Vertical):
                 try:
                     if item.is_dir():
                         branch = node.add(f"📁 {item.name}", data=item, expand=False)
-                        if next(item.iterdir(), None) is not None:
-                            branch.add("Loading...")
+                        try:
+                            if next(item.iterdir(), None) is not None:
+                                branch.add("Loading...")
+                        except (PermissionError, OSError):
+                            pass
                     else:
                         if not self.tag.is_dir:
-                            node.add(f"📄 {item.name}", data=item)
-                except PermissionError:
+                            # Add file nodes as non-expandable
+                            node.add(f"📄 {item.name}", data=item, expand=False).allow_expand = False
+                except (PermissionError, OSError):
                     continue
 
         except PermissionError:
@@ -196,8 +200,65 @@ class FileBrowser(Vertical):
 
     def action_select(self) -> None:
         """Select the currently focused node."""
-        if self._tree and self._tree.cursor_node:
-            self.on_tree_node_selected(Tree.NodeSelected(self._tree, self._tree.cursor_node))
+        if not self._tree or not self._tree.cursor_node:
+            return
+        self.on_tree_node_selected(Tree.NodeSelected(node=self._tree.cursor_node))
+
+    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+        if self._is_quick_search:
+            return
+
+        node = event.node
+        if not node.data:
+            return
+
+        path = node.data
+        if not isinstance(path, Path):
+            try:
+                path = Path(str(path))
+            except Exception:
+                return
+
+        # Handle directories
+        if path.is_dir():
+            if self.tag.is_dir:
+                # Directory selection mode: select the directory
+                if self.tag.multiple:
+                    if path in self.selected_paths:
+                        self.selected_paths.remove(path)
+                    else:
+                        self.selected_paths.append(path)
+                    self._update_status()
+                    if hasattr(self.parent, "input"):
+                        self.parent._update_value_from_browser(self.selected_paths)
+                else:
+                    if hasattr(self.parent, "input"):
+                        self.parent._update_value_from_browser(path)
+                    self.remove()
+            else:
+                # File selection mode: navigate into directory
+                self._start_path = path
+                self._update_status()
+                if not node.is_expanded:
+                    node.expand()
+                    if not node.children:
+                        self._add_directory(path, node)
+            return
+
+        # Handle files (only in file selection mode)
+        if not self.tag.is_dir:
+            if self.tag.multiple:
+                if path in self.selected_paths:
+                    self.selected_paths.remove(path)
+                else:
+                    self.selected_paths.append(path)
+                self._update_status()
+                if hasattr(self.parent, "input"):
+                    self.parent._update_value_from_browser(self.selected_paths)
+            else:
+                if hasattr(self.parent, "input"):
+                    self.parent._update_value_from_browser(path)
+                self.remove()
 
     def action_close(self) -> None:
         """Close the file browser."""
@@ -248,47 +309,6 @@ class FileBrowser(Vertical):
                 self._tree.scroll_to_node(node)
                 self._is_quick_search = False
                 break
-
-    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
-        """Called when a node is selected."""
-        # Skip selection logic if this is a quick search focus change
-        if self._is_quick_search:
-            return
-
-        node = event.node
-        if not node.data:
-            return
-
-        path = node.data
-        if not isinstance(path, Path):
-            try:
-                path = Path(str(path))
-            except Exception:
-                return
-
-        if path.is_dir():
-            self._start_path = path
-            self._update_status()
-            self.refresh()
-
-        if not self.tag.is_dir and path.is_dir():
-            return
-
-        if self.tag.is_dir and not path.is_dir():
-            return
-
-        if self.tag.multiple:
-            if path in self.selected_paths:
-                self.selected_paths.remove(path)
-            else:
-                self.selected_paths.append(path)
-            self._update_status()
-            if hasattr(self.parent, "input"):
-                self.parent._update_value_from_browser(self.selected_paths)
-        else:
-            if hasattr(self.parent, "input"):
-                self.parent._update_value_from_browser(path)
-            self.remove()
 
     def _reset_search(self) -> None:
         """Reset the search prefix after a timeout."""
@@ -374,6 +394,16 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             self.input = Input(value=initial_value, placeholder=kwargs.get("placeholder", ""))
             self.button = Button("...", variant="primary", id="file_picker")
             self.browser = None
+            # Store selected paths at the input widget level
+            self.selected_paths = []
+            if tag.multiple and tag._get_ui_val():
+                # Initialize selected paths from existing value
+                try:
+                    paths = eval(str(tag._get_ui_val()))
+                    if isinstance(paths, list):
+                        self.selected_paths = [Path(p) for p in paths]
+                except (ValueError, SyntaxError):
+                    pass
 
         def compose(self) -> ComposeResult:
             """Compose the widget layout."""
@@ -385,10 +415,14 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             if event.button.id == "file_picker":
                 if not self.browser:
                     self.browser = FileBrowser(self.tag)
+                    # Pass the current selections to the browser
+                    self.browser.selected_paths = self.selected_paths.copy()
                     self.mount(self.browser)
                     self.refresh()
                     self.set_timer(0.1, self._focus_tree)
                 else:
+                    # Store the current selections before closing
+                    self.selected_paths = self.browser.selected_paths.copy()
                     self.browser.remove()
                     self.browser = None
                     self.refresh()
@@ -397,6 +431,9 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             """Focus the tree widget after it's mounted."""
             if self.browser and self.browser._tree:
                 self.browser._tree.focus()
+                # Select the first node if it exists
+                if self.browser._tree.root.children:
+                    self.browser._tree.select_node(self.browser._tree.root.children[0])
 
         def get_ui_value(self):
             """Get the current value of the input field."""
@@ -405,6 +442,8 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
         def _update_value_from_browser(self, path_value):
             """Update the value from browser selection directly, bypassing validation."""
             if isinstance(path_value, list):
+                # Update our stored selections
+                self.selected_paths = path_value.copy()
                 self.input.value = str([str(p) for p in path_value])
             else:
                 self.input.value = str(path_value)
