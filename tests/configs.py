@@ -269,14 +269,20 @@ class SharedArgsB(Command):
     """ Class with a shared argument. """
     foo: int = 7
 
+    def init(self):
+        self._trace = []
+
     def run(self):
-        pass
+        self._trace.append(1)
 
 
 @dataclass
 class SubcommandB1(SharedArgsB):
     """ Class inheriting from SharedArgs. """
     a: int = 1
+
+    def run(self):
+        self._trace.append(2)
 
 
 @dataclass

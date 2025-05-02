@@ -1,12 +1,13 @@
 """ Dealing with CLI subcommands, `from mininterface.subcommands import *`  """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Self
 
-if TYPE_CHECKING:
+
+if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from .facet import Facet
-else:
-    Facet = None
+    from .mininterface import Mininterface
+    from typing import Self
 
 
 @dataclass
@@ -112,10 +113,16 @@ class Command(ABC):
     """
     # Why to not document the Subcommand in the Subcommand class itself? It would be output to the user with --help,
     # I need the text to be available to the developer in the docs, not to the user.
-    # NOTE * `./program.py subcommand1` -> fails to CLI for now  # nice to have implemented
 
     def __post_init__(self):
-        self._facet: "Facet" = None  # As this is dataclass, the internal facet cannot be defined as one of the fields.
+        # We have following options into giving facet to the methods:
+        # * a dataclass field: As this is dataclass, the internal facet cannot be defined as one of the fields.
+        #   * Either it would have a default value and the user would not be able to use a non-default values
+        #   * Or it would not and the user would not be able to construct its own class without the facet.
+        # * def run(self, facet): The user had to pass the reference manually.
+        # * def run_with_facet(facet)
+        self._facet: 'Facet["Self"]'
+        self._interface: 'Mininterface[None]'
 
     def init(self):
         """ Just before the form appears.
@@ -126,7 +133,9 @@ class Command(ABC):
 
     @abstractmethod
     def run(self):
-        """ This method is run automatically in CLI or by a button. (The button is generated in a UI.)
+        """ This method is run automatically when the command is chosen.
+        (Either directly in the CLI or by a successive dialog.)
+
         Raises:
             ValidationFail – Do repeat the form.
         """

@@ -380,7 +380,7 @@ class Tag(Generic[TagValue]):
             # clean-up protected members
             if field.name.startswith("_"):
                 continue
-            if field.name not in ("val", "description", "annotation", "name"):
+            if field.name not in ("val", "description", "annotation", "label"):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'

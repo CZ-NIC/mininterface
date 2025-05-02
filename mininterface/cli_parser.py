@@ -3,6 +3,7 @@
 #
 import argparse
 import logging
+import re
 import sys
 import warnings
 from argparse import Action, ArgumentParser
@@ -11,7 +12,7 @@ from dataclasses import (MISSING, Field, asdict, dataclass, field, fields,
                          is_dataclass, make_dataclass)
 from pathlib import Path
 from types import SimpleNamespace
-from typing import (Annotated, Any, Optional, Sequence, Type, Union, get_args,
+from typing import (Annotated, Any, Callable, Optional, Sequence, Type, Union, get_args,
                     get_origin)
 from unittest.mock import patch
 
@@ -52,6 +53,8 @@ WrongFields = dict[str, Tag]
 
 eavesdrop = ""
 """ Used to intercept an error message from tyro """
+reraise: Optional[Callable] = None
+""" Reraise the intercepted tyro error message """
 
 
 class Patches:
@@ -64,10 +67,11 @@ class Patches:
         the error message function. Then, we reconstruct the missing options.
         Thanks to this we will be able to invoke a UI dialog with the missing options only.
         """
-        global eavesdrop
+        global eavesdrop, reraise
         if not message.startswith("the following arguments are required:"):
             return super(TyroArgumentParser, self).error(message)
         eavesdrop = message
+        def reraise(): return super(TyroArgumentParser, self).error(message)
         raise SystemExit(2)  # will be catched
 
     @staticmethod
@@ -128,8 +132,6 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     else:
         env_classes = [env_or_list]
 
-    parser: ArgumentParser = get_parser(type_form, **kwargs)
-
     # Mock parser, inject special options into
     patches = []
     if ask_for_missing:  # Get the missing flags from the parser
@@ -162,6 +164,21 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         if ask_for_missing and getattr(exception, "code", None) == 2 and eavesdrop:
             # Some required arguments are missing. Determine which.
             wf: dict[str, Tag] = {}
+
+            # There are multiple dataclasses, query which is chosen
+            if len(env_classes) == 1:
+                env = env_classes[0]
+                parser: ArgumentParser = get_parser(type_form, **kwargs)
+                subargs = args
+            elif len(args):
+                env = next((env for env in env_classes if to_kebab_case(env.__name__) == args[0]), None)
+                if env:
+                    parser: ArgumentParser = get_parser(env)
+                    subargs = args[1:]
+            if not env:
+                raise NotImplemented("This case of nested dataclasses is not implemented. Raise an issue please.")
+
+            # Determine missing argument of the given dataclass
             positionals = (p for p in parser._actions if p.default != argparse.SUPPRESS)
             for arg in _fetch_eavesdrop_args():
                 # We handle both Positional and required arguments
@@ -170,12 +187,12 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                     # Positional
                     # Ex: `The following arguments are required: PATH, INT, STR`
                     argument = next(positionals)
-                    register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
+                    register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
                 else:
                     # required arguments
                     # Ex: `the following arguments are required: --foo, --bar`
-                    if argument := identify_required(type_form, kwargs, parser,  arg):
-                        register_wrong_field(type_form, kwargs, wf, argument, exception, eavesdrop)
+                    if argument := identify_required(parser,  arg):
+                        register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
 
             # Second attempt to parse CLI.
             # We have just put a default values for missing fields so that tyro will not fail.
@@ -190,7 +207,14 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                env = cli(type_form, args=args, **kwargs)
+                try:
+                    env = cli(env, args=subargs, **kwargs)
+                except AssertionError:
+                    # Since it is a labyrinth of subcommands, required flags and positional arguments,
+                    # and something is messed up, raise the original tyro message.
+                    # When the user fulfills the error message,
+                    # the program will still work (even without our UI wizzard).
+                    raise reraise()
 
                 # register all wrong fields to the object
                 # so that the object updated automatically while the wrong field is set
@@ -202,7 +226,7 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
         raise
 
 
-def identify_required(env_class, kwargs: dict, parser: ArgumentParser, arg: str) -> None | Action:
+def identify_required(parser: ArgumentParser, arg: str) -> None | Action:
     """
     Identifies the original field_name as it was edited by tyro.
 
@@ -214,7 +238,7 @@ def identify_required(env_class, kwargs: dict, parser: ArgumentParser, arg: str)
     try:
         argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
     except:
-        # missing subcommand flag not implemented
+        # missing subcommand flag not implemented (correction: might be implemented and we never come here anymore)
         return
     argument.default = "DEFAULT"  # NOTE I do not know whether used
     if "." in argument.dest:
@@ -499,3 +523,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
             pos_fields.append((action.dest, Positional[arg_type], field(**met)))
 
     return make_dataclass(name, subparser_fields + pos_fields + normal_fields)
+
+
+def to_kebab_case(name: str) -> str:
+    """ MyClass -> my-class """
+    # I did not find where tyro does it. If I find it, I might use its function instead.
+    return re.sub(r'(?<!^)(?=[A-Z])', '-', name).lower()

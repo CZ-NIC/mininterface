@@ -63,7 +63,7 @@ class Mininterface(Generic[EnvClass]):
     def __init__(self,
                  title: str = "",
                  settings: Optional[UiSettings] = None,
-                 _env: EnvClass | SimpleNamespace | None = None
+                 _env: Optional[EnvClass] = None
                  ):
         self.title = title or "Mininterface"
 
@@ -73,8 +73,8 @@ class Mininterface(Generic[EnvClass]):
         # or if __init__.run is used but Env is not a dataclass but a function (which means it has no attributes).
         # Why using EnvInstance? So that the docs looks nice, otherwise, there would be `_env or SimpleNamespace()`.
         EnvInstance = _env or SimpleNamespace()
-        self.env: EnvClass = EnvInstance
-        """ Parsed arguments, fetched from cli.
+        self.env: EnvClass | SimpleNamespace = EnvInstance
+        """ Parsed arguments, fetched from CLI.
             Contains whole configuration (previously fetched from CLI and config file).
 
         ```bash
@@ -95,11 +95,10 @@ class Mininterface(Generic[EnvClass]):
         ```
 
         """
+        # NOTE docs that
+        # m = run([Env, Env2]) -> .env will be the chosen one.
 
         self._adaptor = self.__annotations__["_adaptor"](self, settings)
-
-        if isinstance(self.env, Command):
-            self.env.run()
 
     def __enter__(self) -> "Self":
         """ Usage within the with statement makes the program to attempt for the following benefits:
@@ -504,14 +503,8 @@ class Mininterface(Generic[EnvClass]):
               submit: str | bool = True
               ) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
-        import ipdb
-        ipdb.set_trace()  # TODO
         if isinstance(_form, dict):
-            try:
-                return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
-            except:
-                import ipdb
-                ipdb.post_mortem()  # TODO
+            return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = parse_cli(_form, {}, False, False, args=[])  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)

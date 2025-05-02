@@ -207,3 +207,6 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self._event_bindings.clear()
         self._result = None
         self.geometry("")  # resize the window so that it does not end up large
+
+    def _destroy(self):
+        self.destroy()

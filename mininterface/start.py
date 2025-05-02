@@ -4,8 +4,9 @@ from collections import defaultdict
 from dataclasses import is_dataclass
 from pathlib import Path
 from subprocess import run
-from typing import Type
+from typing import Type, Optional
 from warnings import warn
+
 
 from .auxiliary import flatten
 
@@ -26,6 +27,7 @@ class Start:
     def __init__(self, title="", interface: Type[Mininterface] | str | None = None):
         self.title = title
         self.interface = interface
+        self._chosen_form: Optional[EnvClass] = None
 
     def integrate(self, env=None):
         """ Integrate to the system
@@ -51,8 +53,10 @@ class Start:
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
     def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None, ask_for_missing=True):
+        # NOTE This method might be reworked to not use `m` at all and do it later – to work better in WebInterface.
         m = get_interface(self.interface, self.title)
-        forms: TagDict = {}
+        superform: TagDict = {}
+        forms: list[EnvClass] = []
         args = args or []
         # remove placeholder as we do not want it to be in the form
         env_classes = [e for e in env_classes if e is not SubcommandPlaceholder]
@@ -76,6 +80,7 @@ class Start:
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
             form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)
+            forms.append(form)
 
             if wf:  # We have some wrong fields.
                 if not common_fields_missing_defaults:
@@ -86,12 +91,10 @@ class Start:
                         wf[tag_name].set_val(val)
                         del wf[tag_name]
                     if wf:  # some other fields were missing too
+                        # NOTE It makes no sense to ask for wrong fields for env classes
+                        # that will not be run.
                         m.form(wf)
 
-            name = form.__class__.__name__
-            if isinstance(form, Command):  # even though we officially support only Command here, we tolerate other
-                form._facet = m.facet
-                form.init()
             tags = dataclass_to_tagdict(form)
 
             # Pull out common fields to the common level
@@ -99,20 +102,30 @@ class Start:
             # We create a single PathTag tag and then source all children PathTags to it.
             for cf in common_fields:
                 local: Tag = tags[""].pop(cf)
-                if cf not in forms:
-                    forms[cf] = type(local)(**local.__dict__)
-                forms[cf]._src_obj_add(local)
+                if cf not in superform:
+                    superform[cf] = type(local)(**local.__dict__)
+                superform[cf]._src_obj_add(local)
 
+            name = form.__class__.__name__
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
-                tags[""][name] = Tag(lambda form=form: form.run())
+                tags[""][name] = Tag(self._submit_generated_button(form))
             else:
+                # Even though we officially support only Command for now, we tolerate other dataclasses
+                # NOTE But in the future, allow it. The subcommand will become the .env.
                 warn(f"Subcommand dataclass {name} does not inherit from the Command."
                      " It is not known what should happen with it, it is being neglected from the CLI subcommands."
                      " Describe the developer your usecase so that they might implement this.")
                 tags[""][name] = Tag("disabled", description=f"Subcommand {name} does not inherit from the Command."
                                      " Hence it is disabled.")
 
-            forms[name] = tags
+            superform[name] = tags
 
-        m.form(forms, submit=False)
+        m._adaptor._destroy()
+        return superform, forms
+
+    def _submit_generated_button(self, form):
+        def _():
+            self._chosen_form = form
+            form.run()
+        return _

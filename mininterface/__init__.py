@@ -192,10 +192,11 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
 
     env, wrong_fields = None, {}
     if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-        start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
+        superform, forms = start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
     elif isinstance(env_or_list, list) and not args:
-        start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
+        superform, forms = start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
     else:
+        superform, forms = None, None
         # Parse CLI arguments, possibly merged from a config file.
         kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
         if env_or_list:
@@ -214,7 +215,30 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
         # Some fields must be set.
         m.form(wrong_fields)
     elif ask_on_empty_cli and len(sys.argv) <= 1:
+        # if superform=True, this does nothing, as env is empty and .form() returns immediately
         m.form()
+
+    if superform:
+        # multiple subcommands exist
+        for form in forms:
+            if isinstance(form, Command):
+                # even though we officially support only Command here, we tolerate other dataclasses
+                form._facet = m.facet
+                form._interface = m
+                form.init()
+        # this call will a chosen env will trigger its `.run()` and stores itself to `start._chosen_form`
+        m.form(superform, submit=False)
+        # NOTE _chosen_form should never be None... except in testing.
+        # The testing should adapt the possibility
+        # assert start._chosen_form is not None
+        m.env = start._chosen_form
+    elif isinstance(env, Command):
+        env._facet = m.facet
+        env._interface = m
+        env.init()
+        # NOTE If this raises a ValidationFail (as suggested in the documentation),
+        # should we repeat? And will not it cycle in a cron script?
+        env.run()
 
     return m
 

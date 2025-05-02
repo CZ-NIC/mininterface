@@ -2,10 +2,16 @@ from dataclasses import dataclass, field
 import importlib
 from typing import Literal, Optional, TypeVar
 
+from .exceptions import ValidationFail
+
+from .subcommands import Command
+
 from . import run
 from .showcase import showcase
 
 from typing import get_args, get_origin, Optional, Union, List, Dict
+
+from tyro.conf import Positional
 
 __doc__ = """Simple GUI/TUI dialog. Outputs the value the user entered. See the full docs at: https://cz-nic.github.io/mininterface/"""
 
@@ -35,6 +41,51 @@ class Web:
 
 
 Showcase = Literal[1] | Literal[2]
+
+
+# NOTE in the future, allow only some classes (here, the dialog clases) have the shared args
+# @dataclass
+# class SharedLabel(Command):
+#     label: Positional[str]
+
+
+@dataclass
+class Alert(Command):
+    """ Display the OK dialog with text. """
+
+    label: Positional[str]
+
+    def run(self):
+        self._interface.alert(self.label)
+
+
+@dataclass
+class Ask(Command):
+    """ Prompt the user to input a value.
+    By default, we input a str, by the second parameter, you can infer a type,
+    ex. `mininterface --ask 'My heading' int`
+    """
+
+    label: Positional[str]
+
+    def run(self):
+        self._interface.ask(self.label)
+
+
+@dataclass
+class OtherDialog(Command):
+    """ A dialog TODO """
+    cmda: str
+
+    def run(self):
+        pass
+
+
+@dataclass
+class Dialog():
+    """ A dialog TODO """
+    cmd: Ask | Alert
+    # dva: OtherDialog
 
 
 @dataclass
@@ -70,6 +121,15 @@ def main():
     result = []
     # We tested both GuiInterface and TextualInterface are able to pass a variable to i.e. a bash script.
     # NOTE TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
+    # TODO
+    # with run(Dialog, prog="Mininterface", description=__doc__) as m:
+    with run([Alert, Ask, OtherDialog], prog="Mininterface", description=__doc__) as m:
+        pass
+        print("135: m", m.env)  # TODO
+
+    print("TODO end")
+    return
+
     with run(CliInteface, prog="Mininterface", description=__doc__) as m:
         for method, label in vars(m.env).items():
             if method in ["web", "showcase"]:  # processed later
