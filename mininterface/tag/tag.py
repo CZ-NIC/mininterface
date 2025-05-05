@@ -401,7 +401,7 @@ class Tag(Generic[TagValue]):
         # Hence, I add a hash function with no intention yet.
         return hash(str(self))
 
-    def _fetch_from(self, tag: Union["Tag", dict], name: str = "") -> "Self":
+    def _fetch_from(self, tag: Union["Tag", dict], name: str = "", include_ref=False) -> "Self":
         """ Fetches attributes from another instance. (Skips the attributes that are already set.)
         Register the fetched tag to be updated when we change.
 
@@ -417,8 +417,11 @@ class Tag(Generic[TagValue]):
             tag = Tag(**tag)
             use_as_src = False
 
-        ignored = {'description', '_src_dict', '_src_obj', '_src_key',
-                   '_src_class', '_pydantic_field', '_attrs_field', '_last_ui_val'}
+        ignored = {'description', '_pydantic_field', '_attrs_field', '_last_ui_val'}
+        if include_ref:
+            use_as_src = False
+        else:
+            ignored |= {'_src_dict', '_src_obj', '_src_key', '_src_class'}
         for attr in tag.__dict__:
             if attr in ignored:
                 continue

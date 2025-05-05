@@ -5,9 +5,41 @@ from tyro.constructors import PrimitiveConstructorSpec
 from .path_tag import PathTag
 
 File = Annotated[Path, PathTag(is_file=True)]
-""" EXPERIMENTAL: missing test, docs """
+""" An existing file.
+from mininterface import run
+from mininterface.tag.flag import File
+
+```python
+@dataclass
+class Env:
+    my_file: File
+
+m = run(Env)
+m.env.my_file  # guaranteed to be an existing dir
+```
+
+!!! Warning
+    EXPERIMENTAL.
+"""
+# NOTE missing test
 Dir = Annotated[Path, PathTag(is_dir=True)]
-""" EXPERIMENTAL: missing test, docs """
+""" An existing directory.
+from mininterface import run
+from mininterface.tag.flag import Dir
+
+```python
+@dataclass
+class Env:
+    my_dir: Dir
+
+m = run(Env)
+m.env.my_dir  # guaranteed to be an existing dir
+```
+
+!!! Warning
+    EXPERIMENTAL.
+"""
+# NOTE missing test
 
 _blank_error = "Unrecognised value '{}'. Allowed values are blank for True/1/on / False/0/off" \
     " (case insensitive). Should the value be considered a positional parameter,"\

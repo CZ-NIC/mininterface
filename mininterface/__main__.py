@@ -67,8 +67,11 @@ class Ask(Command):
     * dir – an existing directory
     Ex. `mininterface ask "Give me a folder" dir` will impose an existing directory to be input. """
 
+    # NOTE
     # validation: Optional[str] = None
     # """ EXPERIMENTAL. Might change, ex. becoming a positional argument."""
+    # Filtering the files with certain extension. Allowing only future dates.
+    # How it should work? Should it be in annotation or validation?
 
     def run(self):
         match self.annotation:

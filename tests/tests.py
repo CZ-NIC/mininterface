@@ -512,13 +512,26 @@ class TestConversion(TestAbstract):
         self.assertEqual(8, t2.val)
         self.assertEqual(5, t3.val)
         self.assertEqual(5, t4.val)
-        self.assertEqual(8, t5.val)  # from t2, we iherited the hook to t1
+        self.assertEqual(8, t5.val)  # from t2, we inherited the hook to t1
 
         # update triggers the value propagation
         inner = Tag(2)
         outer = Tag(Tag(Tag(inner)))
         outer.update(3)
         self.assertEqual(3, inner.val)
+
+    def test_fetch_from(self):
+        t0 = Tag(5)
+        t1 = Tag(t0, label="Used name")
+        t2 = Tag(t1, label="Another name")
+        t5 = Tag(label="My name")._fetch_from(t2, include_ref=True)
+
+        t5.set_val(8)
+
+        self.assertEqual(8, t0.val)
+        self.assertEqual(8, t1.val)
+        self.assertEqual(5, t2.val) # the ref was fetches instead of the t2 object, hence it is not updated
+        self.assertEqual(8, t5.val)
 
     def test_label(self):
         """ Dict labels do not have to be str,

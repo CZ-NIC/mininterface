@@ -22,7 +22,11 @@ At last, use [`Facet`](Facet.md) to tackle the interface from the back-end (`m`)
 
 ## IDE suggestions
 
-The immediate benefit is the type suggestions you see in an IDE. Imagine following code:
+The immediate benefit is the type suggestions provided by your IDE.
+
+### Dataclass showcase
+
+Imagine following code:
 
 ```python
 from dataclasses import dataclass
@@ -67,6 +71,33 @@ As you see, its attributes are hinted alongside their description.
 Should the dataclass cannot be easily investigated by the IDE (i.e. a required field), just annotate the output.
 
 ![Suggestion annotation possible](asset/suggestion_dataclass_annotated.avif)
+
+### Select showcase
+
+We push an intuitive type inference everywhere. Here is an example with the [`m.select`][mininterface.Mininterface.select] dialog.
+
+```python
+from mininterface import run
+
+m = run()
+# x = m.select([1, 2, 3], default=2)  # -> int
+# x = m.select([1, 2, 3], multiple=True)  # -> list[int]
+# x = m.select([1, 2, 3], default=[2])  # -> list[int]
+```
+
+By default, the inferred type is an `int`.
+
+![Suggestion select](asset/suggestion_select1.avif)
+
+When you flag the selection as multiple or when you submit multiple default values...
+
+![Suggestion select](asset/suggestion_select2.avif)
+
+that means your IDE sees a `list` instead of a single value and you can automatically append to it etc.
+
+![Suggestion select](asset/suggestion_select3.avif)
+
+
 
 ## Bash completion
 

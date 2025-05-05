@@ -97,7 +97,7 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                                     # Annotated[ **origin** list[Path], Tag(...)]
                                     new.annotation = annotation or field_type.__origin__
                                 # Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...) -> DatetimeTag(date=True)
-                                tag = tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
+                                tag = tag_assure_type(new._fetch_from(Tag(*args, **kwargs), include_ref=True))
                             elif isinstance(metadata, (BaseMetadata, GroupedMetadata)):
                                 validators.append(metadata)
     if not tag:

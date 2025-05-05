@@ -343,7 +343,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
                 ![Default choice](asset/choices_default.avif)
 
-                If the list is given, this imply multiple choice.
+                If the list is given, this implies multiple choice.
             tips: Options to be highlighted. Use the list of choice values to denote which one the user might prefer.
             multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
