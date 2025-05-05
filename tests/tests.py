@@ -1,12 +1,12 @@
-from argparse import ArgumentParser
-from importlib import import_module
 import logging
 import os
 import sys
 import warnings
+from argparse import ArgumentParser
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from importlib import import_module
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import NoneType, SimpleNamespace
@@ -14,15 +14,22 @@ from typing import Optional, Type, get_type_hints
 from unittest import TestCase, main
 from unittest.mock import DEFAULT, Mock, patch
 
+from annotated_types import Gt, Lt
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
-from configs import (AnnotatedClass, AnnotatedClass3, AnnotatedTypes, AnnotatedTypesCombined, ColorEnum, ColorEnumSingle,
+from configs import (AnnotatedClass, AnnotatedClass3, AnnotatedTypes,
+                     AnnotatedTypesCombined, ColorEnum, ColorEnumSingle,
                      ConflictingEnv, ConstrainedEnv, DatetimeTagClass,
-                     DynamicDescription, FurtherEnv2, InheritedAnnotatedClass, MissingCombined,
-                     MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore,
+                     DynamicDescription, FurtherEnv2, InheritedAnnotatedClass,
+                     MissingCombined, MissingNonscalar, MissingPositional,
+                     MissingPositionalScalar, MissingUnderscore,
                      NestedDefaultedEnv, NestedMissingEnv, OptionalFlagEnv,
                      ParametrizedGeneric, PathTagClass, SimpleEnv, Subcommand1,
-                     Subcommand2, SubcommandB1, SubcommandB2, callback_raw, callback_tag, callback_tag2)
-from mininterface.mininterface import MinAdaptor
+                     Subcommand2, SubcommandB1, SubcommandB2, callback_raw,
+                     callback_tag, callback_tag2)
+from dumb_settings import (GuiSettings, MininterfaceSettings, TextSettings,
+                           TextualSettings, TuiSettings)
+from dumb_settings import UiSettings as UiDumb
+from dumb_settings import WebSettings
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
@@ -30,22 +37,18 @@ from mininterface.auxiliary import (flatten, matches_annotation,
                                     subclass_matches_annotation)
 from mininterface.cli_parser import (_merge_settings, parse_cli,
                                      parse_config_file)
-from mininterface.exceptions import Cancelled, ValidationFail
-from mininterface.form_dict import (MissingTagValue, TagDict, dataclass_to_tagdict,
-                                    dict_to_tagdict, formdict_resolve)
+from mininterface.exceptions import Cancelled
+from mininterface.form_dict import (MissingTagValue, TagDict,
+                                    dataclass_to_tagdict, dict_to_tagdict,
+                                    formdict_resolve)
 from mininterface.interfaces import TextInterface
+from mininterface.mininterface import MinAdaptor
 from mininterface.settings import UiSettings
 from mininterface.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
-from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag
-from mininterface.tag.secret_tag import SecretTag
-from mininterface.tag.select_tag import SelectTag
-from mininterface.tag.tag_factory import tag_assure_type
-from mininterface.text_interface import AssureInteractiveTerminal
+from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag, SelectTag, SecretTag
+from mininterface.tag.tag_factory import tag_assure_type, assure_tag
 from mininterface.validators import limit, not_empty
-from dumb_settings import (GuiSettings, MininterfaceSettings,
-                           TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings)
-
 
 SYS_ARGV = None  # To be redirected
 
@@ -852,6 +855,19 @@ class TestValidators(TestAbstract):
         self.assertFalse(t2.update(11))
         self.assertEqual(10, t2.val)
 
+    def test_assure_tag(self):
+        t = assure_tag(int, Gt(1))
+        for x in ("0", 0, 1, 2.5):
+            self.assertFalse(t.update(x))
+        for x in ("5", 5):
+            self.assertTrue(t.update(x))
+
+        t2 = assure_tag(Tag(annotation=float, validation=Gt(3)), Lt(100))
+        for x in ("0", 0, 1, 2.5, 100.0):
+            self.assertFalse(t2.update(x))
+        for x in ("5", 5.0, 99.9):
+            self.assertTrue(t2.update(x))
+
     def test_annotated_types(self):
         d: TagDict = dataclass_to_tagdict(AnnotatedTypes())[""]
 
@@ -1329,10 +1345,9 @@ class TestSubcommands(TestAbstract):
     def test_command_methods(self):
         # NOTE I need a mechanism to determine the subcommand chosen Subcommand1
         return
-        env = runm([Subcommand1, Subcommand2])
-        self.assertIsInstance(env, Subcommand1)
-        self.assertListEqual(env._trace, [1] ...)
-
+        # env = runm([Subcommand1, Subcommand2])
+        # self.assertIsInstance(env, Subcommand1)
+        # self.assertListEqual(env._trace, [1] ...)
 
     def test_placeholder(self):
         subcommands = [Subcommand1, Subcommand2, SubcommandPlaceholder]

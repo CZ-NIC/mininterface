@@ -639,6 +639,20 @@ class Tag(Generic[TagValue]):
         else:
             return self.annotation()
 
+    def _add_validation(self, validators: Iterable[ValidationCallback] | ValidationCallback):
+        """ Prepend validators to the current validator. """
+        if not isinstance(validators, list):
+            validators = list(validators) if isinstance(validators, Iterable) else [validators]
+
+        if self.validation is None:
+            self.validation = validators
+        elif isinstance(self.validation, Iterable):
+            validators.extend(self.validation)
+            self.validation = validators
+        else:
+            validators.append(self.validation)
+            self.validation = validators
+
     def _get_ui_val(self):
         """ Get values as suitable for UI. Adaptor should not read the value directly.
         Some values are not expected to be parsed by any UI.

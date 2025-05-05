@@ -1,46 +1,39 @@
-from dataclasses import dataclass, field
-import importlib
-from typing import Literal, Optional, TypeVar
-
-from .exceptions import ValidationFail
-
-from .subcommands import Command
-
-from . import run
-from .showcase import showcase
-
-from typing import get_args, get_origin, Optional, Union, List, Dict
+from ast import literal_eval
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, Optional
 
 from tyro.conf import Positional
 
-__doc__ = """Simple GUI/TUI dialog. Outputs the value the user entered. See the full docs at: https://cz-nic.github.io/mininterface/"""
+from . import run
+from .showcase import showcase
+from .subcommands import Command
+from .tag.flag import File
+from .tag.path_tag import PathTag
 
-TYPE_MAP = ({
-    "int": int,
-    "str": str,
-    "float": float,
-})
+__doc__ = """Simple GUI/TUI dialog toolkit. Contains:
+* dialog commands to output the value the user entered
+* commands to operate and test programs using mininterface as a Python library
 
-
-def resolve_type(type_str: str):
-    try:
-        return TYPE_MAP[type_str]
-    except KeyError:
-        print(f"Unknown type {type_str}")
-        quit()
+See the full docs at: https://cz-nic.github.io/mininterface/
+"""
 
 
 @dataclass
-class Web:
-    """Launch a miniterface program, while the TextualInterface will be exposed to the web. """
+class Web(Command):
+    """Expose a program using mininterface to the web."""
 
-    cmd: str = ""
-    """Path to a program, using mininterface."""
+    cmd: Positional[File]
+    """Path to the program using mininterface."""
 
     port: int = 64646
 
+    def run(self):
+        from .web_interface import WebInterface
+        WebInterface(cmd=self.cmd, port=self.port)
 
-Showcase = Literal[1] | Literal[2]
+
+Showcase_Type = Literal[1, 2]
 
 
 # NOTE in the future, allow only some classes (here, the dialog clases) have the shared args
@@ -51,7 +44,7 @@ Showcase = Literal[1] | Literal[2]
 
 @dataclass
 class Alert(Command):
-    """ Display the OK dialog with text. """
+    """ Dialog: Display the OK dialog with text. """
 
     label: Positional[str]
 
@@ -61,103 +54,91 @@ class Alert(Command):
 
 @dataclass
 class Ask(Command):
-    """ Prompt the user to input a value.
+    """ Dialog: Prompt the user to input a value.
     By default, we input a str, by the second parameter, you can infer a type,
     ex. `mininterface --ask 'My heading' int`
     """
 
     label: Positional[str]
+    annotation: Positional[Literal["int", "str", "float", "Path", "date", "datetime", "time", "file", "dir"]] = "str"
+    """ Impose the given type.
+    * Path – any path
+    * file – an existing file
+    * dir – an existing directory
+    Ex. `mininterface ask "Give me a folder" dir` will impose an existing directory to be input. """
+
+    # validation: Optional[str] = None
+    # """ EXPERIMENTAL. Might change, ex. becoming a positional argument."""
 
     def run(self):
-        self._interface.ask(self.label)
+        match self.annotation:
+            case "int":
+                v = int
+            case "float":
+                v = float
+            case "str":
+                v = str
+            case "Path":
+                v = Path
+            case "date":
+                from datetime import date
+                v = date
+            case "datetime":
+                from datetime import datetime
+                v = datetime
+            case "time":
+                from datetime import time
+                v = time
+            case "file":
+                v = PathTag(is_file=True)
+            case "dir":
+                v = PathTag(is_dir=True)
+            case _:
+                raise NotImplementedError(f"This type {self.annotation} has not yet been supported, raise an issue.")
+        print(self._interface.ask(self.label, v))
 
 
 @dataclass
-class OtherDialog(Command):
-    """ A dialog TODO """
-    cmda: str
+class Confirm(Command):
+    """ Dialog: Display confirm box. Returns 0 / 1. """
+
+    label: Positional[str]
+    focus: Positional[Literal["yes", "no"]] = "yes"
+    """focused button"""
+
+    def run(self):
+        r = self._interface.confirm(self.label, self.focus == "yes")
+        print(1 if r else 0)
+
+
+@dataclass
+class Select(Command):
+    """ Dialog: Prompt the user to select. """
+    options: Positional[list[str]]
+    label: str = ""
+
+    def run(self):
+        print(self._interface.select(self.options, self.label))
+
+
+@dataclass
+class Showcase(Command):
+    """ Prints various form just to show what's possible.
+    Choose the interface by MININTERFACE_INTERFACE=...
+    Ex. MININTERFACE_INTERFACE=tui mininterface showcase 2
+    """
+    showcase: Positional[Showcase_Type] = 1
 
     def run(self):
         pass
-
-
-@dataclass
-class Dialog():
-    """ A dialog TODO """
-    cmd: Ask | Alert
-    # dva: OtherDialog
-
-
-@dataclass
-class CliInteface:
-    web: Web
-    alert: str = ""
-    """ Display the OK dialog with text. """
-    ask: str | tuple[str, str] = ""
-    """ Prompt the user to input a value.
-    By default, we input a str, by the second parameter, you can infer a type,
-    ex. `mininterface --ask 'My heading' int`
-    """
-    confirm: str = ""
-    """ Display confirm box, focusing 'yes'. """
-    confirm_default_no: str = ""
-    """ Display confirm box, focusing 'no'. """
-    select: list = field(default_factory=list)
-    """ Prompt the user to select. """
-
-    showcase: Optional[Showcase] = None
-    """ Prints various form just to show what's possible.
-    Choose the interface by MININTERFACE_INTERFACE=...
-    Ex. MININTERFACE_INTERFACE=tui mininterface --showcase 2
-    """
-
-
-def web(env: Web):
-    from .web_interface import WebInterface
-    WebInterface(cmd=env.cmd, port=env.port)
 
 
 def main():
-    result = []
-    # We tested both GuiInterface and TextualInterface are able to pass a variable to i.e. a bash script.
-    # NOTE TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
-    # TODO
-    # with run(Dialog, prog="Mininterface", description=__doc__) as m:
-    with run([Alert, Ask, OtherDialog], prog="Mininterface", description=__doc__) as m:
+    with run([Alert, Ask, Confirm, Select, Web, Showcase], prog="Mininterface", description=__doc__) as m:
         pass
-        print("135: m", m.env)  # TODO
 
-    print("TODO end")
-    return
-
-    with run(CliInteface, prog="Mininterface", description=__doc__) as m:
-        for method, label in vars(m.env).items():
-            if method in ["web", "showcase"]:  # processed later
-                continue
-            if method == "select" and label:
-                result.append(m.select(options=label))
-            elif method == "ask" and label:
-                if isinstance(label, tuple):
-                    arg, type_ = label[0], resolve_type(label[1])
-                    if not type_:
-                        print(f"Unknown type {type_}")
-                        quit()
-                    result.append(m.ask(arg, type_))
-                else:
-                    m.ask(label)
-            elif method == "confirm_default_no" and label:
-                result.append(m.confirm(label, False))
-            elif label:
-                result.append(getattr(m, method)(label))
-
-    # Displays each result on a new line. Currently, this is an undocumented feature.
-    # As we use the script for a single value only and it is not currently possible
-    # to ask two numbers or determine a dialog order etc.
-    [print(val) for val in result]
-
-    if m.env.web.cmd:
-        web(m.env.web)
-    if m.env.showcase:
+    if isinstance(m.env, Showcase):
+        # NOTE: GUI does not work well with `Command.run`, the bug with two appearing windows
         showcase(m.env.showcase)
 
 

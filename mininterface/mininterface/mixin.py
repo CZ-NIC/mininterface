@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any, Iterable, Type
 
 from ..tag.tag_factory import assure_tag
 
 from ..form_dict import DataClass, FormDict, EnvClass
-from ..tag.tag import Tag, TagValue
+from ..tag.tag import Tag, TagValue, ValidationCallback
 
 
 from . import Mininterface
@@ -20,8 +20,8 @@ class RichUiMixin(Mininterface):
     def confirm(self, text, default: bool = True) -> bool:
         return self._adaptor.yes_no(text, not default)
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
-        return self.form({text: assure_tag(annotation)})[text]
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
+        return self.form({text: assure_tag(annotation, validation)})[text]
 
     def form(self,
              form: DataClass | Type[DataClass] | FormDict | None = None,

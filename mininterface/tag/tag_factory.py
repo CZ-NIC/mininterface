@@ -9,7 +9,7 @@ from annotated_types import BaseMetadata, GroupedMetadata
 from . import DatetimeTag, SelectTag, Tag
 from .callback_tag import CallbackTag
 from .path_tag import PathTag
-from .tag import TagValue
+from .tag import TagValue, ValidationCallback
 from .type_stubs import TagCallback
 
 
@@ -41,11 +41,13 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     return type(tag)
 
 
-def assure_tag(type_or_tag: Type[TagValue] | Tag) -> Tag:
+def assure_tag(type_or_tag: Type[TagValue] | Tag, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> Tag:
     if isinstance(type_or_tag, Tag):
+        if validation:
+            type_or_tag._add_validation(validation)
         return type_or_tag
     else:
-        return tag_assure_type(Tag(annotation=type_or_tag))
+        return tag_assure_type(Tag(annotation=type_or_tag, validation=validation))
 
 
 def tag_assure_type(tag: Tag):
@@ -101,14 +103,6 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
     if not tag:
         tag = tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
 
-    if validators:
-        # We prepend annotated_types validators to the current validator.
-        if tag.validation is None:
-            tag.validation = validators
-        elif isinstance(tag.validation, Iterable):
-            validators.extend(tag.validation)
-            tag.validation = validators
-        else:
-            validators.append(tag.validation)
-            tag.validation = validators
+    if validators:  # we prepend annotated_types validators to the current validator
+        tag._add_validation(validators)
     return tag

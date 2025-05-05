@@ -1,14 +1,14 @@
 
 import sys
 from pprint import pprint
-from typing import TYPE_CHECKING, Type, TypeVar
+from typing import TYPE_CHECKING, Iterable, Type, TypeVar
 
 from ..tag.tag_factory import assure_tag
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from ..form_dict import DataClass, EnvClass, FormDict, tag_assure_type
 from ..mininterface import Mininterface
-from ..tag.tag import Tag, TagValue
+from ..tag.tag import Tag, TagValue, ValidationCallback
 from .adaptor import TextAdaptor
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
@@ -81,16 +81,16 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
         with StdinTTYWrapper():
             input(text + " Hit any key.")
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
-                return super().ask(text)
+                return super().ask(text, annotation=annotation, validation=validation)
             while True:
                 try:
                     txt = input(text + ": ") if text else input()
                 except EOFError:
                     raise Cancelled(".. cancelled")
-                t = assure_tag(annotation)
+                t = assure_tag(annotation, validation)
                 if t.update(txt):
                     return t.val
                 else:

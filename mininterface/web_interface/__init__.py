@@ -1,5 +1,6 @@
 """ Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
 import os
+from pathlib import Path
 import sys
 from types import SimpleNamespace
 from typing import Optional
@@ -32,7 +33,7 @@ class WebInterface(TextualInterface):
                  title: str = "",
                  settings: Optional[UiSettings] = None,
                  _env: EnvClass | SimpleNamespace | None = None,
-                 cmd: Optional[str] = None, port=64646, **kwargs):
+                 cmd: Optional[Path] = None, port=64646, **kwargs):
         # NOTE missing
         # * lambda, print, on_change, layout, SubmitTrue support
         # * Docs image.
@@ -80,6 +81,6 @@ class WebInterface(TextualInterface):
                     raise DependencyRequired("web")
                 os.environ["MININTERFACE_ENFORCED_WEB"] = '_web-parent'
 
-                server = Server(cmd or " ".join(sys.argv), port=port)
+                server = Server(str(cmd.absolute()) if cmd else " ".join(sys.argv), port=port)
                 server.serve()
                 quit()

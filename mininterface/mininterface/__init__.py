@@ -19,7 +19,7 @@ from ..subcommands import Command
 from ..facet import Facet
 from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                          dict_to_tagdict, formdict_resolve)
-from ..tag.tag import Tag, TagValue
+from ..tag.tag import Tag, TagValue, ValidationCallback
 
 try:
     from ..cli_parser import parse_cli
@@ -177,7 +177,7 @@ class Mininterface(Generic[EnvClass]):
         print("Alert text", text)
         return
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag[TagValue] = str) -> TagValue:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag[TagValue] = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
         """ Prompt the user to input a value – text, number, ...
 
         By default, it resembles the `input()` built-in.
@@ -219,6 +219,21 @@ class Mininterface(Generic[EnvClass]):
         Args:
             text: The question text.
             annotation: The return type.
+                ```python
+                from datetime import time
+                from mininterface import run
+
+                m = run()
+                m.ask("Give me a time", time)
+                ```
+            validation: Limit the value.
+                ```python
+                from annotated_types import Gt
+                from mininterface import run
+
+                m = run()
+                m.ask("Give me a positive number", int, Gt(0))
+                ```
 
         Returns:
             The type from the `annotation`. For str = '', for int = 0, ...
@@ -226,13 +241,14 @@ class Mininterface(Generic[EnvClass]):
         # NOTE Add validation: Callable | annotated-types | None = None.
         # But what should be the callable parameter, tag, or the value? The same as in the Tag(validation=).
         # So that we can have `ask("My number", int, Gt(0))`
+        # NOTE Missing tests.
 
         if annotation is int:
             print("Asking number:", text)
         else:
             print("Asking:", text)
 
-        return assure_tag(annotation)._make_default_value()
+        return assure_tag(annotation, validation)._make_default_value()
 
     def confirm(self, text: str, default: bool = True) -> bool:
         """ Display confirm box and returns bool.

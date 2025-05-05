@@ -1,6 +1,13 @@
+from pathlib import Path
 from typing import Annotated, TypeVar, Any
-from typing import Annotated
 from tyro.constructors import PrimitiveConstructorSpec
+
+from .path_tag import PathTag
+
+File = Annotated[Path, PathTag(is_file=True)]
+""" EXPERIMENTAL: missing test, docs """
+Dir = Annotated[Path, PathTag(is_dir=True)]
+""" EXPERIMENTAL: missing test, docs """
 
 _blank_error = "Unrecognised value '{}'. Allowed values are blank for True/1/on / False/0/off" \
     " (case insensitive). Should the value be considered a positional parameter,"\
