@@ -33,7 +33,38 @@ logger = logging.getLogger(__name__)
 DataClass = TypeVar("DataClass")
 """ Any dataclass. Or a pydantic model or attrs. """
 EnvClass = TypeVar("EnvClass", bound=DataClass)
-""" Any dataclass. Its instance will be available through [miniterface.env] after CLI parsing. """
+""" Any dataclass. Its instance will be available through [Mininterface.env][mininterface.Mininterface.env] after CLI parsing. Its fields or whole class might be annotated with [tyro conf flags](https://brentyi.github.io/tyro/api/tyro/conf/).
+
+The following example turns down boolean flag conversion.
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+from tyro.conf import FlagConversionOff
+
+@dataclass
+class Env:
+    my_bool: bool = False
+
+m = run(FlagConversionOff[Env])
+```
+
+```bash
+$ program.py --help
+# --my-bool {True,False}  (default: False)
+```
+
+Whereas by default, both flags are generated:
+
+```python
+m = run(Env)
+```
+
+```bash
+$ program.py --help
+# --my-bool, --no-my-bool (default: False)
+```
+"""
 FormDict = dict[Hashable, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
 """ Nested dict that can have descriptions (through Tag) instead of plain values."""
 # Attention to programmers. Should we to change FormDict type, check these IDE suggestions are still the same.

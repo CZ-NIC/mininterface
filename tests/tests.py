@@ -50,6 +50,8 @@ from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag, SelectTag, 
 from mininterface.tag.tag_factory import tag_assure_type, assure_tag
 from mininterface.validators import limit, not_empty
 
+from tyro.conf import FlagConversionOff, OmitArgPrefixes
+
 SYS_ARGV = None  # To be redirected
 
 MISSING = MissingTagValue(BaseException(), None)
@@ -716,6 +718,10 @@ class TestRun(TestAbstract):
         self.assertEqual(4, run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number)
         with self.assertRaises(FileNotFoundError):
             run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
+
+    def test_run_annotated(self):
+        m = run(FlagConversionOff[OmitArgPrefixes[SimpleEnv]])
+        self.assertEqual(4, m.env.important_number)
 
     def test_config_unknown(self):
         """ An unknown field in the config file should emit a warning. """

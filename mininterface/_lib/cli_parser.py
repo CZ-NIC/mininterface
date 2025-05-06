@@ -120,17 +120,24 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
               ask_for_missing: bool = True,
               args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
     """ Run the tyro parser to fetch program configuration from CLI """
-    type_form = env_or_list
-    if isinstance(type_form, list):
+    if isinstance(env_or_list, list):
         # We have to convert the list of possible classes (subcommands) to union for tyro.
         # We have to accept the list and not an union directly because we are not able
         # to type hint a union type, only a union instance.
         # def sugg(a: UnionType[EnvClass]) -> EnvClass: ...
         # sugg(Subcommand1 | Subcommand2). -> IDE will not suggest anything
-        type_form = Union[tuple(type_form)]  # Union[*type_form] not supported in Python3.10
+        type_form = Union[tuple(env_or_list)]  # Union[*env_or_list] not supported in Python3.10
         env_classes = env_or_list
     else:
+        type_form = env_or_list
         env_classes = [env_or_list]
+
+    # unwrap annotated
+    # ex: `run(FlagConversionOff[OmitArgPrefixes[Env]])` -> Env
+    for i, candidate in enumerate(env_classes):
+        while get_origin(candidate) is Annotated:
+            candidate = get_args(candidate)[0]
+        env_classes[i] = candidate
 
     # Mock parser, inject special options into
     patches = []

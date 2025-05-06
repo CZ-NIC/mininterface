@@ -74,7 +74,7 @@ class Mininterface(Generic[EnvClass]):
         # Why using EnvInstance? So that the docs looks nice, otherwise, there would be `_env or SimpleNamespace()`.
         EnvInstance = _env or SimpleNamespace()
         self.env: EnvClass | SimpleNamespace = EnvInstance
-        """ Parsed arguments, fetched from CLI.
+        """ Parsed arguments from the [EnvClass][mininterface._lib.form_dict.EnvClass].
             Contains whole configuration (previously fetched from CLI and config file).
 
         ```bash
