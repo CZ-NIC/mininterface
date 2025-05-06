@@ -5,13 +5,13 @@ import sys
 from types import SimpleNamespace
 from typing import Optional
 
-from ..mininterface.adaptor import MinAdaptor
+from .._mininterface.adaptor import MinAdaptor
 
-from ..form_dict import EnvClass
+from .._lib.form_dict import EnvClass
 
 from ..settings import UiSettings
 
-from ..textual_interface import TextualInterface
+from .._textual_interface import TextualInterface
 from .child_adaptor import SerializedChildAdaptor
 from .parent_adaptor import WebParentAdaptor
 

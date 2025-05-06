@@ -10,11 +10,11 @@ except ImportError:
 
 from ..exceptions import InterfaceNotAvailable
 
-from ..mininterface import EnvClass, Mininterface, TagValue
-from ..mininterface.mixin import RichUiMixin
+from .._mininterface import EnvClass, Mininterface, TagValue
+from .._mininterface.mixin import RichUiMixin
 from ..tag import Tag
 from ..settings import GuiSettings
-from ..redirectable import Redirectable
+from .._lib.redirectable import Redirectable
 from .adaptor import TkAdaptor
 from .redirect_text_tkinter import RedirectTextTkinter
 

@@ -6,17 +6,17 @@ from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
 from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
-from .form_dict import DataClass, EnvClass
+from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
-from .mininterface import EnvClass, Mininterface
+from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings
-from .start import Start
+from ._lib.start import Start
 from .subcommands import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
 
 try:
-    from .cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
+    from ._lib.cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
 
@@ -210,6 +210,10 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
             for form in forms:
                 if isinstance(form, Command):
                     form: Command
+                    # TODO – fetching from adaptor here is asymetric.
+                    # It's on this place only.
+                    # Furthermore, on_change=c.do_refresh_title does not CHANGE THE TITLE.
+                    m.facet._fetch_from_adaptor(superform[form.__class__.__name__])
                     form.facet = m.facet
                     form.interface = m
                     form.init()

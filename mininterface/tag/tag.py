@@ -9,9 +9,9 @@ from warnings import warn
 
 from annotated_types import BaseMetadata, GroupedMetadata
 
-from ..auxiliary import (common_iterables, flatten, guess_type,
-                         matches_annotation, serialize_structure,
-                         subclass_matches_annotation, validate_annotated_type)
+from .._lib.auxiliary import (common_iterables, flatten, guess_type,
+                              matches_annotation, serialize_structure,
+                              subclass_matches_annotation, validate_annotated_type)
 from ..experimental import FacetCallback, SubmitButton
 from .internal import (BoolWidget, CallbackButtonWidget, FacetButtonWidget,
                        RecommendedWidget, SubmitButtonWidget)
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
     from ..facet import Facet
-    from ..form_dict import TagDict
+    from .._lib.form_dict import TagDict
 else:
     # NOTE this is needed for tyro dataclass serialization (which still does not work
     # as Tag is not a frozen object, you cannot use it as an annotation)
@@ -306,8 +306,8 @@ class Tag(Generic[TagValue]):
 
     @property
     def facet(self) -> Facet:
-        """ Access to the UI [`facet`][mininterface.mininterface.Facet] from the front-end side.
-        (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
+        """ Access to the UI [`facet`][mininterface._mininterface.Facet] from the front-end side.
+        (Read [`Mininterface.facet`][mininterface.Mininterface.facet] to access from the back-end side.)
 
         Use the UI facet from within a callback, ex. from a validator.
 

@@ -35,19 +35,19 @@
       show_root_heading: true
       show_labels: false
 
-::: mininterface.form_dict.DataClass
+::: mininterface._lib.form_dict.DataClass
     options:
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
 
-::: mininterface.form_dict.EnvClass
+::: mininterface._lib.form_dict.EnvClass
     options:
       show_root_full_path: false
       show_root_heading: true
       show_labels: false
 
-::: mininterface.form_dict.FormDict
+::: mininterface._lib.form_dict.FormDict
     options:
       show_root_full_path: false
       show_root_heading: true

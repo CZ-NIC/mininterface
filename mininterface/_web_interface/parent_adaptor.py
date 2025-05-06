@@ -7,20 +7,20 @@ from types import GeneratorType
 from typing import TYPE_CHECKING
 
 
-from ..form_dict import TagDict
+from .._lib.form_dict import TagDict
 
 from .app import SerCommand, WebParentApp
 
-from ..auxiliary import flatten
+from .._lib.auxiliary import flatten
 
-from ..textual_interface.facet import TextualFacet
+from .._textual_interface.facet import TextualFacet
 
 from ..settings import WebSettings
 
 from ..facet import Facet
 
-from ..textual_interface.adaptor import TextualAdaptor
-from ..textual_interface.button_contents import ButtonAppType
+from .._textual_interface.adaptor import TextualAdaptor
+from .._textual_interface.button_contents import ButtonAppType
 
 if TYPE_CHECKING:
     from . import TextualInterface

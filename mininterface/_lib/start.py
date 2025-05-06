@@ -4,18 +4,15 @@ from collections import defaultdict
 from dataclasses import is_dataclass
 from pathlib import Path
 from subprocess import run
-from typing import Type, Optional
+from typing import Optional, Type
 from warnings import warn
 
-
-from .auxiliary import flatten
-
-from .subcommands import Command, SubcommandPlaceholder
-from .form_dict import EnvClass, DataClass, TagDict, dataclass_to_tagdict
-from .interfaces import get_interface
-from .mininterface import Mininterface
-from .exceptions import DependencyRequired
-from .tag import Tag
+from .._mininterface import Mininterface
+from ..exceptions import DependencyRequired
+from ..interfaces import get_interface
+from ..subcommands import Command, SubcommandPlaceholder
+from ..tag import Tag
+from .form_dict import DataClass, EnvClass, TagDict, dataclass_to_tagdict
 
 try:
     from .cli_parser import parse_cli
@@ -96,7 +93,7 @@ class Start:
                         # that will not be run.
                         m.form(wf)
 
-            tags = dataclass_to_tagdict(form)
+            tags = dataclass_to_tagdict(form)  # import ipdb
 
             # Pull out common fields to the common level
             # Ex. base class has the PathTag field `files`. Hence all subcommands have a copy of this field.
@@ -110,6 +107,7 @@ class Start:
             name = form.__class__.__name__
             if isinstance(form, Command):
                 # add the button to submit just that one dataclass, by calling its Command.run
+                # ipdb.set_trace()  # TODO Ten button se nespouští!
                 tags[""][name] = Tag(self._submit_generated_button(form))
             else:
                 # Even though we officially support only Command for now, we tolerate other dataclasses

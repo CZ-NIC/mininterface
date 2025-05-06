@@ -2,7 +2,7 @@
 import sys
 from typing import Optional, Type
 
-from ..mininterface.mixin import RichUiMixin
+from .._mininterface.mixin import RichUiMixin
 
 try:
     from textual.app import App as _ImportCheck
@@ -11,8 +11,8 @@ except ImportError:
     raise InterfaceNotAvailable
 
 from ..exceptions import InterfaceNotAvailable
-from ..redirectable import Redirectable
-from ..mininterface import Mininterface
+from .._lib.redirectable import Redirectable
+from .._mininterface import Mininterface
 from .adaptor import TextualAdaptor
 
 

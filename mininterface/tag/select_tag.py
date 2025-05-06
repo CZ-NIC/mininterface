@@ -12,7 +12,7 @@ OptionsType = (list[TagValue] | tuple[TagValue, ...] | set[TagValue]
                | dict[RichOptionLabel, TagValue] | Iterable[Enum] | Type[Enum])
 """ You can denote the options in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
-Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(OptionsType)` to illustrate the examples.
+Values might be Tags as well. Let's take a detailed look. We will use the [`run.select(OptionsType)`][mininterface.Mininterface.select] to illustrate the examples.
 
 ## Iterables like list
 
@@ -21,7 +21,7 @@ Either put options in an iterable:
 ```python
 from mininterface import run
 m = run()
-m.choice([1, 2])
+m.select([1, 2])
 ```
 
 ![Options as a list](asset/choices_list.avif)
@@ -31,7 +31,7 @@ m.choice([1, 2])
 Or to a dict `{name: value}`. Then name are used as labels.
 
 ```python
-m.choice({"one": 1, "two": 2})  # returns 1
+m.select({"one": 1, "two": 2})  # returns 1
 ```
 
 ## Dict with tuples for table
@@ -39,7 +39,7 @@ m.choice({"one": 1, "two": 2})  # returns 1
 If you use tuple as the keys, they will be joined into a table.
 
 ```python
-m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
+m.select({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
 ```
 
 ![Table like](asset/choice_table_span.avif)
@@ -49,7 +49,7 @@ m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
 Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
 
 ```python
-m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
+m.select([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
 ```
 
 ![Options with labels](asset/choices_labels.avif)
@@ -64,7 +64,7 @@ class Color(Enum):
     GREEN = "green"
     BLUE = "blue"
 
-m.choice(Color)
+m.select(Color)
 ```
 
 ![Options from enum](asset/choice_enum_type.avif)
@@ -77,7 +77,7 @@ class Color(Enum):
     GREEN = "green"
     BLUE = "blue"
 
-m.choice(Color.BLUE)
+m.select(Color.BLUE)
 ```
 
 ![Options from enum](asset/choice_enum_instance.avif)
@@ -85,7 +85,7 @@ m.choice(Color.BLUE)
 Alternatively, you may use an Enum instances list.
 
 ```python
-m.choice([Color.GREEN, Color.BLUE])
+m.select([Color.GREEN, Color.BLUE])
 ```
 
 ![Options from enum list](asset/choice_enum_list.avif)
@@ -111,9 +111,9 @@ class SelectTag(Tag[TagValue]):
     m.form({"My restrained": SelectTag(options=("one", "two"))})
     ```
 
-    You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
+    You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`OptionsType`][mininterface.tag.select_tag.OptionsType] for more details.
 
-    Here we focus at the `SelectTag` itself and its [`Options`][mininterface.types.alias.Options] alias. It can be used to annotate a default value in a dataclass.
+    Here we focus at the `SelectTag` itself and its [`Options`][mininterface.tag.alias.Options] alias. It can be used to annotate a default value in a dataclass.
 
     ```python
     from dataclasses import dataclass

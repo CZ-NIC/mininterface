@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Iterable, Type, TypeVar
 from ..tag.tag_factory import assure_tag
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
-from ..form_dict import DataClass, EnvClass, FormDict, tag_assure_type
-from ..mininterface import Mininterface
+from .._lib.form_dict import DataClass, EnvClass, FormDict, tag_assure_type
+from .._mininterface import Mininterface
 from ..tag.tag import Tag, TagValue, ValidationCallback
 from .adaptor import TextAdaptor
 

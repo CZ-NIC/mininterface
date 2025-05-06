@@ -7,23 +7,23 @@ from typing import TYPE_CHECKING
 
 from ..tag.tag import ValsType
 
-from ..auxiliary import flatten
+from .._lib.auxiliary import flatten
 
-from ..textual_interface import TextualAdaptor
+from .._textual_interface import TextualAdaptor
 
-from ..textual_interface.adaptor import ButtonAppType
+from .._textual_interface.adaptor import ButtonAppType
 
 from .app import SerCommand
 
-from ..form_dict import TagDict
-from ..mininterface.adaptor import BackendAdaptor
+from .._lib.form_dict import TagDict
+from .._mininterface.adaptor import BackendAdaptor
 from ..settings import WebSettings
 from ..tag import Tag
-from ..textual_interface.facet import TextualFacet
-from ..textual_interface.widgets import TagWidget
+from .._textual_interface.facet import TextualFacet
+from .._textual_interface.widgets import TagWidget
 
 if TYPE_CHECKING:
-    from ..mininterface import Mininterface
+    from .._mininterface import Mininterface
 
 
 class SerializedChildAdaptor(TextualAdaptor):

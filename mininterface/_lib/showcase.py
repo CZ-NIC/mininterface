@@ -5,14 +5,14 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
-from .exceptions import ValidationFail
-from .subcommands import Command, SubcommandPlaceholder
-from .tag.secret_tag import SecretTag
+from ..exceptions import ValidationFail
+from ..subcommands import Command, SubcommandPlaceholder
+from ..tag.secret_tag import SecretTag
 
-from . import run, Options
-from .interfaces import InterfaceName
-from .tag.alias import Validation
-from .validators import not_empty
+from .. import run, Options
+from ..interfaces import InterfaceName
+from ..tag.alias import Validation
+from ..validators import not_empty
 
 
 ChosenInterface = InterfaceName | Literal["all"]

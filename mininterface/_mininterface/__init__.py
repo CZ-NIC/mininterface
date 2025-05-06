@@ -17,12 +17,12 @@ from ..exceptions import Cancelled, DependencyRequired
 
 from ..subcommands import Command
 from ..facet import Facet
-from ..form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
-                         dict_to_tagdict, formdict_resolve)
+from .._lib.form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
+                              dict_to_tagdict, formdict_resolve)
 from ..tag.tag import Tag, TagValue, ValidationCallback
 
 try:
-    from ..cli_parser import parse_cli
+    from .._lib.cli_parser import parse_cli
 except DependencyRequired as e:
     parse_cli = e
 
@@ -334,7 +334,7 @@ class Mininterface(Generic[EnvClass]):
             options:
                 You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as labels.
                 You can also use tuples for keys to get a table-like formatting. Use the Enums or nested Tags...
-                See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
+                See the [`OptionsType`][mininterface.tag.select_tag.OptionsType] for more details.
             title: Form title
             default: The value of the checked choice.
 

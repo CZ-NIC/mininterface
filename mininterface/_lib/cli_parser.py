@@ -19,10 +19,10 @@ from unittest.mock import patch
 from .auxiliary import (dataclass_asdict_no_defaults, merge_dicts,
                         yield_annotations)
 from .form_dict import DataClass, EnvClass, MissingTagValue
-from .settings import MininterfaceSettings
-from .tag import Tag
-from .tag.tag_factory import tag_factory
-from .validators import not_empty
+from ..settings import MininterfaceSettings
+from ..tag import Tag
+from ..tag.tag_factory import tag_factory
+from ..validators import not_empty
 
 try:
     import yaml
@@ -318,7 +318,7 @@ def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     # Load config file
     if config_file and subcommands:
         # Reading config files when using subcommands is not implemented.
-        kwargs["default"] = None
+        kwargs.pop("default", None)
         warnings.warn(f"Config file {config_file} is ignored because subcommands are used."
                       " It is not easy to set how this should work."
                       " Describe the developer your usecase so that they might implement this.")

@@ -1,6 +1,6 @@
 from tkinter import END, Text, Tk
 
-from ..redirectable import RedirectText
+from .._lib.redirectable import RedirectText
 
 
 class RedirectTextTkinter(RedirectText):

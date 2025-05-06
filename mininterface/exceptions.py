@@ -34,7 +34,7 @@ class DependencyRequired(InterfaceNotAvailable):
 
         ```python
         try:
-            from ..cli_parser import parse_cli
+            from .._lib.cli_parser import parse_cli
         except DependencyRequired as e:
             parse_cli = e
         ```

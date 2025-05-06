@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..auxiliary import naturalsize  # light-weight humanize clone
+from .._lib.auxiliary import naturalsize  # light-weight humanize clone
 from ..facet import Facet, Image, LayoutElement
 
 if TYPE_CHECKING:

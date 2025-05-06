@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from .facet import Facet
-    from .mininterface import Mininterface
+    from ._mininterface import Mininterface
     from typing import Self
 
 
@@ -14,10 +14,14 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 class Command(ABC):
     """ The Command is automatically run while instantanied.
 
+    It adapts [`init`][mininterface.subcommands.Command.init] and [`run`][mininterface.subcommands.Command.init] methods.
+    It receives attributes [`self.facet`][mininterface.facet.Facet] and [`self.interface`][mininterface.Mininterface] set.
+
     Put list of Commands to the [mininterface.run][mininterface.run] and divide your application into different sections.
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
+
 
     # SubcommandPlaceholder class
 

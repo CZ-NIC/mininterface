@@ -3,15 +3,15 @@ from dataclasses import dataclass
 from os import environ
 from pathlib import Path
 from subprocess import run as srun
-from typing import Literal, Optional
+from typing import Literal
 
 from tyro.conf import Positional
 
 from . import run
-from .showcase import showcase
 from .subcommands import Command
 from .tag.flag import File
 from .tag.path_tag import PathTag
+from ._lib.showcase import showcase
 
 __doc__ = """Simple GUI/TUI dialog toolkit. Contains:
 * dialog commands to output the value the user entered
@@ -146,7 +146,7 @@ class Web(Command):
     port: int = 64646
 
     def run(self):
-        from .web_interface import WebInterface
+        from ._web_interface import WebInterface
         WebInterface(cmd=self.cmd, port=self.port)
 
 

@@ -11,9 +11,9 @@ except ImportError:
     raise DependencyRequired("basic")
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
-from ..form_dict import TagDict, tagdict_to_widgetdict
-from ..mininterface.adaptor import BackendAdaptor
-from ..mininterface.mixin import RichUiAdaptor
+from .._lib.form_dict import TagDict, tagdict_to_widgetdict
+from .._mininterface.adaptor import BackendAdaptor
+from .._mininterface.mixin import RichUiAdaptor
 from ..settings import GuiSettings
 from ..tag import Tag
 from .facet import TkFacet
@@ -57,6 +57,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         """ dialog frame """
 
         self.label = Label(self.frame, text="")
+        # TODO need this to be shown self.label.pack(pady=10)
         self.label.pack_forget()
 
         self.text_widget = Text(self.frame, wrap='word', height=20, width=80)

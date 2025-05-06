@@ -6,7 +6,7 @@ from os import isatty
 import sys
 from typing import TYPE_CHECKING, Literal, Optional, Type
 
-from .mininterface import EnvClass, Mininterface
+from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
@@ -43,13 +43,13 @@ def __getattr__(name):
 
         # real interfaces
         case "TkInterface":
-            return _load(name, "..tk_interface", "TkInterface")
+            return _load(name, ".._tk_interface", "TkInterface")
         case "TextualInterface":
-            return _load(name, "..textual_interface", "TextualInterface")
+            return _load(name, ".._textual_interface", "TextualInterface")
         case "TextInterface":
-            return _load(name, "..text_interface", "TextInterface")
+            return _load(name, ".._text_interface", "TextInterface")
         case "WebInterface":
-            return _load(name, "..web_interface", "WebInterface")
+            return _load(name, ".._web_interface", "WebInterface")
         case _:
             return None  # such attribute does not exist
 

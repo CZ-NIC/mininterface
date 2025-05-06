@@ -10,7 +10,7 @@ except ImportError:
 
 from ..tag.datetime_tag import DatetimeTag
 if TYPE_CHECKING:
-    from mininterface.tk_interface.adaptor import TkAdaptor
+    from mininterface._tk_interface.adaptor import TkAdaptor
 
 
 class DateEntryFrame(tk.Frame):

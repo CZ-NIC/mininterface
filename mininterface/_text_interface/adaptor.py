@@ -4,11 +4,11 @@ from simple_term_menu import TerminalMenu
 
 from ..tag.select_tag import SelectTag
 
-from ..auxiliary import flatten
+from .._lib.auxiliary import flatten
 from ..exceptions import Cancelled
-from ..form_dict import TagDict
-from ..mininterface import Tag
-from ..mininterface.adaptor import BackendAdaptor
+from .._lib.form_dict import TagDict
+from .._mininterface import Tag
+from .._mininterface.adaptor import BackendAdaptor
 from ..settings import TextSettings
 from ..tag.internal import (BoolWidget, CallbackButtonWidget,
                             SubmitButtonWidget)

@@ -33,18 +33,18 @@ from dumb_settings import WebSettings
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 
 from mininterface import EnvClass, Mininterface, run
-from mininterface.auxiliary import (flatten, matches_annotation,
-                                    subclass_matches_annotation)
-from mininterface.cli_parser import (_merge_settings, parse_cli,
-                                     parse_config_file)
+from mininterface._lib.auxiliary import (flatten, matches_annotation,
+                                         subclass_matches_annotation)
+from mininterface._lib.cli_parser import (_merge_settings, parse_cli,
+                                          parse_config_file)
 from mininterface.exceptions import Cancelled
-from mininterface.form_dict import (MissingTagValue, TagDict,
-                                    dataclass_to_tagdict, dict_to_tagdict,
-                                    formdict_resolve)
+from mininterface._lib.form_dict import (MissingTagValue, TagDict,
+                                         dataclass_to_tagdict, dict_to_tagdict,
+                                         formdict_resolve)
 from mininterface.interfaces import TextInterface
-from mininterface.mininterface import MinAdaptor
+from mininterface._mininterface import MinAdaptor
 from mininterface.settings import UiSettings
-from mininterface.start import Start
+from mininterface._lib.start import Start
 from mininterface.subcommands import SubcommandPlaceholder
 from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag, SelectTag, SecretTag
 from mininterface.tag.tag_factory import tag_assure_type, assure_tag
@@ -1313,6 +1313,7 @@ class TestSubcommands(TestAbstract):
 
     def DISABLED_test_integrations(self):
         # NOTE Subcommand changed a bit. Now, it's a bigger task to test it.
+        # NOTE test combination of Commands and plain dataclasses
         return
         # Guaranteed support for pydantic and attrs
         self.maxDiff = None
@@ -1347,7 +1348,7 @@ class TestSubcommands(TestAbstract):
             return ret
 
         s = Start("", Mininterface)
-        with patch('mininterface.start.dataclass_to_tagdict', side_effect=check_output) as mocked, \
+        with patch('mininterface._lib.start.dataclass_to_tagdict', side_effect=check_output) as mocked, \
                 redirect_stdout(StringIO()), redirect_stderr(StringIO()):
             s.choose_subcommand([SubcommandB1, SubcommandB2])
             self.assertEqual(2, mocked.call_count)

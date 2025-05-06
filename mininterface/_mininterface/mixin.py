@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Type
 
 from ..tag.tag_factory import assure_tag
 
-from ..form_dict import DataClass, FormDict, EnvClass
+from .._lib.form_dict import DataClass, FormDict, EnvClass
 from ..tag.tag import Tag, TagValue, ValidationCallback
 
 

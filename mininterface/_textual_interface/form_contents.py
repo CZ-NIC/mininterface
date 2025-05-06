@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from ..auxiliary import flatten
-from ..form_dict import tagdict_to_widgetdict
+from .._lib.auxiliary import flatten
+from .._lib.form_dict import tagdict_to_widgetdict
 from .widgets import TagWidget
 
 

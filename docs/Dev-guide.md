@@ -29,4 +29,4 @@ Programmer uses a value -> which is converted to Tag -> which is converted to a 
 
 ## Adaptor
 
-::: mininterface.mininterface.adaptor.BackendAdaptor
+::: mininterface._mininterface.adaptor.BackendAdaptor

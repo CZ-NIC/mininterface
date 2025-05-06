@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from ..textual_interface.textual_app import TextualApp
+from .._textual_interface.textual_app import TextualApp
 
 if TYPE_CHECKING:
     from .parent_adaptor import WebParentAdaptor

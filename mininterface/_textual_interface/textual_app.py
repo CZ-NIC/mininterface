@@ -25,7 +25,7 @@ class TextualApp(App[bool | None]):
     # ]
 
     # We need to jump out of dir to allow children inherits (WebInterface)
-    CSS_PATH = "../textual_interface/style.tcss"
+    CSS_PATH = "../_textual_interface/style.tcss"
 
     def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True):
         super().__init__()

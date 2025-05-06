@@ -1,5 +1,5 @@
 from typing import Generic, Optional
-from ..auxiliary import common_iterables
+from .._lib.auxiliary import common_iterables
 from .tag import Tag, TagValue
 
 

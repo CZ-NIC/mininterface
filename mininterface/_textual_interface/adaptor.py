@@ -11,8 +11,8 @@ from .button_contents import ButtonAppType
 from .secret_input import SecretInputFactory
 
 from ..exceptions import Cancelled
-from ..form_dict import TagDict
-from ..mininterface.adaptor import BackendAdaptor
+from .._lib.form_dict import TagDict
+from .._mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
 from ..tag.tag import Tag, ValsType
 from ..tag.secret_tag import SecretTag

@@ -16,9 +16,9 @@ from ..tag.select_tag import SelectTag
 
 from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
-from ..auxiliary import flatten
+from .._lib.auxiliary import flatten
 from ..experimental import FacetCallback, SubmitButton
-from ..form_dict import TagDict
+from .._lib.form_dict import TagDict
 from ..tag import Tag
 from ..tag.secret_tag import SecretTag
 from .select_input import SelectInputWrapper, VariableAnyWrapper
@@ -27,7 +27,7 @@ from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
 
 if TYPE_CHECKING:
-    from mininterface.tk_interface.adaptor import TkAdaptor
+    from mininterface._tk_interface.adaptor import TkAdaptor
 
 
 def recursive_set_focus(widget: Widget):
