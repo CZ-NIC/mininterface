@@ -1,5 +1,5 @@
 """
-Functions suitable for Tag validation. When the user submits a value whose validation fails,
+Functions suitable for Tag [validation][mininterface.tag.tag.ValidationCallback]. When the user submits a value whose validation fails,
 they are prompted to edit the value.
 
 ```python

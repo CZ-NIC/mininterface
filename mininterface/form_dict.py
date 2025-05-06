@@ -100,7 +100,7 @@ def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -
         if isinstance(val, dict):  # nested config hierarchy
             fd[key] = dict_to_tagdict(val, mininterface)
         else:  # scalar or Tag value
-            d: dict = {"facet": getattr(mininterface, "facet", None)}
+            d: dict = {"_facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
                 tag = Tag(val, "", label=str(key), _src_dict=data, _src_key=key, **d)
             else:
@@ -181,7 +181,7 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
             # Why checking the isinstance? See Tag._is_a_callable.
             subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)
         else:  # scalar or Tag value
-            d = {"description": get_description(env.__class__, param), "facet": getattr(mininterface, "facet", None)}
+            d = {"description": get_description(env.__class__, param), "_facet": getattr(mininterface, "facet", None)}
             if not isinstance(val, Tag):
                 tag = tag_factory(val, _src_key=param, _src_obj=env, **d)
             else:

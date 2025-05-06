@@ -473,7 +473,7 @@ class TestConversion(TestAbstract):
         # a change via set_val propagates
         self.assertEqual("hello", d["test"].val)
         self.assertEqual("hello", m.env.test)
-        d["test"].set_val("foo")
+        d["test"]._set_val("foo")
         self.assertEqual("foo", d["test"].val)
         self.assertEqual("foo", m.env.test)
 
@@ -506,7 +506,7 @@ class TestConversion(TestAbstract):
         self.assertEqual(5, t4.val)
         self.assertEqual(5, t5.val)
 
-        t5.set_val(8)
+        t5._set_val(8)
         self.assertEqual(8, t0.val)
         self.assertEqual(8, t1.val)
         self.assertEqual(8, t2.val)
@@ -526,11 +526,11 @@ class TestConversion(TestAbstract):
         t2 = Tag(t1, label="Another name")
         t5 = Tag(label="My name")._fetch_from(t2, include_ref=True)
 
-        t5.set_val(8)
+        t5._set_val(8)
 
         self.assertEqual(8, t0.val)
         self.assertEqual(8, t1.val)
-        self.assertEqual(5, t2.val) # the ref was fetches instead of the t2 object, hence it is not updated
+        self.assertEqual(5, t2.val)  # the ref was fetches instead of the t2 object, hence it is not updated
         self.assertEqual(8, t5.val)
 
     def test_label(self):
@@ -941,7 +941,7 @@ class TestLog(TestAbstract):
     def test_run_verbosity0(self, mock_basicConfig):
         self.sys("-v")
         with self.assertRaises(SystemExit):
-            run(SimpleEnv, add_verbosity=False, interface=Mininterface)
+            run(SimpleEnv, add_verbose=False, interface=Mininterface)
         mock_basicConfig.assert_not_called()
 
     @patch('logging.basicConfig')
@@ -1383,7 +1383,7 @@ class TestSubcommands(TestAbstract):
 
         # main help works
         # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
-        with (self.assertOutputs(contains="Use this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
+        with (self.assertOutputs(contains="Use this placeholder to choose the subcommand via"), self.assertRaises(SystemExit)):
             r(["--help"])
 
         # placeholder help works and shows shared arguments of other subcommands

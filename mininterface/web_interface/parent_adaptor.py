@@ -57,10 +57,9 @@ class WebParentAdaptor(TextualAdaptor):
         match command, data:
             case SerCommand.FORM, [form]:
                 form: TagDict
-
                 # sets the facet to all the tags in the form
                 for t in flatten(form):
-                    t.facet = self.facet
+                    t._facet = self.facet
 
                 self.button_app = False
                 self.facet._fetch_from_adaptor(form)

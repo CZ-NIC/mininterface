@@ -64,13 +64,13 @@ class TextAdaptor(BackendAdaptor):
                             return "(submit button)"
                         else:
                             tag.update(True)
-                            tag.facet.submit()
+                            tag._facet.submit()
                             raise Submit
                     case CallbackButtonWidget():  # Replace with a callback button
                         if only_label:
                             return "(submit)"
                         else:
-                            tag.facet.submit(_post_submit=tag._run_callable)
+                            tag._facet.submit(_post_submit=tag._run_callable)
                             raise Submit
                     case _:
                         if only_label:

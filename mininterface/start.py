@@ -85,10 +85,11 @@ class Start:
             if wf:  # We have some wrong fields.
                 if not common_fields_missing_defaults:
                     # Store the values for the common fields
+                    # NOTE this will work poorly when we ask for a not common fields in the first class
                     common_fields_missing_defaults = m.form(wf)
                 else:  # As the common field appears multiple times, restore its value.
                     for tag_name, val in common_fields_missing_defaults.items():
-                        wf[tag_name].set_val(val)
+                        wf[tag_name]._set_val(val)
                         del wf[tag_name]
                     if wf:  # some other fields were missing too
                         # NOTE It makes no sense to ask for wrong fields for env classes

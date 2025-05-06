@@ -56,12 +56,108 @@ UiValue = TagValue | str
 ErrorMessage = TypeVar("ErrorMessage")
 """ A string, callback validation error message. """
 ValidationResult = bool | ErrorMessage
-""" Callback validation result is either boolean or an error message. """
+""" Being used at [Tag.validation][mininterface.Tag.validation].
+
+A bool or the error message (that implicitly means the [ValidationCallback][mininterface.tag.tag.ValidationCallback] has failed) as shows the following table.
+Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
+
+| return | description |
+|--|--|
+| bool | True if validation succeeded or False if validation failed. |
+| str | Error message if the validation failed. |
+| tuple[bool\\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
+
+This example shows the str error message:
+
+```python
+def check(tag: Tag):
+    if tag.val < 10:
+        return "The value must be at least 10"
+m.form({"number", Tag(12, validation=check)})
+```
+
+This example shows the value transformation. For `val=50+`, the validation fails.
+
+```python
+def check(tag: Tag):
+    return True, tag.val * 2
+m.form({"number", Tag(12, validation=(check, Lt(100)))})
+```
+"""
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 ValsType = Iterable[tuple["Tag", UiValue]]
-ValidationCallback = Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]] | BaseMetadata
-""" See [Tag.validation][mininterface.Tag.validation] """
+ValidationCallback = Callable[["Tag"], ValidationResult |
+                              tuple[ValidationResult, TagValue]] | BaseMetadata | GroupedMetadata
+""" Being used at [Tag.validation][mininterface.Tag.validation].
+
+Either use a custom callback function, a provided [validator][mininterface.validators], or an [annotated-types predicate](https://github.com/annotated-types/annotated-types?#documentation). (You can use multiple validation callbacks combined into an itarable.)
+
+[ValidationResult][mininterface.tag.tag.ValidationResult] is a bool or the error message that implicitly means it has failed. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
+
+# Custom function
+
+Handles the Tag.
+
+```python
+from mininterface.tag import Tag
+
+def my_validation(tag: Tag):
+    return tag.val > 50
+
+m.form({"number", Tag("", validation=my_validation)})
+```
+
+# Provided validators
+
+Found in the [mininterface.validators][mininterface.validators] module.
+
+```python
+from mininterface.validators import not_empty
+m.form({"number", Tag("", validation=not_empty)})
+# User cannot leave the field empty.
+```
+
+You may use the validation in a type annotation.
+```python
+from mininterface import Tag, Validation
+@dataclass
+class Env:
+    my_text: Annotated[str, Validation(not_empty)] = "will not be emtpy"
+
+    # which is an alias for:
+    # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
+```
+
+# annotated-types predicate.
+
+The [annotated-types](https://github.com/annotated-types/annotated-types?#documentation) are de-facto standard for types restraining.
+
+Currently, `Gt, Ge, Lt, Le, MultipleOf and Len` are supported.
+
+```python
+from dataclasses import dataclass
+from annotated_types import Ge
+from mininterface import run
+
+@dataclass
+class AnnotatedTypes:
+    age: Annotated[int, Ge(18)]
+
+run(AnnotatedTypes).env.age  # guaranteed to be >= 18
+```
+
+!!! info
+    The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.
+
+    ```python
+    @dataclass
+    class AnnotatedTypes:
+        age: Annotated[int, Ge(18), Tag(validation=custom)]
+
+    # -> age: Annotated[int, Tag(validation=[Ge(18), custom])]
+    ```
+"""
 
 
 class MissingTagValue:
@@ -86,10 +182,26 @@ class MissingTagValue:
 @dataclass
 class Tag(Generic[TagValue]):
     """ Wrapper around a value that encapsulates a description, validation etc.
-        When you provide a value to an interface, you may instead use this object.
 
         Bridge between the input values and a UI widget. The widget is created with the help of this object,
         then transforms the value back (str to int conversion etc).
+
+        For dataclasses, use in as an annotation:
+
+        ```python
+        from mininterface import run
+        @dataclass
+        class Env:
+            my_str: Annotated[str, Tag(validation=not_empty)]
+
+        m = run(Env)
+        ```
+
+        For dicts, use it as a value:
+
+        ```python
+        m.form({"My string": Tag(annotation=str, validation=not_empty)})
+        ```
         """
 
     val: TagValue = None
@@ -127,101 +239,10 @@ class Tag(Generic[TagValue]):
     """
 
     validation: Iterable[ValidationCallback] | ValidationCallback | None = None
-    """ When the user submits the form, the values are validated (and possibly transformed) with a callback [ValidationCallback][mininterface.tag.tag.ValidationCallback] function.
+    """ When the user submits the form, the values are validated (and possibly transformed) with a [ValidationCallback][mininterface.tag.tag.ValidationCallback] function (or several of them).
         If the validation fails, user is prompted to edit the value.
 
-    # The function to do the work
-
-    Either use a custom callback function, mininterface.validators, or an [annotated-types predicate](https://github.com/annotated-types/annotated-types?#documentation). (You can use multiple validation callbacks combined into an itarable.)
-
-    ## Custom function
-
-    Handles the Tag.
-
-    ```python
-    from mininterface.tag import Tag
-
-    def my_validation(tag: Tag):
-        return tag.val > 50
-
-    m.form({"number", Tag("", validation=my_validation)})
-    ```
-
-    ## mininterface.validators template
-
-    ```python
-    from mininterface.validators import not_empty
-    m.form({"number", Tag("", validation=not_empty)})
-    # User cannot leave the field empty.
-    ```
-
-    You may use the validation in a type annotation.
-    ```python
-    from mininterface import Tag, Validation
-    @dataclass
-    class Env:
-        my_text: Annotated[str, Validation(not_empty)] = "will not be emtpy"
-
-        # which is an alias for:
-        # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
-    ```
-
-    ## annotated-types predicate.
-
-    The [annotated-types](https://github.com/annotated-types/annotated-types?#documentation) are de-facto standard for types restraining.
-
-    Currently, `Gt, Ge, Lt, Le, MultipleOf and Len` are supported.
-
-    ```python
-    from dataclasses import dataclass
-    from annotated_types import Ge
-    from mininterface import run
-
-    @dataclass
-    class AnnotatedTypes:
-        age: Annotated[int, Ge(18)]
-
-    run(AnnotatedTypes).env.age  # guaranteed to be >= 18
-    ```
-
-    !!! info
-        The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.
-
-        ```python
-        @dataclass
-        class AnnotatedTypes:
-            age: Annotated[int, Ge(18), Tag(validation=custom)]
-
-        # -> age: Annotated[int, Tag(validation=[Ge(18), custom])]
-        ```
-
-    # The result output
-
-    [ValidationResult][mininterface.tag.tag.ValidationResult] is a bool or the error message (that implicitly means it has failed) as shows the following table.
-    Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
-
-    | return | description |
-    |--|--|
-    | bool | True if validation succeeded or False if validation failed. |
-    | str | Error message if the validation failed. |
-    | tuple[bool\\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
-
-    This example shows the str error message:
-
-    ```python
-    def check(tag: Tag):
-        if tag.val < 10:
-            return "The value must be at least 10"
-    m.form({"number", Tag(12, validation=check)})
-    ```
-
-    This example shows the value transformation. For `val=50+`, the validation fails.
-
-    ```python
-    def check(tag: Tag):
-        return True, tag.val * 2
-    m.form({"number", Tag(12, validation=(check, Lt(100)))})
-    ```
+        The [ValidationResult][mininterface.tag.tag.ValidationResult] is either a boolean or an error message. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
     """
 
     label: str | None = None
@@ -264,6 +285,9 @@ class Tag(Generic[TagValue]):
     ![Choice with on change callback chosen](asset/on_change2.avif)
     """
 
+    #
+    # Following attributes are not meant to be set externally.
+    #
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
 
@@ -278,41 +302,48 @@ class Tag(Generic[TagValue]):
     _src_class: type | None = None
     """ If not set earlier, fetch name, annotation and _pydantic_field from this class. """
 
-    #
-    # Following attributes are not meant to be set externally.
-    #
-    facet: Optional["Facet"] = None
-    """ Access to the UI [`facet`][mininterface.mininterface.Facet] from the front-end side.
-    (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
+    _facet: Optional["Facet"] = None
 
-    Set the UI facet from within a callback, ex. a validator.
+    @property
+    def facet(self) -> Facet:
+        """ Access to the UI [`facet`][mininterface.mininterface.Facet] from the front-end side.
+        (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
 
-    ```python
-    from mininterface import run, Tag
+        Use the UI facet from within a callback, ex. from a validator.
 
-    def my_check(tag: Tag):
-        tag.facet.set_title("My form title")
-        return "Validation failed"
+        ```python
+        from mininterface import run, Tag
 
-    with run(title='My window title') as m:
-        m.form({"My form": Tag(1, validation=my_check)})
-    ```
+        def my_check(tag: Tag):
+            tag.facet.set_title("My form title")
+            return "Validation failed"
 
-    This happens when you click ok.
+        with run(title='My window title') as m:
+            m.form({"My form": Tag(1, validation=my_check)})
+        ```
 
-    ![Facet front-end](asset/facet_frontend.avif)
-    """
+        This happens when you click ok.
 
-    original_val: TagValue = None
-    """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
+        ![Facet front-end](asset/facet_frontend.avif)
+        """
+        if self._facet is None:
+            raise ValueError("Facet has not been set")
+        return self._facet
 
-    ```python
-    def check(tag.val):
-        if tag.val != tag.original_val:
-            return "You have to change the value."
-    m.form({"number", Tag(8, validation=check)})
-    ```
-    """
+    _original_val: TagValue = None
+
+    @property
+    def original_val(self) -> TagValue:
+        """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
+
+        ```python
+        def check(tag.val):
+            if tag.val != tag.original_val:
+                return "You have to change the value."
+        m.form({"number", Tag(8, validation=check)})
+        ```
+        """
+        return self._original_val
 
     _error_text = None
     """ Meant to be read only. Error text if type check or validation fail and the UI has to be revised """
@@ -326,7 +357,7 @@ class Tag(Generic[TagValue]):
         to determine whether the UI value changed. """
 
     def __post_init__(self):
-        """ Determine annotation and fetch other information. """
+        # Determine annotation and fetch other information.
 
         # Fetch information from the nested tag: `Tag(Tag(...))`
         if isinstance(self.val, Tag):
@@ -370,7 +401,7 @@ class Tag(Generic[TagValue]):
 
         self._original_desc = self.description
         self._original_label = self.label
-        self.original_val = self.val
+        self._original_val = self.val
         self._last_ui_val = None
 
     def __repr__(self):
@@ -437,7 +468,7 @@ class Tag(Generic[TagValue]):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["facet"] = None  # NOTE WebUi rather than deleting facet, try removing StdIO from it.
+        state["_facet"] = None  # NOTE WebUi rather than deleting facet, try removing StdIO from it.
         state["_src_dict"] = None
         state["_src_obj"] = None
         state["_src_class"] = None
@@ -748,14 +779,16 @@ class Tag(Generic[TagValue]):
 
         return out_value
 
-    def set_val(self, val: TagValue) -> "Self":
-        """ Sets the value without any checks. """
+    def _set_val(self, val: TagValue) -> "Self":
+        """ Sets the value without any checks. Updates the sources. """
         self.val = val
         self._update_source(val)
         return self
 
-    def update(self, ui_value: UiValue) -> bool:
-        """ UI value → Tag value → original value. (With type conversion and checks.)
+    def update(self, ui_value: UiValue | str) -> bool:
+        """ Update the tag value with type conversion and checks.
+
+        UI → Tag → the object of origin.
 
         Args:
             ui_value:
@@ -766,8 +799,8 @@ class Tag(Generic[TagValue]):
                 Validates the type and do the transformation.
                 (Ex: Some values might be nulled from "".)
 
-        Returns:
-            bool, whether the value is alright or whether the revision is needed.
+        Returns: bool
+            Whether the value was succesfully changed or whether the revision is needed.
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
@@ -840,7 +873,7 @@ class Tag(Generic[TagValue]):
             for src in _src_objs:
                 if isinstance(src, Tag):
                     # this helps to propagate the modification to possible other nested tags
-                    src.set_val(out_value)
+                    src._set_val(out_value)
                 else:
                     setattr(src, self._src_key, out_value)
         elif self._src_dict:

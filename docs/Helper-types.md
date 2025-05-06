@@ -1,10 +1,4 @@
 # Helper types
-::: mininterface.tag.tag.ValidationResult
-    options:
-      show_root_full_path: false
-      show_root_heading: true
-      show_labels: false
-
 ::: mininterface.tag.tag.ErrorMessage
     options:
       show_root_full_path: false
@@ -17,7 +11,19 @@
       show_root_heading: true
       show_labels: false
 
+::: mininterface.tag.tag.UiValue
+    options:
+      show_root_full_path: false
+      show_root_heading: true
+      show_labels: false
+
 ::: mininterface.tag.tag.ValidationCallback
+    options:
+      show_root_full_path: false
+      show_root_heading: true
+      show_labels: false
+
+::: mininterface.tag.tag.ValidationResult
     options:
       show_root_full_path: false
       show_root_heading: true

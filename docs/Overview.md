@@ -97,16 +97,8 @@ that means your IDE sees a `list` instead of a single value and you can automati
 
 ![Suggestion select](asset/suggestion_select3.avif)
 
-
-
-## Bash completion
-
-Run your program with a hidden `--integrate-to-system` flag and a tutorial will install bash completion.
-
-![Bash completion](asset/bash_completion_tutorial.avif)
-
 ## Nested configuration
-You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).
+You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/).)
 
 Just put another dataclass inside the config file:
 
@@ -139,8 +131,20 @@ further:
   host: example.com
 ```
 
-## Bash integration
+## Bash completion
+
+Run your program with a bundled `mininterface` executable to start a tutorial that will install bash completion.
+
+`$ mininterface integrate ./program`
+
+![Bash completion](asset/bash_completion_tutorial.avif)
+
+## System dialog toolkit
 
 Mininterface can be used as a standalone dialog layer for sh scripts. See `mininterface --help`.
 
-Ex. `mininterface --choice one two three  # outputs one of them`
+```bash
+$ mininterface select one two  # outputs a chosen item
+```
+
+![Select dialog](asset/choices_labels.avif)

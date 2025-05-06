@@ -41,7 +41,7 @@ class TagWidgetWithInput(TagWidget):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle Enter key in the input field to submit the form."""
-        self.tag.facet.adaptor.app.action_confirm()
+        self.tag._facet.adaptor.app.action_confirm()
 
     def focus(self):
         """Focus the input element of this widget."""
@@ -79,7 +79,7 @@ class MyRadioSet(TagWidget, RadioSet):
             if not self._nodes[self._selected].value:
                 self.action_toggle_button()
                 # NOTE: If it is the only tag, we submit the form. But this should be implemented at the Tag level.
-                if len(self.tag.facet._form) > 1 or self.tag is not next(iter(self.tag.facet._form.values())):
+                if len(self.tag._facet._form) > 1 or self.tag is not next(iter(self.tag._facet._form.values())):
                     event.stop()
 
     def get_ui_value(self):
@@ -105,7 +105,7 @@ class MyButton(TagWidget, Button):
         super().__init__(tag, tag.label, *args, **kwargs)
 
     def on_button_pressed(self, event):
-        self.tag.facet.submit(_post_submit=self.tag._run_callable)
+        self.tag._facet.submit(_post_submit=self.tag._run_callable)
 
     def get_ui_value(self):
         return self.tag.val
@@ -119,7 +119,7 @@ class MySubmitButton(MyButton):
     def on_button_pressed(self, event):
         event.prevent_default()  # prevent calling the parent MyButton
         self._val = True
-        self.tag.facet.submit()
+        self.tag._facet.submit()
 
     def get_ui_value(self):
         return self._val  # NOTE use self.value instead?

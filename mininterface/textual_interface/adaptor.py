@@ -104,7 +104,7 @@ class TextualAdaptor(BackendAdaptor):
 
     def _build_buttons(self, text, buttons, focused):
         self.button_app = (text,
-                           [(MySubmitButton(Tag(value, facet=self.facet, label=label)), i == focused-1)
+                           [(MySubmitButton(Tag(value, _facet=self.facet, label=label)), i == focused-1)
                                for i, (label, value) in enumerate(buttons)])
 
     def _get_buttons_val(self):

@@ -28,11 +28,11 @@ class _Empty:
     pass
 
 
-def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | None = None,
+def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None,
         ask_on_empty_cli: bool = False,
         title: str = "",
         config_file: Path | str | bool = True,
-        add_verbosity: bool = True,
+        add_verbose: bool = True,
         ask_for_missing: bool = True,
         # We do not use InterfaceType as a type here because we want the documentation to show full alias:
         interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
@@ -49,8 +49,8 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
 
     Args:
         env_or_list:
-            * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
-            * `list` of [Commands][mininterface.subcommands.Command] let you create multiple commands within a single program, each with unique options.
+            * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments. A [Command][mininterface.subcommands.Command] descendant might be used to be automatically run.
+            * `list` of such `dataclasses` or [Commands][mininterface.subcommands.Command] let you create multiple commands within a single program, each with unique options.
             * `argparse.ArgumentParser` Not as powerful as the `dataclass` but should you need to try out whether to use the Mininterface instead of the old [`argparse`](https://docs.python.org/3/library/argparse.html), this is the way to go.
             * `None` You need just the dialogs, no CLI/config file parsing.
 
@@ -78,13 +78,13 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
-        add_verbosity: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+        add_verbose: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
 
             ```python
             import logging
             logger = logging.getLogger(__name__)
 
-            m = run(Env, add_verbosity=True)
+            m = run(Env, add_verbose=True)
             logger.info("Info shown") # needs `-v` or `--verbose`
             logger.debug("Debug not shown")  # needs `-vv`
             # $ program.py --verbose
@@ -151,6 +151,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
     #     `if isinstance(config, FunctionType): config = lambda: config(**kwargs["default"])`
     #
     # Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
+    # NOTE add add_integrate flag
 
     # Prepare the config file
     if config_file is True and not kwargs.get("default"):
@@ -174,71 +175,81 @@ def run(env_or_list: Type[EnvClass] | list[Type[Command]] | ArgumentParser | Non
     if not interface:
         interface = os.environ.get("MININTERFACE_INTERFACE")
     start = Start(title, interface)
+    if os.environ.get("MININTERFACE_ENFORCED_WEB"):
+        interface = "web"
 
     if isinstance(assure_args, DependencyRequired) and not env_or_list:
         # Basic dependencies missing, we have no CLI capacities
         # Since the user needs no CLI, we return a bare interface.
         return get_interface(interface, title)
+    args = assure_args(args)
+
+    # Hidden meta-commands in args
+    if os.environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
+        del os.environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
+        start.integrate(env_or_list or _Empty)
+        quit()
 
     # Convert argparse
     if isinstance(env_or_list, ArgumentParser):
         env_or_list = parser_to_dataclass(env_or_list)
 
-    # Hidden meta-commands in args
-    args = assure_args(args)
-    if len(args) == 1 and args[0] == "--integrate-to-system":
-        start.integrate(env_or_list or _Empty)
-        quit()
+    # A) Superform – overview of the subcommands
+    classic_env = True
+    if ask_for_missing and isinstance(env_or_list, list):
+        superform = False
+        if SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
+            superform, forms = start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
+        elif not args:
+            superform, forms = start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
 
-    env, wrong_fields = None, {}
-    if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-        superform, forms = start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
-    elif isinstance(env_or_list, list) and not args:
-        superform, forms = start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
-    else:
-        superform, forms = None, None
+        if superform:
+            # multiple subcommands exist
+            classic_env = False
+            m = get_interface(interface, title, settings, None)
+            for form in forms:
+                if isinstance(form, Command):
+                    form: Command
+                    form.facet = m.facet
+                    form.interface = m
+                    form.init()
+            # this call will a chosen env will trigger its `.run()` and stores itself to `start._chosen_form`
+            m.form(superform, submit=False)
+            # NOTE _chosen_form should never be None... except in testing.
+            # The testing should adapt the possibility
+            # assert start._chosen_form is not None
+            m.env = start._chosen_form
+
+    # B) Classic Env object or their list
+    # C) No Env object
+    if classic_env:
         # Parse CLI arguments, possibly merged from a config file.
         kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
         if env_or_list:
+            # B) Classic Env object or their list
             # Load configuration from CLI and a config file
-            env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbosity, ask_for_missing, args)
-        else:  # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-            parse_cli(_Empty, {}, add_verbosity, ask_for_missing, args)
+            env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
+            m = get_interface(interface, title, settings, env)
 
-    # Build the interface
-    if os.environ.get("MININTERFACE_ENFORCED_WEB"):
-        interface = "web"
-    m = get_interface(interface, title, settings, env)
+            # Empty CLI → GUI edit
+            if ask_for_missing and wrong_fields:
+                # Some fields must be set.
+                m.form(wrong_fields)
+            elif ask_on_empty_cli and len(sys.argv) <= 1:
+                m.form()
 
-    # Empty CLI → GUI edit
-    if ask_for_missing and wrong_fields:
-        # Some fields must be set.
-        m.form(wrong_fields)
-    elif ask_on_empty_cli and len(sys.argv) <= 1:
-        # if superform=True, this does nothing, as env is empty and .form() returns immediately
-        m.form()
-
-    if superform:
-        # multiple subcommands exist
-        for form in forms:
-            if isinstance(form, Command):
-                # even though we officially support only Command here, we tolerate other dataclasses
-                form._facet = m.facet
-                form._interface = m
-                form.init()
-        # this call will a chosen env will trigger its `.run()` and stores itself to `start._chosen_form`
-        m.form(superform, submit=False)
-        # NOTE _chosen_form should never be None... except in testing.
-        # The testing should adapt the possibility
-        # assert start._chosen_form is not None
-        m.env = start._chosen_form
-    elif isinstance(env, Command):
-        env._facet = m.facet
-        env._interface = m
-        env.init()
-        # NOTE If this raises a ValidationFail (as suggested in the documentation),
-        # should we repeat? And will not it cycle in a cron script?
-        env.run()
+            if isinstance(env, Command):
+                env.facet = m.facet
+                env.interface = m
+                env.init()
+                # NOTE If this raises a ValidationFail (as suggested in the documentation),
+                # should we repeat? And will not it cycle in a cron script?
+                env.run()
+        else:
+            # C) No Env object
+            # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
+            parse_cli(_Empty, {}, add_verbose, ask_for_missing, args)
+            m = get_interface(interface, title, settings, None)
 
     return m
 

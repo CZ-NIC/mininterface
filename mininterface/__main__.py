@@ -1,6 +1,8 @@
 from ast import literal_eval
 from dataclasses import dataclass
+from os import environ
 from pathlib import Path
+from subprocess import run as srun
 from typing import Literal, Optional
 
 from tyro.conf import Positional
@@ -17,20 +19,6 @@ __doc__ = """Simple GUI/TUI dialog toolkit. Contains:
 
 See the full docs at: https://cz-nic.github.io/mininterface/
 """
-
-
-@dataclass
-class Web(Command):
-    """Expose a program using mininterface to the web."""
-
-    cmd: Positional[File]
-    """Path to the program using mininterface."""
-
-    port: int = 64646
-
-    def run(self):
-        from .web_interface import WebInterface
-        WebInterface(cmd=self.cmd, port=self.port)
 
 
 Showcase_Type = Literal[1, 2]
@@ -125,19 +113,45 @@ class Select(Command):
 
 
 @dataclass
-class Showcase(Command):
+class Integrate(Command):
+    """ Integrate to the system. Generates a bash completion for the given program. """
+
+    cmd: Positional[File]
+    """Path to the program using mininterface.
+    Note that Bash completion uses argparse.prog, so do not set prog="Program Name" in the program as bash completion would stop working.
+    """
+
+    def run(self):
+        environ["MININTERFACE_INTEGRATE_TO_SYSTEM"] = '1'
+        srun(self.cmd.absolute(), env=environ)
+        quit()
+
+
+@dataclass
+class Showcase:
     """ Prints various form just to show what's possible.
     Choose the interface by MININTERFACE_INTERFACE=...
     Ex. MININTERFACE_INTERFACE=tui mininterface showcase 2
     """
     showcase: Positional[Showcase_Type] = 1
 
+
+@dataclass
+class Web(Command):
+    """Expose a program using mininterface to the web."""
+
+    cmd: Positional[File]
+    """Path to the program using mininterface."""
+
+    port: int = 64646
+
     def run(self):
-        pass
+        from .web_interface import WebInterface
+        WebInterface(cmd=self.cmd, port=self.port)
 
 
 def main():
-    with run([Alert, Ask, Confirm, Select, Web, Showcase], prog="Mininterface", description=__doc__) as m:
+    with run([Alert, Ask, Confirm, Select, Integrate, Showcase,  Web], prog="Mininterface", description=__doc__, ask_for_missing=False) as m:
         pass
 
     if isinstance(m.env, Showcase):

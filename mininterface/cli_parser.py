@@ -116,7 +116,7 @@ def assure_args(args: Optional[Sequence[str]] = None):
 
 def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
               kwargs: dict,
-              add_verbosity: bool = True,
+              add_verbose: bool = True,
               ask_for_missing: bool = True,
               args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
     """ Run the tyro parser to fetch program configuration from CLI """
@@ -136,7 +136,7 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     patches = []
     if ask_for_missing:  # Get the missing flags from the parser
         patches.append(patch.object(TyroArgumentParser, 'error', Patches.custom_error))
-    if add_verbosity:  # Mock parser to add verbosity
+    if add_verbose:  # Mock parser to add verbosity
         # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
         if all("verbose" not in cl.__annotations__ for cl in env_classes):
             patches.extend((

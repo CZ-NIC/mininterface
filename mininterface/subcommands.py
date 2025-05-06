@@ -1,7 +1,7 @@
 """ Dealing with CLI subcommands, `from mininterface.subcommands import *`  """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Self
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
@@ -14,22 +14,18 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 class Command(ABC):
     """ The Command is automatically run while instantanied.
 
-    Experimental – how should it receive _facet?
-
     Put list of Commands to the [mininterface.run][mininterface.run] and divide your application into different sections.
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
 
-    ## SubcommandPlaceholder
+    # SubcommandPlaceholder class
 
-    What if I need to use my program
-    Special placeholder class SubcommandPlaceholder.
-    This special class let the user to choose the subcommands via UI,
-    while still benefiniting from default CLI arguments.
+    The special class `SubcommandPlaceholder` let the user to choose the subcommands via UI,
+    while still benefiting from the default CLI arguments.
 
 
-    ### The CLI behaviour:
+    ## The CLI behaviour:
     * `./program.py` -> UI started with subcommand choice
     * `./program.py subcommand --flag` -> special class `SubcommandPlaceholder` allows defining a common `--flag`
         while still starting UI with subcommand choice
@@ -37,7 +33,7 @@ class Command(ABC):
     * `./program.py subcommand1` -> fails to CLI for now
 
 
-    ## An example of Command usage
+    # An example of Command usage
 
     ```python
     from dataclasses import dataclass, field
@@ -71,7 +67,7 @@ class Command(ABC):
     @dataclass
     class Subcommand2(SharedArgs):
         def run(self):
-            self._facet.set_title("Button clicked")  # you can access internal self._facet: Facet
+            self.facet.set_title("Button clicked")  # you can access internal self.facet: Facet
             print("Common files", self.files)
 
 
@@ -107,7 +103,7 @@ class Command(ABC):
     Common files [PosixPath('page1.html'), PosixPath('page2.html')]
     ```
 
-    ### Powerful automation
+    ## Powerful automation
 
     Note we use `from tyro.conf import Positional` to denote the positional argument. We did not have to write `--files` to put there HTML files.
     """
@@ -121,13 +117,13 @@ class Command(ABC):
         #   * Or it would not and the user would not be able to construct its own class without the facet.
         # * def run(self, facet): The user had to pass the reference manually.
         # * def run_with_facet(facet)
-        self._facet: 'Facet["Self"]'
-        self._interface: 'Mininterface[None]'
+        self.facet: 'Facet["Self"]'
+        self.interface: 'Mininterface[None]'
 
     def init(self):
         """ Just before the form appears.
         As the `__post_init__` method is not guaranteed to run just once (internal CLI behaviour),
-        you are welcome to override this method instead. You can use [self._facet][mininterface.facet.Facet] from within.
+        you are welcome to override this method instead. You can use [self.facet][mininterface.facet.Facet] from within.
         """
         ...
 
@@ -144,7 +140,7 @@ class Command(ABC):
 
 @dataclass
 class SubcommandPlaceholder(Command):
-    """ Use this placeholder to choose the subcomannd via a UI. """
+    """ Use this placeholder to choose the subcommand via a UI."""
 
     def run(self):
         ...

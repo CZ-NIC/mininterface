@@ -93,7 +93,7 @@ def on_change_handler(variable: Variable | VariableAnyWrapper, tag: Tag):
 def _set_true(variable: Variable, tag: Tag):
     def _(*_):
         variable.set(True)
-        tag.facet.submit()
+        tag._facet.submit()
     return _
 
 
@@ -168,12 +168,12 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                     case FacetButtonWidget():  # NOTE EXPERIMENTAL
                         # Special type: FacetCallback button
                         variable, widget = create_button(master, replace_variable, tag, label1,
-                                                         lambda tag=tag: tag.val(tag.facet))
+                                                         lambda tag=tag: tag.val(tag._facet))
 
                     case CallbackButtonWidget():
                         # Replace with a callback button
                         def inner(tag: Tag):
-                            tag.facet.submit(_post_submit=tag._run_callable)
+                            tag._facet.submit(_post_submit=tag._run_callable)
                         variable, widget = create_button(master, replace_variable, tag,
                                                          label1, lambda tag=tag: inner(tag))
                     case _:

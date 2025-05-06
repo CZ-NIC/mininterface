@@ -13,6 +13,7 @@
     * Mininterface.ask_number -> ask(..., int)
     * Mininterface.ask does not return None anymore but forces the type
     * Tag.name -> Tag.label
+    * removed `--integrate-to-system` in favour of `mininterface integrate`
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation
