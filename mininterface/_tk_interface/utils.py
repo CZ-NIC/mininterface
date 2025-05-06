@@ -12,12 +12,9 @@ from ..tag.path_tag import PathTag
 
 from ..tag.select_tag import SelectTag
 
-from ..tag.select_tag import SelectTag
-
 from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
 from .._lib.auxiliary import flatten
-from ..experimental import FacetCallback, SubmitButton
 from .._lib.form_dict import TagDict
 from ..tag import Tag
 from ..tag.secret_tag import SecretTag

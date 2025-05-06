@@ -8,6 +8,7 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from .facet import Facet
     from ._mininterface import Mininterface
     from typing import Self
+    from ._lib.form_dict import EnvClass
 
 
 @dataclass
@@ -21,7 +22,6 @@ class Command(ABC):
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
-
 
     # SubcommandPlaceholder class
 
@@ -122,7 +122,7 @@ class Command(ABC):
         # * def run(self, facet): The user had to pass the reference manually.
         # * def run_with_facet(facet)
         self.facet: 'Facet["Self"]'
-        self.interface: 'Mininterface[None]'
+        self.interface: 'Mininterface["EnvClass"]'
 
     def init(self):
         """ Just before the form appears.

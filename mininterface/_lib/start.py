@@ -24,7 +24,6 @@ class Start:
     def __init__(self, title="", interface: Type[Mininterface] | str | None = None):
         self.title = title
         self.interface = interface
-        self._chosen_form: Optional[EnvClass] = None
 
     def integrate(self, env=None):
         """ Integrate to the system
@@ -49,12 +48,11 @@ class Start:
 
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
-    def choose_subcommand(self, env_classes: list[Type[DataClass]], args=None, ask_for_missing=True):
-        # NOTE This method might be reworked to not use `m` at all and do it later – to work better in WebInterface.
-        m = get_interface(self.interface, self.title)
+
+class ChooseSubcommandOverview:
+    def __init__(self, env_classes: list[Type[DataClass]], m: Mininterface[EnvClass], args, ask_for_missing=True):
+        self.m = m
         superform: TagDict = {}
-        forms: list[EnvClass] = []
-        args = args or []
         # remove placeholder as we do not want it to be in the form
         env_classes = [e for e in env_classes if e is not SubcommandPlaceholder]
 
@@ -77,7 +75,6 @@ class Start:
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
             form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)
-            forms.append(form)
 
             if wf:  # We have some wrong fields.
                 if not common_fields_missing_defaults:
@@ -93,7 +90,15 @@ class Start:
                         # that will not be run.
                         m.form(wf)
 
-            tags = dataclass_to_tagdict(form)  # import ipdb
+            if isinstance(form, Command):
+                form: Command
+                form.facet = m.facet
+                form.interface = m
+                # Undocumented as I'm not sure whether I can recommend it or there might be a better design.
+                # Init is launched before tagdict creation so that it can modify class __annotation__.
+                form.init()
+
+            tags = dataclass_to_tagdict(form)
 
             # Pull out common fields to the common level
             # Ex. base class has the PathTag field `files`. Hence all subcommands have a copy of this field.
@@ -105,26 +110,23 @@ class Start:
                 superform[cf]._src_obj_add(local)
 
             name = form.__class__.__name__
-            if isinstance(form, Command):
-                # add the button to submit just that one dataclass, by calling its Command.run
-                # ipdb.set_trace()  # TODO Ten button se nespouští!
-                tags[""][name] = Tag(self._submit_generated_button(form))
-            else:
-                # Even though we officially support only Command for now, we tolerate other dataclasses
-                # NOTE But in the future, allow it. The subcommand will become the .env.
-                warn(f"Subcommand dataclass {name} does not inherit from the Command."
-                     " It is not known what should happen with it, it is being neglected from the CLI subcommands."
-                     " Describe the developer your usecase so that they might implement this.")
-                tags[""][name] = Tag("disabled", description=f"Subcommand {name} does not inherit from the Command."
-                                     " Hence it is disabled.")
-
+            # if isinstance(form, Command):
+            # add the button to submit just that one dataclass,
+            # sets m.env to it,
+            # and possibly call Command.run
+            tags[""][name] = Tag(self._submit_generated_button(form))
             superform[name] = tags
 
-        m._adaptor._destroy()
-        return superform, forms
+        # this call will a chosen env will trigger its `.run()` and stores a chosen env to `m.env`
+        m.form(superform, submit=False)
+        # NOTE m.env should never be None after this form call... except in testing.
+        # The testing should adapt the possibility.
+        # Then, I'd like to have this line here:
+        # assert m.env is not None
 
-    def _submit_generated_button(self, form):
+    def _submit_generated_button(self, form: EnvClass):
         def _():
-            self._chosen_form = form
-            form.run()
+            self.m.env = form
+            if isinstance(form, Command):
+                form.run()
         return _
