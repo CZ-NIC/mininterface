@@ -236,7 +236,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
 
         Returns:
-            The type from the `annotation`. For str = '', for int = 0, ...
+            The type from the `annotation`. By default `str` but might be int, datetime...
         """
         # NOTE Add validation: Callable | annotated-types | None = None.
         # But what should be the callable parameter, tag, or the value? The same as in the Tag(validation=).

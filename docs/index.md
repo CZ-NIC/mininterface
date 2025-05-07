@@ -34,7 +34,7 @@ if __name__ == "__main__":
 # Contents
 - [You got CLI](#you-got-cli)
 - [You got config file management](#you-got-config-file-management)
-- [You got dialogues](#you-got-dialogues)
+- [You got dialogs](#you-got-dialogs)
 - [Background](#background)
 - [Installation](#installation)
 - [Docs](#docs)
@@ -63,7 +63,7 @@ This calculates something.
 ```
 
 ## You got config file management
-Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. They are seamlessly taken as defaults.
+Loading config file is a piece of cake. Alongside `program.py`, write some of its arguments to `program.yaml`. They are seamlessly taken as defaults.
 
 ```yaml
 my_number: 555
@@ -75,8 +75,8 @@ $ program.py --help
 │ --my-number INT        This number is very important (default: 555)     │
 ```
 
-## You got dialogues
-Check out several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
+## You got dialogs
+Check out several useful methods to handle user dialogs. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
 
 ```python
 with run(Env) as m:
@@ -243,7 +243,15 @@ subparsers = parser.add_subparsers(dest="command", required=True)
 sub1 = subparsers.add_parser("build", help="Build something.")
 sub1.add_argument("--optimize", action="store_true", help="Enable optimizations.")
 
+# Old version
+# env = parser.parse_args()
+# env.input_file  # a Path object
+
+# New version
 m = run(parser)
+m.env.input_file  # a Path object
+
+# Live edit of the fields
 m.form()
 ```
 
@@ -284,4 +292,4 @@ print(m.env.time)  # -> 14:21
 If you're sure enough to start using *Mininterface*, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.
 
 !!! warning
-    Be aware that in contrast to the argparse, we create default values. This does make sense for most values and but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.
+    Be aware that in contrast to the argparse, we create default values. This does make sense for most values but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.

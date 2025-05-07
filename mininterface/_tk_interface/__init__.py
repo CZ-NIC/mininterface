@@ -20,7 +20,7 @@ from .redirect_text_tkinter import RedirectTextTkinter
 
 
 class TkInterface(Redirectable, RichUiMixin, Mininterface):
-    """ When used in the with statement, the GUI window does not vanish between dialogues. """
+    """ When used in the with statement, the GUI window does not vanish between dialogs. """
 
     _adaptor: TkAdaptor
 

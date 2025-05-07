@@ -32,7 +32,7 @@ class UiSettings:
 class GuiSettings(UiSettings):
     # If multiple Gui interfaces exist, this had to be TkSettings instead.
 
-    combobox_since: int = 5
+    combobox_since: int = 10
     """ The threshold to switch from radio buttons to a combobox. """
 
     radio_select_on_focus: bool = False

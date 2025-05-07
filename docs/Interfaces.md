@@ -1,11 +1,28 @@
 ## All possible interfaces
 
+Apart from the default [`Mininterface`][mininterface.Mininterface], the base interface the others are fully compatible with, several interfaces exist.
+
+| shortcut | full name |
+| -- | -- |
+| - | [Mininterface](#mininterface) |
+| gui | [GuiInterface](#guiinterface-or-tkinterface-or-gui) \| TkInterface |
+| tui \| textual | [TuiInterface](#tuiinterface-or-tui) |
+| text \| tui | [TextInterface](#textinterface) |
+| web | [WebInterface](#webinterface-or-web) |
+
+### Ordering
+
+We try to obtain the best interface available. By preference, it is **gui** , then **> tui** (textual or at least **> text**), then the original non-interactive **> Mininterface** is used. The ensures the program to still work in cron jobs etc.
+
+### Getting one
+
 Normally, you get an interface through [mininterface.run][]
-but if you do not wish to parse CLI and config file, you can invoke one directly `from mininterface.interfaces import *`.
+but if you do not wish to parse CLI and config file, you can invoke one directly through `from mininterface.interfaces import *`. You may as well use the [`get_interface`][mininterface.interfaces.get_interface] function to ensure the interface is available or invoke the program with [`MININTERFACE_INTERFACE`](#environment-variable-mininterface_interface) environment variable.
 
-Apart from the default [`Mininterface`][mininterface.Mininterface], the base interface the others are fully compatible with, several interfaces exist:
 
-How to invoke a specific interface.
+### Direct invocation
+
+How to invoke a specific interface directly?
 
 ```python
 from mininterface.interfaces import TuiInterface
@@ -14,18 +31,21 @@ with TuiInterface("My program") as m:
     number = m.ask("Returns number", int)
 ```
 
-Or you may use the `get_interface` function to ensure the interface is available.
-
 ::: mininterface.interfaces.get_interface
 
 
 !!! info
     Performance boost: Only interfaces that are being used are loaded into memory for faster start.
 
+### Environment variable `MININTERFACE_INTERFACE`
+
+From outside, you may override the default interface choice by the environment variable.
+
+`$ MININTERFACE_INTERFACE=web program.py`
+
 # `Mininterface`
 
-When a GUI is not available (GuiInterface), nor the rich TUI is available (TextualInterface), nor the mere interactive TextInterface is available, the original non-interactive Mininterface is used. The ensures the program is still working in cron jobs etc.
-
+The base interface.
 
 # `GuiInterface` or `TkInterface` or 'gui'
 

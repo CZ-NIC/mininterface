@@ -2,22 +2,24 @@
 
 ## unreleased
 * CHANGED – renamed: API is becoming stable but we have to rename several things.
-    * Mininterface.is_yes -> [.confirm][mininterface.Mininterface.confirm]
-    * Mininterface.is_no -> .confirm(..., False) (because .is_no was counterintuitive)
-    * Mininterface.choice -> [.select][mininterface.Mininterface.select] (as HTML counterpart)
+    * .is_yes -> [Mininterface.confirm][mininterface.Mininterface.confirm]
+    * .is_no -> .confirm(..., False) (because .is_no was counterintuitive)
+    * .choice -> [Mininterface.select][mininterface.Mininterface.select] (as HTML counterpart)
     * EnumTag(choices=) -> [SelectTag(options=)][mininterface.tag.SelectTag]
     * Choices alias -> Options alias
     * MininterfaceOptions -> [MininterfaceSettings][mininterface.settings.MininterfaceSettings] (to not meddle with the SelectTag)
     * mininterface.types.rich_tags -> [mininterface.tag.*][mininterface.tag.SelectTag]
     * Tag attribute order, swap `name` and `validation`
-    * Mininterface.ask_number -> ask(..., int)
+    * .ask_number -> [Mininterface.ask(..., int)][mininterface.Mininterface.ask]
     * Mininterface.ask does not return None anymore but forces the type
     * Tag.name -> Tag.label
     * removed `--integrate-to-system` in favour of `mininterface integrate`
-* enh: options add shortcut
-* feat: EnumTag multiple
-* fix: TkInterface focus and tab navigation
+* [WebInterface](Interfaces.md#webinterface-or-web)
+* SelectTag(multiple=)
 * argparse support
+* minimal bundle
+* file picker
+* fix: TkInterface focus and tab navigation
 
 ## 0.8.0 (2025-04-01)
 * CHANGED: [EnumTag][mininterface.tag.SelectTag] instead of Tag(choices=)

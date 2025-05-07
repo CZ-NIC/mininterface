@@ -32,7 +32,7 @@ try:
     from tyro.conf import Positional
     from tyro.extras import get_parser
 except ImportError:
-    from .exceptions import DependencyRequired
+    from ..exceptions import DependencyRequired
     raise DependencyRequired("basic")
 
 

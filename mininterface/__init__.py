@@ -112,7 +112,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
         interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
             You may write "gui" or "tui" literal or pass a specific Mininterface type,
             see the full [list](Interfaces.md) of possible interfaces.
-            If not set, we look also for an environment variable MININTERFACE_INTERFACE and in the config file.
+            If not set, we look also for an environment variable [`MININTERFACE_INTERFACE`](Interfaces.md#environment-variable-mininterface_interface) and in the config file.
         args: Parse arguments from a sequence instead of the command line.
         settings: Default settings. These might be further modified by the 'mininterface' section in the config file.
     Kwargs:
