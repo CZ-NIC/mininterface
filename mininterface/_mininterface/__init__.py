@@ -15,7 +15,6 @@ from ..settings import UiSettings
 
 from ..exceptions import DependencyRequired
 
-from ..cli import Command
 from ..facet import Facet
 from .._lib.form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                               dict_to_tagdict, formdict_resolve)
@@ -270,7 +269,7 @@ class Mininterface(Generic[EnvClass]):
         """
         # NOTE cancel=False parameter to add a cancel button
         print(f"Asking {'yes' if default else 'no'}:", text)
-        return True
+        return default is True
 
     # default + multiple none -> single
     @overload

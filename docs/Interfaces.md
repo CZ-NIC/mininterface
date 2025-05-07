@@ -4,7 +4,7 @@ Apart from the default [`Mininterface`][mininterface.Mininterface], the base int
 
 | shortcut | full name |
 | -- | -- |
-| - | [Mininterface](#mininterface) |
+| min | [Mininterface](#mininterface) |
 | gui | [GuiInterface](#guiinterface-or-tkinterface-or-gui) \| TkInterface |
 | tui \| textual | [TuiInterface](#tuiinterface-or-tui) |
 | text \| tui | [TextInterface](#textinterface) |

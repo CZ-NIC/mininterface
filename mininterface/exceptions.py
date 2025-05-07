@@ -41,4 +41,8 @@ class DependencyRequired(InterfaceNotAvailable):
 
         When the function is used, the original exception is raised.
         """
-        raise self
+        self.exit()
+
+    def exit(self):
+        """ Wrap the exception in a SystemExit so that the program exits without a traceback. """
+        raise SystemExit(self)

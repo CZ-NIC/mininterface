@@ -10,15 +10,16 @@ from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
 from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings
-from ._lib.start import ChooseSubcommandOverview, Start
-from .cli import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
 
 try:
+    from ._lib.start import ChooseSubcommandOverview, Start
+    from .cli import Command, SubcommandPlaceholder
     from ._lib.cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
+    ChooseSubcommandOverview, Start, SubcommandPlaceholder = (e,) * 3
 
 
 @dataclass
@@ -223,14 +224,16 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
         elif ask_on_empty_cli and len(sys.argv) <= 1:
             m.form()
 
-        # Do you find a use-case for Command here?
-        # if isinstance(env, Command):
-        #     env.facet = m.facet
-        #     env.interface = m
-        #     env.init()
-        #     # If this raises a ValidationFail (as suggested in the documentation),
-        #     # should we repeat? And will not it cycle in a cron script?
-        #     env.run()
+        # Even though Command is not documented to work with run(Env) (but only as run([Env])), it works.
+        # Why? Because the subcommand chosen by CLI and not here in the SubcommandOverview will get here.
+        # Why it is not documented? – What use-case would it have?
+        # And if this env.run() raises a ValidationFail (as suggested in the documentation),
+        # should we repeat? And will not it cycle in a cron script?
+        if isinstance(env, Command):
+            env.facet = m.facet
+            env.interface = m
+            env.init()
+            env.run()
     else:
         # C) No Env object
         # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose

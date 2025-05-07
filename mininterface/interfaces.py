@@ -81,6 +81,8 @@ def _get_interface_type(interface: InterfaceType = None):
             return __getattr__("WebInterface")
         case "tui" | "textual":
             return __getattr__("TuiInterface")
+        case "min":
+            return Mininterface
         case _:
             raise InterfaceNotAvailable
 

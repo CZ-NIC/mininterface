@@ -75,7 +75,7 @@ class CallbackTag(Tag):
     m.form()
     ```
     '''
-    val: Callable[[str], Any]
+    val: Callable[[Tag], Any]
 
     def _run_callable(self):
         return self.val(self)

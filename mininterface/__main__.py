@@ -5,7 +5,11 @@ from pathlib import Path
 from subprocess import run as srun
 from typing import Literal
 
-from tyro.conf import Positional
+try:
+    from tyro.conf import Positional
+except ImportError:
+    from .exceptions import DependencyRequired
+    raise DependencyRequired("basic").exit()
 
 from . import run
 from .cli import Command
@@ -27,17 +31,17 @@ Showcase_Type = Literal[1, 2]
 # NOTE in the future, allow only some classes (here, the dialog clases) have the shared args
 # @dataclass
 # class SharedLabel(Command):
-#     label: Positional[str]
+#     text: Positional[str]
 
 
 @dataclass
 class Alert(Command):
     """ Dialog: Display the OK dialog with text. """
 
-    label: Positional[str]
+    text: Positional[str]
 
     def run(self):
-        self._interface.alert(self.label)
+        self.interface.alert(self.text)
 
 
 @dataclass
@@ -47,7 +51,7 @@ class Ask(Command):
     ex. `mininterface --ask 'My heading' int`
     """
 
-    label: Positional[str]
+    text: Positional[str]
     annotation: Positional[Literal["int", "str", "float", "Path", "date", "datetime", "time", "file", "dir"]] = "str"
     """ Impose the given type.
     * Path – any path
@@ -86,19 +90,19 @@ class Ask(Command):
                 v = PathTag(is_dir=True)
             case _:
                 raise NotImplementedError(f"This type {self.annotation} has not yet been supported, raise an issue.")
-        print(self._interface.ask(self.label, v))
+        print(self.interface.ask(self.text, v))
 
 
 @dataclass
 class Confirm(Command):
     """ Dialog: Display confirm box. Returns 0 / 1. """
 
-    label: Positional[str]
+    text: Positional[str]
     focus: Positional[Literal["yes", "no"]] = "yes"
     """focused button"""
 
     def run(self):
-        r = self._interface.confirm(self.label, self.focus == "yes")
+        r = self.interface.confirm(self.text, self.focus == "yes")
         print(1 if r else 0)
 
 
@@ -106,10 +110,10 @@ class Confirm(Command):
 class Select(Command):
     """ Dialog: Prompt the user to select. """
     options: Positional[list[str]]
-    label: str = ""
+    title: str = ""
 
     def run(self):
-        print(self._interface.select(self.options, self.label))
+        print(self.interface.select(self.options, self.title))
 
 
 @dataclass

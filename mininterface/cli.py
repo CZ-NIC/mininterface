@@ -1,11 +1,10 @@
 """ Useful objects meaningful for CLI handling only. """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING
 
 try:
     from tyro.conf import Positional
-
 except ImportError:
     from .exceptions import DependencyRequired
     raise DependencyRequired("basic")
