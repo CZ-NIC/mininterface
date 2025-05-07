@@ -8,7 +8,7 @@ from typing import Literal
 from tyro.conf import Positional
 
 from . import run
-from .subcommands import Command
+from .cli import Command
 from .tag.flag import File
 from .tag.path_tag import PathTag
 from ._lib.showcase import showcase

@@ -1,14 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Callable, Optional
 
-from .._lib.cli_parser import MissingTagValue
-
 from .._lib.auxiliary import flatten
 from ..exceptions import Cancelled, ValidationFail
 from ..facet import Facet
 from .._lib.form_dict import TagDict
 from ..settings import UiSettings
-from ..tag.tag import Tag, ValsType
+from ..tag.tag import Tag, ValsType, MissingTagValue
 
 if TYPE_CHECKING:
     from . import Mininterface

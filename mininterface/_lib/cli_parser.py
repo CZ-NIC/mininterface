@@ -237,7 +237,7 @@ def identify_required(parser: ArgumentParser, arg: str) -> None | Action:
     """
     Identifies the original field_name as it was edited by tyro.
 
-    See the [mininterface.subcommands.SubcommandPlaceholder] for CLI expectation.
+    See the [mininterface.cli.SubcommandPlaceholder] for CLI expectation.
     """
     if arg.startswith("{"):
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand

@@ -45,7 +45,7 @@ from mininterface.interfaces import TextInterface
 from mininterface._mininterface import MinAdaptor
 from mininterface.settings import UiSettings
 from mininterface._lib.start import Start
-from mininterface.subcommands import SubcommandPlaceholder
+from mininterface.cli import SubcommandPlaceholder
 from mininterface.tag import CallbackTag, DatetimeTag, PathTag, Tag, SelectTag, SecretTag
 from mininterface.tag.tag_factory import tag_assure_type, assure_tag
 from mininterface.validators import limit, not_empty
@@ -324,6 +324,30 @@ class TestInteface(TestAbstract):
 
         # NOTE This test does not work. We have to formalize the callback.
         # self.assertEqual(100, m.select(options, default=options["My choice2"]))
+
+    def test_select_callback(self):
+        def do_cmd1():
+            return "cmd1"
+
+        def do_cmd2():
+            return "cmd2"
+
+        m = runm()
+        with self.assertRaises(SystemExit) as cm:
+            m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2})
+        self.assertEqual("Choose: Must be one of ['Open file...', 'Apply filter...']", str(cm.exception))
+
+        ret = m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2}, default=do_cmd1)
+        self.assertEqual("cmd1", ret)
+
+        ret = m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2}, default=do_cmd1, launch=False)
+        self.assertEqual(do_cmd1, ret)
+
+        ret = m.select({"Apply filter...": do_cmd2})
+        self.assertEqual("cmd2", ret)
+
+        with self.assertRaises(SystemExit) as cm:
+            m.select({"Apply filter...": do_cmd2}, skippable=False)
 
 
 class TestConversion(TestAbstract):
@@ -1360,7 +1384,7 @@ class TestSubcommands(TestAbstract):
             # self.assertEqual(2, mocked.call_count)
 
     def test_subcommands(self):
-        self.subcommands([Subcommand1, Subcommand2])
+        self.cli([Subcommand1, Subcommand2])
 
     def test_command_methods(self):
         # NOTE I need a mechanism to determine the subcommand chosen Subcommand1
@@ -1375,7 +1399,7 @@ class TestSubcommands(TestAbstract):
         def r(args):
             return runm(subcommands, args=args)
 
-        self.subcommands(subcommands)
+        self.cli(subcommands)
 
         # with the placeholder, the form is raised
         # with self.assertOutputs(self.form1):   <- wrong fields dialog appear instead of the whole form

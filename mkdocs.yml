@@ -54,7 +54,7 @@ nav:
       - Mininterface.md
       - Tag.md
       - Facet.md
-      - Subcommands.md
+      - Cli.md
       - Custom types:
           - CallbackTag.md
           - DatetimeTag.md

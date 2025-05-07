@@ -11,7 +11,7 @@ from .interfaces import get_interface
 from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings
 from ._lib.start import ChooseSubcommandOverview, Start
-from .subcommands import Command, SubcommandPlaceholder
+from .cli import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
 
@@ -19,8 +19,6 @@ try:
     from ._lib.cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
-
-# NOTE: imgs missing in Interfaces.md
 
 
 @dataclass
@@ -50,7 +48,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
     Args:
         env_or_list:
             * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
-            * `list` of dataclasses let you create multiple commands within a single program, each with unique options. You may use [Command][mininterface.subcommands.Command] descendants to be automatically run.
+            * `list` of dataclasses let you create multiple commands within a single program, each with unique options. You may use [Command][mininterface.cli.Command] descendants to be automatically run.
             * `argparse.ArgumentParser` Not as powerful as the `dataclass` but should you need to try out whether to use the Mininterface instead of the old [`argparse`](https://docs.python.org/3/library/argparse.html), this is the way to go.
             * `None` You need just the dialogs, no CLI/config file parsing.
 

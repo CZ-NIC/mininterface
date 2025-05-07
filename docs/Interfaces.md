@@ -1,6 +1,6 @@
 ## All possible interfaces
 
-Apart from the default [`Mininterface`][mininterface.Mininterface], the base interface the others are fully compatible with, several interfaces exist.
+Apart from the default [`Mininterface`][mininterface.Mininterface], the base interface the others are fully compatible with, several interfaces exist at `mininterface.interfaces`.
 
 | shortcut | full name |
 | -- | -- |
@@ -19,6 +19,8 @@ We try to obtain the best interface available. By preference, it is **gui** , th
 Normally, you get an interface through [mininterface.run][]
 but if you do not wish to parse CLI and config file, you can invoke one directly through `from mininterface.interfaces import *`. You may as well use the [`get_interface`][mininterface.interfaces.get_interface] function to ensure the interface is available or invoke the program with [`MININTERFACE_INTERFACE`](#environment-variable-mininterface_interface) environment variable.
 
+!!! info
+    Performance boost: Only interfaces that are being used are loaded into memory for faster start.
 
 ### Direct invocation
 
@@ -32,10 +34,9 @@ with TuiInterface("My program") as m:
 ```
 
 ::: mininterface.interfaces.get_interface
-
-
-!!! info
-    Performance boost: Only interfaces that are being used are loaded into memory for faster start.
+    options:
+        show_signature: false
+        show_root_full_path: false
 
 ### Environment variable `MININTERFACE_INTERFACE`
 

@@ -11,6 +11,7 @@ from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
 InterfaceType = Type[Mininterface] | InterfaceName | None
+""" Either a class symbol or [a shortcut string](Interfaces.md#all-possible-interfaces). """
 
 if TYPE_CHECKING:
     # static type checker does not see our dynamic interface import (performance reason)
@@ -88,6 +89,12 @@ def get_interface(interface: InterfaceType = None, title="", settings: Optional[
     """ Returns the best available interface.
 
     Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
+
+    ```python
+    from mininterface.interfaces import get_interface
+    m = get_interface()
+    m.ask("...")
+    ```
 
     Args:
         interface: An interface type of preference.

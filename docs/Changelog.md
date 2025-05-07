@@ -14,6 +14,7 @@
     * Mininterface.ask does not return None anymore but forces the type
     * Tag.name -> Tag.label
     * removed `--integrate-to-system` in favour of `mininterface integrate`
+    * .subcommands -> [mininterface.cli][]
 * [WebInterface](Interfaces.md#webinterface-or-web)
 * SelectTag(multiple=)
 * argparse support
@@ -28,7 +29,7 @@
 * [SecretTag][mininterface.tag.SecretTag]
 * PathTag UI in TextualInterface
 * UI options available from the program
-* Mininterface.choice [tips][mininterface.Mininterface.choice] parameter
+* Mininterface.choice [tips][mininterface.Mininterface.select] parameter
 * better annotated fetching
 
 ## 0.7.5 (2025-01-29)
@@ -54,4 +55,4 @@
 ## 0.7.0 (2024-11-08)
 * hidden [`--integrate-to-system`](Overview.md#bash-completion) argument
 * interfaces migrated to [`mininterface.interfaces`](Interfaces.md) to save around 50 ms starting time due to lazy loading
-* [SubcommandPlaceholder][mininterface.subcommands.Command]
+* [SubcommandPlaceholder][mininterface.cli.Command]

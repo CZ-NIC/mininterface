@@ -11,11 +11,11 @@ from ..tag.select_tag import OptionsType, SelectTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
 
-from ..settings import MininterfaceSettings, UiSettings
+from ..settings import UiSettings
 
-from ..exceptions import Cancelled, DependencyRequired
+from ..exceptions import DependencyRequired
 
-from ..subcommands import Command
+from ..cli import Command
 from ..facet import Facet
 from .._lib.form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                               dict_to_tagdict, formdict_resolve)
@@ -347,7 +347,20 @@ class Mininterface(Generic[EnvClass]):
             tips: Options to be highlighted. Use the list of choice values to denote which one the user might prefer.
             multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
-            launch: If the chosen value is a callback, we directly call it and return its return value.
+            launch:
+                If the chosen value is a callback, we directly call it and return its return value.
+
+                ```python
+                def do_cmd1():
+                    return "cmd1"
+
+                def do_cmd2():
+                    return "cmd2"
+
+                m = run()
+                out = m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2})
+                print(out)  # 'cmd1' or 'cmd2'
+                ```
 
         Returns:
             TagValue: The chosen value.
