@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "1.0.0"
+version = "1.0.1"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "LGPL-3.0-or-later"

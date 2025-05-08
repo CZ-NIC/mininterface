@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1 (2025-05-08)
+* fix: gui ask validation
+
 ## 1.0.0 (2025-05-08)
 * CHANGED – renamed: API is becoming stable but we have to rename several things.
     * .is_yes -> [Mininterface.confirm][mininterface.Mininterface.confirm]

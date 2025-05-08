@@ -127,7 +127,7 @@ There are various bundles. We mark the least permissive licence in the bundle.
 Apart from the minimal bundle (which lacks CLI and dataclass support), they have the same functionality, differring only in the user experience.
 
 !!! tip
-  For automated testing (e.g., in CI environments), the `mininterface[basic]` bundle is sufficient.
+    For automated testing (e.g., in CI environments), the `mininterface[basic]` bundle is sufficient.
 
 ## MacOS GUI
 

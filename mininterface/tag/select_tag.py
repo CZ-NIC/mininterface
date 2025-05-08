@@ -312,11 +312,9 @@ class SelectTag(Tag[TagValue]):
             if all(v in vals for v in out_value):
                 return out_value
             else:
-                self.set_error_text(f"A value is not one of the allowed")
-                raise ValueError
+                raise ValueError(f"A value is not one of the options")
         else:
             if out_value in vals:
                 return out_value
             else:
-                self.set_error_text(f"Not one of the allowed values")
-                raise ValueError
+                raise ValueError(f"Not one of the allowed values")
