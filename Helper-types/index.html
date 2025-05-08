@@ -1,1211 +1,927 @@
 
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-      
-        <link rel="prev" href="../Standalone/">
-      
-      
-        <link rel="next" href="../Validation/">
-      
-      
-      <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
-    
-    
-      
-        <title>Helper types - Mininterface</title>
-      
-    
-    
-      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
-      
-      
+<!DOCTYPE html>
 
-
-    
-    
-      
-    
-    
-      
-        
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-      
-    
-    
-      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
-    
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-    
-      
-
-    
-    
-    
-  </head>
-  
-  
-    <body dir="ltr">
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#helper-types" class="md-skip">
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="../Standalone/" rel="prev"/>
+<link href="../Validation/" rel="next"/>
+<link href="../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
+<title>Helper types - Mininterface</title>
+<link href="../assets/stylesheets/main.35f28582.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../assets/_mkdocstrings.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+</head>
+<body dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#mininterface.tag.tag.ErrorMessage">
           Skip to content
         </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-    
-      
-
-  
-
+</div>
+<div data-md-component="announce">
+</div>
 <header class="md-header md-header--shadow" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Mininterface" class="md-header__button md-logo" aria-label="Mininterface" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
-
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Mininterface" class="md-header__button md-logo" data-md-component="logo" href=".." title="Mininterface">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
             Mininterface
           </span>
-        </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
             
               Helper types
             
           </span>
-        </div>
-      </div>
-    </div>
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
-    
-    
-    
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
+</div>
+</div>
+</div>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
             Initializing search
           </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
+<ol class="md-search-result__list" role="presentation"></ol>
 </div>
-    
-    
-      <div class="md-header__source">
-        <a href="https://github.com/CZ-NIC/mininterface" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
-  </div>
-  <div class="md-source__repository">
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/CZ-NIC/mininterface" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
     CZ-NIC/mininterface
   </div>
 </a>
-      </div>
-    
-  </nav>
-  
+</div>
+</nav>
 </header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-          
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Mininterface" class="md-nav__button md-logo" aria-label="Mininterface" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
-
-    </a>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Mininterface" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Mininterface">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
     Mininterface
   </label>
-  
-    <div class="md-nav__source">
-      <a href="https://github.com/CZ-NIC/mininterface" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
-  </div>
-  <div class="md-source__repository">
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/CZ-NIC/mininterface" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
     CZ-NIC/mininterface
   </div>
 </a>
-    </div>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
     Introduction
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Overview/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Overview/">
+<span class="md-ellipsis">
     Overview
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Supported-types/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Supported-types/">
+<span class="md-ellipsis">
     Supported types
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Examples/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Examples/">
+<span class="md-ellipsis">
     Examples
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
     API
   </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
             API
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../run/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../run/">
+<span class="md-ellipsis">
     Run
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Mininterface/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Mininterface/">
+<span class="md-ellipsis">
     Mininterface
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Tag/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Tag/">
+<span class="md-ellipsis">
     Tag
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Facet/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Facet/">
+<span class="md-ellipsis">
     Facet
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Subcommands/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Subcommands
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Cli/">
+<span class="md-ellipsis">
+    Cli
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Types/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Types
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    Custom types
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
-  
-  <span class="md-ellipsis">
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            Custom types
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CallbackTag/">
+<span class="md-ellipsis">
+    CallbackTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../DatetimeTag/">
+<span class="md-ellipsis">
+    DatetimeTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../PathTag/">
+<span class="md-ellipsis">
+    PathTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SecretTag/">
+<span class="md-ellipsis">
+    SecretTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SelectTag/">
+<span class="md-ellipsis">
+    SelectTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Tag-aliases/">
+<span class="md-ellipsis">
+    Tag aliases
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Prepared-annotations/">
+<span class="md-ellipsis">
+    Prepared annotations
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
     Extras
   </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
             Extras
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Options/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Options
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Settings/">
+<span class="md-ellipsis">
+    Settings
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Exceptions/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Exceptions/">
+<span class="md-ellipsis">
     Exceptions
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Interfaces/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Interfaces/">
+<span class="md-ellipsis">
     Interfaces
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Standalone/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Standalone/">
+<span class="md-ellipsis">
     Standalone
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
     Helper types
   </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
     Helper types
   </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ValidationResult" class="md-nav__link">
-    <span class="md-ellipsis">
-      ValidationResult
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ErrorMessage" class="md-nav__link">
-    <span class="md-ellipsis">
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ErrorMessage">
+<span class="md-ellipsis">
       ErrorMessage
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.TagValue" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.TagValue">
+<span class="md-ellipsis">
       TagValue
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType" class="md-nav__link">
-    <span class="md-ellipsis">
-      ChoicesType
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.UiValue">
+<span class="md-ellipsis">
+      UiValue
     </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ChoicesType">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--iterables-like-list" class="md-nav__link">
-    <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback">
+<span class="md-ellipsis">
+      ValidationCallback
+    </span>
+</a>
+<nav aria-label="ValidationCallback" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--custom-function">
+<span class="md-ellipsis">
+      Custom function
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--provided-validators">
+<span class="md-ellipsis">
+      Provided validators
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--annotated-types-predicate">
+<span class="md-ellipsis">
+      annotated-types predicate.
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationResult">
+<span class="md-ellipsis">
+      ValidationResult
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType">
+<span class="md-ellipsis">
+      OptionsType
+    </span>
+</a>
+<nav aria-label="OptionsType" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--iterables-like-list">
+<span class="md-ellipsis">
       Iterables like list
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--dict-for-labels" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--dict-for-labels">
+<span class="md-ellipsis">
       Dict for labels
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--dict-with-tuples-for-table" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--dict-with-tuples-for-table">
+<span class="md-ellipsis">
       Dict with tuples for table
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--tags-for-labels" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--tags-for-labels">
+<span class="md-ellipsis">
       Tags for labels
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--enums" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--enums">
+<span class="md-ellipsis">
       Enums
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--further-examples" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--further-examples">
+<span class="md-ellipsis">
       Further examples
     </span>
-  </a>
-  
+</a>
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.form_dict.DataClass" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.DataClass">
+<span class="md-ellipsis">
       DataClass
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.form_dict.EnvClass" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.EnvClass">
+<span class="md-ellipsis">
       EnvClass
     </span>
-  </a>
-  
+</a>
 </li>
-      
-    </ul>
-  
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.FormDict">
+<span class="md-ellipsis">
+      FormDict
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.interfaces.InterfaceType">
+<span class="md-ellipsis">
+      InterfaceType
+    </span>
+</a>
+</li>
+</ul>
 </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Validation/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Validation/">
+<span class="md-ellipsis">
     Validation
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Experimental/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Experimental/">
+<span class="md-ellipsis">
     Experimental
   </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Changelog/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Changelog/">
+<span class="md-ellipsis">
     Changelog
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../Dev-guide/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Dev-guide/">
+<span class="md-ellipsis">
     Dev Guide
   </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-  </ul>
+</a>
+</li>
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-            
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ValidationResult" class="md-nav__link">
-    <span class="md-ellipsis">
-      ValidationResult
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ErrorMessage" class="md-nav__link">
-    <span class="md-ellipsis">
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ErrorMessage">
+<span class="md-ellipsis">
       ErrorMessage
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.TagValue" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.TagValue">
+<span class="md-ellipsis">
       TagValue
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType" class="md-nav__link">
-    <span class="md-ellipsis">
-      ChoicesType
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.UiValue">
+<span class="md-ellipsis">
+      UiValue
     </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ChoicesType">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--iterables-like-list" class="md-nav__link">
-    <span class="md-ellipsis">
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback">
+<span class="md-ellipsis">
+      ValidationCallback
+    </span>
+</a>
+<nav aria-label="ValidationCallback" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--custom-function">
+<span class="md-ellipsis">
+      Custom function
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--provided-validators">
+<span class="md-ellipsis">
+      Provided validators
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationCallback--annotated-types-predicate">
+<span class="md-ellipsis">
+      annotated-types predicate.
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.tag.ValidationResult">
+<span class="md-ellipsis">
+      ValidationResult
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType">
+<span class="md-ellipsis">
+      OptionsType
+    </span>
+</a>
+<nav aria-label="OptionsType" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--iterables-like-list">
+<span class="md-ellipsis">
       Iterables like list
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--dict-for-labels" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--dict-for-labels">
+<span class="md-ellipsis">
       Dict for labels
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--dict-with-tuples-for-table" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--dict-with-tuples-for-table">
+<span class="md-ellipsis">
       Dict with tuples for table
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--tags-for-labels" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--tags-for-labels">
+<span class="md-ellipsis">
       Tags for labels
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--enums" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--enums">
+<span class="md-ellipsis">
       Enums
     </span>
-  </a>
-  
+</a>
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mininterface.tag.ChoicesType--further-examples" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--further-examples">
+<span class="md-ellipsis">
       Further examples
     </span>
-  </a>
-  
+</a>
 </li>
-        
-      </ul>
-    </nav>
-  
+</ul>
+</nav>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.form_dict.DataClass" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.DataClass">
+<span class="md-ellipsis">
       DataClass
     </span>
-  </a>
-  
+</a>
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#mininterface.form_dict.EnvClass" class="md-nav__link">
-    <span class="md-ellipsis">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.EnvClass">
+<span class="md-ellipsis">
       EnvClass
     </span>
-  </a>
-  
+</a>
 </li>
-      
-    </ul>
-  
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface._lib.form_dict.FormDict">
+<span class="md-ellipsis">
+      FormDict
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.interfaces.InterfaceType">
+<span class="md-ellipsis">
+      InterfaceType
+    </span>
+</a>
+</li>
+</ul>
 </nav>
-                  </div>
-                </div>
-              </div>
-            
-          
-          
-            <div class="md-content" data-md-component="content">
-              <article class="md-content__inner md-typeset">
-                
-                  
-
-  
-  
-
-
-<h1 id="helper-types">Helper types</h1>
-
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.tag.ValidationResult" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ValidationResult</span> <span class="o">=</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ErrorMessage</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>Callback validation result is either boolean or an error message.</p>
-    </div>
-
 </div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.tag.ErrorMessage" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ErrorMessage</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;ErrorMessage&#39;</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>A string, callback validation error message.</p>
-    </div>
-
 </div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.tag.TagValue" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TagValue</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;TagValue&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Any</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>Any value. It is being wrapped by a <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag">Tag</a>.</p>
-    </div>
-
 </div>
-
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1>Helper types</h1>
 <div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.tag.ChoicesType" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ChoicesType</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RichChoiceLabel</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span> <span class="o">|</span> <span class="n">Type</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span></code>
-
+<h3 class="doc doc-heading" id="mininterface.tag.tag.ErrorMessage">
+<code class="highlight language-python"><span class="n">ErrorMessage</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'ErrorMessage'</span><span class="p">)</span></code>
 </h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>You can denote the choices in many ways.
+<div class="doc doc-contents first">
+<p>A string, callback validation error message.</p>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.tag.tag.TagValue">
+<code class="highlight language-python"><span class="n">TagValue</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'TagValue'</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Any</span><span class="p">)</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Any value. It is being wrapped by a <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag">Tag</a>.</p>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.tag.tag.UiValue">
+<code class="highlight language-python"><span class="n">UiValue</span> <span class="o">=</span> <span class="n">TagValue</span> <span class="o">|</span> <span class="nb">str</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str
+(as the default input type for interfaces that do not implement the given type further).</p>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.tag.tag.ValidationCallback">
+<code class="highlight language-python"><span class="n">ValidationCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">'Tag'</span><span class="p">],</span> <span class="n">ValidationResult</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ValidationResult</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]]</span> <span class="o">|</span> <span class="n">BaseMetadata</span> <span class="o">|</span> <span class="n">GroupedMetadata</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Being used at <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.validation">Tag.validation</a>.</p>
+<p>Either use a custom callback function, a provided <a class="autorefs autorefs-internal" href="../Validation/#mininterface.validators">validator</a>, or an <a href="https://github.com/annotated-types/annotated-types?#documentation">annotated-types predicate</a>. (You can use multiple validation callbacks combined into an itarable.)</p>
+<p><a class="autorefs autorefs-internal" href="#mininterface.tag.tag.ValidationResult">ValidationResult</a> is a bool or the error message that implicitly means it has failed. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).</p>
+<h4 id="mininterface.tag.tag.ValidationCallback--custom-function">Custom function</h4>
+<p>Handles the Tag.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface.tag</span> <span class="kn">import</span> <span class="n">Tag</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">def</span> <span class="nf">my_validation</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">&gt;</span> <span class="mi">50</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">my_validation</span><span class="p">)})</span>
+</code></pre></div>
+<h4 id="mininterface.tag.tag.ValidationCallback--provided-validators">Provided validators</h4>
+<p>Found in the <a class="autorefs autorefs-internal" href="../Validation/#mininterface.validators">mininterface.validators</a> module.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface.validators</span> <span class="kn">import</span> <span class="n">not_empty</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">not_empty</span><span class="p">)})</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="c1"># User cannot leave the field empty.</span>
+</code></pre></div>
+<p>You may use the validation in a type annotation.
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">Validation</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">my_text</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Validation</span><span class="p">(</span><span class="n">not_empty</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"will not be emtpy"</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a>    <span class="c1"># which is an alias for:</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>    <span class="c1"># my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"</span>
+</code></pre></div></p>
+<h4 id="mininterface.tag.tag.ValidationCallback--annotated-types-predicate">annotated-types predicate.</h4>
+<p>The <a href="https://github.com/annotated-types/annotated-types?#documentation">annotated-types</a> are de-facto standard for types restraining.</p>
+<p>Currently, <code>Gt, Ge, Lt, Le, MultipleOf and Len</code> are supported.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="kn">from</span> <span class="nn">annotated_types</span> <span class="kn">import</span> <span class="n">Ge</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="k">class</span> <span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a>    <span class="n">age</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">)]</span>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="n">run</span><span class="p">(</span><span class="n">AnnotatedTypes</span><span class="p">)</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">age</span>  <span class="c1"># guaranteed to be &gt;= 18</span>
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="k">class</span> <span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">age</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="n">validation</span><span class="o">=</span><span class="n">custom</span><span class="p">)]</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="c1"># -&gt; age: Annotated[int, Tag(validation=[Ge(18), custom])]</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.tag.tag.ValidationResult">
+<code class="highlight language-python"><span class="n">ValidationResult</span> <span class="o">=</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ErrorMessage</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Being used at <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.validation">Tag.validation</a>.</p>
+<p>A bool or the error message (that implicitly means the <a class="autorefs autorefs-internal" href="#mininterface.tag.tag.ValidationCallback">ValidationCallback</a> has failed) as shows the following table.
+Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).</p>
+<table>
+<thead>
+<tr>
+<th>return</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bool</td>
+<td>True if validation succeeded or False if validation failed.</td>
+</tr>
+<tr>
+<td>str</td>
+<td>Error message if the validation failed.</td>
+</tr>
+<tr>
+<td>tuple[bool|str, TagVal]</td>
+<td>The first argument is the same as above. The second is the value to be set.</td>
+</tr>
+</tbody>
+</table>
+<p>This example shows the str error message:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>        <span class="k">return</span> <span class="s2">"The value must be at least 10"</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">check</span><span class="p">)})</span>
+</code></pre></div>
+<p>This example shows the value transformation. For <code>val=50+</code>, the validation fails.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">*</span> <span class="mi">2</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="p">(</span><span class="n">check</span><span class="p">,</span> <span class="n">Lt</span><span class="p">(</span><span class="mi">100</span><span class="p">)))})</span>
+</code></pre></div>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.tag.select_tag.OptionsType">
+<code class="highlight language-python"><span class="n">OptionsType</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TagValue</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RichOptionLabel</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span> <span class="o">|</span> <span class="n">Type</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>You can denote the options in many ways.
 Either put options in an iterable or to a dict <code>{labels: value}</code>.
-Values might be Tags as well. Let's take a detailed look. We will use the <code>run.choice(ChoicesType)</code> to illustrate the examples.</p>
-<h5 id="mininterface.tag.ChoicesType--iterables-like-list">Iterables like list</h5>
+Values might be Tags as well. Let's take a detailed look. We will use the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select"><code>run.select(OptionsType)</code></a> to illustrate the examples.</p>
+<h5 id="mininterface.tag.select_tag.OptionsType--iterables-like-list">Iterables like list</h5>
 <p>Either put options in an iterable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 </code></pre></div>
-<p><img alt="Choices as a list" src="../asset/choices_list.avif" /></p>
-<h5 id="mininterface.tag.ChoicesType--dict-for-labels">Dict for labels</h5>
+<p><img alt="Options as a list" src="../asset/choices_list.avif"/></p>
+<h5 id="mininterface.tag.select_tag.OptionsType--dict-for-labels">Dict for labels</h5>
 <p>Or to a dict <code>{name: value}</code>. Then name are used as labels.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">({</span><span class="s2">&quot;one&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># returns 1</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">({</span><span class="s2">"one"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># returns 1</span>
 </code></pre></div>
-<h5 id="mininterface.tag.ChoicesType--dict-with-tuples-for-table">Dict with tuples for table</h5>
+<h5 id="mininterface.tag.select_tag.OptionsType--dict-with-tuples-for-table">Dict with tuples for table</h5>
 <p>If you use tuple as the keys, they will be joined into a table.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">({(</span><span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;two&quot;</span><span class="p">,</span> <span class="s2">&quot;three&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;lorem&quot;</span><span class="p">,</span> <span class="s2">&quot;ipsum&quot;</span><span class="p">,</span> <span class="s2">&quot;dolor&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">({(</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">,</span> <span class="s2">"three"</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">"lorem"</span><span class="p">,</span> <span class="s2">"ipsum"</span><span class="p">,</span> <span class="s2">"dolor"</span><span class="p">)</span> <span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
 </code></pre></div>
-<p><img alt="Table like" src="../asset/choice_table_span.avif" /></p>
-<h5 id="mininterface.tag.ChoicesType--tags-for-labels">Tags for labels</h5>
+<p><img alt="Table like" src="../asset/choice_table_span.avif"/></p>
+<h5 id="mininterface.tag.select_tag.OptionsType--tags-for-labels">Tags for labels</h5>
 <p>Alternatively, you may specify the names in <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tags</code></a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="n">Tag</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;one&quot;</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;two&quot;</span><span class="p">)])</span>  <span class="c1"># returns 1</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">Tag</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"one"</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"two"</span><span class="p">)])</span>  <span class="c1"># returns 1</span>
 </code></pre></div>
-<p><img alt="Choices with labels" src="../asset/choices_labels.avif" /></p>
-<h5 id="mininterface.tag.ChoicesType--enums">Enums</h5>
+<p><img alt="Options with labels" src="../asset/choices_labels.avif"/></p>
+<h5 id="mininterface.tag.select_tag.OptionsType--enums">Enums</h5>
 <p>Alternatively, you may use an Enum.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">"blue"</span>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span>
 </code></pre></div>
-<p><img alt="Choices from enum" src="../asset/choice_enum_type.avif" /></p>
+<p><img alt="Options from enum" src="../asset/choice_enum_type.avif"/></p>
 <p>Alternatively, you may use an Enum instance. (Which means the default value is already selected.)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">"blue"</span>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">)</span>
 </code></pre></div>
-<p><img alt="Choices from enum" src="../asset/choice_enum_instance.avif" /></p>
+<p><img alt="Options from enum" src="../asset/choice_enum_instance.avif"/></p>
 <p>Alternatively, you may use an Enum instances list.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="n">Color</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">Color</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">])</span>
 </code></pre></div>
-<p><img alt="Choices from enum list" src="../asset/choice_enum_list.avif" /></p>
-<h5 id="mininterface.tag.ChoicesType--further-examples">Further examples</h5>
-<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.choice">mininterface.choice</a> or <a class="autorefs autorefs-internal" href="../Types/#mininterface.types.rich_tags.EnumTag.choices"><code>EnumTag.choices</code></a> for further usage.</p>
-    </div>
-
+<p><img alt="Options from enum list" src="../asset/choice_enum_list.avif"/></p>
+<h5 id="mininterface.tag.select_tag.OptionsType--further-examples">Further examples</h5>
+<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select">mininterface.select</a> or <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag.options"><code>SelectTag.options</code></a> for further usage.</p>
 </div>
-
+</div>
 <div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.form_dict.DataClass" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">DataClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;DataClass&#39;</span><span class="p">)</span></code>
-
+<h3 class="doc doc-heading" id="mininterface._lib.form_dict.DataClass">
+<code class="highlight language-python"><span class="n">DataClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'DataClass'</span><span class="p">)</span></code>
 </h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>Any dataclass. Or a pydantic model or attrs.</p>
-    </div>
-
+<div class="doc doc-contents first">
+<p>Any dataclass. Or a pydantic model or attrs.</p>
 </div>
-
+</div>
 <div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="mininterface.form_dict.EnvClass" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">EnvClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;EnvClass&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">DataClass</span><span class="p">)</span></code>
-
+<h3 class="doc doc-heading" id="mininterface._lib.form_dict.EnvClass">
+<code class="highlight language-python"><span class="n">EnvClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'EnvClass'</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">DataClass</span><span class="p">)</span></code>
 </h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>Any dataclass. Its instance will be available through [miniterface.env] after CLI parsing.</p>
-    </div>
-
+<div class="doc doc-contents first">
+<p>Any dataclass. Its instance will be available through <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">Mininterface.env</a> after CLI parsing. Its fields or whole class might be annotated with <a href="https://brentyi.github.io/tyro/api/tyro/conf/">tyro conf flags</a>.</p>
+<p>The following example turns down boolean flag conversion.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">tyro.conf</span> <span class="kn">import</span> <span class="n">FlagConversionOff</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>    <span class="n">my_bool</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">FlagConversionOff</span><span class="p">[</span><span class="n">Env</span><span class="p">])</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="c1"># --my-bool {True,False}  (default: False)</span>
+</code></pre></div>
+<p>Whereas by default, both flags are generated:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="c1"># --my-bool, --no-my-bool (default: False)</span>
+</code></pre></div>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-                
-              </article>
-            </div>
-          
-          
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface._lib.form_dict.FormDict">
+<code class="highlight language-python"><span class="n">FormDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'FormDictRecursiveValue'</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="s1">'Self'</span><span class="p">)]</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Nested dict that can have descriptions (through Tag) instead of plain values.</p>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h3 class="doc doc-heading" id="mininterface.interfaces.InterfaceType">
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">InterfaceType</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">Mininterface</span><span class="p">]</span> <span class="o">|</span> <span class="n">InterfaceName</span> <span class="o">|</span> <span class="kc">None</span></code>
+</h3>
+<div class="doc doc-contents first">
+<p>Either a class symbol or <a href="../Interfaces/#all-possible-interfaces">a shortcut string</a>.</p>
+</div>
+</div>
+</article>
+</div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
-        </div>
-        
-      </main>
-      
-        <footer class="md-footer">
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
   
   
     Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
       Material for MkDocs
     </a>
-  
 </div>
-      
-    </div>
-  </div>
+</div>
+</div>
 </footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
-    
-    
-    <script id="__config" type="application/json">{"base": "..", "features": "navigation.expand", "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
-    
-    
-      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
-      
-    
-  </body>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+<script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</body>
 </html>

@@ -158,13 +158,24 @@
       IDE suggestions
     </span>
 </a>
-</li>
+<nav aria-label="IDE suggestions" class="md-nav">
+<ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#bash-completion">
+<a class="md-nav__link" href="#dataclass-showcase">
 <span class="md-ellipsis">
-      Bash completion
+      Dataclass showcase
     </span>
 </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#select-showcase">
+<span class="md-ellipsis">
+      Select showcase
+    </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#nested-configuration">
@@ -174,9 +185,16 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#bash-integration">
+<a class="md-nav__link" href="#bash-completion">
 <span class="md-ellipsis">
-      Bash integration
+      Bash completion
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-dialog-toolkit">
+<span class="md-ellipsis">
+      System dialog toolkit
     </span>
 </a>
 </li>
@@ -240,18 +258,77 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Subcommands/">
+<a class="md-nav__link" href="../Cli/">
 <span class="md-ellipsis">
-    Subcommands
+    Cli
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    Custom types
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            Custom types
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CallbackTag/">
+<span class="md-ellipsis">
+    CallbackTag
   </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Types/">
+<a class="md-nav__link" href="../DatetimeTag/">
 <span class="md-ellipsis">
-    Types
+    DatetimeTag
   </span>
 </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../PathTag/">
+<span class="md-ellipsis">
+    PathTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SecretTag/">
+<span class="md-ellipsis">
+    SecretTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SelectTag/">
+<span class="md-ellipsis">
+    SelectTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Tag-aliases/">
+<span class="md-ellipsis">
+    Tag aliases
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Prepared-annotations/">
+<span class="md-ellipsis">
+    Prepared annotations
+  </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 </ul>
 </nav>
@@ -271,9 +348,9 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Options/">
+<a class="md-nav__link" href="../Settings/">
 <span class="md-ellipsis">
-    Options
+    Settings
   </span>
 </a>
 </li>
@@ -363,13 +440,24 @@
       IDE suggestions
     </span>
 </a>
-</li>
+<nav aria-label="IDE suggestions" class="md-nav">
+<ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#bash-completion">
+<a class="md-nav__link" href="#dataclass-showcase">
 <span class="md-ellipsis">
-      Bash completion
+      Dataclass showcase
     </span>
 </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#select-showcase">
+<span class="md-ellipsis">
+      Select showcase
+    </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#nested-configuration">
@@ -379,9 +467,16 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#bash-integration">
+<a class="md-nav__link" href="#bash-completion">
 <span class="md-ellipsis">
-      Bash integration
+      Bash completion
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-dialog-toolkit">
+<span class="md-ellipsis">
+      System dialog toolkit
     </span>
 </a>
 </li>
@@ -406,11 +501,13 @@
     program --&gt; run
 </code></pre>
 <h2 id="basic-usage">Basic usage</h2>
-<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user with methods like <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.is_yes"><code>m.is_yes("Is that alright?")</code></a>.</p>
-<p>There are a lot of supported <a href="../Supported-types/">types</a> you can use, not only scalars and well-known objects (<code>Path</code>, <code>datetime</code>), but also functions, iterables (like <code>list[Path]</code>) and union types (like <code>int | None</code>). To do even more advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its <a href="../Types/">subclasses</a>. Ex. for a validation only, use its <a class="autorefs autorefs-internal" href="../Types/#mininterface.types.alias.Validation"><code>Validation alias</code></a>.</p>
+<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, an argparse <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user with methods like <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.confirm"><code>m.confirm("Is that alright?")</code></a>.</p>
+<p>There are a lot of supported <a href="../Supported-types/">types</a> you can use, not only scalars and well-known objects (<code>Path</code>, <code>datetime</code>), but also functions, iterables (like <code>list[Path]</code>) and union types (like <code>int | None</code>). To do even more advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its <a href="../Supported-types/#additional">subclasses</a>. Ex. for a validation only, use its <a class="autorefs autorefs-internal" href="../Tag-aliases/#mininterface.Validation"><code>Validation alias</code></a>.</p>
 <p>At last, use <a href="../Facet/"><code>Facet</code></a> to tackle the interface from the back-end (<code>m</code>) or the front-end (<code>Tag</code>) side.</p>
 <h2 id="ide-suggestions">IDE suggestions</h2>
-<p>The immediate benefit is the type suggestions you see in an IDE. Imagine following code:</p>
+<p>The immediate benefit is the type suggestions provided by your IDE.</p>
+<h3 id="dataclass-showcase">Dataclass showcase</h3>
+<p>Imagine following code:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
@@ -439,36 +536,54 @@
 <p><img alt="Suggestion dataclass expanded" src="../asset/suggestion_dataclass_expanded.avif"/></p>
 <p>Should the dataclass cannot be easily investigated by the IDE (i.e. a required field), just annotate the output.</p>
 <p><img alt="Suggestion annotation possible" src="../asset/suggestion_dataclass_annotated.avif"/></p>
-<h2 id="bash-completion">Bash completion</h2>
-<p>Run your program with a hidden <code>--integrate-to-system</code> flag and a tutorial will install bash completion.</p>
-<p><img alt="Bash completion" src="../asset/bash_completion_tutorial.avif"/></p>
+<h3 id="select-showcase">Select showcase</h3>
+<p>We push an intuitive type inference everywhere. Here is an example with the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select"><code>m.select</code></a> dialog.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="c1"># x = m.select([1, 2, 3], default=2)  # -&gt; int</span>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="c1"># x = m.select([1, 2, 3], multiple=True)  # -&gt; list[int]</span>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="c1"># x = m.select([1, 2, 3], default=[2])  # -&gt; list[int]</span>
+</code></pre></div>
+<p>By default, the inferred type is an <code>int</code>.</p>
+<p><img alt="Suggestion select" src="../asset/suggestion_select1.avif"/></p>
+<p>When you flag the selection as multiple or when you submit multiple default values...</p>
+<p><img alt="Suggestion select" src="../asset/suggestion_select2.avif"/></p>
+<p>that means your IDE sees a <code>list</code> instead of a single value and you can automatically append to it etc.</p>
+<p><img alt="Suggestion select" src="../asset/suggestion_select3.avif"/></p>
 <h2 id="nested-configuration">Nested configuration</h2>
-<p>You can easily nest the configuration. (See also <a href="https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/">Tyro Hierarchical Configs</a>).</p>
+<p>You can easily nest the configuration. (See also <a href="https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/">Tyro Hierarchical Configs</a>.)</p>
 <p>Just put another dataclass inside the config file:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span> <span class="nc">FurtherConfig</span><span class="p">:</span>
-<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
-<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>
-<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
-<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>
-<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="o">...</span>
-<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="k">class</span> <span class="nc">FurtherConfig</span><span class="p">:</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
+<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a>
+<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="o">...</span>
+<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
 </code></pre></div>
 <p>The attributes can by defaulted by CLI:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>$./program.py --further.host example.net
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$./program.py --further.host example.net
 </code></pre></div>
 <p>And in a YAML config file. Note that you are not obliged to define all the attributes, a subset will do.
 (Ex. you do not need to specify <code>token</code> too.)</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">further</span><span class="p">:</span>
-<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nt">further</span><span class="p">:</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
 </code></pre></div>
-<h2 id="bash-integration">Bash integration</h2>
+<h2 id="bash-completion">Bash completion</h2>
+<p>Run your program with a bundled <code>mininterface</code> executable to start a tutorial that will install bash completion.</p>
+<p><code>$ mininterface integrate ./program</code></p>
+<p><img alt="Bash completion" src="../asset/bash_completion_tutorial.avif"/></p>
+<h2 id="system-dialog-toolkit">System dialog toolkit</h2>
 <p>Mininterface can be used as a standalone dialog layer for sh scripts. See <code>mininterface --help</code>.</p>
-<p>Ex. <code>mininterface --choice one two three  # outputs one of them</code></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span><span class="k">select</span><span class="w"> </span>one<span class="w"> </span>two<span class="w">  </span><span class="c1"># outputs a chosen item</span>
+</code></pre></div>
+<p><img alt="Select dialog" src="../asset/choices_labels.avif"/></p>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
@@ -492,10 +607,10 @@
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "..", "features": "navigation.expand", "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+<script id="__config" type="application/json">{"base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
 <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
-<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
-window.mermaidConfig = {default: {
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>window.mermaidConfig = {default: {
     startOnLoad: false
 }};</script></body>
 </html>

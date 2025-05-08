@@ -189,18 +189,77 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Subcommands/">
+<a class="md-nav__link" href="../Cli/">
 <span class="md-ellipsis">
-    Subcommands
+    Cli
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<span class="md-ellipsis">
+    Custom types
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_5_6">
+<span class="md-nav__icon md-icon"></span>
+            Custom types
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CallbackTag/">
+<span class="md-ellipsis">
+    CallbackTag
   </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Types/">
+<a class="md-nav__link" href="../DatetimeTag/">
 <span class="md-ellipsis">
-    Types
+    DatetimeTag
   </span>
 </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../PathTag/">
+<span class="md-ellipsis">
+    PathTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SecretTag/">
+<span class="md-ellipsis">
+    SecretTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../SelectTag/">
+<span class="md-ellipsis">
+    SelectTag
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Tag-aliases/">
+<span class="md-ellipsis">
+    Tag aliases
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Prepared-annotations/">
+<span class="md-ellipsis">
+    Prepared annotations
+  </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 </ul>
 </nav>
@@ -220,9 +279,9 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="../Options/">
+<a class="md-nav__link" href="../Settings/">
 <span class="md-ellipsis">
-    Options
+    Settings
   </span>
 </a>
 </li>
@@ -320,7 +379,7 @@
 <nav aria-label="Adaptor" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor">
 <span class="md-ellipsis">
       BackendAdaptor
     </span>
@@ -328,14 +387,14 @@
 <nav aria-label="BackendAdaptor" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor.widgetize">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor.widgetize">
 <span class="md-ellipsis">
       widgetize
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor.run_dialog">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor.run_dialog">
 <span class="md-ellipsis">
       run_dialog
     </span>
@@ -387,7 +446,7 @@
 <nav aria-label="Adaptor" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor">
 <span class="md-ellipsis">
       BackendAdaptor
     </span>
@@ -395,14 +454,14 @@
 <nav aria-label="BackendAdaptor" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor.widgetize">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor.widgetize">
 <span class="md-ellipsis">
       widgetize
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.mininterface.adaptor.BackendAdaptor.run_dialog">
+<a class="md-nav__link" href="#mininterface._mininterface.adaptor.BackendAdaptor.run_dialog">
 <span class="md-ellipsis">
       run_dialog
     </span>
@@ -442,16 +501,17 @@ dataclass --&gt; Tags --&gt; Mininterface --&gt; Adaptor --&gt; App
 Adaptor --&gt; Facet
 Facet --&gt; Tags
 </code></pre>
+<p>Programmer uses a value -&gt; which is converted to Tag -&gt; which is converted to a widget by an interface Adaptor.</p>
 <h2 id="adaptor">Adaptor</h2>
 <div class="doc doc-object doc-class">
-<h3 class="doc doc-heading" id="mininterface.mininterface.adaptor.BackendAdaptor">
-<code>mininterface.mininterface.adaptor.BackendAdaptor</code>
+<h3 class="doc doc-heading" id="mininterface._mininterface.adaptor.BackendAdaptor">
+<code>mininterface._mininterface.adaptor.BackendAdaptor</code>
 </h3>
 <div class="doc doc-contents first">
 <p>Connection point between a Mininterface and an external UI library.</p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-function">
-<h4 class="doc doc-heading" id="mininterface.mininterface.adaptor.BackendAdaptor.widgetize">
+<h4 class="doc doc-heading" id="mininterface._mininterface.adaptor.BackendAdaptor.widgetize">
 <code class="highlight language-python"><span class="n">widgetize</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span></code>
 </h4>
 <div class="doc doc-contents">
@@ -459,7 +519,7 @@ Facet --&gt; Tags
 </div>
 </div>
 <div class="doc doc-object doc-function">
-<h4 class="doc doc-heading" id="mininterface.mininterface.adaptor.BackendAdaptor.run_dialog">
+<h4 class="doc doc-heading" id="mininterface._mininterface.adaptor.BackendAdaptor.run_dialog">
 <code class="highlight language-python"><span class="n">run_dialog</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="n">submit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 </h4>
 <div class="doc doc-contents">
@@ -493,10 +553,10 @@ Facet --&gt; Tags
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "..", "features": "navigation.expand", "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+<script id="__config" type="application/json">{"base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
 <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
-<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
-window.mermaidConfig = {default: {
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>window.mermaidConfig = {default: {
     startOnLoad: false
 }};</script></body>
 </html>

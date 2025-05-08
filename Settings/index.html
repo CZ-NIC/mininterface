@@ -5,11 +5,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<link href="../Settings/" rel="prev"/>
-<link href="../Interfaces/" rel="next"/>
+<link href="../Prepared-annotations/" rel="prev"/>
+<link href="../Exceptions/" rel="next"/>
 <link href="../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
-<title>Exceptions - Mininterface</title>
+<title>Settings - Mininterface</title>
 <link href="../assets/stylesheets/main.35f28582.min.css" rel="stylesheet"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
@@ -22,7 +22,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#exceptions">
+<a class="md-skip" href="#ui-settings">
           Skip to content
         </a>
 </div>
@@ -46,7 +46,7 @@
 <div class="md-header__topic" data-md-component="header-topic">
 <span class="md-ellipsis">
             
-              Exceptions
+              Settings
             
           </span>
 </div>
@@ -279,24 +279,17 @@
             Extras
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../Settings/">
-<span class="md-ellipsis">
-    Settings
-  </span>
-</a>
-</li>
 <li class="md-nav__item md-nav__item--active">
 <input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
 <label class="md-nav__link md-nav__link--active" for="__toc">
 <span class="md-ellipsis">
-    Exceptions
+    Settings
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
 <a class="md-nav__link md-nav__link--active" href="./">
 <span class="md-ellipsis">
-    Exceptions
+    Settings
   </span>
 </a>
 <nav aria-label="Table of contents" class="md-nav md-nav--secondary">
@@ -306,53 +299,82 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions">
+<a class="md-nav__link" href="#ui-settings">
 <span class="md-ellipsis">
-      exceptions
+      UI Settings
     </span>
 </a>
-<nav aria-label="exceptions" class="md-nav">
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#config-file-special-section">
+<span class="md-ellipsis">
+      Config file special section
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#complete-example">
+<span class="md-ellipsis">
+      Complete example
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-settings-object">
+<span class="md-ellipsis">
+      The settings object
+    </span>
+</a>
+<nav aria-label="The settings object" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.Cancelled">
+<a class="md-nav__link" href="#mininterface.settings.MininterfaceSettings">
 <span class="md-ellipsis">
-      Cancelled
+      MininterfaceSettings
     </span>
 </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.ValidationFail">
-<span class="md-ellipsis">
-      ValidationFail
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.InterfaceNotAvailable">
-<span class="md-ellipsis">
-      InterfaceNotAvailable
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired">
-<span class="md-ellipsis">
-      DependencyRequired
-    </span>
-</a>
-<nav aria-label="DependencyRequired" class="md-nav">
+<nav aria-label="MininterfaceSettings" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired.__call__">
+<a class="md-nav__link" href="#mininterface.settings.MininterfaceSettings.interface">
 <span class="md-ellipsis">
-      __call__
+      interface
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#guisettings">
+<span class="md-ellipsis">
+      GuiSettings
+    </span>
+</a>
+<nav aria-label="GuiSettings" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings">
+<span class="md-ellipsis">
+      GuiSettings
+    </span>
+</a>
+<nav aria-label="GuiSettings" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings.combobox_since">
+<span class="md-ellipsis">
+      combobox_since
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired.exit">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings.radio_select_on_focus">
 <span class="md-ellipsis">
-      exit
+      radio_select_on_focus
     </span>
 </a>
 </li>
@@ -364,6 +386,13 @@
 </li>
 </ul>
 </nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Exceptions/">
+<span class="md-ellipsis">
+    Exceptions
+  </span>
+</a>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="../Interfaces/">
@@ -432,53 +461,82 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions">
+<a class="md-nav__link" href="#ui-settings">
 <span class="md-ellipsis">
-      exceptions
+      UI Settings
     </span>
 </a>
-<nav aria-label="exceptions" class="md-nav">
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#config-file-special-section">
+<span class="md-ellipsis">
+      Config file special section
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#complete-example">
+<span class="md-ellipsis">
+      Complete example
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-settings-object">
+<span class="md-ellipsis">
+      The settings object
+    </span>
+</a>
+<nav aria-label="The settings object" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.Cancelled">
+<a class="md-nav__link" href="#mininterface.settings.MininterfaceSettings">
 <span class="md-ellipsis">
-      Cancelled
+      MininterfaceSettings
     </span>
 </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.ValidationFail">
-<span class="md-ellipsis">
-      ValidationFail
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.InterfaceNotAvailable">
-<span class="md-ellipsis">
-      InterfaceNotAvailable
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired">
-<span class="md-ellipsis">
-      DependencyRequired
-    </span>
-</a>
-<nav aria-label="DependencyRequired" class="md-nav">
+<nav aria-label="MininterfaceSettings" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired.__call__">
+<a class="md-nav__link" href="#mininterface.settings.MininterfaceSettings.interface">
 <span class="md-ellipsis">
-      __call__
+      interface
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#guisettings">
+<span class="md-ellipsis">
+      GuiSettings
+    </span>
+</a>
+<nav aria-label="GuiSettings" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings">
+<span class="md-ellipsis">
+      GuiSettings
+    </span>
+</a>
+<nav aria-label="GuiSettings" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings.combobox_since">
+<span class="md-ellipsis">
+      combobox_since
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#mininterface.exceptions.DependencyRequired.exit">
+<a class="md-nav__link" href="#mininterface.settings.GuiSettings.radio_select_on_focus">
 <span class="md-ellipsis">
-      exit
+      radio_select_on_focus
     </span>
 </a>
 </li>
@@ -495,69 +553,83 @@
 </div>
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
-<h1 id="exceptions">Exceptions</h1>
-<div class="doc doc-object doc-module">
-<h3 class="doc doc-heading" id="mininterface.exceptions">
-<code>mininterface.exceptions</code>
+<h1>Settings</h1>
+<h2 id="ui-settings">UI Settings</h2>
+<p>The UI behaviour might be modified via an settings object. This can be passed to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function or defined through a config file. Settings defined in the config file have bigger priority. Every interface has its own settings object.</p>
+<h2 id="config-file-special-section">Config file special section</h2>
+<p>In a YAML config file, use a special section 'mininterface' to set up the UI. For example, this stub will enforce your program to use the Tui interface.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nt">mininterface</span><span class="p">:</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="w">    </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tui</span>
+</code></pre></div>
+<h2 id="complete-example">Complete example</h2>
+<p>Source of <code>program.py</code>, we have one single attribute <code>foo</code>:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Options</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="n">foo</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">Options</span><span class="p">(</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"one"</span>
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+</code></pre></div>
+<p>Source of <code>program.yaml</code> will enforce the comboboxes:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="nt">mininterface</span><span class="p">:</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="w">    </span><span class="nt">gui</span><span class="p">:</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="w">        </span><span class="nt">combobox_since</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+<p>The difference when using such configuration file.</p>
+<p><img alt="Configuration not used" src="../asset/configuration-not-used.avif"/> <img alt="Configuration used" src="../asset/configuration-used.avif"/></p>
+<h2 id="the-settings-object">The settings object</h2>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">mininterface.settings</span> <span class="kn">import</span> <span class="n">MininterfaceSettings</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="n">opt</span> <span class="o">=</span> <span class="n">MininterfaceSettings</span><span class="p">()</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
+</code></pre></div>
+<div class="doc doc-object doc-class">
+<h3 class="doc doc-heading" id="mininterface.settings.MininterfaceSettings">
+<code>mininterface.settings.MininterfaceSettings</code>
 </h3>
 <div class="doc doc-contents first">
-<p>Exceptions that might make sense to be used outside the library.</p>
 <div class="doc doc-children">
-<div class="doc doc-object doc-class">
-<h4 class="doc doc-heading" id="mininterface.exceptions.Cancelled">
-<code>Cancelled</code>
+<div class="doc doc-object doc-attribute">
+<h4 class="doc doc-heading" id="mininterface.settings.MininterfaceSettings.interface">
+<code class="highlight language-python"><span class="n">interface</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InterfaceName</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
 </h4>
 <div class="doc doc-contents">
-<p>User has cancelled.
-A SystemExit based exception noting that the program exits without a traceback,
-ex. if user hits the escape or closes the window.</p>
+<p>Enforce an interface. By default, we choose automatically.</p>
 </div>
 </div>
-<div class="doc doc-object doc-class">
-<h4 class="doc doc-heading" id="mininterface.exceptions.ValidationFail">
-<code>ValidationFail</code>
-</h4>
-<div class="doc doc-contents">
-<p>Signal to the form that submit failed and we want to restore it.</p>
 </div>
 </div>
-<div class="doc doc-object doc-class">
-<h4 class="doc doc-heading" id="mininterface.exceptions.InterfaceNotAvailable">
-<code>InterfaceNotAvailable</code>
-</h4>
-<div class="doc doc-contents">
-<p>Interface failed to init, ex. display not available in GUI. Or an underlying dependency was uninstalled.</p>
-</div>
-</div>
-<div class="doc doc-object doc-class">
-<h4 class="doc doc-heading" id="mininterface.exceptions.DependencyRequired">
-<code>DependencyRequired</code>
-</h4>
-<div class="doc doc-contents">
-<div class="doc doc-children">
-<div class="doc doc-object doc-function">
-<h5 class="doc doc-heading" id="mininterface.exceptions.DependencyRequired.__call__">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-</h5>
-<div class="doc doc-contents">
-<p>This is an elagant way to handling missing functions. Consider this case.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">try</span><span class="p">:</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="kn">from</span> <span class="nn">.._lib.cli_parser</span> <span class="kn">import</span> <span class="n">parse_cli</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">except</span> <span class="n">DependencyRequired</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="n">parse_cli</span> <span class="o">=</span> <span class="n">e</span>
+</div><h2 id="guisettings">GuiSettings</h2>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">mininterface.settings</span> <span class="kn">import</span> <span class="n">MininterfaceSettings</span><span class="p">,</span> <span class="n">GuiSettings</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="n">opt</span> <span class="o">=</span> <span class="n">MininterfaceSettings</span><span class="p">(</span><span class="n">gui</span><span class="o">=</span><span class="n">GuiSettings</span><span class="p">(</span><span class="n">combobox_since</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
 </code></pre></div>
-<p>When the function is used, the original exception is raised.</p>
-</div>
-</div>
-<div class="doc doc-object doc-function">
-<h5 class="doc doc-heading" id="mininterface.exceptions.DependencyRequired.exit">
-<code class="highlight language-python"><span class="n">exit</span><span class="p">()</span></code>
-</h5>
+<div class="doc doc-object doc-class">
+<h3 class="doc doc-heading" id="mininterface.settings.GuiSettings">
+<code>mininterface.settings.GuiSettings</code>
+</h3>
+<div class="doc doc-contents first">
+<div class="doc doc-children">
+<div class="doc doc-object doc-attribute">
+<h4 class="doc doc-heading" id="mininterface.settings.GuiSettings.combobox_since">
+<code class="highlight language-python"><span class="n">combobox_since</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span></code>
+</h4>
 <div class="doc doc-contents">
-<p>Wrap the exception in a SystemExit so that the program exits without a traceback.</p>
+<p>The threshold to switch from radio buttons to a combobox.</p>
 </div>
 </div>
-</div>
+<div class="doc doc-object doc-attribute">
+<h4 class="doc doc-heading" id="mininterface.settings.GuiSettings.radio_select_on_focus">
+<code class="highlight language-python"><span class="n">radio_select_on_focus</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
+</h4>
+<div class="doc doc-contents">
+<p>Select the radio button on focus. Ex. when navigating by arrows.</p>
 </div>
 </div>
 </div>
