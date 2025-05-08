@@ -18,7 +18,6 @@ from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButton
 
 
 from .._lib.auxiliary import flatten
-from ..experimental import FacetCallback, SubmitButton
 from .._lib.form_dict import TagDict
 
 from ..tag import Tag
@@ -111,6 +110,14 @@ def choose_file_handler(variable: Variable, tag: PathTag):
                 if selected_file:
                     variable.set(selected_file)
 
+        # Restore focus to the form after file selection
+        if tag._facet and tag._facet.adaptor:
+            tag._facet.adaptor.focus_set()
+            # Try to focus the first input field
+            recursive_set_focus(tag._facet.adaptor.form)
+
+        return None  # Allow event propagation
+
     return _
 
 
@@ -154,7 +161,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     # But do not interfere with Tab navigation
     def prevent_submit(event):
         # Only prevent form submission, don't affect Tab navigation
-        return "break"
+        return None  # Allow event propagation for other handlers
 
     for tag, field_form in zip(flatten(form), flatten(nested_widgets)):
         tag: Tag
@@ -173,7 +180,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         # But still allow Tab key to work normally
         if isinstance(widget, Entry):
             # Only bind the Enter key, not Tab key
-            widget.bind('<Return>', prevent_submit)
+            widget.bind('<Return>', prevent_submit, add="+")
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag:
@@ -200,8 +207,12 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 widget2 = Button(master, text=button_text, command=file_handler)
                 widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
 
-                # Bind Enter key to button to open file dialog when button is focused
-                widget2.bind('<Return>', lambda event: file_handler())
+                # Handle Enter key for file picker button
+                def handle_return(event):
+                    file_handler()
+                    return "break"  # Prevent event propagation
+
+                widget2.bind('<Return>', handle_return)
 
                 # For input field, just prevent form submission on Enter without opening file dialog
                 widget.bind('<Return>', prevent_submit)
