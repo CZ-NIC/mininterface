@@ -1,6 +1,45 @@
+from pathlib import Path
 from typing import Annotated, TypeVar, Any
-from typing import Annotated
 from tyro.constructors import PrimitiveConstructorSpec
+
+from .path_tag import PathTag
+
+File = Annotated[Path, PathTag(is_file=True)]
+""" An existing file.
+from mininterface import run
+from mininterface.tag.flag import File
+
+```python
+@dataclass
+class Env:
+    my_file: File
+
+m = run(Env)
+m.env.my_file  # guaranteed to be an existing dir
+```
+
+!!! Warning
+    EXPERIMENTAL.
+"""
+# NOTE missing test
+Dir = Annotated[Path, PathTag(is_dir=True)]
+""" An existing directory.
+from mininterface import run
+from mininterface.tag.flag import Dir
+
+```python
+@dataclass
+class Env:
+    my_dir: Dir
+
+m = run(Env)
+m.env.my_dir  # guaranteed to be an existing dir
+```
+
+!!! Warning
+    EXPERIMENTAL.
+"""
+# NOTE missing test
 
 _blank_error = "Unrecognised value '{}'. Allowed values are blank for True/1/on / False/0/off" \
     " (case insensitive). Should the value be considered a positional parameter,"\
@@ -46,6 +85,7 @@ Raises:
 
 """
 # NOTE untested
+# NOTE Works good with static type checking.
 
 
 T = TypeVar("T")
@@ -65,6 +105,8 @@ class Blank:
 
     """
     # NOTE untested
+    # NOTE Works bad with static type checking. Because `Blank[str]` pylance never matches with 'my text'.
+    # We had to have Blank=Annotated instead, which would prevent instantianting str_from_instance and dynamic metavar.
 
     def __class_getitem__(cls, item_type: type[T]) -> Any:
         def instance_from_str(args: list[str]) -> T | bool:
@@ -73,9 +115,9 @@ class Blank:
             if len(args) > 1:
                 raise NotImplemented("Describe your use case in an issue please.")
             match args:
-                case "True":
+                case ("True",):
                     return True
-                case "False":
+                case ("False",):
                     return False
                 case _:
                     return item_type(*args)

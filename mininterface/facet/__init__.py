@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 from warnings import warn
 
 
-from ..redirectable import Redirectable
+from .._lib.redirectable import Redirectable
 
 
-from ..form_dict import EnvClass, TagDict
+from .._lib.form_dict import EnvClass, TagDict
 
 if TYPE_CHECKING:
-    from ..mininterface.adaptor import BackendAdaptor
+    from .._mininterface.adaptor import BackendAdaptor
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 
@@ -31,7 +31,7 @@ class Facet(Generic[EnvClass]):
         this allows to set frontend properties like the heading.
 
     Read [`Tag.facet`][mininterface.Tag.facet] to see how to access it from the front-end side.
-    Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to see how to access it from the back-end side.
+    Read [`Mininterface.facet`][mininterface.Mininterface.facet] to see how to access it from the back-end side.
     """
     # Every UI adopts this object through BackendAdaptor methods.
 

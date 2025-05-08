@@ -20,14 +20,4 @@ class Env:
 
 Why we used it in an Annotated statement? To preserve the date type.
 
-```python3
-@dataclass
-class Env:
-    my_string: Tag = Tag("hello", validation=not_empty)
-
-m = run(Env)
-print(type(m.env.my_string))  # Tag
-print(m.env.my_string.val)  # hello
-```
-
 ::: mininterface.validators

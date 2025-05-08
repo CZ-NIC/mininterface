@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mininterface"
-version = "0.8.0"
+version = "1.0.0-alpha.1"
 description = "A minimal access to GUI, TUI, CLI and config"
 authors = ["Edvard Rejthar <edvard.rejthar@nic.cz>"]
 license = "LGPL-3.0-or-later"
@@ -12,43 +12,117 @@ homepage = "https://github.com/CZ-NIC/mininterface"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-# Minimal requirements
+# Minimal requirements (dialogs with partial .form support (m.form(dict) or m.form(dataclass_instance))
 python = "^3.10"
-tyro = "^0.9"
-typing_extensions = "*"
-pyyaml = "*"
 simple_term_menu = "*"
-# Standard requirements
-humanize = "*"          # NOTE check the size and optinally make it optional
-textual = "<2.0.0"
-tkinter-tooltip = "*"
-tkinter_form = "0.2.1"
-tkscrollableframe = "*"
-# Extras requirements
+annotated-types = "*"
+# Basic requirements (CLI and full .form support (m.form(dataclass_class))
+tyro = { version = "^0.9", optional = true }
+pyyaml = { version = "*", optional = true }
+humanize = { version = "*", optional = true }
+textual = { version = "<2.0.0", optional = true }
+tkinter-tooltip = { version = "*", optional = true }
+tkinter_form = { version = "0.2.1", optional = true }
+tkscrollableframe = { version = "*", optional = true }
+# Extras requirements for all other groups
 textual-serve = { version = "*", optional = true }
 pillow = { version = "*", optional = true }
-tkcalendar = { version = "*", optional = true }
+tkcalendar = { version = "*", optional = true }        # GPLv3
 textual_imageview = { version = "*", optional = true }
-autocombobox = { version = "1.4.2", optional = true }
+autocombobox = { version = "1.4.2", optional = true }  # GPLv3
 
 [tool.poetry.extras]
-# These projects have GPLv3
-# autocombobox, tkcalendar
-web = ["textual-serve"]
-img = ["pillow", "textual_imageview"]
-tui = ["textual_imageview"]
-gui = ["pillow", "tkcalendar", "autocombobox"]
+# Basic requirements
+basic = [
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+]
+
+# specific group that scatter among UIs
+img = [
+    # basic
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+    # proper
+    "pillow",
+    "textual_imageview",
+]
+
+# Individual UIs
+tui = [
+    # basic
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+    # specific
+    "textual_imageview",
+]
+gui = [ # basic
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+    # specific
+    "pillow",
+    "tkcalendar",
+    "autocombobox",
+]
+web = [
+    # basic
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+    # specific
+    "textual-serve",
+]
 ui = [
+    # basic
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
+    # web, tui, gui
     "textual-serve",
     "pillow",
     "tkcalendar",
     "textual_imageview",
     "autocombobox",
 ]
-# Reserved for future use.
+# Group 'all' is reserved for future use.
 # Might contain some big dependencies, other interfaces.
-# Now is the same as ui.
+# Now is the same as 'ui'.
 all = [
+    "tyro",
+    "pyyaml",
+    "humanize",
+    "textual",
+    "tkinter-tooltip",
+    "tkinter_form",
+    "tkscrollableframe",
     "textual-serve",
     "pillow",
     "tkcalendar",

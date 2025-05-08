@@ -8,11 +8,11 @@ from .tag import Tag, TagValue
 OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 OptionLabel = str
 RichOptionLabel = OptionLabel | tuple[OptionLabel]
-OptionsType = list[TagValue] | tuple[TagValue] | set[TagValue] | dict[RichOptionLabel,
-                                                                      TagValue] | list[Enum] | Type[Enum]
+OptionsType = (list[TagValue] | tuple[TagValue, ...] | set[TagValue]
+               | dict[RichOptionLabel, TagValue] | Iterable[Enum] | Type[Enum])
 """ You can denote the options in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
-Values might be Tags as well. Let's take a detailed look. We will use the `run.choice(OptionsType)` to illustrate the examples.
+Values might be Tags as well. Let's take a detailed look. We will use the [`run.select(OptionsType)`][mininterface.Mininterface.select] to illustrate the examples.
 
 ## Iterables like list
 
@@ -21,7 +21,7 @@ Either put options in an iterable:
 ```python
 from mininterface import run
 m = run()
-m.choice([1, 2])
+m.select([1, 2])
 ```
 
 ![Options as a list](asset/choices_list.avif)
@@ -31,7 +31,7 @@ m.choice([1, 2])
 Or to a dict `{name: value}`. Then name are used as labels.
 
 ```python
-m.choice({"one": 1, "two": 2})  # returns 1
+m.select({"one": 1, "two": 2})  # returns 1
 ```
 
 ## Dict with tuples for table
@@ -39,7 +39,7 @@ m.choice({"one": 1, "two": 2})  # returns 1
 If you use tuple as the keys, they will be joined into a table.
 
 ```python
-m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
+m.select({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
 ```
 
 ![Table like](asset/choice_table_span.avif)
@@ -49,7 +49,7 @@ m.choice({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})
 Alternatively, you may specify the names in [`Tags`][mininterface.Tag].
 
 ```python
-m.choice([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
+m.select([Tag(1, name="one"), Tag(2, name="two")])  # returns 1
 ```
 
 ![Options with labels](asset/choices_labels.avif)
@@ -64,7 +64,7 @@ class Color(Enum):
     GREEN = "green"
     BLUE = "blue"
 
-m.choice(Color)
+m.select(Color)
 ```
 
 ![Options from enum](asset/choice_enum_type.avif)
@@ -77,7 +77,7 @@ class Color(Enum):
     GREEN = "green"
     BLUE = "blue"
 
-m.choice(Color.BLUE)
+m.select(Color.BLUE)
 ```
 
 ![Options from enum](asset/choice_enum_instance.avif)
@@ -85,19 +85,19 @@ m.choice(Color.BLUE)
 Alternatively, you may use an Enum instances list.
 
 ```python
-m.choice([Color.GREEN, Color.BLUE])
+m.select([Color.GREEN, Color.BLUE])
 ```
 
 ![Options from enum list](asset/choice_enum_list.avif)
 
 ## Further examples
 
-See [mininterface.choice][mininterface.Mininterface.choice] or [`SelectTag.options`][mininterface.tag.SelectTag.options] for further usage.
+See [mininterface.select][mininterface.Mininterface.select] or [`SelectTag.options`][mininterface.tag.SelectTag.options] for further usage.
 """
 
 
 @dataclass(repr=False)
-class SelectTag(Tag):
+class SelectTag(Tag[TagValue]):
     """ Handle options – radio buttons / select box.
     The value serves as the initially selected choice.
     It is constrained to those defined in the `options` attribute.
@@ -111,9 +111,9 @@ class SelectTag(Tag):
     m.form({"My restrained": SelectTag(options=("one", "two"))})
     ```
 
-    You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`OptionsType`][mininterface.tag.OptionsType] for more details.
+    You can denote the options in many ways. Either put options in an iterable, or to a dict with keys as a values. You can also you tuples for keys to get a table-like formatting. Use the Enums or nested Tags... See the [`OptionsType`][mininterface.tag.select_tag.OptionsType] for more details.
 
-    Here we focus at the `SelectTag` itself and its [`Options`][mininterface.types.alias.Options] alias. It can be used to annotate a default value in a dataclass.
+    Here we focus at the `SelectTag` itself and its [`Options`][mininterface.tag.alias.Options] alias. It can be used to annotate a default value in a dataclass.
 
     ```python
     from dataclasses import dataclass
@@ -164,13 +164,13 @@ class SelectTag(Tag):
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
         self.annotation = type(self)
-        reset_name = not self.name
+        reset_name = not self.label
         super().__post_init__()
         if reset_name:
             # Inheriting the name of the default value in self.val (done in post_init)
             # does not make sense to me. Let's reset here so that we receive
             # the dict key or the dataclass attribute name as the name in form_dict.py .
-            self.name = None
+            self.label = None
         self.annotation = None
 
         # Assure list val for multiple selection
@@ -224,7 +224,9 @@ class SelectTag(Tag):
         if self.options is None:
             return {}
         if isinstance(self.options, dict):
-            return {key: self._get_tag_val(v) for key, v in self.options.items()}
+            # assure the key is a str or their tuple
+            return {(tuple(str(k) for k in key) if isinstance(key, tuple) else str(key)): self._get_tag_val(v)
+                    for key, v in self.options.items()}
         if isinstance(self.options, Iterable):
             return {self._repr_val(v): self._get_tag_val(v) for v in self.options}
         if isinstance(self.options, type) and issubclass(self.options, Enum):  # Enum type, ex: options=ColorEnum
@@ -278,8 +280,8 @@ class SelectTag(Tag):
             hello - world"
         """
         a_key = next(iter(keys))
-        col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
         try:
+            col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
             return [(delim.join(cell.ljust(col_widths[i]) for i, cell in enumerate(key)), key) for key in keys]
         except IndexError:
             # different lengths, table does not work

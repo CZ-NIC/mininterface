@@ -3,32 +3,33 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+
+if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from .facet import Facet
-else:
-    Facet = None
+    from ._mininterface import Mininterface
+    from typing import Self
 
 
 @dataclass
 class Command(ABC):
     """ The Command is automatically run while instantanied.
 
-    Experimental – how should it receive _facet?
+    It adapts [`init`][mininterface.subcommands.Command.init] and [`run`][mininterface.subcommands.Command.init] methods.
+    It receives attributes [`self.facet`][mininterface.facet.Facet] and [`self.interface`][mininterface.Mininterface] set.
 
     Put list of Commands to the [mininterface.run][mininterface.run] and divide your application into different sections.
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
 
-    ## SubcommandPlaceholder
 
-    What if I need to use my program
-    Special placeholder class SubcommandPlaceholder.
-    This special class let the user to choose the subcommands via UI,
-    while still benefiniting from default CLI arguments.
+    # SubcommandPlaceholder class
+
+    The special class `SubcommandPlaceholder` let the user to choose the subcommands via UI,
+    while still benefiting from the default CLI arguments.
 
 
-    ### The CLI behaviour:
+    ## The CLI behaviour:
     * `./program.py` -> UI started with subcommand choice
     * `./program.py subcommand --flag` -> special class `SubcommandPlaceholder` allows defining a common `--flag`
         while still starting UI with subcommand choice
@@ -36,7 +37,7 @@ class Command(ABC):
     * `./program.py subcommand1` -> fails to CLI for now
 
 
-    ## An example of Command usage
+    # An example of Command usage
 
     ```python
     from dataclasses import dataclass, field
@@ -70,7 +71,7 @@ class Command(ABC):
     @dataclass
     class Subcommand2(SharedArgs):
         def run(self):
-            self._facet.set_title("Button clicked")  # you can access internal self._facet: Facet
+            self.facet.set_title("Button clicked")  # you can access internal self.facet: Facet
             print("Common files", self.files)
 
 
@@ -106,33 +107,44 @@ class Command(ABC):
     Common files [PosixPath('page1.html'), PosixPath('page2.html')]
     ```
 
-    ### Powerful automation
+    ## Powerful automation
 
     Note we use `from tyro.conf import Positional` to denote the positional argument. We did not have to write `--files` to put there HTML files.
     """
     # Why to not document the Subcommand in the Subcommand class itself? It would be output to the user with --help,
     # I need the text to be available to the developer in the docs, not to the user.
-    # NOTE * `./program.py subcommand1` -> fails to CLI for now  # nice to have implemented
 
     def __post_init__(self):
-        self._facet: "Facet" = None  # As this is dataclass, the internal facet cannot be defined as one of the fields.
+        # We have following options into giving facet to the methods:
+        # * a dataclass field: As this is dataclass, the internal facet cannot be defined as one of the fields.
+        #   * Either it would have a default value and the user would not be able to use a non-default values
+        #   * Or it would not and the user would not be able to construct its own class without the facet.
+        # * def run(self, facet): The user had to pass the reference manually.
+        # * def run_with_facet(facet)
+        self.facet: 'Facet["Self"]'
+        self.interface: 'Mininterface[None]'
 
     def init(self):
         """ Just before the form appears.
         As the `__post_init__` method is not guaranteed to run just once (internal CLI behaviour),
-        you are welcome to override this method instead. You can use [self._facet][mininterface.facet.Facet] from within.
+        you are welcome to override this method instead. You can use [self.facet][mininterface.facet.Facet] from within.
         """
         ...
 
     @abstractmethod
     def run(self):
-        """ This method is run automatically in CLI or by a button button it generates in a UI."""
+        """ This method is run automatically when the command is chosen.
+        (Either directly in the CLI or by a successive dialog.)
+
+        Raises:
+            ValidationFail – Do repeat the form.
+        """
         ...
 
 
 @dataclass
 class SubcommandPlaceholder(Command):
-    """ Use this placeholder to choose the subcomannd via a UI. """
+    """ Use this placeholder to choose the subcommand via a UI."""
 
     def run(self):
         ...

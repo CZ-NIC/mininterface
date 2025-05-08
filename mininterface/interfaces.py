@@ -4,21 +4,27 @@ from dataclasses import replace
 from importlib import import_module
 from os import isatty
 import sys
-from typing import Literal, Optional, Type
+from typing import TYPE_CHECKING, Literal, Optional, Type
 
-from .mininterface import EnvClass, Mininterface
+from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
 InterfaceType = Type[Mininterface] | InterfaceName | None
 
+if TYPE_CHECKING:
+    # static type checker does not see our dynamic interface import (performance reason)
+    TextInterface: Type[Mininterface]
+    TextualInterface: Type[Mininterface]
+    TkInterface: Type[Mininterface]
+    TuiInterface: Type[Mininterface]
+    GuiInterface: Type[Mininterface]
+
 
 def _load(name, mod, attr):
-    try:
-        globals()[name] = getattr(import_module(mod, __name__), attr)
-        return globals()[name]
-    except InterfaceNotAvailable:
-        return None
+    """ Raises: InterfaceNotAvailable """
+    globals()[name] = getattr(import_module(mod, __name__), attr)
+    return globals()[name]
 
 
 def __getattr__(name):
@@ -37,13 +43,13 @@ def __getattr__(name):
 
         # real interfaces
         case "TkInterface":
-            return _load(name, "..tk_interface", "TkInterface")
+            return _load(name, ".._tk_interface", "TkInterface")
         case "TextualInterface":
-            return _load(name, "..textual_interface", "TextualInterface")
+            return _load(name, ".._textual_interface", "TextualInterface")
         case "TextInterface":
-            return _load(name, "..text_interface", "TextInterface")
+            return _load(name, ".._text_interface", "TextInterface")
         case "WebInterface":
-            return _load(name, "..web_interface", "WebInterface")
+            return _load(name, ".._web_interface", "WebInterface")
         case _:
             return None  # such attribute does not exist
 
@@ -78,7 +84,7 @@ def _get_interface_type(interface: InterfaceType = None):
             raise InterfaceNotAvailable
 
 
-def get_interface(interface: InterfaceType = None, title="", settings: Optional[MininterfaceSettings] = None, env: EnvClass = None) -> Mininterface[EnvClass]:
+def get_interface(interface: InterfaceType = None, title="", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
     """ Returns the best available interface.
 
     Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.

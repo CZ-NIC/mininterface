@@ -1,101 +1,161 @@
-from dataclasses import dataclass, field
-import importlib
-from typing import Literal, Optional, TypeVar
+from ast import literal_eval
+from dataclasses import dataclass
+from os import environ
+from pathlib import Path
+from subprocess import run as srun
+from typing import Literal
+
+from tyro.conf import Positional
 
 from . import run
-from .showcase import showcase
+from .subcommands import Command
+from .tag.flag import File
+from .tag.path_tag import PathTag
+from ._lib.showcase import showcase
 
-from typing import get_args, get_origin, Optional, Union, List, Dict
+__doc__ = """Simple GUI/TUI dialog toolkit. Contains:
+* dialog commands to output the value the user entered
+* commands to operate and test programs using mininterface as a Python library
 
-__doc__ = """Simple GUI/TUI dialog. Outputs the value the user entered. See the full docs at: https://cz-nic.github.io/mininterface/"""
-
-TYPE_MAP = ({
-    "int": int,
-    "str": str,
-    "float": float,
-})
+See the full docs at: https://cz-nic.github.io/mininterface/
+"""
 
 
-def resolve_type(type_str: str):
-    try:
-        return TYPE_MAP[type_str]
-    except KeyError:
-        print(f"Unknown type {type_str}")
+Showcase_Type = Literal[1, 2]
+
+
+# NOTE in the future, allow only some classes (here, the dialog clases) have the shared args
+# @dataclass
+# class SharedLabel(Command):
+#     label: Positional[str]
+
+
+@dataclass
+class Alert(Command):
+    """ Dialog: Display the OK dialog with text. """
+
+    label: Positional[str]
+
+    def run(self):
+        self._interface.alert(self.label)
+
+
+@dataclass
+class Ask(Command):
+    """ Dialog: Prompt the user to input a value.
+    By default, we input a str, by the second parameter, you can infer a type,
+    ex. `mininterface --ask 'My heading' int`
+    """
+
+    label: Positional[str]
+    annotation: Positional[Literal["int", "str", "float", "Path", "date", "datetime", "time", "file", "dir"]] = "str"
+    """ Impose the given type.
+    * Path – any path
+    * file – an existing file
+    * dir – an existing directory
+    Ex. `mininterface ask "Give me a folder" dir` will impose an existing directory to be input. """
+
+    # NOTE
+    # validation: Optional[str] = None
+    # """ EXPERIMENTAL. Might change, ex. becoming a positional argument."""
+    # Filtering the files with certain extension. Allowing only future dates.
+    # How it should work? Should it be in annotation or validation?
+
+    def run(self):
+        match self.annotation:
+            case "int":
+                v = int
+            case "float":
+                v = float
+            case "str":
+                v = str
+            case "Path":
+                v = Path
+            case "date":
+                from datetime import date
+                v = date
+            case "datetime":
+                from datetime import datetime
+                v = datetime
+            case "time":
+                from datetime import time
+                v = time
+            case "file":
+                v = PathTag(is_file=True)
+            case "dir":
+                v = PathTag(is_dir=True)
+            case _:
+                raise NotImplementedError(f"This type {self.annotation} has not yet been supported, raise an issue.")
+        print(self._interface.ask(self.label, v))
+
+
+@dataclass
+class Confirm(Command):
+    """ Dialog: Display confirm box. Returns 0 / 1. """
+
+    label: Positional[str]
+    focus: Positional[Literal["yes", "no"]] = "yes"
+    """focused button"""
+
+    def run(self):
+        r = self._interface.confirm(self.label, self.focus == "yes")
+        print(1 if r else 0)
+
+
+@dataclass
+class Select(Command):
+    """ Dialog: Prompt the user to select. """
+    options: Positional[list[str]]
+    label: str = ""
+
+    def run(self):
+        print(self._interface.select(self.options, self.label))
+
+
+@dataclass
+class Integrate(Command):
+    """ Integrate to the system. Generates a bash completion for the given program. """
+
+    cmd: Positional[File]
+    """Path to the program using mininterface.
+    Note that Bash completion uses argparse.prog, so do not set prog="Program Name" in the program as bash completion would stop working.
+    """
+
+    def run(self):
+        environ["MININTERFACE_INTEGRATE_TO_SYSTEM"] = '1'
+        srun(self.cmd.absolute(), env=environ)
         quit()
 
 
 @dataclass
-class Web:
-    """Launch a miniterface program, while the TextualInterface will be exposed to the web. """
-
-    cmd: str = ""
-    """Path to a program, using mininterface."""
-
-    port: int = 64646
-
-
-Showcase = Literal[1] | Literal[2]
+class Showcase:
+    """ Prints various form just to show what's possible.
+    Choose the interface by MININTERFACE_INTERFACE=...
+    Ex. MININTERFACE_INTERFACE=tui mininterface showcase 2
+    """
+    showcase: Positional[Showcase_Type] = 1
 
 
 @dataclass
-class CliInteface:
-    web: Web
-    alert: str = ""
-    """ Display the OK dialog with text. """
-    ask: str | tuple[str, str] = ""
-    """ Prompt the user to input a value.
-    By default, we input a str, by the second parameter, you can infer a type,
-    ex. `mininterface --ask 'My heading' int`
-    """
-    confirm: str = ""
-    """ Display confirm box, focusing 'yes'. """
-    confirm_default_no: str = ""
-    """ Display confirm box, focusing 'no'. """
-    choice: list = field(default_factory=list)
-    """ Prompt the user to select. """
+class Web(Command):
+    """Expose a program using mininterface to the web."""
 
-    showcase: Optional[Showcase] = None
-    """ Prints various form just to show what's possible.
-    Choose the interface by MININTERFACE_INTERFACE=...
-    Ex. MININTERFACE_INTERFACE=tui mininterface --showcase 2
-    """
+    cmd: Positional[File]
+    """Path to the program using mininterface."""
 
+    port: int = 64646
 
-def web(env: Web):
-    from .web_interface import WebInterface
-    WebInterface(cmd=env.cmd, port=env.port)
+    def run(self):
+        from ._web_interface import WebInterface
+        WebInterface(cmd=self.cmd, port=self.port)
 
 
 def main():
-    result = []
-    # We tested both GuiInterface and TextualInterface are able to pass a variable to i.e. a bash script.
-    # NOTE TextInterface fails (`mininterface --ask Test | grep Hello` – pipe causes no visible output).
-    with run(CliInteface, prog="Mininterface", description=__doc__) as m:
-        for method, label in vars(m.env).items():
-            if method in ["web", "showcase"]:  # processed later
-                continue
-            if method == "ask" and label:
-                if isinstance(label, tuple):
-                    arg, type_ = label[0], resolve_type(label[1])
-                    if not type_:
-                        print(f"Unknown type {type_}")
-                        quit()
-                    result.append(m.ask(arg, type_))
-                else:
-                    m.ask(label)
-            elif method == "confirm_default_no" and label:
-                result.append(m.confirm(label, False))
-            elif label:
-                result.append(getattr(m, method)(label))
+    with run([Alert, Ask, Confirm, Select, Integrate, Showcase,  Web], prog="Mininterface", description=__doc__, ask_for_missing=False) as m:
+        pass
 
-    # Displays each result on a new line. Currently, this is an undocumented feature.
-    # As we use the script for a single value only and it is not currently possible
-    # to ask two numbers or determine a dialog order etc.
-    [print(val) for val in result]
-
-    if m.env.web.cmd:
-        web(m.env.web)
-    if m.env.showcase:
+    if isinstance(m.env, Showcase):
+        # NOTE: GUI does not work well with `Command.run`, the bug with two appearing windows
         showcase(m.env.showcase)
 
 

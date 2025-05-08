@@ -3,13 +3,15 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import (TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar,
+from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, TypeVar,
                     Union, get_args, get_origin)
 from warnings import warn
 
-from ..auxiliary import (common_iterables, flatten, guess_type,
-                         matches_annotation, serialize_structure,
-                         subclass_matches_annotation)
+from annotated_types import BaseMetadata, GroupedMetadata
+
+from .._lib.auxiliary import (common_iterables, flatten, guess_type,
+                              matches_annotation, serialize_structure,
+                              subclass_matches_annotation, validate_annotated_type)
 from ..experimental import FacetCallback, SubmitButton
 from .internal import (BoolWidget, CallbackButtonWidget, FacetButtonWidget,
                        RecommendedWidget, SubmitButtonWidget)
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
         Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
     from ..facet import Facet
-    from ..form_dict import TagDict
+    from .._lib.form_dict import TagDict
 else:
     # NOTE this is needed for tyro dataclass serialization (which still does not work
     # as Tag is not a frozen object, you cannot use it as an annotation)
@@ -41,8 +43,6 @@ except ImportError:
     attr = None
 
 
-UiValue = TypeVar("UiValue")
-""" Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str."""
 TD = TypeVar("TD")
 """ dict """
 TK = TypeVar("TK")
@@ -50,30 +50,158 @@ TK = TypeVar("TK")
 # Why TagValue bounded to Any? This might help in the future to allow a dataclass to have a Tag as the attribute value. (It is not frozen now.)
 TagValue = TypeVar("TagValue", bound=Any)
 """ Any value. It is being wrapped by a [Tag][mininterface.Tag]. """
+UiValue = TagValue | str
+""" Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str
+    (as the default input type for interfaces that do not implement the given type further)."""
 ErrorMessage = TypeVar("ErrorMessage")
 """ A string, callback validation error message. """
 ValidationResult = bool | ErrorMessage
-""" Callback validation result is either boolean or an error message. """
+""" Being used at [Tag.validation][mininterface.Tag.validation].
+
+A bool or the error message (that implicitly means the [ValidationCallback][mininterface.tag.tag.ValidationCallback] has failed) as shows the following table.
+Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
+
+| return | description |
+|--|--|
+| bool | True if validation succeeded or False if validation failed. |
+| str | Error message if the validation failed. |
+| tuple[bool\\|str, TagVal] | The first argument is the same as above. The second is the value to be set. |
+
+This example shows the str error message:
+
+```python
+def check(tag: Tag):
+    if tag.val < 10:
+        return "The value must be at least 10"
+m.form({"number", Tag(12, validation=check)})
+```
+
+This example shows the value transformation. For `val=50+`, the validation fails.
+
+```python
+def check(tag: Tag):
+    return True, tag.val * 2
+m.form({"number", Tag(12, validation=(check, Lt(100)))})
+```
+"""
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
+ValsType = Iterable[tuple["Tag", UiValue]]
+ValidationCallback = Callable[["Tag"], ValidationResult |
+                              tuple[ValidationResult, TagValue]] | BaseMetadata | GroupedMetadata
+""" Being used at [Tag.validation][mininterface.Tag.validation].
+
+Either use a custom callback function, a provided [validator][mininterface.validators], or an [annotated-types predicate](https://github.com/annotated-types/annotated-types?#documentation). (You can use multiple validation callbacks combined into an itarable.)
+
+[ValidationResult][mininterface.tag.tag.ValidationResult] is a bool or the error message that implicitly means it has failed. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
+
+# Custom function
+
+Handles the Tag.
+
+```python
+from mininterface.tag import Tag
+
+def my_validation(tag: Tag):
+    return tag.val > 50
+
+m.form({"number", Tag("", validation=my_validation)})
+```
+
+# Provided validators
+
+Found in the [mininterface.validators][mininterface.validators] module.
+
+```python
+from mininterface.validators import not_empty
+m.form({"number", Tag("", validation=not_empty)})
+# User cannot leave the field empty.
+```
+
+You may use the validation in a type annotation.
+```python
+from mininterface import Tag, Validation
+@dataclass
+class Env:
+    my_text: Annotated[str, Validation(not_empty)] = "will not be emtpy"
+
+    # which is an alias for:
+    # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
+```
+
+# annotated-types predicate.
+
+The [annotated-types](https://github.com/annotated-types/annotated-types?#documentation) are de-facto standard for types restraining.
+
+Currently, `Gt, Ge, Lt, Le, MultipleOf and Len` are supported.
+
+```python
+from dataclasses import dataclass
+from annotated_types import Ge
+from mininterface import run
+
+@dataclass
+class AnnotatedTypes:
+    age: Annotated[int, Ge(18)]
+
+run(AnnotatedTypes).env.age  # guaranteed to be >= 18
+```
+
+!!! info
+    The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.
+
+    ```python
+    @dataclass
+    class AnnotatedTypes:
+        age: Annotated[int, Ge(18), Tag(validation=custom)]
+
+    # -> age: Annotated[int, Tag(validation=[Ge(18), custom])]
+    ```
+"""
 
 
 class MissingTagValue:
-    """ The dataclass field has not received a value from the CLI.
+    """ The dataclass field has not received a value from the CLI, and this value is required.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
+
+    If we fail to fill a value (ex. in a CRON), the program ends.
     """
+
+    def __init__(self, exception: BaseException, eavesdrop):
+        self.exception = exception
+        self.eavesdrop = eavesdrop
 
     def __repr__(self):
         return "MISSING"
 
+    def fail(self):
+        print(self.eavesdrop)
+        raise self.exception
+
 
 @dataclass
-class Tag:
+class Tag(Generic[TagValue]):
     """ Wrapper around a value that encapsulates a description, validation etc.
-        When you provide a value to an interface, you may instead use this object.
 
         Bridge between the input values and a UI widget. The widget is created with the help of this object,
         then transforms the value back (str to int conversion etc).
+
+        For dataclasses, use in as an annotation:
+
+        ```python
+        from mininterface import run
+        @dataclass
+        class Env:
+            my_str: Annotated[str, Tag(validation=not_empty)]
+
+        m = run(Env)
+        ```
+
+        For dicts, use it as a value:
+
+        ```python
+        m.form({"My string": Tag(annotation=str, validation=not_empty)})
+        ```
         """
 
     val: TagValue = None
@@ -92,7 +220,7 @@ class Tag:
     ![Image title](asset/tag_val.avif)
 
     The encapsulated value is `True`, `tag.description` is 'This is my boolean',
-    `tag.annotation` is `bool` and 'My boolean' is used as `tag.name`.
+    `tag.annotation` is `bool` and 'My boolean' is used as `tag.label`.
 
     !!! tip
         If the Tag is nested, the info is fetched to the outer Tag.
@@ -105,51 +233,32 @@ class Tag:
     description: str = ""
     """ The description displayed in the UI. """
 
-    annotation: type | None = None
+    annotation: type[TagValue] | None = None
     """ Used for validation (ex. to convert an empty string to None).
         If not set, will be determined automatically from the [val][mininterface.Tag.val] type.
     """
 
-    validation: Callable[["Tag"], ValidationResult | tuple[ValidationResult,
-                                                           TagValue]] | None = None
-    """ When the user submits the form, the values are validated (and possibly transformed) with a callback function.
+    validation: Iterable[ValidationCallback] | ValidationCallback | None = None
+    """ When the user submits the form, the values are validated (and possibly transformed) with a [ValidationCallback][mininterface.tag.tag.ValidationCallback] function (or several of them).
         If the validation fails, user is prompted to edit the value.
-        Return True if validation succeeded or False or an error message when it failed.
 
-    [ValidationResult][mininterface.tag.ValidationResult] is a bool or the error message (that implicitly means it has failed).
-
-
-    ```python
-    def check(tag: Tag):
-        if tag.val < 10:
-            return "The value must be at least 10"
-    m.form({"number", Tag(12, validation=check)})
-    ```
-
-    Either use a custom callback function or mininterface.validators.
-
-    ```python
-    from mininterface.validators import not_empty
-    m.form({"number", Tag("", validation=not_empty)})
-    # User cannot leave the field empty.
-    ```
-
-    You may use the validation in a type annotation.
-    ```python
-    from mininterface import Tag, Validation
-    @dataclass
-    class Env:
-        my_text: Annotated[str, Validation(not_empty) = "will not be emtpy"
-
-        # which is an alias for:
-        # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"
-    ```
-
-    NOTE Undocumented feature, we can return tuple [ValidationResult, FieldValue] to set the self.val.
+        The [ValidationResult][mininterface.tag.tag.ValidationResult] is either a boolean or an error message. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).
     """
 
-    name: str | None = None
-    """ Name displayed in the UI. """
+    label: str | None = None
+    """ Name displayed in the UI. If not set, it is taken from the dict key or the field name.
+
+    ```python
+    m.form({"label": ...})
+    ```
+
+    ```python
+    @dataclass
+    class Form:
+        my_field: str
+    m.form(Form)  # label=my_field
+    ```
+    """
 
     on_change: Callable[["Tag"], Any] | None = None
     """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
@@ -176,6 +285,9 @@ class Tag:
     ![Choice with on change callback chosen](asset/on_change2.avif)
     """
 
+    #
+    # Following attributes are not meant to be set externally.
+    #
     _src_dict: TD | None = None
     """ The original dict to be updated when UI ends."""
 
@@ -190,41 +302,48 @@ class Tag:
     _src_class: type | None = None
     """ If not set earlier, fetch name, annotation and _pydantic_field from this class. """
 
-    #
-    # Following attributes are not meant to be set externally.
-    #
-    facet: Optional["Facet"] = None
-    """ Access to the UI [`facet`][mininterface.mininterface.Facet] from the front-end side.
-    (Read [`Mininterface.facet`][mininterface.mininterface.Mininterface.facet] to access from the back-end side.)
+    _facet: Optional["Facet"] = None
 
-    Set the UI facet from within a callback, ex. a validator.
+    @property
+    def facet(self) -> Facet:
+        """ Access to the UI [`facet`][mininterface._mininterface.Facet] from the front-end side.
+        (Read [`Mininterface.facet`][mininterface.Mininterface.facet] to access from the back-end side.)
 
-    ```python
-    from mininterface import run, Tag
+        Use the UI facet from within a callback, ex. from a validator.
 
-    def my_check(tag: Tag):
-        tag.facet.set_title("My form title")
-        return "Validation failed"
+        ```python
+        from mininterface import run, Tag
 
-    with run(title='My window title') as m:
-        m.form({"My form": Tag(1, validation=my_check)})
-    ```
+        def my_check(tag: Tag):
+            tag.facet.set_title("My form title")
+            return "Validation failed"
 
-    This happens when you click ok.
+        with run(title='My window title') as m:
+            m.form({"My form": Tag(1, validation=my_check)})
+        ```
 
-    ![Facet front-end](asset/facet_frontend.avif)
-    """
+        This happens when you click ok.
 
-    original_val: TagValue = None
-    """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
+        ![Facet front-end](asset/facet_frontend.avif)
+        """
+        if self._facet is None:
+            raise ValueError("Facet has not been set")
+        return self._facet
 
-    ```python
-    def check(tag.val):
-        if tag.val != tag.original_val:
-            return "You have to change the value."
-    m.form({"number", Tag(8, validation=check)})
-    ```
-    """
+    _original_val: TagValue = None
+
+    @property
+    def original_val(self) -> TagValue:
+        """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
+
+        ```python
+        def check(tag.val):
+            if tag.val != tag.original_val:
+                return "You have to change the value."
+        m.form({"number", Tag(8, validation=check)})
+        ```
+        """
+        return self._original_val
 
     _error_text = None
     """ Meant to be read only. Error text if type check or validation fail and the UI has to be revised """
@@ -232,20 +351,18 @@ class Tag:
     _pydantic_field: PydanticFieldInfo = None
     _attrs_field: AttrsFieldInfo = None
     _original_desc: Optional[str] = None
-    _original_name: Optional[str] = None
+    _original_label: Optional[str] = None
     _last_ui_val: TagValue = None
     """ This is the value as was in the current UI. Used by on_change_trigger
         to determine whether the UI value changed. """
 
     def __post_init__(self):
-        """ Determine annotation and fetch other information. """
+        # Determine annotation and fetch other information.
 
         # Fetch information from the nested tag: `Tag(Tag(...))`
         if isinstance(self.val, Tag):
             if self._src_obj or self._src_key:
                 raise ValueError("Wrong Tag inheritance, submit a bug report.")
-            self._src_obj = self.val
-            self._src_key = "val"
             self._fetch_from(self.val)
             self.val = self.val.val
 
@@ -271,20 +388,20 @@ class Tag:
         if self.annotation is SubmitButton:
             self.val = False
 
-        if not self.name:
+        if not self.label:
             if self._src_key:
-                self.name = self._src_key
+                self.label = self._src_key
             # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
             # We are using get_name() instead.
             # if self._is_a_callable():
-                #     self.name = self.val.__name__
+                #     self.label = self.val.__name__
         if not self.description and self._is_a_callable():
             # NOTE does not work, do a test, there is `(fixed to` instead
             self.description = self.val.__doc__
 
         self._original_desc = self.description
-        self._original_name = self.name
-        self.original_val = self.val
+        self._original_label = self.label
+        self._original_val = self.val
         self._last_ui_val = None
 
     def __repr__(self):
@@ -294,7 +411,7 @@ class Tag:
             # clean-up protected members
             if field.name.startswith("_"):
                 continue
-            if field.name not in ("val", "description", "annotation", "name"):
+            if field.name not in ("val", "description", "annotation", "label"):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
@@ -315,25 +432,43 @@ class Tag:
         # Hence, I add a hash function with no intention yet.
         return hash(str(self))
 
-    def _fetch_from(self, tag: "Self", name: str = "") -> "Self":
-        """ Fetches attributes from another instance.
-        (Skips the attributes that are already set.)
+    def _fetch_from(self, tag: Union["Tag", dict], name: str = "", include_ref=False) -> "Self":
+        """ Fetches attributes from another instance. (Skips the attributes that are already set.)
+        Register the fetched tag to be updated when we change.
+
+        Note that without the parameters, __post_init__ might end up with a default and wrong annotation.
+        Hence consider setting annotation on Tag init instead of fetching it later.
+        ```python
+        p = PathTag() .. -> annotation = Path
+        p._fetch_from(PathTag(annotation=list[Path])) # still annotation = Path
+        ```
         """
-        # TODO what about children? Like 'options' is not fetched from.
-        for attr in ('val', 'annotation', 'name', 'validation', 'on_change', "facet",
-                     "_src_obj", "_src_key", "_src_class",
-                     "_original_desc", "_original_name", "original_val"):
+        use_as_src = True
+        if isinstance(tag, dict):
+            tag = Tag(**tag)
+            use_as_src = False
+
+        ignored = {'description', '_pydantic_field', '_attrs_field', '_last_ui_val'}
+        if include_ref:
+            use_as_src = False
+        else:
+            ignored |= {'_src_dict', '_src_obj', '_src_key', '_src_class'}
+        for attr in tag.__dict__:
+            if attr in ignored:
+                continue
             if getattr(self, attr, None) is None:
                 setattr(self, attr, getattr(tag, attr))
+        if use_as_src:
+            self._src_obj_add(tag)
         if self.description == "":
             self.description = tag.description
-        if name and self.name is None:
-            self._original_name = self.name = name
+        if name and self.label is None:
+            self._original_label = self.label = name
         return self
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state["facet"] = None  # NOTE WebUi rather than deleting facet, try removing StdIO from it.
+        state["_facet"] = None  # NOTE WebUi rather than deleting facet, try removing StdIO from it.
         state["_src_dict"] = None
         state["_src_obj"] = None
         state["_src_class"] = None
@@ -432,6 +567,14 @@ class Tag:
         try:
             if issubclass(self.annotation, class_type):
                 return True
+            if issubclass(class_type, self.annotation):
+                # Let me explain. DatetimeTag receives a date.
+                # In __post_init__, it resolves, whether it is self._is_subclass(datetime)
+                # to determine the time component.
+                # Later on, we call subclass_matches_annotation which swaps class_type and self.annotation
+                # in the 'scalar' part – I don't clearly see the use-case, we can identify it and limit it.
+                # Until then, this reverse check will do.
+                return False
         except TypeError:  # None, Union etc cast an error
             pass
         for origin, subtype in self._get_possible_types():
@@ -483,18 +626,19 @@ class Tag:
             self._src_obj = [self._src_obj, src]
         else:
             self._src_obj.append(src)
+        return self
 
     def set_error_text(self, s):
         self.description = f"{s} {self._original_desc}"
-        if n := self._original_name:
-            # Why checking self.name?
+        if n := self._original_label:
+            # Why checking self._original_label?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
-            self.name = f"* {n}"
+            self.label = f"* {n}"
         self._error_text = s
 
     def remove_error_text(self):
         self.description = self._original_desc
-        self.name = self._original_name
+        self.label = self._original_label
         self._error_text = None
 
     def _get_name(self, make_effort=False):
@@ -502,9 +646,9 @@ class Tag:
         When used as a form button, we prefer to use the dict key.
         However, when used as a choice, this might be the only way to get the name.
         """
-        if make_effort and not self.name and self._is_a_callable():
+        if make_effort and not self.label and self._is_a_callable():
             return self.val.__name__
-        return self.name
+        return self.label
 
     def _repr_annotation(self):
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
@@ -528,6 +672,20 @@ class Tag:
             return self.annotation()
         else:
             return self.annotation()
+
+    def _add_validation(self, validators: Iterable[ValidationCallback] | ValidationCallback):
+        """ Prepend validators to the current validator. """
+        if not isinstance(validators, list):
+            validators = list(validators) if isinstance(validators, Iterable) else [validators]
+
+        if self.validation is None:
+            self.validation = validators
+        elif isinstance(self.validation, Iterable):
+            validators.extend(self.validation)
+            self.validation = validators
+        else:
+            validators.append(self.validation)
+            self.validation = validators
 
     def _get_ui_val(self):
         """ Get values as suitable for UI. Adaptor should not read the value directly.
@@ -569,16 +727,32 @@ class Tag:
         if self.validation:
             last = self.val
             self.val = out_value
-            res = self.validation(self)
-            if isinstance(res, tuple):
-                passed, out_value = res
-                self.val = out_value
-            else:
-                passed = res
-                self.val = last
-            if passed is not True:  # we did not pass, there might be an error message in passed
-                self.set_error_text(passed or f"Validation fail")
-                raise ValueError
+
+            validation = self.validation
+            if not isinstance(validation, Iterable):
+                validation = (validation,)
+
+            for vald in validation:
+                if isinstance(vald, (BaseMetadata, GroupedMetadata)):
+                    try:
+                        res = validate_annotated_type(vald, out_value)
+                    except TypeError:
+                        # Ex. putting "2.0" into an int.
+                        # It would generate type problem later here in the method,
+                        # but even now comparison failed Ex. TypeError("2.0" > 0)
+                        self.set_error_text(f"Type must be {self._repr_annotation()}!")
+                        raise ValueError
+                else:
+                    res = vald(self)
+                    if isinstance(res, tuple):
+                        passed, out_value = res
+                        self.val = out_value
+                    else:
+                        passed = res
+                        self.val = last
+                    if passed is not True:  # we did not pass, there might be an error message in passed
+                        self.set_error_text(passed or f"Validation fail")
+                        raise ValueError
 
         # pydantic_check
         if self._pydantic_field:
@@ -605,14 +779,16 @@ class Tag:
 
         return out_value
 
-    def set_val(self, val: TagValue) -> "Self":
-        """ Sets the value without any checks. """
+    def _set_val(self, val: TagValue) -> "Self":
+        """ Sets the value without any checks. Updates the sources. """
         self.val = val
         self._update_source(val)
         return self
 
-    def update(self, ui_value: UiValue) -> bool:
-        """ UI value → Tag value → original value. (With type conversion and checks.)
+    def update(self, ui_value: UiValue | str) -> bool:
+        """ Update the tag value with type conversion and checks.
+
+        UI → Tag → the object of origin.
 
         Args:
             ui_value:
@@ -623,8 +799,8 @@ class Tag:
                 Validates the type and do the transformation.
                 (Ex: Some values might be nulled from "".)
 
-        Returns:
-            bool, whether the value is alright or whether the revision is needed.
+        Returns: bool
+            Whether the value was succesfully changed or whether the revision is needed.
         """
         self.remove_error_text()
         out_value = ui_value  # The proposed value, with fixed type.
@@ -654,11 +830,6 @@ class Tag:
                 except (SyntaxError, ValueError):
                     self.set_error_text(f"Not a valid {self._repr_annotation()}")
                     return False
-            elif self._is_subclass((time, date)):
-                try:
-                    out_value = self.annotation.fromisoformat(ui_value)
-                except ValueError:
-                    pass
 
             if not self._is_right_instance(out_value) and isinstance(out_value, str):
                 try:
@@ -697,16 +868,16 @@ class Tag:
 
     def _update_source(self, out_value):
         # Store to the source user data
-        if self._src_dict:
-            self._src_dict[self._src_key] = out_value
-        elif self._src_obj:
+        if self._src_obj:
             _src_objs = [self._src_obj] if not isinstance(self._src_obj, list) else self._src_obj
             for src in _src_objs:
                 if isinstance(src, Tag):
                     # this helps to propagate the modification to possible other nested tags
-                    src.set_val(out_value)
+                    src._set_val(out_value)
                 else:
                     setattr(src, self._src_key, out_value)
+        elif self._src_dict:
+            self._src_dict[self._src_key] = out_value
         else:
             # This might be user-created object. There is no need to update anything as the user reads directly from self.val.
             pass
@@ -735,7 +906,7 @@ class Tag:
         #     return self.val
 
     @staticmethod
-    def _submit_values(updater: Iterable[tuple["Tag", UiValue]]) -> bool:
+    def _submit_values(updater: ValsType) -> bool:
         """ Returns whether the form is alright or whether we should revise it.
         Input is tuple of the Tags and their new values from the UI.
         """

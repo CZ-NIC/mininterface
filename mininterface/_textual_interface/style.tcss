@@ -1,0 +1,50 @@
+
+# Limit layout image size
+ImageViewer {
+    height: 20;
+}
+
+
+FilePickerInput {
+    layout: horizontal;
+    height: auto;
+    margin: 1;
+}
+
+FilePickerInput Input {
+    width: 80%;
+}
+
+FilePickerInput Button {
+    width: 20%;
+    margin-left: 1;
+}
+.enum-highlight {
+    text-style: bold italic;
+}
+
+
+
+
+.button-app {
+
+    #button-container {
+        layout: grid;
+        grid-size: 2;
+        grid-gutter: 2;
+        padding: 2;
+        Button {
+            width: 100%;
+            }
+        }
+
+    #buffered_text {
+        width: 100%;
+    }
+
+    #question {
+        width: 100%;
+        content-align: center bottom;
+        text-style: bold;
+    }
+}

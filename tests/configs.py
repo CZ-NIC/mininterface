@@ -4,6 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Callable, Optional
 
+from annotated_types import Gt, Le, Len, Lt
 from tyro.conf import Positional, arg
 
 from mininterface import Tag
@@ -143,7 +144,7 @@ class OptionalFlagEnv:
 class ConstrainedEnv:
     """Set of options."""
 
-    test: Annotated[str, Tag(validation=not_empty, name="Better name")] = "hello"
+    test: Annotated[str, Tag(validation=not_empty, label="Better name")] = "hello"
     """My testing flag"""
 
     test2: Annotated[str, Validation(not_empty)] = "hello"
@@ -171,7 +172,7 @@ class PathTagClass:
     files: Positional[list[Path]] = field(default_factory=list)
 
     # This becomes PathTag(multiple=True)
-    files2: Annotated[list[Path], Tag(name="Custom name")] = field(default_factory=list)
+    files2: Annotated[list[Path], Tag(label="Custom name")] = field(default_factory=list)
 
     # NOTE this should become PathTag(multiple=True)
     # files3: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
@@ -182,7 +183,7 @@ class DatetimeTagClass:
     p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
     p2: time = time.fromisoformat("17:35:39.922044")
     p3: date = date.fromisoformat("2024-09-10")
-    pAnnot: Annotated[date, Tag(name="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
+    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
 
 
 @dataclass
@@ -191,14 +192,26 @@ class MissingPositional:
 
 
 @dataclass
+class MissingPositionalScalar:
+    file: Positional[Path]
+
+
+@dataclass
+class MissingCombined:
+    file: Positional[Path]
+    foo: str
+    bar: str = "hello"
+
+
+@dataclass
 class AnnotatedClass:
     # NOTE some of the entries are not well supported
-    files1: list[Path]
-    # files2: Positional[list[Path]]  # raises error
+    files1: Positional[list[Path]]
+    files2: list[Path]
+    # files4: Positional[list[Path]] = field(default_factory=list)  # raises error
     # files7: Annotated[list[Path], None]
     # files8: Annotated[list[Path], Tag(annotation=str)]
     files3: list[Path] = field(default_factory=list)
-    # files4: Positional[list[Path]] = field(default_factory=list) # raises error
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
@@ -216,6 +229,14 @@ class AnnotatedClassInner:
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
+
+
+@dataclass
+class AnnotatedClass3:
+    foo1: Positional[int]
+    foo2: list[Path]
+    foo3: Annotated[list[Path], Validation(not_empty)]
+    foo4: Positional[list[bool]] = field(default_factory=list)  # raises error
 
 
 @dataclass
@@ -243,9 +264,64 @@ class Subcommand2(SharedArgs):
     b: int
 
 
+@dataclass
+class SharedArgsB(Command):
+    """ Class with a shared argument. """
+    foo: int = 7
+
+    def init(self):
+        self._trace = []
+
+    def run(self):
+        self._trace.append(1)
+
+
+@dataclass
+class SubcommandB1(SharedArgsB):
+    """ Class inheriting from SharedArgs. """
+    a: int = 1
+
+    def run(self):
+        self._trace.append(2)
+
+
+@dataclass
+class SubcommandB2(SharedArgsB):
+    b: int = 2
+
+
 dynamic_str = "My dynamic str"
+
+
+def validation1(tag: Tag):
+    if tag.val < 10:
+        return True
+    if tag.val < 50:
+        return True, tag.val*2
+    if tag.val < 90:
+        return False
+    return "too big"
+
+
+@dataclass
+class AnnotatedTypes:
+    age: Annotated[int, Gt(18)] = 20                        # Valid: 19, 20, ...
+    # Invalid: 17, 18, "19", 19.0, ...
+    my_list: Annotated[list[int], Len(0, 10)] = field(default_factory=lambda: []
+                                                      )          # Valid: [], [10, 20, 30, 40, 50]
+    # Invalid: (1, 2), ["abc"], [0] * 20
+    percent: Annotated[int, Gt(0), Le(100)] = 5
+    percent_fl: Annotated[float, Gt(0), Le(100)] = 5
+
+
+@dataclass
+class AnnotatedTypesCombined:
+    combined1: Annotated[int, Tag(validation=validation1), Gt(-100), Lt(95)] = 5
+    combined2: Annotated[int, Gt(-100), Tag(validation=validation1), Lt(95)] = 5
+    combined3: Annotated[int, Lt(95), Gt(-100), Tag(validation=validation1)] = 5
+    combined4: Annotated[int, Tag(validation=(validation1, Lt(95), Gt(-100)))] = 5
 
 
 @dataclass
 class DynamicDescription:
-    foo: Annotated[str, Tag(name="Foo"), arg(help=dynamic_str)] = "hello"
+    foo: Annotated[str, Tag(label="Foo"), arg(help=dynamic_str)] = "hello"

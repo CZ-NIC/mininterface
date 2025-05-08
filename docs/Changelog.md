@@ -12,12 +12,15 @@
     * Tag attribute order, swap `name` and `validation`
     * Mininterface.ask_number -> ask(..., int)
     * Mininterface.ask does not return None anymore but forces the type
+    * Tag.name -> Tag.label
+    * removed `--integrate-to-system` in favour of `mininterface integrate`
 * enh: options add shortcut
 * feat: EnumTag multiple
 * fix: TkInterface focus and tab navigation
+* argparse support
 
 ## 0.8.0 (2025-04-01)
-* CHANGED: [EnumTag][mininterface.tag.SelectTag] instead of Tag(options=)
+* CHANGED: [EnumTag][mininterface.tag.SelectTag] instead of Tag(choices=)
 * [WebInterface](Interfaces.md#webinterface-or-web) (working draft)
 * much better [TextInterface](Interfaces.md#textinterface)
 * [SecretTag][mininterface.tag.SecretTag]

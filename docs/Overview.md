@@ -14,7 +14,7 @@ graph LR
 ```
 
 ## Basic usage
-Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user with methods like [`m.confirm("Is that alright?")`][mininterface.Mininterface.confirm].
+Use a common [dataclass](https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass), an argparse [`ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser), a Pydantic [BaseModel](https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/) or an [attrs](https://brentyi.github.io/tyro/examples/04_additional/09_attrs/) model to store the configuration. Wrap it to the [run][mininterface.run] function that returns an interface `m`. Access the configuration via [`m.env`][mininterface.Mininterface.env] or use it to prompt the user with methods like [`m.confirm("Is that alright?")`][mininterface.Mininterface.confirm].
 
 There are a lot of supported [types](Supported-types.md) you can use, not only scalars and well-known objects (`Path`, `datetime`), but also functions, iterables (like `list[Path]`) and union types (like `int | None`). To do even more advanced things, stick the value to a powerful [`Tag`][mininterface.Tag] or its [subclasses](Supported-types.md#additional). Ex. for a validation only, use its [`Validation alias`][mininterface.tag.alias.Validation].
 
@@ -22,7 +22,11 @@ At last, use [`Facet`](Facet.md) to tackle the interface from the back-end (`m`)
 
 ## IDE suggestions
 
-The immediate benefit is the type suggestions you see in an IDE. Imagine following code:
+The immediate benefit is the type suggestions provided by your IDE.
+
+### Dataclass showcase
+
+Imagine following code:
 
 ```python
 from dataclasses import dataclass
@@ -68,14 +72,33 @@ Should the dataclass cannot be easily investigated by the IDE (i.e. a required f
 
 ![Suggestion annotation possible](asset/suggestion_dataclass_annotated.avif)
 
-## Bash completion
+### Select showcase
 
-Run your program with a hidden `--integrate-to-system` flag and a tutorial will install bash completion.
+We push an intuitive type inference everywhere. Here is an example with the [`m.select`][mininterface.Mininterface.select] dialog.
 
-![Bash completion](asset/bash_completion_tutorial.avif)
+```python
+from mininterface import run
+
+m = run()
+# x = m.select([1, 2, 3], default=2)  # -> int
+# x = m.select([1, 2, 3], multiple=True)  # -> list[int]
+# x = m.select([1, 2, 3], default=[2])  # -> list[int]
+```
+
+By default, the inferred type is an `int`.
+
+![Suggestion select](asset/suggestion_select1.avif)
+
+When you flag the selection as multiple or when you submit multiple default values...
+
+![Suggestion select](asset/suggestion_select2.avif)
+
+that means your IDE sees a `list` instead of a single value and you can automatically append to it etc.
+
+![Suggestion select](asset/suggestion_select3.avif)
 
 ## Nested configuration
-You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/)).
+You can easily nest the configuration. (See also [Tyro Hierarchical Configs](https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/).)
 
 Just put another dataclass inside the config file:
 
@@ -108,8 +131,20 @@ further:
   host: example.com
 ```
 
-## Bash integration
+## Bash completion
+
+Run your program with a bundled `mininterface` executable to start a tutorial that will install bash completion.
+
+`$ mininterface integrate ./program`
+
+![Bash completion](asset/bash_completion_tutorial.avif)
+
+## System dialog toolkit
 
 Mininterface can be used as a standalone dialog layer for sh scripts. See `mininterface --help`.
 
-Ex. `mininterface --choice one two three  # outputs one of them`
+```bash
+$ mininterface select one two  # outputs a chosen item
+```
+
+![Select dialog](asset/choices_labels.avif)

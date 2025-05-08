@@ -1,6 +1,6 @@
-from typing import Optional
-from ..auxiliary import common_iterables
-from . import Tag
+from typing import Generic, Optional
+from .._lib.auxiliary import common_iterables
+from .tag import Tag, TagValue
 
 
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 @dataclass(repr=False)
-class PathTag(Tag):
+class PathTag(Tag[Path | list[Path] | TagValue]):
     """
     Contains a Path or their list. Use this helper object to select files.
 
@@ -49,6 +49,9 @@ class PathTag(Tag):
     is_file: Optional[bool] = None
     """ If True, validates that the selected path is a file """
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __post_init__(self):
         # Determine annotation from multiple
         if not self.annotation and self.multiple is not None:
@@ -63,6 +66,8 @@ class PathTag(Tag):
             self.annotation = list[Path]
         if self.annotation == list:  # PathTag([])
             self.annotation = list[Path]
+        if self.annotation is None:  # the .val seems None but we need an annotation
+            self.annotation = Path
 
         # Determine multiple from annotation
         if self.multiple is None:

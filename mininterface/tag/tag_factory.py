@@ -2,11 +2,14 @@ from copy import copy
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
-from typing import Type, get_type_hints
+from typing import Any, Iterable, Type, get_type_hints
+
+from annotated_types import BaseMetadata, GroupedMetadata
 
 from . import DatetimeTag, SelectTag, Tag
 from .callback_tag import CallbackTag
 from .path_tag import PathTag
+from .tag import TagValue, ValidationCallback
 from .type_stubs import TagCallback
 
 
@@ -38,8 +41,13 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     return type(tag)
 
 
-def tag_fetch(tag: Tag, ref: dict | None, name: str):
-    return tag._fetch_from(Tag(**ref), name)
+def assure_tag(type_or_tag: Type[TagValue] | Tag, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> Tag:
+    if isinstance(type_or_tag, Tag):
+        if validation:
+            type_or_tag._add_validation(validation)
+        return type_or_tag
+    else:
+        return tag_assure_type(Tag(annotation=type_or_tag, validation=validation))
 
 
 def tag_assure_type(tag: Tag):
@@ -47,7 +55,11 @@ def tag_assure_type(tag: Tag):
     if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
         # I cannot use type_._fetch_from(tag) here as SelectTag.__post_init__
         # needs the self.val which would not be yet set.
-        return type_(**tag.__dict__)
+        # Hence we pass the attributes as a dict, while fixing the inheritance – we need to inherit
+        # directly from the source tag (not from its own ancestors).
+        info = {**tag.__dict__}
+        info["_src_obj"] = tag
+        return type_(**info)
     return tag
 
 
@@ -60,6 +72,8 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
         else:
             _src_class = _src_obj.__class__
     kwargs |= {"_src_obj": _src_obj, "_src_key": _src_key, "_src_class": _src_class}
+    validators = []
+    tag = None
     if _src_class:
         if not annotation:  # when we have _src_class, we assume to have _src_key too
             annotation = get_type_hint_from_class_hierarchy(_src_class, _src_key)
@@ -83,5 +97,12 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                                     # Annotated[ **origin** list[Path], Tag(...)]
                                     new.annotation = annotation or field_type.__origin__
                                 # Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...) -> DatetimeTag(date=True)
-                                return tag_assure_type(new._fetch_from(Tag(*args, **kwargs)))
-    return tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
+                                tag = tag_assure_type(new._fetch_from(Tag(*args, **kwargs), include_ref=True))
+                            elif isinstance(metadata, (BaseMetadata, GroupedMetadata)):
+                                validators.append(metadata)
+    if not tag:
+        tag = tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
+
+    if validators:  # we prepend annotated_types validators to the current validator
+        tag._add_validation(validators)
+    return tag
