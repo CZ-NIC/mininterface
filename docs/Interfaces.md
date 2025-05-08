@@ -50,61 +50,60 @@ The base interface.
 
 # `GuiInterface` or `TkInterface` or 'gui'
 
-A tkinter window.
+A tkinter window. It inherits from [`GuiSettings`][mininterface.settings.GuiSettings].
 
-It inherits from [`GuiSettings`][mininterface.settings.GuiSettings]
+```bash
+$ MININTERFACE_INTERFACE=gui ./program.py
+```
+
+![Hello world example: GUI window](asset/hello-gui.avif "A minimal use case – GUI")
+<br>*The code for generating screenshots is taken from the [Introduction](index.md).*
 
 # `TuiInterface` or 'tui'
 
-An interactive terminal.
+An interactive terminal. Will try to get `TextualInterface` and `TextInterface` as a fallback.
 
 ## `TextualInterface`
 
 If [textual](https://github.com/Textualize/textual) installed, rich and mouse clickable interface is used.
 
+```bash
+$ MININTERFACE_INTERFACE=tui ./program.py
+```
+
+![Hello world example: TUI fallback](asset/hello-tui.avif "A minimal use case – TUI fallback")
+
 ## `TextInterface`
 
 Plain text only interface with no dependency as a fallback. The non-interactive session becomes interactive if possible but there is no mouse support. Does not clear whole screen as TextualInterface if it suits better your program flow.
+
+```bash
+$ MININTERFACE_INTERFACE=text ./program.py
+```
+![Hello world example: text fallback](asset/hello-text.avif "A minimal use case – text fallback")
 
 # `WebInterface` or 'web'
 
 Exposed to a web.
 
-```python
-from dataclasses import dataclass
-from mininterface import run
+You can expose any script to the web by invoking it through the bundled `mininterface` program.
 
-@dataclass
-class Env:
-    my_flag: bool = False
-    my_number: int = 4
-
-if __name__ == "__main__":
-    m = run(Env, interface="web")
-    m.form()  # Exposed on the web
-```
-
-Note that you can expose to the web any mininterface application, like this GUI:
-
-```python
-from dataclasses import dataclass
-from mininterface import run
-
-@dataclass
-class Env:
-    my_flag: bool = False
-    my_number: int = 4
-
-if __name__ == "__main__":
-    m = run(Env, interface="gui")
-    m.form()  # Seen in the GUI
-```
-
-We expose it to the web by invoking it through the `mininterface` program.
 
 ```bash
-$ mininterface --web.cmd ./program.py --web.port 9997
+$ mininterface web ./program.py --port 9997
 ```
+
+But still, you have the possibility to invoke the web by preference in the `run` or `get_interface` method, direct invocation through importing `WebInterface` from `mininterface.interfaces`, or through the environment variable.
+
+```bash
+$ MININTERFACE_INTERFACE=web ./program.py
+Serving './program.py' on http://localhost:64646
+
+Press Ctrl+C to quit
+```
+![Hello world example: web](asset/hello-web.avif "A minimal use case – web")
+
+
 
 !!! Caveat
     Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!

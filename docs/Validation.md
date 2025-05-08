@@ -1,6 +1,6 @@
 We recommend to use the dataclass and validate with the `Annotated` keyword. We use a [Validation][mininterface.tag.alias.Validation] type here.
 
-```python3
+```python
 from typing import Annotated
 from mininterface.validators import not_empty
 from mininterface import Validation
@@ -12,7 +12,7 @@ class Env:
 
 Under the hood, this is just a [`Tag`][mininterface.Tag].
 
-```python3
+```python
 @dataclass
 class Env:
     test: Annotated[str, Tag(validation=not_empty)] = "hello"

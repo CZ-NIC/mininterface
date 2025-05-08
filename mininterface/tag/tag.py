@@ -1,4 +1,5 @@
 from ast import literal_eval
+from collections import abc
 from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
@@ -603,6 +604,14 @@ class Tag(Generic[TagValue]):
         """
         def _(annot):
             if origin := get_origin(annot):  # list[str] -> list, list -> None
+                if origin is abc.Callable:
+                    # I found no usecase for checking Callable, hence I return None.
+                    # This statement is here for handling cases like this. That checks whether there is ex. `date` to get the DatetimeTag
+                    # but there is nothing like that.
+                    # @dataclass
+                    # class Env:
+                    #     foo: Callable = fn
+                    return None, None
                 subtype = get_args(annot)  # list[str] -> (str,), list -> ()
                 if origin in [UnionType, Union]:  # ex: `int | None`, `list[int] | None`, `Optional[list[int]]`
                     return [_(subt) for subt in subtype]

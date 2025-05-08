@@ -87,7 +87,7 @@ def _get_interface_type(interface: InterfaceType = None):
             raise InterfaceNotAvailable
 
 
-def get_interface(interface: InterfaceType = None, title="", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
+def get_interface(interface: InterfaceType = None, title: str = "", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
     """ Returns the best available interface.
 
     Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
@@ -100,7 +100,7 @@ def get_interface(interface: InterfaceType = None, title="", settings: Optional[
 
     Args:
         interface: An interface type of preference.
-        title:
+        title: Window title
         settings: [MininterfaceSettings][mininterface.settings.MininterfaceSettings] objects
         env: You can specify the .env attribute of the returned object.
     """

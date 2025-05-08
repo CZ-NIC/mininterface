@@ -8,7 +8,7 @@ class DatetimeTag(Tag[TagValue | date | time | datetime]):
     """
     Datetime, date and time types are supported.
 
-    ```python3
+    ```python
     from datetime import datetime
     from dataclasses import dataclass
     from mininterface import run
@@ -26,7 +26,7 @@ class DatetimeTag(Tag[TagValue | date | time | datetime]):
 
     In this code, we want only the date part.
 
-    ```python3
+    ```python
     from datetime import date
     from dataclasses import dataclass
     from mininterface import run
@@ -46,7 +46,7 @@ class DatetimeTag(Tag[TagValue | date | time | datetime]):
     # NOTE, document using full_precision.
     # You may use the DatetimeTag to specify more options.
 
-    # ```python3
+    # ```python
     # from mininterface import run
     # from mininterface.tag import DatetimeTag
 

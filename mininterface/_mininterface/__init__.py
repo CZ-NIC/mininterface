@@ -37,10 +37,10 @@ class Mininterface(Generic[EnvClass]):
         or you can create [one](Interfaces.md) directly (without benefiting from the CLI parsing).
 
     Raise:
-        [Cancelled][mininterface.exceptions.Cancelled]: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
+        [Cancelled][mininterface.exceptions.Cancelled]: A `SystemExit` based exception noting that the program exits without a traceback, ex. if user hits the escape.
 
     Raise:
-        [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI.
+        [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI. You don't have to check for it when invoking an interface through safe methods [`run`][mininterface.run] or [`get_interface`][mininterface.interfaces.get_interface].
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 
@@ -110,7 +110,7 @@ class Mininterface(Generic[EnvClass]):
 
         Redirects the stdout to a text area instead of a terminal.
 
-        ```python3
+        ```python
         from mininterface import run
 
         with run() as m:
@@ -124,7 +124,7 @@ class Mininterface(Generic[EnvClass]):
 
         If run from an interactive terminal or if a GUI is used, nothing special happens.
 
-        ```python3
+        ```python
         # $ ./program.py
         with run() as m:
             m.ask("What number", int)
@@ -135,7 +135,7 @@ class Mininterface(Generic[EnvClass]):
         However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#textinterface)
         is used which is able to turn it into an interactive one.
 
-        ```python3
+        ```python
         piped_in = int(sys.stdin.read())
 
         with run(interface="tui") as m:
@@ -152,7 +152,7 @@ class Mininterface(Generic[EnvClass]):
         If the `with` statement is not used, the result is the same as if an interactive session is not available, like in a cron job.
         In that case, plain Mininterface is used.
 
-        ```python3
+        ```python
         piped_in = int(sys.stdin.read())
 
         m = run(interface="tui")

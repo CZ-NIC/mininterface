@@ -244,5 +244,5 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
 
 
 __all__ = ["run", "Mininterface", "Tag",
-           "InterfaceNotAvailable", "Cancelled",
+           "Cancelled",
            "Validation", "Options"]

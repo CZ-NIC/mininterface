@@ -177,7 +177,7 @@ class Command(ABC):
         (Either directly in the CLI or by a successive dialog.)
 
         Raises:
-            ValidationFail – Do repeat the form.
+            ValidationFail: Do repeat the form.
         """
         ...
 

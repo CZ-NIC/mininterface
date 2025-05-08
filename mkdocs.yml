@@ -5,7 +5,9 @@ docs_dir: docs
 
 theme:
   name: "material"
-  features: navigation.expand
+  features:
+    - navigation.expand
+    - content.code.copy
 
 extra_javascript:
   - https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js

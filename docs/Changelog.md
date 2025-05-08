@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## 1.0.0 (2025-05-08)
 * CHANGED – renamed: API is becoming stable but we have to rename several things.
     * .is_yes -> [Mininterface.confirm][mininterface.Mininterface.confirm]
     * .is_no -> .confirm(..., False) (because .is_no was counterintuitive)

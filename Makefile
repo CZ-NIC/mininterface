@@ -1,5 +1,5 @@
 MANIFEST := pyproject.toml
-TAG := $(shell grep "^version" $(MANIFEST) | pz --search '"(\d+\.\d+\.\d+(?:-(?:rc|alpha|beta)\d+)?)?"')
+TAG := $(shell grep "^version" $(MANIFEST) | pz --search '"(\d+\.\d+\.\d+(?:-(?:rc|alpha|beta)\.?\d+)?)?"')
 
 .PHONY: release validate pre-check
 default: release

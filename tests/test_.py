@@ -7,9 +7,9 @@ from importlib import import_module
 from io import StringIO
 from pathlib import Path, PosixPath
 from types import NoneType, SimpleNamespace
-from typing import Optional, Type, get_type_hints
+from typing import Callable, Optional
 from unittest import main
-from unittest.mock import DEFAULT, Mock, patch
+from unittest.mock import patch
 
 from annotated_types import Gt, Lt
 from attrs_configs import AttrsModel, AttrsNested, AttrsNestedRestraint
@@ -911,6 +911,10 @@ class TestTagAnnotation(TestAbstract):
         _([(list, str)], None | list[str])
         _([(list, str), (tuple, [int])], None | list[str] | tuple[int])
         _([(list, int), (tuple, [str]), (None, str)], list[int] | tuple[str] | str | None)
+
+        # I found no usecase for Callable, so currently, it returns None.
+        _([(None, None)], Callable)
+        _([(None, None)], Callable[[int], int])
 
     def test_subclass_check(self):
         def _(compared, annotation, true=True):

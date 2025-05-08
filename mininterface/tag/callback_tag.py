@@ -1,4 +1,4 @@
-from . import Tag
+from .tag import Tag, TagValue, UiValue
 
 
 from dataclasses import dataclass
@@ -6,11 +6,11 @@ from typing import Any, Callable
 
 
 @dataclass
-class CallbackTag(Tag):
+class CallbackTag(Tag[TagValue | Callable]):
     ''' Callback function is guaranteed to receive the [Tag][mininterface.Tag] as a parameter.
 
     !!! warning
-        Experimental. May change.
+        Experimental. May change into a CallableTag.
 
     For the following examples, we will use these custom callback functions:
     ```python

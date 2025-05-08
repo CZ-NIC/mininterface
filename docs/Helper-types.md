@@ -1,4 +1,3 @@
-# Helper types
 ::: mininterface.tag.tag.ErrorMessage
     options:
       show_root_full_path: false

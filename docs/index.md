@@ -24,7 +24,7 @@ class Env:
     """ This number is very important """
 
 if __name__ == "__main__":
-    m = run(Env, prog="My application")
+    m = run(Env, title="My application")
     m.form()
     # Attributes are suggested by the IDE
     # along with the hint text 'This number is very important'.
@@ -49,7 +49,7 @@ It was all the code you need. No lengthy blocks of code imposed by an external d
 
 ```bash
 $ ./program.py --help
-usage: My application [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
+usage: program.py [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
 
 This calculates something.
 
@@ -115,7 +115,7 @@ There are various bundles. We mark the least permissive licence in the bundle.
 
 | bundle | size | licence | description |
 | ------ | ---- | ----------- | ---- |
-| mininterface | 1 MB | LGPL | only text dialogs |
+| mininterface | 1 MB | LGPL | minimal – only text dialogs |
 | mininterface[basic] | 25 MB | LGPL | CLI, GUI, TUI |
 | mininterface[web] | 40 MB | LGPL | including [WebInterface](Interfaces.md#webinterface-or-web) |
 | mininterface[img] | 40 MB | LGPL | images |
@@ -123,6 +123,11 @@ There are various bundles. We mark the least permissive licence in the bundle.
 | mininterface[gui] | 70 MB | GPL | images, combobox, calendar |
 | mininterface[ui] | 90 MB | GPL | full installation |
 | mininterface[all] | 90 MB | GPL | full installation, same as `ui`, reserved for future use (big dependencies, optional interfaces) |
+
+Apart from the minimal bundle (which lacks CLI and dataclass support), they have the same functionality, differring only in the user experience.
+
+!!! tip
+  For automated testing (e.g., in CI environments), the `mininterface[basic]` bundle is sufficient.
 
 ## MacOS GUI
 
@@ -149,7 +154,7 @@ Take a look at the following example.
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
-```python3
+```python
 from dataclasses import dataclass
 from pathlib import Path
 from mininterface import run
@@ -228,7 +233,7 @@ You want to try out the Mininterface with your current [`ArgumentParser`](https:
 
 You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the [`run`][mininterface.run] method.
 
-```python3
+```python
 #!/usr/bin/env python3
 from argparse import ArgumentParser
 from datetime import time
