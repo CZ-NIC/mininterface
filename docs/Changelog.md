@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.2 (2025-05-10)
+* fix: mute TextInterface on Win
+
 ## 1.0.1 (2025-05-08)
 * fix: gui ask validation
 

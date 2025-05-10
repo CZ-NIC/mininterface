@@ -150,7 +150,7 @@ Take a look at the following example.
 
 1. We define any Env class.
 2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
-3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`choice`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
+3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`select`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
       # like `confirm` for bool
       if m.confirm("Do you want to continue?"):
 
-        # or `choice` for choosing a value
+        # or `select` for choosing a value
         fruit = m.select(("apple", "banana", "sirup"), "Choose a fruit")
 
         if fruit == "apple":

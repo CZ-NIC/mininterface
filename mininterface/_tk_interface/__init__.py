@@ -1,7 +1,5 @@
 from typing import Iterable, Type
 
-from .._text_interface import ValidationCallback
-
 try:
     # It seems tkinter is installed either by default or not installable at all.
     # Tkinter is not marked as a requirement as other libraries does that neither.
@@ -12,7 +10,7 @@ except ImportError:
 
 from ..exceptions import InterfaceNotAvailable
 
-from .._mininterface import EnvClass, Mininterface, TagValue
+from .._mininterface import EnvClass, Mininterface, TagValue, ValidationCallback
 from .._mininterface.mixin import RichUiMixin
 from ..tag import Tag
 from ..settings import GuiSettings
