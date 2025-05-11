@@ -1,2 +1,0 @@
-# Subcommands
-::: mininterface.subcommands

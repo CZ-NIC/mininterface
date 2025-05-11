@@ -12,6 +12,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install minimal dependencies
+        run: pip install -e .
+      - name: Run minimal tests
+        # It is important to test the minimal installation
+        # as it should be the most stable one which can be thwarted by a single errand import.
+        #
+        # Even though it is a complex task to neglect some dependencies from being importable,
+        # it is easy to not install them at all.
+        run: python3 -m unittest tests.minimal_test
       - name: Install dependencies
         run: |
           pip install -e .[basic]
@@ -19,4 +28,4 @@ jobs:
           pip install attrs
           pip install pydantic
       - name: Run tests
-        run: python3 tests/tests.py
+        run: python3 -m unittest discover -s tests -p "test_*.py"

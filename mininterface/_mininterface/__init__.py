@@ -11,11 +11,10 @@ from ..tag.select_tag import OptionsType, SelectTag
 
 from .adaptor import BackendAdaptor, MinAdaptor
 
-from ..settings import MininterfaceSettings, UiSettings
+from ..settings import UiSettings
 
-from ..exceptions import Cancelled, DependencyRequired
+from ..exceptions import DependencyRequired
 
-from ..subcommands import Command
 from ..facet import Facet
 from .._lib.form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
                               dict_to_tagdict, formdict_resolve)
@@ -38,10 +37,10 @@ class Mininterface(Generic[EnvClass]):
         or you can create [one](Interfaces.md) directly (without benefiting from the CLI parsing).
 
     Raise:
-        [Cancelled][mininterface.exceptions.Cancelled]: A SystemExit based exception noting that the program exits without a traceback, ex. if user hits the escape.
+        [Cancelled][mininterface.exceptions.Cancelled]: A `SystemExit` based exception noting that the program exits without a traceback, ex. if user hits the escape.
 
     Raise:
-        [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI.
+        [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI. You don't have to check for it when invoking an interface through safe methods [`run`][mininterface.run] or [`get_interface`][mininterface.interfaces.get_interface].
     """
     # This base interface does not require any user input and hence is suitable for headless testing.
 
@@ -74,7 +73,7 @@ class Mininterface(Generic[EnvClass]):
         # Why using EnvInstance? So that the docs looks nice, otherwise, there would be `_env or SimpleNamespace()`.
         EnvInstance = _env or SimpleNamespace()
         self.env: EnvClass | SimpleNamespace = EnvInstance
-        """ Parsed arguments, fetched from CLI.
+        """ Parsed arguments from the [EnvClass][mininterface._lib.form_dict.EnvClass].
             Contains whole configuration (previously fetched from CLI and config file).
 
         ```bash
@@ -111,7 +110,7 @@ class Mininterface(Generic[EnvClass]):
 
         Redirects the stdout to a text area instead of a terminal.
 
-        ```python3
+        ```python
         from mininterface import run
 
         with run() as m:
@@ -125,7 +124,7 @@ class Mininterface(Generic[EnvClass]):
 
         If run from an interactive terminal or if a GUI is used, nothing special happens.
 
-        ```python3
+        ```python
         # $ ./program.py
         with run() as m:
             m.ask("What number", int)
@@ -136,7 +135,7 @@ class Mininterface(Generic[EnvClass]):
         However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#textinterface)
         is used which is able to turn it into an interactive one.
 
-        ```python3
+        ```python
         piped_in = int(sys.stdin.read())
 
         with run(interface="tui") as m:
@@ -153,7 +152,7 @@ class Mininterface(Generic[EnvClass]):
         If the `with` statement is not used, the result is the same as if an interactive session is not available, like in a cron job.
         In that case, plain Mininterface is used.
 
-        ```python3
+        ```python
         piped_in = int(sys.stdin.read())
 
         m = run(interface="tui")
@@ -236,7 +235,7 @@ class Mininterface(Generic[EnvClass]):
                 ```
 
         Returns:
-            The type from the `annotation`. For str = '', for int = 0, ...
+            The type from the `annotation`. By default `str` but might be int, datetime...
         """
         # NOTE Add validation: Callable | annotated-types | None = None.
         # But what should be the callable parameter, tag, or the value? The same as in the Tag(validation=).
@@ -270,7 +269,7 @@ class Mininterface(Generic[EnvClass]):
         """
         # NOTE cancel=False parameter to add a cancel button
         print(f"Asking {'yes' if default else 'no'}:", text)
-        return True
+        return default is True
 
     # default + multiple none -> single
     @overload
@@ -347,7 +346,20 @@ class Mininterface(Generic[EnvClass]):
             tips: Options to be highlighted. Use the list of choice values to denote which one the user might prefer.
             multiple: If True, the user can choose multiple values and we return a list.
             skippable: If there is a single option, choose it directly, without a dialog.
-            launch: If the chosen value is a callback, we directly call it and return its return value.
+            launch:
+                If the chosen value is a callback, we directly call it and return its return value.
+
+                ```python
+                def do_cmd1():
+                    return "cmd1"
+
+                def do_cmd2():
+                    return "cmd2"
+
+                m = run()
+                out = m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2})
+                print(out)  # 'cmd1' or 'cmd2'
+                ```
 
         Returns:
             TagValue: The chosen value.

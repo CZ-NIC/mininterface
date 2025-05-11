@@ -10,17 +10,16 @@ from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
 from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings
-from ._lib.start import Start
-from .subcommands import Command, SubcommandPlaceholder
 from .tag import Tag
 from .tag.alias import Options, Validation
 
 try:
+    from ._lib.start import ChooseSubcommandOverview, Start
+    from .cli import Command, SubcommandPlaceholder
     from ._lib.cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
-
-# NOTE: imgs missing in Interfaces.md
+    ChooseSubcommandOverview, Start, SubcommandPlaceholder = (e,) * 3
 
 
 @dataclass
@@ -49,8 +48,8 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
 
     Args:
         env_or_list:
-            * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments. A [Command][mininterface.subcommands.Command] descendant might be used to be automatically run.
-            * `list` of such `dataclasses` or [Commands][mininterface.subcommands.Command] let you create multiple commands within a single program, each with unique options.
+            * `dataclass` Dataclass with the configuration. Their values will be modified with the CLI arguments.
+            * `list` of dataclasses let you create multiple commands within a single program, each with unique options. You may use [Command][mininterface.cli.Command] descendants to be automatically run.
             * `argparse.ArgumentParser` Not as powerful as the `dataclass` but should you need to try out whether to use the Mininterface instead of the old [`argparse`](https://docs.python.org/3/library/argparse.html), this is the way to go.
             * `None` You need just the dialogs, no CLI/config file parsing.
 
@@ -112,7 +111,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
         interface: Which interface to prefer. By default, we use the GUI, the fallback is the TUI.
             You may write "gui" or "tui" literal or pass a specific Mininterface type,
             see the full [list](Interfaces.md) of possible interfaces.
-            If not set, we look also for an environment variable MININTERFACE_INTERFACE and in the config file.
+            If not set, we look also for an environment variable [`MININTERFACE_INTERFACE`](Interfaces.md#environment-variable-mininterface_interface) and in the config file.
         args: Parse arguments from a sequence instead of the command line.
         settings: Default settings. These might be further modified by the 'mininterface' section in the config file.
     Kwargs:
@@ -174,7 +173,6 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
     if not interface:
         interface = os.environ.get("MININTERFACE_INTERFACE")
-    start = Start(title, interface)
     if os.environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
 
@@ -187,7 +185,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
     # Hidden meta-commands in args
     if os.environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
         del os.environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
-        start.integrate(env_or_list or _Empty)
+        Start(title, interface).integrate(env_or_list or _Empty)
         quit()
 
     # Convert argparse
@@ -195,69 +193,56 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
         env_or_list = parser_to_dataclass(env_or_list)
 
     # A) Superform – overview of the subcommands
-    classic_env = True
     if ask_for_missing and isinstance(env_or_list, list):
-        superform = False
+        superform_args = None
         if SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-            superform, forms = start.choose_subcommand(env_or_list, args=args[1:], ask_for_missing=ask_for_missing)
+            superform_args = args[1:]
         elif not args:
-            superform, forms = start.choose_subcommand(env_or_list, ask_for_missing=ask_for_missing)
+            superform_args = []
 
-        if superform:
-            # multiple subcommands exist
-            classic_env = False
+        if superform_args is not None:
+            # Run Superform as multiple subcommands exist and we have to decide which one to run.
             m = get_interface(interface, title, settings, None)
-            for form in forms:
-                if isinstance(form, Command):
-                    form: Command
-                    # TODO – fetching from adaptor here is asymetric.
-                    # It's on this place only.
-                    # Furthermore, on_change=c.do_refresh_title does not CHANGE THE TITLE.
-                    m.facet._fetch_from_adaptor(superform[form.__class__.__name__])
-                    form.facet = m.facet
-                    form.interface = m
-                    form.init()
-            # this call will a chosen env will trigger its `.run()` and stores itself to `start._chosen_form`
-            m.form(superform, submit=False)
-            # NOTE _chosen_form should never be None... except in testing.
-            # The testing should adapt the possibility
-            # assert start._chosen_form is not None
-            m.env = start._chosen_form
+            ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
+            return m  # m with added `m.env`
 
-    # B) Classic Env object or their list
+    # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
-    if classic_env:
-        # Parse CLI arguments, possibly merged from a config file.
-        kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
-        if env_or_list:
-            # B) Classic Env object or their list
-            # Load configuration from CLI and a config file
-            env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
-            m = get_interface(interface, title, settings, env)
 
-            # Empty CLI → GUI edit
-            if ask_for_missing and wrong_fields:
-                # Some fields must be set.
-                m.form(wrong_fields)
-            elif ask_on_empty_cli and len(sys.argv) <= 1:
-                m.form()
+    # Parse CLI arguments, possibly merged from a config file.
+    kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
+    if env_or_list:
+        # B) single Env object
+        # Load configuration from CLI and a config file
+        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
+        m = get_interface(interface, title, settings, env)
 
-            if isinstance(env, Command):
-                env.facet = m.facet
-                env.interface = m
-                env.init()
-                # NOTE If this raises a ValidationFail (as suggested in the documentation),
-                # should we repeat? And will not it cycle in a cron script?
-                env.run()
-        else:
-            # C) No Env object
-            # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-            parse_cli(_Empty, {}, add_verbose, ask_for_missing, args)
-            m = get_interface(interface, title, settings, None)
+        # Empty CLI → GUI edit
+        if ask_for_missing and wrong_fields:
+            # Some fields must be set.
+            m.form(wrong_fields)
+        elif ask_on_empty_cli and len(sys.argv) <= 1:
+            m.form()
+
+        # Even though Command is not documented to work with run(Env) (but only as run([Env])), it works.
+        # Why? Because the subcommand chosen by CLI and not here in the SubcommandOverview will get here.
+        # Why it is not documented? – What use-case would it have?
+        # And if this env.run() raises a ValidationFail (as suggested in the documentation),
+        # should we repeat? And will not it cycle in a cron script?
+        if isinstance(env, Command):
+            env.facet = m.facet
+            env.interface = m
+            env.init()
+            env.run()
+    else:
+        # C) No Env object
+        # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
+        parse_cli(_Empty, {}, add_verbose, ask_for_missing, args)
+        m = get_interface(interface, title, settings, None)
 
     return m
 
 
 __all__ = ["run", "Mininterface", "Tag",
-           "InterfaceNotAvailable", "Cancelled",
+           "Cancelled",
            "Validation", "Options"]

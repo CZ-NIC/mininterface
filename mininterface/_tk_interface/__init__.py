@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Iterable, Type
 
 try:
     # It seems tkinter is installed either by default or not installable at all.
@@ -10,7 +10,7 @@ except ImportError:
 
 from ..exceptions import InterfaceNotAvailable
 
-from .._mininterface import EnvClass, Mininterface, TagValue
+from .._mininterface import EnvClass, Mininterface, TagValue, ValidationCallback
 from .._mininterface.mixin import RichUiMixin
 from ..tag import Tag
 from ..settings import GuiSettings
@@ -20,7 +20,7 @@ from .redirect_text_tkinter import RedirectTextTkinter
 
 
 class TkInterface(Redirectable, RichUiMixin, Mininterface):
-    """ When used in the with statement, the GUI window does not vanish between dialogues. """
+    """ When used in the with statement, the GUI window does not vanish between dialogs. """
 
     _adaptor: TkAdaptor
 
@@ -33,8 +33,8 @@ class TkInterface(Redirectable, RichUiMixin, Mininterface):
         # The window must disappear completely. Otherwise an empty trailing window would appear in the case another TkInterface would start.
         self._adaptor.destroy()
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag = str) -> TagValue:
-        if annotation is int:
+    def ask(self, text: str, annotation: Type[TagValue] | Tag = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
+        if annotation is int and validation is None:
             # without 0, tkinter_form would create a mere text Entry
             return self.form({text: 0})[text]
-        return super().ask(text, annotation)
+        return super().ask(text, annotation, validation)

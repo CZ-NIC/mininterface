@@ -56,9 +56,11 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self.frame = self.sf.display_widget(Frame)
         """ dialog frame """
 
-        self.label = Label(self.frame, text="")
-        # TODO need this to be shown self.label.pack(pady=10)
-        self.label.pack_forget()
+        # Without label frame, self.label would be repacked to the end, not to the top.
+        # (As the packing does not occur in __init__ but later via facet.set_title.)
+        self.label_frame = Frame(self.frame)
+        self.label_frame.pack()
+        self.label = Label(self.label_frame, text="")
 
         self.text_widget = Text(self.frame, wrap='word', height=20, width=80)
         self.text_widget.pack_forget()

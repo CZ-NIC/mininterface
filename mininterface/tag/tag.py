@@ -1,4 +1,5 @@
 from ast import literal_eval
+from collections import abc
 from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
@@ -603,6 +604,14 @@ class Tag(Generic[TagValue]):
         """
         def _(annot):
             if origin := get_origin(annot):  # list[str] -> list, list -> None
+                if origin is abc.Callable:
+                    # I found no usecase for checking Callable, hence I return None.
+                    # This statement is here for handling cases like this. That checks whether there is ex. `date` to get the DatetimeTag
+                    # but there is nothing like that.
+                    # @dataclass
+                    # class Env:
+                    #     foo: Callable = fn
+                    return None, None
                 subtype = get_args(annot)  # list[str] -> (str,), list -> ()
                 if origin in [UnionType, Union]:  # ex: `int | None`, `list[int] | None`, `Optional[list[int]]`
                     return [_(subt) for subt in subtype]
@@ -740,8 +749,7 @@ class Tag(Generic[TagValue]):
                         # Ex. putting "2.0" into an int.
                         # It would generate type problem later here in the method,
                         # but even now comparison failed Ex. TypeError("2.0" > 0)
-                        self.set_error_text(f"Type must be {self._repr_annotation()}!")
-                        raise ValueError
+                        raise ValueError(f"Type must be {self._repr_annotation()}!")
                 else:
                     res = vald(self)
                     if isinstance(res, tuple):
@@ -751,16 +759,14 @@ class Tag(Generic[TagValue]):
                         passed = res
                         self.val = last
                     if passed is not True:  # we did not pass, there might be an error message in passed
-                        self.set_error_text(passed or f"Validation fail")
-                        raise ValueError
+                        raise ValueError(passed or f"Validation fail")
 
         # pydantic_check
         if self._pydantic_field:
             try:
                 create_model('ValidationModel', check=(self.annotation, self._pydantic_field))(check=out_value)
             except PydanticValidationError as e:
-                self.set_error_text(e.errors()[0]["msg"])
-                raise ValueError
+                raise ValueError(e.errors()[0]["msg"])
         # attrs check
         if self._attrs_field:
             try:
@@ -769,13 +775,11 @@ class Tag(Generic[TagValue]):
                     {"check": attr.ib(validator=self._attrs_field.validator)}
                 )(check=out_value)
             except ValueError as e:
-                self.set_error_text(str(e))
-                raise
+                raise ValueError(str(e))
 
         # Type check
         if not self._is_right_instance(out_value):
-            self.set_error_text(f"Type must be {self._repr_annotation()}!")
-            raise ValueError
+            raise ValueError(f"Type must be {self._repr_annotation()}!")
 
         return out_value
 
@@ -861,7 +865,8 @@ class Tag(Generic[TagValue]):
         # User and type validation check
         try:
             self.val = self._validate(out_value)   # checks succeeded, confirm the value
-        except ValueError:
+        except ValueError as e:
+            self.set_error_text(str(e))
             return False
         self._update_source(out_value)
         return True

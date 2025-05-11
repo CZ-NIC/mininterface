@@ -11,6 +11,7 @@ from .settings import MininterfaceSettings, InterfaceName
 from .exceptions import InterfaceNotAvailable
 
 InterfaceType = Type[Mininterface] | InterfaceName | None
+""" Either a class symbol or [a shortcut string](Interfaces.md#all-possible-interfaces). """
 
 if TYPE_CHECKING:
     # static type checker does not see our dynamic interface import (performance reason)
@@ -80,18 +81,26 @@ def _get_interface_type(interface: InterfaceType = None):
             return __getattr__("WebInterface")
         case "tui" | "textual":
             return __getattr__("TuiInterface")
+        case "min":
+            return Mininterface
         case _:
             raise InterfaceNotAvailable
 
 
-def get_interface(interface: InterfaceType = None, title="", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
+def get_interface(interface: InterfaceType = None, title: str = "", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
     """ Returns the best available interface.
 
     Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
 
+    ```python
+    from mininterface.interfaces import get_interface
+    m = get_interface()
+    m.ask("...")
+    ```
+
     Args:
         interface: An interface type of preference.
-        title:
+        title: Window title
         settings: [MininterfaceSettings][mininterface.settings.MininterfaceSettings] objects
         env: You can specify the .env attribute of the returned object.
     """

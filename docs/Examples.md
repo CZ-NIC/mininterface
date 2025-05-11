@@ -4,7 +4,7 @@ A powerful [`m.form`](https://cz-nic.github.io/mininterface/Mininterface/#minint
 
 ## A complex dataclass.
 
-```python3
+```python
 from typing import Annotated
 from dataclasses import dataclass
 from mininterface.validators import not_empty

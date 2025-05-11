@@ -1,27 +1,67 @@
-""" Dealing with CLI subcommands, `from mininterface.subcommands import *`  """
+""" Useful objects meaningful for CLI handling only. """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+try:
+    from tyro.conf import Positional
+except ImportError:
+    from .exceptions import DependencyRequired
+    raise DependencyRequired("basic")
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
     from .facet import Facet
     from ._mininterface import Mininterface
     from typing import Self
+    from ._lib.form_dict import EnvClass
+
+Positional = Positional
+"""
+Annotate the dataclass field with `Positional` to make it behave like a positional argument in the CLI.
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+from mininterface.cli import Positional
+
+@dataclass
+class Env:
+    flag1: Positional[str] = "default"
+    flag2: str = "flag"
+
+run(Env)
+```
+
+```bash
+$ ./program.py --help
+usage: program.py [-h] [-v] [--flag2 STR] [STR]
+
+╭─ positional arguments ───────────────────────────────────────────────╮
+│ [STR]                flag1 (default: default)                        │
+╰──────────────────────────────────────────────────────────────────────╯
+╭─ options ────────────────────────────────────────────────────────────╮
+│ -h, --help           show this help message and exit                 │
+│ -v, --verbose        Verbosity level. Can be used twice to increase. │
+│ --flag2 STR          (default: flag)                                 │
+╰──────────────────────────────────────────────────────────────────────╯
+```
+
+This is just a link from `tyro.conf` package which comes bundled. You will find much more useful features there.
+https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.Positional
+"""
 
 
 @dataclass
 class Command(ABC):
     """ The Command is automatically run while instantanied.
 
-    It adapts [`init`][mininterface.subcommands.Command.init] and [`run`][mininterface.subcommands.Command.init] methods.
+    It adapts [`init`][mininterface.cli.Command.init] and [`run`][mininterface.cli.Command.init] methods.
     It receives attributes [`self.facet`][mininterface.facet.Facet] and [`self.interface`][mininterface.Mininterface] set.
 
     Put list of Commands to the [mininterface.run][mininterface.run] and divide your application into different sections.
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
-
 
     # SubcommandPlaceholder class
 
@@ -44,7 +84,7 @@ class Command(ABC):
     from pathlib import Path
     from mininterface import run
     from mininterface.exceptions import ValidationFail
-    from mininterface.subcommands import Command, SubcommandPlaceholder
+    from mininterface.cli import Command, SubcommandPlaceholder
     from tyro.conf import Positional
 
 
@@ -122,7 +162,7 @@ class Command(ABC):
         # * def run(self, facet): The user had to pass the reference manually.
         # * def run_with_facet(facet)
         self.facet: 'Facet["Self"]'
-        self.interface: 'Mininterface[None]'
+        self.interface: 'Mininterface["EnvClass"]'
 
     def init(self):
         """ Just before the form appears.
@@ -137,7 +177,7 @@ class Command(ABC):
         (Either directly in the CLI or by a successive dialog.)
 
         Raises:
-            ValidationFail – Do repeat the form.
+            ValidationFail: Do repeat the form.
         """
         ...
 
@@ -151,3 +191,5 @@ class SubcommandPlaceholder(Command):
 
 
 SubcommandPlaceholder.__name__ = "subcommand"  # show just the shortcut in the CLI
+
+__all__ = ["Command", "SubcommandPlaceholder", "Positional"]

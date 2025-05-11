@@ -102,7 +102,7 @@ You can easily nest the configuration. (See also [Tyro Hierarchical Configs](htt
 
 Just put another dataclass inside the config file:
 
-```python3
+```python
 @dataclass
 class FurtherConfig:
     token: str

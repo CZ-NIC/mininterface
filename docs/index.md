@@ -24,7 +24,7 @@ class Env:
     """ This number is very important """
 
 if __name__ == "__main__":
-    m = run(Env, prog="My application")
+    m = run(Env, title="My application")
     m.form()
     # Attributes are suggested by the IDE
     # along with the hint text 'This number is very important'.
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 # Contents
 - [You got CLI](#you-got-cli)
 - [You got config file management](#you-got-config-file-management)
-- [You got dialogues](#you-got-dialogues)
+- [You got dialogs](#you-got-dialogs)
 - [Background](#background)
 - [Installation](#installation)
 - [Docs](#docs)
@@ -49,7 +49,7 @@ It was all the code you need. No lengthy blocks of code imposed by an external d
 
 ```bash
 $ ./program.py --help
-usage: My application [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
+usage: program.py [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
 
 This calculates something.
 
@@ -63,7 +63,7 @@ This calculates something.
 ```
 
 ## You got config file management
-Loading config file is a piece of cake. Alongside `program.py`, put `program.yaml` and put there some of the arguments. They are seamlessly taken as defaults.
+Loading config file is a piece of cake. Alongside `program.py`, write some of its arguments to `program.yaml`. They are seamlessly taken as defaults.
 
 ```yaml
 my_number: 555
@@ -75,8 +75,8 @@ $ program.py --help
 │ --my-number INT        This number is very important (default: 555)     │
 ```
 
-## You got dialogues
-Check out several useful methods to handle user dialogues. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
+## You got dialogs
+Check out several useful methods to handle user dialogs. Here we bound the interface to a `with` statement that redirects stdout directly to the window.
 
 ```python
 with run(Env) as m:
@@ -115,7 +115,7 @@ There are various bundles. We mark the least permissive licence in the bundle.
 
 | bundle | size | licence | description |
 | ------ | ---- | ----------- | ---- |
-| mininterface | 1 MB | LGPL | only text dialogs |
+| mininterface | 1 MB | LGPL | minimal – only text dialogs |
 | mininterface[basic] | 25 MB | LGPL | CLI, GUI, TUI |
 | mininterface[web] | 40 MB | LGPL | including [WebInterface](Interfaces.md#webinterface-or-web) |
 | mininterface[img] | 40 MB | LGPL | images |
@@ -123,6 +123,11 @@ There are various bundles. We mark the least permissive licence in the bundle.
 | mininterface[gui] | 70 MB | GPL | images, combobox, calendar |
 | mininterface[ui] | 90 MB | GPL | full installation |
 | mininterface[all] | 90 MB | GPL | full installation, same as `ui`, reserved for future use (big dependencies, optional interfaces) |
+
+Apart from the minimal bundle (which lacks CLI and dataclass support), they have the same functionality, differring only in the user experience.
+
+!!! tip
+    For automated testing (e.g., in CI environments), the `mininterface[basic]` bundle is sufficient.
 
 ## MacOS GUI
 
@@ -145,11 +150,11 @@ Take a look at the following example.
 
 1. We define any Env class.
 2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
-3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`choice`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
+3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`select`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
-```python3
+```python
 from dataclasses import dataclass
 from pathlib import Path
 from mininterface import run
@@ -173,7 +178,7 @@ if __name__ == "__main__":
       # like `confirm` for bool
       if m.confirm("Do you want to continue?"):
 
-        # or `choice` for choosing a value
+        # or `select` for choosing a value
         fruit = m.select(("apple", "banana", "sirup"), "Choose a fruit")
 
         if fruit == "apple":
@@ -228,7 +233,7 @@ You want to try out the Mininterface with your current [`ArgumentParser`](https:
 
 You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the [`run`][mininterface.run] method.
 
-```python3
+```python
 #!/usr/bin/env python3
 from argparse import ArgumentParser
 from datetime import time
@@ -243,7 +248,15 @@ subparsers = parser.add_subparsers(dest="command", required=True)
 sub1 = subparsers.add_parser("build", help="Build something.")
 sub1.add_argument("--optimize", action="store_true", help="Enable optimizations.")
 
+# Old version
+# env = parser.parse_args()
+# env.input_file  # a Path object
+
+# New version
 m = run(parser)
+m.env.input_file  # a Path object
+
+# Live edit of the fields
 m.form()
 ```
 
@@ -284,4 +297,4 @@ print(m.env.time)  # -> 14:21
 If you're sure enough to start using *Mininterface*, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.
 
 !!! warning
-    Be aware that in contrast to the argparse, we create default values. This does make sense for most values and but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.
+    Be aware that in contrast to the argparse, we create default values. This does make sense for most values but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.

@@ -1,18 +1,22 @@
 import warnings
 
-from simple_term_menu import TerminalMenu
-
-from ..tag.select_tag import SelectTag
+try:
+    # NOTE does not work in Win, we should find a replacement
+    # https://github.com/IngoMeyer441/simple-term-menu/issues/5
+    from simple_term_menu import TerminalMenu
+except ImportError:
+    from ..exceptions import InterfaceNotAvailable
+    raise InterfaceNotAvailable
 
 from .._lib.auxiliary import flatten
-from ..exceptions import Cancelled
 from .._lib.form_dict import TagDict
 from .._mininterface import Tag
 from .._mininterface.adaptor import BackendAdaptor
+from ..exceptions import Cancelled
 from ..settings import TextSettings
-from ..tag.internal import (BoolWidget, CallbackButtonWidget,
-                            SubmitButtonWidget)
+from ..tag.internal import BoolWidget, CallbackButtonWidget, SubmitButtonWidget
 from ..tag.secret_tag import SecretTag
+from ..tag.select_tag import SelectTag
 from .facet import TextFacet
 
 

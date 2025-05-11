@@ -79,7 +79,7 @@ print(values["my_point"].i)  # 100
 
 All the examples need some imports:
 
-```
+```python
 from dataclasses import dataclass, field
 from pathlib import Path
 from mininterface import run
@@ -103,6 +103,8 @@ run(Env).form()
 
 ### Functions
 
+Will appear as buttons.
+
 ```python
 def my_callback():
     print("I'm here!")
@@ -116,11 +118,14 @@ run(Env).form()
 
 Or use the `with` statement to redirect the stdout into the mininterface.
 
-```
+```python
 with run(Env) as m:
     m.form()
     m.alert("The text 'I'm here' is displayed in the window.")
 ```
+
+!!! Warning
+    When used in a form like this `m.form({'My callback': my_callback)`, the value is left intact. It still points to the function. This behaviour might reconsidered and changed. (It might make more sense to change it to the return value instead.)
 
 ### Enums
 
@@ -128,7 +133,7 @@ To constraint a value, either pass an enum object or use handy additional type [
 
 ### Well-known objects
 
-We've added extra function for known objects like `Path` or `datetime` (file exists check etc.), see [`Tag` subclasses](Tag-subclasses.md).
+We've added extra functions for known objects like `Path` or `datetime` (file exists check etc.), see `Tag` subclasses in Custom types section ([PathTag][mininterface.tag.PathTag], [DatetimeTag][mininterface.tag.DatetimeTag], ...).
 
 ### Iterables
 
@@ -154,10 +159,8 @@ class Env:
 
 ### Additional
 
-We've added some other useful custom types.
+We've added some other useful custom types that can be imported mostly from `mininterface.tag`.
 
-These useful types can be imported from `mininterface.types`.
-
-1. [Tag subclasses](Tag-subclasses.md) – They are mosty subclasses of the [`Tag`](Tag.md), the main object for storing values. Normally, you don't need to use or know much about those but they can be helpful when you need to further specify the functionality, such as restricting a `Path` to directories only.
+1. Tag subclasses – The descendants of the [`Tag`](Tag.md), the object for storing values. Normally, you don't need to use or know much about those but they can be helpful when you need to further specify the functionality, such as restricting a `Path` to directories only ([PathTag][mininterface.tag.PathTag]).
 2. [Tag aliases](Tag-aliases.md) – Userful shortcuts.
 3. [Prepared annotations](Prepared-annotations.md) – Useful types to be used for nifty CLI parsing.

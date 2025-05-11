@@ -19,8 +19,8 @@ class TkFacet(Facet):
             self.adaptor.label.pack_forget()
         else:
             self.adaptor.label.config(text=title)
-            self.adaptor.label.pack(pady=10)
-            pass
+            self.adaptor.label.pack(pady=5)
+            self.adaptor._refresh_size()
 
     def _layout(self, elements: list[LayoutElement]):
         try:

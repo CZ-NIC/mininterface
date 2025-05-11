@@ -1,14 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Callable, Optional
 
-from .._lib.cli_parser import MissingTagValue
-
 from .._lib.auxiliary import flatten
 from ..exceptions import Cancelled, ValidationFail
 from ..facet import Facet
 from .._lib.form_dict import TagDict
 from ..settings import UiSettings
-from ..tag.tag import Tag, ValsType
+from ..tag.tag import Tag, ValsType, MissingTagValue
 
 if TYPE_CHECKING:
     from . import Mininterface
@@ -74,8 +72,7 @@ class BackendAdaptor(ABC):
         4. Hence all variables somehow exist in the first
         and all the forms are empty.
 
-        Note this is not documented as it is being used now only for subcommand choosing
-        when we need a temp interface for a moment.
+        Note this is not documented as it is not used.
 
         It still does no handle the case when two interfaces co-exist together.
         We should be able to not use the default master but to register to the current one.

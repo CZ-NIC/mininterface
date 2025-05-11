@@ -82,8 +82,7 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
         value = super()._validate(value)
         # Check for multiple paths before any conversion
         if not self.multiple and isinstance(value, (list, tuple)):
-            self.set_error_text("Multiple paths are not allowed")
-            raise ValueError()
+            raise ValueError("Multiple paths are not allowed")
         # Convert to list for validation
         paths = value if isinstance(value, list) else [value]
 
@@ -93,23 +92,18 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
                 try:
                     path = Path(path)
                 except Exception:
-                    self.set_error_text(f"Invalid path format: {path}")
-                    raise ValueError()
+                    raise ValueError(f"Invalid path format: {path}")
 
             if self.exist and not path.exists():
-                self.set_error_text(f"Path does not exist: {path}")
-                raise ValueError()
+                raise ValueError(f"Path does not exist: {path}")
 
             if self.is_dir and self.is_file:
-                self.set_error_text(f"Path cannot be both a file and a directory: {path}")
-                raise ValueError()
+                raise ValueError(f"Path cannot be both a file and a directory: {path}")
 
             if self.is_dir and not path.is_dir():
-                self.set_error_text(f"Path is not a directory: {path}")
-                raise ValueError()
+                raise ValueError(f"Path is not a directory: {path}")
 
             if self.is_file and not path.is_file():
-                self.set_error_text(f"Path is not a file: {path}")
-                raise ValueError()
+                raise ValueError(f"Path is not a file: {path}")
 
         return value

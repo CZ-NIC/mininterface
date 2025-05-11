@@ -1,3 +1,4 @@
+from pathlib import Path
 from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
 from tkinter.filedialog import askopenfilename, askopenfilenames, askdirectory
 from tkinter.ttk import Checkbutton, Combobox, Radiobutton
@@ -13,7 +14,6 @@ from ..tag.path_tag import PathTag
 
 from ..tag.select_tag import SelectTag
 
-
 from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
 
@@ -25,6 +25,8 @@ from ..tag.secret_tag import SecretTag
 from .select_input import SelectInputWrapper, VariableAnyWrapper
 from .date_entry import DateEntryFrame
 from .secret_entry import SecretEntryWrapper
+
+from .external_fix import __create_widgets_monkeypatched
 
 if TYPE_CHECKING:
     from mininterface._tk_interface.adaptor import TkAdaptor
@@ -71,11 +73,12 @@ class AnyVariable(Variable):
 def choose_file_handler(variable: Variable, tag: PathTag):
     """Handler for file/directory selection on PathTag"""
     def _(*_):
-        initialdir = tag.val if tag.val else os.getcwd()
+        initialdir = tag.val
 
         # Check whether this is a directory selection
         if tag.is_dir:
             # Directory selection using askdirectory
+            # NOTE this should support multiple dirs
             kwargs = {"title": "Select Directory", "initialdir": initialdir}
             selected_dir = askdirectory(**kwargs)
             if not selected_dir:  # User cancelled
@@ -84,15 +87,13 @@ def choose_file_handler(variable: Variable, tag: PathTag):
             if tag.multiple:
                 # Handle multiple selection for directories
                 current_dirs = tag.val if tag.val else []
-                if not isinstance(current_dirs, list):
-                    current_dirs = [current_dirs]
-                if selected_dir not in current_dirs:
-                    current_dirs.append(selected_dir)
-                variable.set(current_dirs)
+                current_dirs.append(Path(selected_dir))
+                variable.set(str(list(str(x) for x in current_dirs)))
             else:
                 variable.set(selected_dir)
         else:
             # File selection
+            # NOTE this should support single dir selection too
             if tag.multiple:
                 kwargs = {"title": "Select Files", "initialdir": initialdir}
                 selected_files = list(askopenfilenames(**kwargs))
@@ -101,9 +102,8 @@ def choose_file_handler(variable: Variable, tag: PathTag):
                     if not isinstance(current_files, list):
                         current_files = [current_files]
                     for file in selected_files:
-                        if file not in current_files:
-                            current_files.append(file)
-                    variable.set(current_files)
+                        current_files.append(Path(file))
+                    variable.set(str(list(str(x) for x in current_files)))
             else:
                 kwargs = {"title": "Select File", "initialdir": initialdir}
                 selected_file = askopenfilename(**kwargs)
