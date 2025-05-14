@@ -1,6 +1,8 @@
-from tkinter import LEFT, Button, Entry, TclError, Variable, Spinbox
-from tkinter.filedialog import askopenfilename, askopenfilenames
-from tkinter.ttk import Checkbutton, Combobox, Radiobutton, Widget
+from pathlib import Path
+from tkinter import Button, Entry, TclError, Variable, Widget, Spinbox
+from tkinter.filedialog import askopenfilename, askopenfilenames, askdirectory
+from tkinter.ttk import Checkbutton, Combobox, Radiobutton
+
 from typing import TYPE_CHECKING
 
 
@@ -14,17 +16,22 @@ from ..tag.select_tag import SelectTag
 
 from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButtonWidget
 
+
 from .._lib.auxiliary import flatten
 from .._lib.form_dict import TagDict
+
 from ..tag import Tag
 from ..tag.secret_tag import SecretTag
 from .select_input import SelectInputWrapper, VariableAnyWrapper
 from .date_entry import DateEntryFrame
-from .external_fix import __create_widgets_monkeypatched
 from .secret_entry import SecretEntryWrapper
+
+from .external_fix import __create_widgets_monkeypatched
 
 if TYPE_CHECKING:
     from mininterface._tk_interface.adaptor import TkAdaptor
+
+import os
 
 
 def recursive_set_focus(widget: Widget):
@@ -64,12 +71,53 @@ class AnyVariable(Variable):
 
 
 def choose_file_handler(variable: Variable, tag: PathTag):
+    """Handler for file/directory selection on PathTag"""
     def _(*_):
-        if tag.multiple:
-            out = str(list(askopenfilenames(title="Choose files")))
+        initialdir = tag.val
+
+        # Check whether this is a directory selection
+        if tag.is_dir:
+            # Directory selection using askdirectory
+            # NOTE this should support multiple dirs
+            kwargs = {"title": "Select Directory", "initialdir": initialdir}
+            selected_dir = askdirectory(**kwargs)
+            if not selected_dir:  # User cancelled
+                return
+
+            if tag.multiple:
+                # Handle multiple selection for directories
+                current_dirs = tag.val if tag.val else []
+                current_dirs.append(Path(selected_dir))
+                variable.set(str(list(str(x) for x in current_dirs)))
+            else:
+                variable.set(selected_dir)
         else:
-            out = askopenfilename(title="Choose a file")
-        variable.set(out)
+            # File selection
+            # NOTE this should support single dir selection too
+            if tag.multiple:
+                kwargs = {"title": "Select Files", "initialdir": initialdir}
+                selected_files = list(askopenfilenames(**kwargs))
+                if selected_files:
+                    current_files = tag.val if tag.val else []
+                    if not isinstance(current_files, list):
+                        current_files = [current_files]
+                    for file in selected_files:
+                        current_files.append(Path(file))
+                    variable.set(str(list(str(x) for x in current_files)))
+            else:
+                kwargs = {"title": "Select File", "initialdir": initialdir}
+                selected_file = askopenfilename(**kwargs)
+                if selected_file:
+                    variable.set(selected_file)
+
+        # Restore focus to the form after file selection
+        if tag._facet and tag._facet.adaptor:
+            tag._facet.adaptor.focus_set()
+            # Try to focus the first input field
+            recursive_set_focus(tag._facet.adaptor.form)
+
+        return None  # Allow event propagation
+
     return _
 
 
@@ -108,6 +156,13 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     # NOTE should the button receive tag or directly
     #   the whole facet (to change the current form)? Specifiable by experimental.FacetCallback.
     nested_widgets = widgets_to_dict(nested_widgets)
+
+    # Prevent Enter key in an input field from submitting the form
+    # But do not interfere with Tab navigation
+    def prevent_submit(event):
+        # Only prevent form submission, don't affect Tab navigation
+        return None  # Allow event propagation for other handlers
+
     for tag, field_form in zip(flatten(form), flatten(nested_widgets)):
         tag: Tag
         field_form: FieldForm
@@ -120,6 +175,12 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         """ If False, you process _last_ui_val and launch _on_change_trigger. """
         select_tag = False
         # NOTE this variable exists due to poor design
+
+        # Prevent Enter key in any regular input field from submitting the form
+        # But still allow Tab key to work normally
+        if isinstance(widget, Entry):
+            # Only bind the Enter key, not Tab key
+            widget.bind('<Return>', prevent_submit, add="+")
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag:
@@ -140,8 +201,21 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
             case PathTag():
                 grid_info = widget.grid_info()
 
-                widget2 = Button(master, text='…', command=choose_file_handler(variable, tag))
+                # Create button for file/directory selection with appropriate icon
+                file_handler = choose_file_handler(variable, tag)
+                button_text = "📁" if tag.is_dir else "…"  # Folder icon for directories
+                widget2 = Button(master, text=button_text, command=file_handler)
                 widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+
+                # Handle Enter key for file picker button
+                def handle_return(event):
+                    file_handler()
+                    return "break"  # Prevent event propagation
+
+                widget2.bind('<Return>', handle_return)
+
+                # For input field, just prevent form submission on Enter without opening file dialog
+                widget.bind('<Return>', prevent_submit)
             case DatetimeTag():
                 grid_info = widget.grid_info()
                 widget.grid_forget()
