@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.3 (unreleased)
+* enh: Tk better file dialog
+
 ## 1.0.2 (2025-05-10)
 * fix: mute TextInterface on Win
 

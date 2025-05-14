@@ -73,7 +73,7 @@ class AnyVariable(Variable):
 def choose_file_handler(variable: Variable, tag: PathTag):
     """Handler for file/directory selection on PathTag"""
     def _(*_):
-        initialdir = tag.val
+        initialdir = str(tag._get_init_dir())
 
         # Check whether this is a directory selection
         if tag.is_dir:

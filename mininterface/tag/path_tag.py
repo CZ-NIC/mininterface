@@ -107,3 +107,14 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
                 raise ValueError(f"Path is not a file: {path}")
 
         return value
+
+    def _get_init_dir(self):
+        """ For ['/var/log/syslog'] start in '/var/log' """
+        v = self.val
+        if not v:
+            return Path().cwd()
+        if isinstance(v, list):
+            v = v[0]
+        v = Path(v)
+        v = v if v.is_dir() else v.parent
+        return v

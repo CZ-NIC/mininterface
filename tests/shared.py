@@ -1,12 +1,12 @@
-from mininterface import EnvClass, Mininterface, Type, run
-from mininterface._lib.form_dict import MissingTagValue, TagDict
-from mininterface._mininterface import MinAdaptor
-
-
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
+
+from mininterface import EnvClass, Mininterface, Type, run
+from mininterface._lib.form_dict import MissingTagValue, TagDict
+from mininterface._mininterface import MinAdaptor
 
 SYS_ARGV = None  # To be redirected
 
@@ -15,6 +15,16 @@ MISSING = MissingTagValue(BaseException(), None)
 
 def runm(env_class: Type[EnvClass] | list[Type[EnvClass]] | None = None, args=None, **kwargs) -> Mininterface[EnvClass]:
     return run(env_class, interface=Mininterface, args=args, **kwargs)
+
+
+def mock_interactive_terminal(func):
+    # mock the session could be made interactive
+    @patch("sys.stdin.isatty", new=lambda: True)
+    @patch("sys.stdout.isatty", new=lambda: True)
+    @patch.dict(sys.modules, {"ipdb": None})  # ipdb prevents vscode to finish test_ask_form
+    def _(*args, **kwargs):
+        return func(*args, **kwargs)
+    return _
 
 
 class TestAbstract(TestCase):
