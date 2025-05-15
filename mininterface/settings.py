@@ -34,6 +34,9 @@ class UiSettings:
     * `None`: All Tags with `Tag(mnemonic=char|True)` will have a mnemonic enabled.
     """
 
+    mnemonic_hidden: bool = False
+    """ If True, the field label is not underlined to mark the mnemonic. """
+
 
 @dataclass
 class GuiSettings(UiSettings):

@@ -59,6 +59,7 @@ class SelectInputWrapper:
         self.options: OptionsReturnType = tag._get_options()
         self.variable = Variable()
         self.widget = widget
+        self.taking_focus = widget
 
         self.frame = nested_frame = Frame(master)
         nested_frame.grid(row=grid_info['row'], column=grid_info['column'], sticky='w')
@@ -92,6 +93,8 @@ class SelectInputWrapper:
 
         vw = self.variable_wrapper
 
+        taken = False
+
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
             var = BooleanVar(value=choice_val in tag.val)
 
@@ -113,6 +116,10 @@ class SelectInputWrapper:
 
             button.pack(anchor="w")
 
+            if not taken:
+                taken = True
+                self.taking_focus = button  # NOTE should be better, to the first one
+
     def radio(self, bg):
         options = self.options
         tag = self.tag
@@ -128,6 +135,8 @@ class SelectInputWrapper:
                              value=choice_label,
                              style="Highlight.TRadiobutton" if tip else "",
                              takefocus=is_selected)
+            if is_selected:
+                self.taking_focus = rb
             if adaptor.settings.radio_select_on_focus:
                 rb.bind("<FocusIn>",
                         lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val),

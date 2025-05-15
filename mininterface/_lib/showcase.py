@@ -5,6 +5,8 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
+from ..tag.select_tag import SelectTag
+
 from ..exceptions import ValidationFail
 from ..cli import Command, SubcommandPlaceholder
 from ..tag.secret_tag import SecretTag
@@ -84,6 +86,9 @@ class Env:
 
     my_choice: Annotated[str, Options("one", "two", "three")] = "two"
     """ Choose between values """
+
+    my_multiple: Annotated[str, SelectTag(options=("one", "two", "three"), multiple=True)] = "two"
+    """ Choose values """
 
 
 def showcase(case: int):

@@ -48,7 +48,10 @@ class BackendAdaptor(ABC):
         # Determine mnemonic
         used_mnemonic = set()
         to_be_determined: list[Tag] = []
-        for tag in flatten(form):
+        tags = list(flatten(form))
+        if len(tags) <= 1:  # do not use mnemonic for single field which is focused by default
+            return
+        for tag in tags:
             if tag.mnemonic is False:
                 continue
             if isinstance(tag.mnemonic, str):

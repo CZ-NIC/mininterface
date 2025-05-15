@@ -169,6 +169,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         variable = field_form.variable
         master = widget.master
         widget.pack_forget()
+        taking_focus = widget
         process_change_handler = True
         """ If False, you process _last_ui_val and launch _on_change_trigger. """
         select_tag = False
@@ -193,6 +194,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 replace_variable(variable)
                 widget.grid_forget()
                 widget = wrapper.widget
+                taking_focus = wrapper.taking_focus
                 if tag.multiple:
                     process_change_handler = False
 
@@ -270,11 +272,16 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         underline = -1
         if char:
             try:
-                underline = label.index(char)
+                underline = label.lower().index(char)
             except ValueError:
                 label += f" ({char})"
-                underline = label.index(char)
-            adaptor.bind_shortcut(f'<Alt-{char}>', widget)
+                underline = label.lower().index(char)
+            # NOTE in case of a radio, put here
+            adaptor.bind_shortcut(f'<Alt-{char}>', taking_focus)
+
+            if adaptor.settings.mnemonic_hidden:
+                label = tag.label
+                underline = -1
 
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself
