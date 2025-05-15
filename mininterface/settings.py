@@ -1,4 +1,3 @@
-# Configuration used by all minterfaces in the program.
 # Might be changed by a 'mininterface' section in a config file.
 from dataclasses import dataclass, field
 from typing import Literal, Optional
@@ -26,6 +25,14 @@ class UiSettings:
     # key = keys[-1]
 
     # return f"<{'-'.join(modifiers + [key])}>"
+
+    mnemonic: Optional[bool] = True
+    """ Allow users to access fields with the `Alt+char` shortcut.
+
+    * `True`: All Tags with `Tag(mnemonic=char|True|None)` will have a mnemonic enabled.
+    * `False`: All mnemonic is disabled, even if configured via `Tag(mnemonic=char)`.
+    * `None`: All Tags with `Tag(mnemonic=char|True)` will have a mnemonic enabled.
+    """
 
 
 @dataclass

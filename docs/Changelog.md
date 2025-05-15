@@ -2,6 +2,7 @@
 
 ## 1.0.3 (unreleased)
 * enh: Tk better file dialog
+* feat: [Tag.mnemonic][mininterface.Tag.mnemonic]
 
 ## 1.0.2 (2025-05-10)
 * fix: mute TextInterface on Win

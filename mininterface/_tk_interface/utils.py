@@ -31,8 +31,6 @@ from .external_fix import __create_widgets_monkeypatched
 if TYPE_CHECKING:
     from mininterface._tk_interface.adaptor import TkAdaptor
 
-import os
-
 
 def recursive_set_focus(widget: Widget):
     for child in widget.winfo_children():
@@ -266,11 +264,23 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
             elif isinstance(widget, Checkbutton):
                 widget.configure(command=h)
 
+        label: str = tag.label
+
+        char = tag._mnemonic
+        underline = -1
+        if char:
+            try:
+                underline = label.index(char)
+            except ValueError:
+                label += f" ({char})"
+                underline = label.index(char)
+            adaptor.bind_shortcut(f'<Alt-{char}>', widget)
+
         # Change label name as the field name might have changed (ex. highlighted by an asterisk)
         # But we cannot change the dict key itself
         # as the user expects the consistency – the original one in the dict.
-        if tag.label:
-            label1.config(text=tag.label)
+        if label:
+            label1.config(text=label, underline=underline)
 
 
 def create_button(master, _fetch, tag: Tag, label1, command=None):

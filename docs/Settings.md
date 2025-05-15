@@ -2,7 +2,25 @@
 
 The UI behaviour might be modified via an settings object. This can be passed to the [run][mininterface.run] function or defined through a config file. Settings defined in the config file have bigger priority. Every interface has its own settings object.
 
-## Config file special section
+Passing the settings to the `run` method:
+
+```python
+from mininterface.settings import MininterfaceSettings
+
+opt = MininterfaceSettings()
+run(settings=opt)
+```
+
+Specifying only the GuiSettings:
+```python
+from mininterface.settings import MininterfaceSettings, GuiSettings
+
+opt = MininterfaceSettings(gui=GuiSettings(combobox_since=1))
+run(settings=opt)
+```
+
+
+### Config file special section
 In a YAML config file, use a special section 'mininterface' to set up the UI. For example, this stub will enforce your program to use the Tui interface.
 
 ```yaml
@@ -10,7 +28,7 @@ mininterface:
     interface: tui
 ```
 
-## Complete example
+#### Complete example
 
 Source of `program.py`, we have one single attribute `foo`:
 
@@ -40,25 +58,46 @@ The difference when using such configuration file.
 
 ![Configuration not used](asset/configuration-not-used.avif) ![Configuration used](asset/configuration-used.avif)
 
+### Inheritance
+
+The individual setting items are inherited, while the descendants have the higher priority.
+
+```mermaid
+graph LR
+GuiSettings --> UiSettings
+TuiSettings  --> UiSettings
+TextualSettings --> TuiSettings
+TextSettings --> TuiSettings
+```
+
+Ex. this config file sets the `UiSettings` item [`mnemonic`][mininterface.settings.UiSettings.mnemonic] to None for `TuiSettings` and more specifically to False for `TextSettings`.
+
+```yaml
+mininterface:
+    tui:
+        mnemonic: null
+    text:
+        mnemonic: False
+```
+
+For the different interfaces, the value varies this way:
+
+| interface | mnemonic value |
+| -- | -- |
+| gui | True (the `UiSettings` item default) |
+| textual | None |
+| text | False |
+
 ## The settings object
 
-```python
-from mininterface.settings import MininterfaceSettings
-
-opt = MininterfaceSettings()
-run(settings=opt)
-```
-
-
 ::: mininterface.settings.MininterfaceSettings
+    options:
+        show_root_full_path: false
 
-## GuiSettings
-
-```python
-from mininterface.settings import MininterfaceSettings, GuiSettings
-
-opt = MininterfaceSettings(gui=GuiSettings(combobox_since=1))
-run(settings=opt)
-```
+::: mininterface.settings.UiSettings
+    options:
+        show_root_full_path: false
 
 ::: mininterface.settings.GuiSettings
+    options:
+        show_root_full_path: false

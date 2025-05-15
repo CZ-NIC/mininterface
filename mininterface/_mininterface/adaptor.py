@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from itertools import chain
+from string import ascii_lowercase
 from typing import TYPE_CHECKING, Callable, Optional
 
 from .._lib.auxiliary import flatten
@@ -38,6 +40,31 @@ class BackendAdaptor(ABC):
         Setups the facet._fetch_from_adaptor.
         """
         self.facet._fetch_from_adaptor(form)
+
+        # Determine mnemonic
+        if self.settings.mnemonic is not False:
+            used_mnemonic = set()
+            to_be_determined: list[Tag] = []
+            for tag in flatten(form):
+                if tag.mnemonic is False:
+                    continue
+                if isinstance(tag.mnemonic, str):
+                    used_mnemonic.add(tag.mnemonic)
+                    tag._mnemonic = tag.mnemonic
+                elif self.settings.mnemonic or tag.mnemonic:
+                    # .settings.mnemonic=None + tag.mnemonic=True OR
+                    # .settings.mnemonic=True + tag.mnemonic=None
+                    to_be_determined.append(tag)
+
+            # Find free mnemonic for Tag
+            for tag in to_be_determined:
+                # try every char in label
+                # then, if no free letter, give a random letter
+                for c in chain((c.lower() for c in tag.label if c.isalpha()), ascii_lowercase):
+                    if c not in used_mnemonic:
+                        used_mnemonic.add(c)
+                        tag._mnemonic = c
+                        break
 
     def submit_done(self) -> bool:
         if action := self.post_submit_action:

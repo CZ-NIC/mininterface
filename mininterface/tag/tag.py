@@ -261,6 +261,17 @@ class Tag(Generic[TagValue]):
     ```
     """
 
+    mnemonic: str | bool | None = None
+    """ Focus the field on the `Alt+char` shortcut.
+
+    * `char`: Use this char for mnemonic.
+    * `True`: The char is determined automatically.
+    * `None`: The char is determined automatically when [UiSettings.mnemonic][mininterface.settings.UiSettings.mnemonic] is True.
+    * `False`: Disabled.
+
+    See also [UiSettings.mnemonic][mininterface.settings.UiSettings.mnemonic].
+    """
+
     on_change: Callable[["Tag"], Any] | None = None
     """ Accepts a callback that launches whenever the value changes (if the validation succeeds).
     The callback runs while the dialog is still running.
@@ -356,6 +367,7 @@ class Tag(Generic[TagValue]):
     _last_ui_val: TagValue = None
     """ This is the value as was in the current UI. Used by on_change_trigger
         to determine whether the UI value changed. """
+    _mnemonic: Optional[str] = None
 
     def __post_init__(self):
         # Determine annotation and fetch other information.

@@ -1,5 +1,5 @@
 import sys
-from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk
+from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk, Widget
 from typing import TYPE_CHECKING, Any, Callable
 
 try:
@@ -203,6 +203,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     def _clear_dialog(self):
         self.frame.pack_forget()
         for widget in self.frame.winfo_children():
+            widget: Widget
             if widget not in [self.text_widget, self.label]:
                 widget.destroy()
         for key in self._event_bindings:
@@ -213,3 +214,9 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
 
     def _destroy(self):
         self.destroy()
+
+    def bind_shortcut(self, shortcut: str, widget: Widget):
+        def _(event=None):
+            widget.focus_set()
+            return "break"
+        self.bind(shortcut, _)
