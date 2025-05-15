@@ -94,6 +94,11 @@ class TextAdaptor(BackendAdaptor):
             case dict() as d:
                 return f"... ({len(d)}×)"
 
+    def _get_tag_mnemonic(self, val: Tag | dict):
+        if isinstance(val, Tag) and val._mnemonic:
+            return f"[{val._mnemonic}] "
+        return ""
+
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """ Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
@@ -121,7 +126,7 @@ class TextAdaptor(BackendAdaptor):
             if single:
                 key = next(iter(form))
             else:
-                index = self._choose([f"{key}{self._get_tag_val(val)}" for key,
+                index = self._choose([f"{self._get_tag_mnemonic(val)}{key}{self._get_tag_val(val)}" for key,
                                       val in form.items()], append_ok=True)
                 key = list(form)[index]
 
@@ -155,7 +160,10 @@ class TextAdaptor(BackendAdaptor):
         kwargs = {}
         if not multiple:
             if len(items) < 10:
-                it = [f"[{i+1}] {item}" for i, item in enumerate(items)]
+                # use number as shorcuts when no shortcuts are given `[c]`
+                it = [item if item.startswith("[")  # field already starts with a shortcut, ex. `[f] foo`
+                      else f"[{i+1}] {item}"  # add a number shorctu, ex. `[1] foo`
+                      for i, item in enumerate(items)]
             else:
                 kwargs = {"show_search_hint": True}
 
@@ -187,3 +195,8 @@ class TextAdaptor(BackendAdaptor):
                     raise Submit
                 index -= 1
         return index
+
+    def _determine_mnemonic(self, form: TagDict, also_nones=False):
+        if self.settings.mnemonic_over_number is False:
+            return
+        super()._determine_mnemonic(form, also_nones=also_nones and self.settings.mnemonic_over_number is True)

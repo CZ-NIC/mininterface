@@ -60,7 +60,7 @@ The difference when using such configuration file.
 
 ### Inheritance
 
-The individual setting items are inherited, while the descendants have the higher priority.
+The individual setting items are inherited, while the descendants have the higher priority. Ex. `TuiSettings` works as a default for `TextSettings` and `TextualSettings`.
 
 ```mermaid
 graph LR
@@ -70,7 +70,7 @@ TextualSettings --> TuiSettings
 TextSettings --> TuiSettings
 ```
 
-Ex. this config file sets the `UiSettings` item [`mnemonic`][mininterface.settings.UiSettings.mnemonic] to None for `TuiSettings` and more specifically to False for `TextSettings`.
+Ex. this config file sets the `UiSettings` item [`mnemonic`][mininterface.settings.UiSettings.mnemonic] to `None` for `TuiSettings` and more specifically to `False` for `TextSettings`.
 
 ```yaml
 mininterface:
@@ -99,5 +99,17 @@ For the different interfaces, the value varies this way:
         show_root_full_path: false
 
 ::: mininterface.settings.GuiSettings
+    options:
+        show_root_full_path: false
+
+::: mininterface.settings.TuiSettings
+    options:
+        show_root_full_path: false
+
+::: mininterface.settings.TextualSettings
+    options:
+        show_root_full_path: false
+
+::: mininterface.settings.TextSettings
     options:
         show_root_full_path: false

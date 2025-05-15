@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING
 from textual import events
 from textual.app import App

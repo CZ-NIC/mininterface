@@ -40,31 +40,34 @@ class BackendAdaptor(ABC):
         Setups the facet._fetch_from_adaptor.
         """
         self.facet._fetch_from_adaptor(form)
-
-        # Determine mnemonic
         if self.settings.mnemonic is not False:
-            used_mnemonic = set()
-            to_be_determined: list[Tag] = []
-            for tag in flatten(form):
-                if tag.mnemonic is False:
-                    continue
-                if isinstance(tag.mnemonic, str):
-                    used_mnemonic.add(tag.mnemonic)
-                    tag._mnemonic = tag.mnemonic
-                elif self.settings.mnemonic or tag.mnemonic:
-                    # .settings.mnemonic=None + tag.mnemonic=True OR
-                    # .settings.mnemonic=True + tag.mnemonic=None
-                    to_be_determined.append(tag)
+            self._determine_mnemonic(form, self.settings.mnemonic is True)
 
-            # Find free mnemonic for Tag
-            for tag in to_be_determined:
-                # try every char in label
-                # then, if no free letter, give a random letter
-                for c in chain((c.lower() for c in tag.label if c.isalpha()), ascii_lowercase):
-                    if c not in used_mnemonic:
-                        used_mnemonic.add(c)
-                        tag._mnemonic = c
-                        break
+    def _determine_mnemonic(self, form: TagDict, also_nones=False):
+        """ also_nones – Also determine those tags when Tag.mnemonic=None. """
+        # Determine mnemonic
+        used_mnemonic = set()
+        to_be_determined: list[Tag] = []
+        for tag in flatten(form):
+            if tag.mnemonic is False:
+                continue
+            if isinstance(tag.mnemonic, str):
+                used_mnemonic.add(tag.mnemonic)
+                tag._mnemonic = tag.mnemonic
+            elif also_nones or tag.mnemonic:
+                # .settings.mnemonic=None + tag.mnemonic=True OR
+                # .settings.mnemonic=True + tag.mnemonic=None
+                to_be_determined.append(tag)
+
+        # Find free mnemonic for Tag
+        for tag in to_be_determined:
+            # try every char in label
+            # then, if no free letter, give a random letter
+            for c in chain((c.lower() for c in tag.label if c.isalpha()), ascii_lowercase):
+                if c not in used_mnemonic:
+                    used_mnemonic.add(c)
+                    tag._mnemonic = c
+                    break
 
     def submit_done(self) -> bool:
         if action := self.post_submit_action:

@@ -32,6 +32,19 @@ class TagWidget:
         else:
             return self.value
 
+    # NOTE, Tag.mnemonic is unfortunately not supported
+    # because terminal key sending is a mess.
+    # In some terminals (gnome-terminal, terminator), alt+f sends ctrl+right
+    # (yeah, alt+f should go word forward, but this is awfaul)
+    # and hitting alt will trigger an escape sequence while escape is mapped to exit the app.
+    # I failed setting a timeout to work around this. Not taking account the different Win behaviour.
+    # This should really be handled by a lower level, ex. prompt_toolkit seem to have better handling than textual.
+    # def on_key(self, event: events.Key) -> None:
+    #     return
+    #     if event.key == "alt+" + self.tag._mnemonic:
+    #         self.focus()
+    #         event.stop()
+
 
 class TagWidgetWithInput(TagWidget):
     """Base class for widgets that contain an input element"""

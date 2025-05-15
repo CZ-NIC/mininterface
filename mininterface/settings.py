@@ -58,16 +58,64 @@ class TextualSettings(TuiSettings):
 
 @dataclass
 class TextSettings(TuiSettings):
-    ...
+    mnemonic_over_number: Optional[bool] = None
+    """ Even when mnemonic can be determined, use rather number as a shortcut.
+
+    By default if `None`, determine those with `Tag(mnemonic=char|True)`:
+
+    ```bash
+    >     ok
+    [1] foo1: ×
+    [2] foo2: ×
+    [g] foo3: ×
+    ```
+
+    If `True`, determine also those having `Tag(mnemonic=None)`:
+
+    ```bash
+    >     ok
+    [f] foo1: ×
+    [o] foo2: ×
+    [g] foo3: ×
+    ```
+
+    If `False`, we prefer numbers:
+
+    ```bash
+    >     ok
+    [1] foo1: ×
+    [2] foo2: ×
+    [3] foo3: ×
+    ```
+
+    The original code:
+
+    ```python
+    from dataclasses import dataclass
+    from typing import Annotated
+    from mininterface import Tag, run
+    from mininterface.settings import MininterfaceSettings, TextSettings
+
+
+    @dataclass
+    class Env:
+        foo1: bool = False
+        foo2: bool = False
+        foo3: Annotated[bool, Tag(mnemonic="g")] = False
+
+
+    m = run(Env, settings=MininterfaceSettings(text=TextSettings(mnemonic_over_number=True)))
+    m.form()
+    quit()
+    ```
+    """
 
 
 @dataclass
 class WebSettings(TextualSettings):
+    # This is ready and working and waiting for the demand.
     ...
 
-
-# NOTE elaborate in the docs when more examples exist
-# TuiSettings works as a default for TextSettings and TextualSettings
 
 @dataclass
 class MininterfaceSettings:
