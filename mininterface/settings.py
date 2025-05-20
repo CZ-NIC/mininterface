@@ -9,22 +9,18 @@ InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["
 @dataclass
 class UiSettings:
     toggle_widget: str = "f4"
-    """ Shortcuts to toggle ex. calendar or file picker. """
+    """ Shortcut to toggle widgets like secret fields, file picker, and datetime dialog.
 
-    # NOTE should be used in tkinter
-    # But we have to convert textual shortcut to tkinter shortcut with something like this
-    # mods = {
-    #     "ctrl": "Control",
-    #     "alt": "Alt",
-    #     "shift": "Shift",
-    # }
+    The shortcut should be in Textual format (e.g., "ctrl+t", "f4").
+    This format will be automatically converted to the appropriate format
+    for each interface (e.g., "<Control-t>" for Tkinter).
 
-    # parts = shortcut.lower().split("+")
-    # keys = [mods.get(p, p) for p in parts]
-    # modifiers = keys[:-1]
-    # key = keys[-1]
-
-    # return f"<{'-'.join(modifiers + [key])}>"
+    Examples:
+        - "ctrl+t" for Control+T
+        - "alt+f" for Alt+F
+        - "f4" for F4 key
+        - "cmd+s" for Command+S (macOS)
+    """
 
     mnemonic: Optional[bool] = True
     """ Allow users to access fields with the `Alt+char` shortcut.
