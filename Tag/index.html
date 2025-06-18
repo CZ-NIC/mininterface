@@ -238,6 +238,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.Tag.mnemonic">
+<span class="md-ellipsis">
+      mnemonic
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.Tag.on_change">
 <span class="md-ellipsis">
       on_change
@@ -369,6 +376,13 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Config-file/">
+<span class="md-ellipsis">
+    Config file
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Settings/">
 <span class="md-ellipsis">
     Settings
@@ -488,6 +502,13 @@
 <a class="md-nav__link" href="#mininterface.Tag.label">
 <span class="md-ellipsis">
       label
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.Tag.mnemonic">
+<span class="md-ellipsis">
+      mnemonic
     </span>
 </a>
 </li>
@@ -616,6 +637,21 @@ If the validation fails, user is prompted to edit the value.</p>
 <a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">my_field</span><span class="p">:</span> <span class="nb">str</span>
 <a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">Form</span><span class="p">)</span>  <span class="c1"># label=my_field</span>
 </code></pre></div>
+</div>
+</div>
+<div class="doc doc-object doc-attribute">
+<h4 class="doc doc-heading" id="mininterface.Tag.mnemonic">
+<code class="highlight language-python"><span class="n">mnemonic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></code>
+</h4>
+<div class="doc doc-contents">
+<p>Focus the field on the <code>Alt+char</code> shortcut.</p>
+<ul>
+<li><code>char</code>: Use this char for mnemonic.</li>
+<li><code>True</code>: The char is determined automatically.</li>
+<li><code>None</code>: The char is determined automatically when <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.UiSettings.mnemonic">UiSettings.mnemonic</a> is True.</li>
+<li><code>False</code>: Disabled.</li>
+</ul>
+<p>See also <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.UiSettings.mnemonic">UiSettings.mnemonic</a>.</p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">

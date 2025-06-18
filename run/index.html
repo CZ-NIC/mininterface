@@ -302,6 +302,13 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Config-file/">
+<span class="md-ellipsis">
+    Config file
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Settings/">
 <span class="md-ellipsis">
     Settings
@@ -449,9 +456,9 @@ with the program name ending on <em>.yaml</em>, ex: <code>program.py</code> will
 (Withdrawn when <code>ask_for_missing</code> happens.)
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nd">@dataclass</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">ask_on_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="n">number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>    <span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">ask_on_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div></p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py<span class="w">  </span><span class="c1">#  omitting all parameters</span>
 <a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="c1"># Dialog for `number` and `text` appears</span>
@@ -490,7 +497,8 @@ You do not have to re-define all the settings in the config file, you can choose
 If set to True (default), we try to find one in the current working dir,
 whose name stem is the same as the program's.
 Ex: <code>program.py</code> will search for <code>program.yaml</code>.
-If False, no config file is used.</p>
+If False, no config file is used.
+See the <a href="../Config-file/">Config file</a> section.</p>
 </div>
 </td>
 <td>

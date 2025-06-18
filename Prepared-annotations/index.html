@@ -6,7 +6,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <link href="../Tag-aliases/" rel="prev"/>
-<link href="../Settings/" rel="next"/>
+<link href="../Config-file/" rel="next"/>
 <link href="../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
 <title>Prepared annotations - Mininterface</title>
@@ -323,6 +323,13 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Config-file/">
+<span class="md-ellipsis">
+    Config file
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Settings/">
 <span class="md-ellipsis">
     Settings
@@ -459,7 +466,7 @@
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.flag.BlankTrue">
-<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">BlankTrue</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PrimitiveConstructorSpec</span><span class="p">(</span><span class="n">nargs</span><span class="o">=</span><span class="s1">'*'</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">'blank=True|BOOL'</span><span class="p">,</span> <span class="n">instance_from_str</span><span class="o">=</span><span class="n">_assure_blank_or_bool</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">str_from_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="p">[</span><span class="n">instance</span><span class="p">])]</span></code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">BlankTrue</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PrimitiveConstructorSpec</span><span class="p">(</span><span class="n">nargs</span><span class="o">=</span><span class="s1">'*'</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">'blank=True|BOOL'</span><span class="p">,</span> <span class="n">instance_from_str</span><span class="o">=</span><span class="n">_assure_blank_or_bool</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">str_from_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="p">[</span><span class="n">instance</span><span class="p">])]</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>When left blank, this flag produces True.</p>
