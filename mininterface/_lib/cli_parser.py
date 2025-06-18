@@ -8,16 +8,32 @@ import sys
 import warnings
 from argparse import Action, ArgumentParser
 from contextlib import ExitStack
-from dataclasses import (MISSING, Field, asdict, dataclass, field, fields,
-                         is_dataclass, make_dataclass)
+from dataclasses import (
+    MISSING,
+    Field,
+    asdict,
+    dataclass,
+    field,
+    fields,
+    is_dataclass,
+    make_dataclass,
+)
 from pathlib import Path
 from types import SimpleNamespace
-from typing import (Annotated, Any, Callable, Optional, Sequence, Type, Union, get_args,
-                    get_origin)
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+    get_args,
+    get_origin,
+)
 from unittest.mock import patch
 
-from .auxiliary import (dataclass_asdict_no_defaults, merge_dicts,
-                        yield_annotations)
+from .auxiliary import dataclass_asdict_no_defaults, merge_dicts, yield_annotations
 from .form_dict import DataClass, EnvClass, MissingTagValue
 from ..settings import MininterfaceSettings
 from ..tag import Tag
@@ -33,17 +49,19 @@ try:
     from tyro.extras import get_parser
 except ImportError:
     from ..exceptions import DependencyRequired
+
     raise DependencyRequired("basic")
 
 
 # Pydantic is not a project dependency, that is just an optional integration
 try:  # Pydantic is not a dependency but integration
     from pydantic import BaseModel
+
     pydantic = True
 except ImportError:
     pydantic = False
     BaseModel = False
-try:   # Attrs is not a dependency but integration
+try:  # Attrs is not a dependency but integration
     import attr
 except ImportError:
     attr = None
@@ -58,11 +76,11 @@ reraise: Optional[Callable] = None
 
 
 class Patches:
-    """ Various mocking patches. """
+    """Various mocking patches."""
 
     @staticmethod
     def custom_error(self: TyroArgumentParser, message: str):
-        """ Fetch missing required options in GUI.
+        """Fetch missing required options in GUI.
         On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
         the error message function. Then, we reconstruct the missing options.
         Thanks to this we will be able to invoke a UI dialog with the missing options only.
@@ -71,28 +89,38 @@ class Patches:
         if not message.startswith("the following arguments are required:"):
             return super(TyroArgumentParser, self).error(message)
         eavesdrop = message
-        def reraise(): return super(TyroArgumentParser, self).error(message)
+
+        def reraise():
+            return super(TyroArgumentParser, self).error(message)
+
         raise SystemExit(2)  # will be catched
 
     @staticmethod
     def custom_init(self: TyroArgumentParser, *args, **kwargs):
         super(TyroArgumentParser, self).__init__(*args, **kwargs)
-        default_prefix = '-' if '-' in self.prefix_chars else self.prefix_chars[0]
-        self.add_argument(default_prefix+'v', default_prefix*2+'verbose', action='count', default=0,
-                          help="Verbosity level. Can be used twice to increase.")
+        default_prefix = "-" if "-" in self.prefix_chars else self.prefix_chars[0]
+        self.add_argument(
+            default_prefix + "v",
+            default_prefix * 2 + "verbose",
+            action="count",
+            default=0,
+            help="Verbosity level. Can be used twice to increase.",
+        )
 
     @staticmethod
     def custom_parse_known_args(self: TyroArgumentParser, args=None, namespace=None):
-        namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
+        namespace, args = super(TyroArgumentParser, self).parse_known_args(
+            args, namespace
+        )
         # NOTE We may check that the Env does not have its own `verbose``
         if hasattr(namespace, "verbose"):
             if namespace.verbose > 0:
-                log_level = {
-                    1: logging.INFO,
-                    2: logging.DEBUG,
-                    3: logging.NOTSET
-                }.get(namespace.verbose, logging.NOTSET)
-                logging.basicConfig(level=log_level, format='%(levelname)s - %(message)s')
+                log_level = {1: logging.INFO, 2: logging.DEBUG, 3: logging.NOTSET}.get(
+                    namespace.verbose, logging.NOTSET
+                )
+                logging.basicConfig(
+                    level=log_level, format="%(levelname)s - %(message)s"
+                )
             delattr(namespace, "verbose")
         return namespace, args
 
@@ -114,19 +142,23 @@ def assure_args(args: Optional[Sequence[str]] = None):
     return args
 
 
-def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
-              kwargs: dict,
-              add_verbose: bool = True,
-              ask_for_missing: bool = True,
-              args: Optional[Sequence[str]] = None) -> tuple[EnvClass, WrongFields]:
-    """ Run the tyro parser to fetch program configuration from CLI """
+def parse_cli(
+    env_or_list: Type[EnvClass] | list[Type[EnvClass]],
+    kwargs: dict,
+    add_verbose: bool = True,
+    ask_for_missing: bool = True,
+    args: Optional[Sequence[str]] = None,
+) -> tuple[EnvClass, WrongFields]:
+    """Run the tyro parser to fetch program configuration from CLI"""
     if isinstance(env_or_list, list):
         # We have to convert the list of possible classes (subcommands) to union for tyro.
         # We have to accept the list and not an union directly because we are not able
         # to type hint a union type, only a union instance.
         # def sugg(a: UnionType[EnvClass]) -> EnvClass: ...
         # sugg(Subcommand1 | Subcommand2). -> IDE will not suggest anything
-        type_form = Union[tuple(env_or_list)]  # Union[*env_or_list] not supported in Python3.10
+        type_form = Union[
+            tuple(env_or_list)
+        ]  # Union[*env_or_list] not supported in Python3.10
         env_classes = env_or_list
     else:
         type_form = env_or_list
@@ -142,14 +174,20 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     # Mock parser, inject special options into
     patches = []
     if ask_for_missing:  # Get the missing flags from the parser
-        patches.append(patch.object(TyroArgumentParser, 'error', Patches.custom_error))
+        patches.append(patch.object(TyroArgumentParser, "error", Patches.custom_error))
     if add_verbose:  # Mock parser to add verbosity
         # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
         if all("verbose" not in cl.__annotations__ for cl in env_classes):
-            patches.extend((
-                patch.object(TyroArgumentParser, '__init__', Patches.custom_init),
-                patch.object(TyroArgumentParser, 'parse_known_args', Patches.custom_parse_known_args)
-            ))
+            patches.extend(
+                (
+                    patch.object(TyroArgumentParser, "__init__", Patches.custom_init),
+                    patch.object(
+                        TyroArgumentParser,
+                        "parse_known_args",
+                        Patches.custom_parse_known_args,
+                    ),
+                )
+            )
 
     # Run the parser, with the mocks
     try:
@@ -178,12 +216,21 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                 parser: ArgumentParser = get_parser(type_form, **kwargs)
                 subargs = args
             elif len(args):
-                env = next((env for env in env_classes if to_kebab_case(env.__name__) == args[0]), None)
+                env = next(
+                    (
+                        env
+                        for env in env_classes
+                        if to_kebab_case(env.__name__) == args[0]
+                    ),
+                    None,
+                )
                 if env:
                     parser: ArgumentParser = get_parser(env)
                     subargs = args[1:]
             if not env:
-                raise NotImplemented("This case of nested dataclasses is not implemented. Raise an issue please.")
+                raise NotImplemented(
+                    "This case of nested dataclasses is not implemented. Raise an issue please."
+                )
 
             # Determine missing argument of the given dataclass
             positionals = (p for p in parser._actions if p.default != argparse.SUPPRESS)
@@ -194,12 +241,16 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
                     # Positional
                     # Ex: `The following arguments are required: PATH, INT, STR`
                     argument = next(positionals)
-                    register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
+                    register_wrong_field(
+                        env, kwargs, wf, argument, exception, eavesdrop
+                    )
                 else:
                     # required arguments
                     # Ex: `the following arguments are required: --foo, --bar`
-                    if argument := identify_required(parser,  arg):
-                        register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
+                    if argument := identify_required(parser, arg):
+                        register_wrong_field(
+                            env, kwargs, wf, argument, exception, eavesdrop
+                        )
 
             # Second attempt to parse CLI.
             # We have just put a default values for missing fields so that tyro will not fail.
@@ -213,7 +264,7 @@ def parse_cli(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
             # (This is not true anymore; to support pydantic we put a default value of the type,
             # so there is probably no more warning to be caught.)
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
+                warnings.simplefilter("ignore")
                 try:
                     env = cli(env, args=subargs, **kwargs)
                 except AssertionError:
@@ -243,7 +294,9 @@ def identify_required(parser: ArgumentParser, arg: str) -> None | Action:
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
         return
     try:
-        argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
+        argument: Action = next(
+            iter(p for p in parser._actions if arg in p.option_strings)
+        )
     except:
         # missing subcommand flag not implemented (correction: might be implemented and we never come here anymore)
         return
@@ -268,8 +321,15 @@ def argument_to_field_name(env_class: EnvClass, argument: Action):
     return field_name
 
 
-def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument: Action, exception: BaseException, eavesdrop):
-    """ The field is missing.
+def register_wrong_field(
+    env_class: EnvClass,
+    kwargs: dict,
+    wf: dict,
+    argument: Action,
+    exception: BaseException,
+    eavesdrop,
+):
+    """The field is missing.
     We prepare it to the list of wrong fields to be filled up
     and make a temporary default value so that tyro will not fail.
     """
@@ -277,12 +337,13 @@ def register_wrong_field(env_class: EnvClass, kwargs: dict,  wf: dict, argument:
     # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
     # However, the UI then is not able to use ex. the number filtering capabilities.
     # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
-    tag = wf[field_name] = tag_factory(MissingTagValue(exception, eavesdrop),
-                                       (argument.help or "").replace("(required)", ""),
-                                       validation=not_empty,
-                                       _src_class=env_class,
-                                       _src_key=field_name
-                                       )
+    tag = wf[field_name] = tag_factory(
+        MissingTagValue(exception, eavesdrop),
+        (argument.help or "").replace("(required)", ""),
+        validation=not_empty,
+        _src_class=env_class,
+        _src_key=field_name,
+    )
     # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
     # A None would be enough because Mininterface will ask for the missing values
     # promply, however, Pydantic model would fail.
@@ -300,11 +361,13 @@ def set_default(kwargs, field_name, val):
     setattr(kwargs["default"], field_name, val)
 
 
-def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
-                      config_file: Path | None = None,
-                      settings: Optional[MininterfaceSettings] = None,
-                      **kwargs) -> tuple[dict, MininterfaceSettings | None]:
-    """ Fetches the config file into the program defaults kwargs["default"] and UI settings.
+def parse_config_file(
+    env_or_list: Type[EnvClass] | list[Type[EnvClass]],
+    config_file: Path | None = None,
+    settings: Optional[MininterfaceSettings] = None,
+    **kwargs,
+) -> tuple[dict, MininterfaceSettings | None]:
+    """Fetches the config file into the program defaults kwargs["default"] and UI settings.
 
     Args:
         env_class: Class with the configuration.
@@ -326,24 +389,31 @@ def parse_config_file(env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     if config_file and subcommands:
         # Reading config files when using subcommands is not implemented.
         kwargs.pop("default", None)
-        warnings.warn(f"Config file {config_file} is ignored because subcommands are used."
-                      " It is not easy to set how this should work."
-                      " Describe the developer your usecase so that they might implement this.")
+        warnings.warn(
+            f"Config file {config_file} is ignored because subcommands are used."
+            " It is not easy to set how this should work."
+            " Describe the developer your usecase so that they might implement this."
+        )
 
     if "default" not in kwargs and not subcommands and config_file:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
-        if confopt := disk.pop("mininterface", None):
-            # Section 'mininterface' in the config file.
-            settings = _merge_settings(settings, confopt)
+        try:
+            if confopt := disk.pop("mininterface", None):
+                # Section 'mininterface' in the config file.
+                settings = _merge_settings(settings, confopt)
 
-        kwargs["default"] = _create_with_missing(env, disk)
+            kwargs["default"] = _create_with_missing(env, disk)
+        except TypeError:
+            raise SyntaxError(f"Config file parsing failed for {config_file}")
 
     return kwargs, settings
 
 
-def _merge_settings(runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings) -> MininterfaceSettings:
+def _merge_settings(
+    runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings
+) -> MininterfaceSettings:
     # Settings inheritance:
     # Config file > program-given through run(settings=) > the default settings (original dataclasses)
 
@@ -357,19 +427,64 @@ def _merge_settings(runopt: MininterfaceSettings | None, confopt: dict, _def_fac
 
     # Merge option sections.
     # Ex: TextSettings will derive from both Tui and Ui. You may specify a Tui default value, common for all Tui interfaces.
-    for sources in [("ui", "gui"),
-                    ("ui", "tui"),
-                    ("ui", "tui", "textual"),
-                    ("ui", "tui", "text"),
-                    ("ui", "tui", "textual", "web"),
-                    ]:
+    for sources in [
+        ("ui", "gui"),
+        ("ui", "tui"),
+        ("ui", "tui", "textual"),
+        ("ui", "tui", "text"),
+        ("ui", "tui", "textual", "web"),
+    ]:
         target = sources[-1]
-        confopt[target] = {**{k: v for s in sources for k, v in confopt.get(s, {}).items()}, **confopt.get(target, {})}
+        confopt[target] = {
+            **{k: v for s in sources for k, v in confopt.get(s, {}).items()},
+            **confopt.get(target, {}),
+        }
 
     for key, value in vars(_create_with_missing(_def_fact, confopt)).items():
         if value is not MISSING_NONPROP:
             setattr(runopt, key, value)
     return runopt
+
+
+def coerce_type_to_annotation(value, annotation):
+    """
+    Coerce value (e.g. list) to expected type (e.g. tuple[int, int]).
+    Only handles basic cases: tuple[...] from list, and recurses if needed.
+    """
+    if annotation is None:
+        return value
+
+    annotation = _unwrap_annotated(annotation)
+    origin = get_origin(annotation)
+
+    # Handle tuple[...] conversion
+    if origin is tuple and isinstance(value, list):
+        args = get_args(annotation)
+        if args and len(args) == len(value):
+            return tuple(
+                coerce_type_to_annotation(v, arg) for v, arg in zip(value, args)
+            )
+        return tuple(value)
+
+    # Handle list[...] conversion
+    if origin is list and isinstance(value, list):
+        args = get_args(annotation)
+        if args:
+            return [coerce_type_to_annotation(v, args[0]) for v in value]
+        return value
+
+    # Handle dict[...] conversion
+    if origin is dict and isinstance(value, dict):
+        key_type, val_type = get_args(annotation)
+        return {
+            coerce_type_to_annotation(k, key_type): coerce_type_to_annotation(
+                v, val_type
+            )
+            for k, v in value.items()
+        }
+
+    # For nested dataclass or BaseModel etc.
+    return value
 
 
 def _unwrap_annotated(tp):
@@ -435,7 +550,7 @@ def _process_pydantic(env, disk):
             if isinstance(f.default, BaseModel):
                 v = _create_with_missing(f.default.__class__, disk[name])
             else:
-                v = disk[name]
+                v = coerce_type_to_annotation(disk[name], f.annotation)
         elif f.default is not None:
             v = f.default
         yield name, v
@@ -447,7 +562,7 @@ def _process_attr(env, disk):
             if attr.has(f.default):
                 v = _create_with_missing(f.default.__class__, disk[f.name])
             else:
-                v = disk[f.name]
+                v = coerce_type_to_annotation(disk[f.name], f.type)
         elif f.default is not attr.NOTHING:
             v = f.default
         else:
@@ -463,7 +578,7 @@ def _process_dataclass(env, disk):
             if is_dataclass(_unwrap_annotated(f.type)):
                 v = _create_with_missing(f.type, disk[f.name])
             else:
-                v = disk[f.name]
+                v = coerce_type_to_annotation(disk[f.name], f.type)
         elif f.default_factory is not MISSING:
             v = f.default_factory()
         elif f.default is not MISSING:
@@ -474,7 +589,7 @@ def _process_dataclass(env, disk):
 
 
 def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass:
-    """ Note that in contrast to the argparse, we create default values.
+    """Note that in contrast to the argparse, we create default values.
     When an optional flag is not used, argparse put None, we have a default value.
 
     This does make sense for most values and should not pose problems for truthy-values.
@@ -502,7 +617,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
             arg_type = list[action.type or str]
             opt["default_factory"] = list
         else:
-            if isinstance(action, (argparse._StoreTrueAction, argparse._StoreFalseAction)):
+            if isinstance(
+                action, (argparse._StoreTrueAction, argparse._StoreFalseAction)
+            ):
                 arg_type = bool
             elif isinstance(action, argparse._StoreConstAction):
                 arg_type = type(action.const)
@@ -520,7 +637,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
                     # nevertheless.
                     # Ex. parser.add_argument("--time", type=time) -> does work poorly in argparse.
                     action.default = Tag(annotation=arg_type)._make_default_value()
-            opt["default"] = action.default if action.default != argparse.SUPPRESS else None
+            opt["default"] = (
+                action.default if action.default != argparse.SUPPRESS else None
+            )
 
         # build a dataclass field, either optional, or positional
         met = {"metadata": {"help": action.help}}
@@ -533,6 +652,6 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
 
 
 def to_kebab_case(name: str) -> str:
-    """ MyClass -> my-class """
+    """MyClass -> my-class"""
     # I did not find where tyro does it. If I find it, I might use its function instead.
-    return re.sub(r'(?<!^)(?=[A-Z])', '-', name).lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()

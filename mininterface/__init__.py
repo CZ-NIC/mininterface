@@ -16,7 +16,12 @@ from .tag.alias import Options, Validation
 try:
     from ._lib.start import ChooseSubcommandOverview, Start
     from .cli import Command, SubcommandPlaceholder
-    from ._lib.cli_parser import assure_args, parse_cli, parse_config_file, parser_to_dataclass
+    from ._lib.cli_parser import (
+        assure_args,
+        parse_cli,
+        parse_config_file,
+        parser_to_dataclass,
+    )
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
     ChooseSubcommandOverview, Start, SubcommandPlaceholder = (e,) * 3
@@ -27,18 +32,27 @@ class _Empty:
     pass
 
 
-def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None,
-        ask_on_empty_cli: bool = False,
-        title: str = "",
-        config_file: Path | str | bool = True,
-        add_verbose: bool = True,
-        ask_for_missing: bool = True,
-        # We do not use InterfaceType as a type here because we want the documentation to show full alias:
-        interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
-        args: Optional[Sequence[str]] = None,
-        settings: Optional[MininterfaceSettings] = None,
-        **kwargs) -> Mininterface[EnvClass]:
-    """ The main access, start here.
+def run(
+    env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None,
+    ask_on_empty_cli: bool = False,
+    title: str = "",
+    config_file: Path | str | bool = True,
+    add_verbose: bool = True,
+    ask_for_missing: bool = True,
+    # We do not use InterfaceType as a type here because we want the documentation to show full alias:
+    interface: (
+        Type[Mininterface]
+        | Literal["gui"]
+        | Literal["tui"]
+        | Literal["text"]
+        | Literal["web"]
+        | None
+    ) = None,
+    args: Optional[Sequence[str]] = None,
+    settings: Optional[MininterfaceSettings] = None,
+    **kwargs
+) -> Mininterface[EnvClass]:
+    """The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
     with the preference of the graphical one, regressed to a text interface for machines without display.
     Besides, if given a configuration dataclass, the function enriches it with the CLI commands and possibly
@@ -59,9 +73,9 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
             ```python
             @dataclass
             class Env:
-            number: int = 3
-            text: str = ""
-            m = run(Env, ask_on_empty=True)
+                number: int = 3
+                text: str = ""
+                m = run(Env, ask_on_empty=True)
             ```
 
             ```bash
@@ -77,6 +91,7 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
+            See the [Config file](Config-file.md) section.
         add_verbose: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
 
             ```python
@@ -203,18 +218,24 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
         if superform_args is not None:
             # Run Superform as multiple subcommands exist and we have to decide which one to run.
             m = get_interface(interface, title, settings, None)
-            ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
+            ChooseSubcommandOverview(
+                env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing
+            )
             return m  # m with added `m.env`
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
 
     # Parse CLI arguments, possibly merged from a config file.
-    kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
+    kwargs, settings = parse_config_file(
+        env_or_list or _Empty, config_file, settings, **kwargs
+    )
     if env_or_list:
         # B) single Env object
         # Load configuration from CLI and a config file
-        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
+        env, wrong_fields = parse_cli(
+            env_or_list, kwargs, add_verbose, ask_for_missing, args
+        )
         m = get_interface(interface, title, settings, env)
 
         # Empty CLI → GUI edit
@@ -243,6 +264,4 @@ def run(env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | No
     return m
 
 
-__all__ = ["run", "Mininterface", "Tag",
-           "Cancelled",
-           "Validation", "Options"]
+__all__ = ["run", "Mininterface", "Tag", "Cancelled", "Validation", "Options"]

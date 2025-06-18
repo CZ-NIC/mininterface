@@ -61,7 +61,7 @@ def _assure_blank_or_bool(args):
 
 
 BlankTrue = Annotated[
-    list[str] | None,
+    list[str] | bool | None,
     PrimitiveConstructorSpec(
         nargs="*",
         metavar="blank=True|BOOL",

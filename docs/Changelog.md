@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.0.3 (unreleased)
+## 1.0.3 (2025-06-18)
 * enh: Tk better file dialog
 * feat: [Tag.mnemonic][mininterface.Tag.mnemonic]
+* feat: config file tuple annotation support
 
 ## 1.0.2 (2025-05-10)
 * fix: mute TextInterface on Win

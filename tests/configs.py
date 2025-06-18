@@ -27,18 +27,18 @@ class ColorEnumSingle(Enum):
 
 
 def callback_tag(tag: Tag):
-    """ Receives a tag """
+    """Receives a tag"""
     print("Printing", type(tag))
     return 100
 
 
 def callback_tag2(tag: Tag):
-    """ Receives a tag """
+    """Receives a tag"""
     print("Printing", type(tag))
 
 
 def callback_raw():
-    """ Dummy function """
+    """Dummy function"""
     print("Priting text")
     return 50
 
@@ -46,10 +46,22 @@ def callback_raw():
 @dataclass
 class SimpleEnv:
     """Set of options."""
+
     test: bool = False
     """My testing flag"""
     important_number: int = 4
     """This number is very important"""
+
+
+@dataclass
+class ComplexEnv:
+    a1: dict[int, str]
+    a2: dict[int, tuple[str, int]]
+    a3: dict[int, list[str]]
+    a4: list[int]
+    a5: tuple[str, int]
+    a6: list[int | str]
+    a7: list[tuple[str, float]]
 
 
 @dataclass
@@ -172,7 +184,9 @@ class PathTagClass:
     files: Positional[list[Path]] = field(default_factory=list)
 
     # This becomes PathTag(multiple=True)
-    files2: Annotated[list[Path], Tag(label="Custom name")] = field(default_factory=list)
+    files2: Annotated[list[Path], Tag(label="Custom name")] = field(
+        default_factory=list
+    )
 
     # NOTE this should become PathTag(multiple=True)
     # files3: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
@@ -183,7 +197,9 @@ class DatetimeTagClass:
     p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
     p2: time = time.fromisoformat("17:35:39.922044")
     p3: date = date.fromisoformat("2024-09-10")
-    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
+    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat(
+        "2024-09-10 17:35:39.922044"
+    )
 
 
 @dataclass
@@ -246,7 +262,8 @@ class InheritedAnnotatedClass(AnnotatedClassInner):
 
 @dataclass
 class SharedArgs(Command):
-    """ Class with a shared argument. """
+    """Class with a shared argument."""
+
     foo: int
 
     def run(self):
@@ -255,7 +272,8 @@ class SharedArgs(Command):
 
 @dataclass
 class Subcommand1(SharedArgs):
-    """ Class inheriting from SharedArgs. """
+    """Class inheriting from SharedArgs."""
+
     a: int = 1
 
 
@@ -266,7 +284,8 @@ class Subcommand2(SharedArgs):
 
 @dataclass
 class SharedArgsB(Command):
-    """ Class with a shared argument. """
+    """Class with a shared argument."""
+
     foo: int = 7
 
     def init(self):
@@ -278,7 +297,8 @@ class SharedArgsB(Command):
 
 @dataclass
 class SubcommandB1(SharedArgsB):
-    """ Class inheriting from SharedArgs. """
+    """Class inheriting from SharedArgs."""
+
     a: int = 1
 
     def run(self):
@@ -297,7 +317,7 @@ def validation1(tag: Tag):
     if tag.val < 10:
         return True
     if tag.val < 50:
-        return True, tag.val*2
+        return True, tag.val * 2
     if tag.val < 90:
         return False
     return "too big"
@@ -305,10 +325,11 @@ def validation1(tag: Tag):
 
 @dataclass
 class AnnotatedTypes:
-    age: Annotated[int, Gt(18)] = 20                        # Valid: 19, 20, ...
+    age: Annotated[int, Gt(18)] = 20  # Valid: 19, 20, ...
     # Invalid: 17, 18, "19", 19.0, ...
-    my_list: Annotated[list[int], Len(0, 10)] = field(default_factory=lambda: []
-                                                      )          # Valid: [], [10, 20, 30, 40, 50]
+    my_list: Annotated[list[int], Len(0, 10)] = field(
+        default_factory=lambda: []
+    )  # Valid: [], [10, 20, 30, 40, 50]
     # Invalid: (1, 2), ["abc"], [0] * 20
     percent: Annotated[int, Gt(0), Le(100)] = 5
     percent_fl: Annotated[float, Gt(0), Le(100)] = 5

@@ -14,6 +14,7 @@ extra_javascript:
 plugins:
   - search
   - mermaid2
+  - include-markdown
   - mkdocstrings:
       handlers:
         python:
@@ -66,6 +67,7 @@ nav:
           - Tag-aliases.md
           - Prepared-annotations.md
   - Extras:
+      - Config-file.md
       - Settings.md
       - Exceptions.md
       - Interfaces.md
