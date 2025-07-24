@@ -149,7 +149,7 @@ These projects have the code base reduced thanks to the mininterface:
 Take a look at the following example.
 
 1. We define any Env class.
-2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompter for
+2. Then, we initialize mininterface with [`run(Env)`][mininterface.run] – the missing fields will be prompted for
 3. Then, we use various dialog methods, like [`confirm`][mininterface.Mininterface.confirm], [`select`][mininterface.Mininterface.select] or [`form`][mininterface.Mininterface.form].
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
