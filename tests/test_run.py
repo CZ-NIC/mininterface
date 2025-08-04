@@ -30,7 +30,6 @@ from shared import MISSING, TestAbstract, runm
 import os
 import sys
 import warnings
-from argparse import ArgumentParser
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
@@ -249,55 +248,3 @@ class TestRun(TestAbstract):
         m = run(settings=opt1, interface=Mininterface)
         self.assertIsInstance(m, Mininterface)
         self.assertIsInstance(m._adaptor.settings, UiSettings)
-
-    def test_argparse(self):
-        parser = ArgumentParser(description="Test parser for dataclass generation.")
-        # positional
-        parser.add_argument("input_file", type=str, help="Path to the input file.")
-        parser.add_argument(
-            "output_dir", type=str, help="Directory where output will be saved."
-        )
-        # optional with/out defaults
-        parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
-        # attention, an empty path will become Path('.'), not None
-        parser.add_argument("--config", type=Path, help="Optional path to config file.")
-        # action=store_true
-        parser.add_argument("--debug", action="store_true", help="Enable debug mode.")
-        # action=store_false
-        parser.add_argument(
-            "--no-color",
-            dest="color",
-            action="store_false",
-            help="Disable colored output.",
-        )
-        # append
-        parser.add_argument("--tag", action="append", help="Add one or more tags.")
-        # subparsers
-        subparsers = parser.add_subparsers(dest="command", required=True)
-        sub1 = subparsers.add_parser("build", help="Build something.")
-        sub1.add_argument(
-            "--optimize", action="store_true", help="Enable optimizations."
-        )
-        sub1.add_argument("--target", type=str, help="Build target platform.")
-        sub2 = subparsers.add_parser("deploy", help="Deploy something.")
-        # NOTE handling missing values in subparsers is not implemented (we defer to tyro exception)
-        # sub2.add_argument("host", type=str, help="Remote host.")
-        sub2.add_argument("--port", type=int, default=22, help="SSH port.")
-        sub2.add_argument("--user", type=str, default="root", help="SSH user.")
-
-        with self.assertRaises(SystemExit) as cm:
-            run(parser, interface=Mininterface)
-        self.assertEqual(
-            """input_file: Type must be str!
-output_dir: Type must be str!
-the following arguments are required: STR, STR""",
-            cm.exception.code,
-        )
-
-        env = run(parser, args=["/tmp/file", "/tmp"], interface=Mininterface).form()
-
-        PathType = type(Path(""))  # PosixPath on Linux
-        self.assertEqual(
-            f"""Args(build=Build(optimize=False, target=''), deploy=Deploy(port=22, user='root'), input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, color=True, tag=[])""",
-            repr(env),
-        )

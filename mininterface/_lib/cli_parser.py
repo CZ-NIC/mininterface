@@ -10,13 +10,10 @@ from argparse import Action, ArgumentParser
 from contextlib import ExitStack
 from dataclasses import (
     MISSING,
-    Field,
     asdict,
     dataclass,
-    field,
     fields,
     is_dataclass,
-    make_dataclass,
 )
 from pathlib import Path
 from types import SimpleNamespace
@@ -33,8 +30,9 @@ from typing import (
 )
 from unittest.mock import patch
 
+
 from .auxiliary import dataclass_asdict_no_defaults, merge_dicts, yield_annotations
-from .form_dict import DataClass, EnvClass, MissingTagValue
+from .form_dict import EnvClass, MissingTagValue
 from ..settings import MininterfaceSettings
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
@@ -45,7 +43,6 @@ try:
     from tyro import cli
     from tyro._argparse_formatter import TyroArgumentParser
     from tyro._singleton import MISSING_NONPROP
-    from tyro.conf import Positional
     from tyro.extras import get_parser
 except ImportError:
     from ..exceptions import DependencyRequired
@@ -586,69 +583,6 @@ def _process_dataclass(env, disk):
         else:
             v = MISSING_NONPROP
         yield f.name, v
-
-
-def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass:
-    """Note that in contrast to the argparse, we create default values.
-    When an optional flag is not used, argparse put None, we have a default value.
-
-    This does make sense for most values and should not pose problems for truthy-values.
-    Ex. checking `if namespace.my_int` still returns False for both argparse-None and our-0.
-
-    Be aware that for Path this might pose a big difference:
-    parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
-    """
-    subparser_fields: list[tuple[str, type]] = []
-    normal_fields: list[tuple[str, type, Field]] = []
-    pos_fields: list[tuple[str, type, Field]] = []
-
-    for action in parser._actions:
-        if isinstance(action, argparse._HelpAction):
-            continue
-
-        if isinstance(action, argparse._SubParsersAction):
-            for subname, subparser in action.choices.items():
-                sub_dc = parser_to_dataclass(subparser, name=subname.capitalize())
-                subparser_fields.append((subname, sub_dc))  # required, no default
-            continue
-
-        opt = {}
-        if isinstance(action, argparse._AppendAction):
-            arg_type = list[action.type or str]
-            opt["default_factory"] = list
-        else:
-            if isinstance(
-                action, (argparse._StoreTrueAction, argparse._StoreFalseAction)
-            ):
-                arg_type = bool
-            elif isinstance(action, argparse._StoreConstAction):
-                arg_type = type(action.const)
-            elif isinstance(action, argparse._CountAction):
-                arg_type = int
-            else:
-                arg_type = action.type or str
-                if action.default is None:
-                    # parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
-                    # By default, argparse put None if not used in the CLI.
-                    # Which makes tyro output the warning: annotated with type `<class 'str'>`, but the default value `None`
-                    # We either make None an option by `arg_type |= None`
-                    # or else we default the value.
-                    # This creates a slightly different behaviour, however, the behaviour is slightly different
-                    # nevertheless.
-                    # Ex. parser.add_argument("--time", type=time) -> does work poorly in argparse.
-                    action.default = Tag(annotation=arg_type)._make_default_value()
-            opt["default"] = (
-                action.default if action.default != argparse.SUPPRESS else None
-            )
-
-        # build a dataclass field, either optional, or positional
-        met = {"metadata": {"help": action.help}}
-        if action.option_strings:
-            normal_fields.append((action.dest, arg_type, field(**opt, **met)))
-        else:
-            pos_fields.append((action.dest, Positional[arg_type], field(**met)))
-
-    return make_dataclass(name, subparser_fields + pos_fields + normal_fields)
 
 
 def to_kebab_case(name: str) -> str:

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
+
 from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
@@ -16,11 +17,11 @@ from .tag.alias import Options, Validation
 try:
     from ._lib.start import ChooseSubcommandOverview, Start
     from .cli import Command, SubcommandPlaceholder
+    from ._lib.argparse_support import parser_to_dataclass
     from ._lib.cli_parser import (
         assure_args,
         parse_cli,
         parse_config_file,
-        parser_to_dataclass,
     )
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4

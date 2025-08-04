@@ -297,4 +297,7 @@ print(m.env.time)  # -> 14:21
 If you're sure enough to start using *Mininterface*, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.
 
 !!! warning
-    Be aware that in contrast to the argparse, we create default values. This does make sense for most values but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.
+    Be aware that in contrast to the argparse:
+
+    * We create default values. This does make sense for most values but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.
+    * When storing multiple `store_const` action to the same `dest`, order does not matter.
