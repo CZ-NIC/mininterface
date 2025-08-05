@@ -16,6 +16,7 @@ from dataclasses import Field, dataclass, field, make_dataclass
 from functools import cached_property
 import re
 from typing import Callable
+from warnings import warn
 
 from .form_dict import DataClass
 from ..tag import Tag
@@ -88,13 +89,20 @@ def parser_to_dataclass(
     subparsers: list[_SubParsersAction] = []
 
     normal_actions: list[Action] = []
+    has_positionals = False
     for action in parser._actions:
         match action:
             case _HelpAction():
                 continue
             case _SubParsersAction():
+                if has_positionals:
+                    warn(
+                        "This CLI parser have a subcommand placed after positional arguments. The order of arguments changes, see --help."
+                    )
                 subparsers.append(action)
             case _:
+                if not action.option_strings:
+                    has_positionals = True
                 normal_actions.append(action)
 
     if subparsers:
@@ -195,7 +203,6 @@ def _make_dataclass_from_actions(actions: list[Action], name) -> DataClass:
         else:
             pos_fields.append((action.dest, Positional[arg_type], field(**met)))
 
-    # TODO
     return make_dataclass(
         name,
         subparser_fields + pos_fields + normal_fields,

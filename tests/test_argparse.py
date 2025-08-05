@@ -1,3 +1,4 @@
+import warnings
 from mininterface import Mininterface, run
 from shared import TestAbstract, runm
 
@@ -51,9 +52,16 @@ the following arguments are required: STR, STR""",
             cm.exception.code,
         )
 
-        env = run(
-            parser, args=["build", "/tmp/file", "/tmp"], interface=Mininterface
-        ).form()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")  # zachytí všechna varování
+            env = run(
+                parser, args=["build", "/tmp/file", "/tmp"], interface=Mininterface
+            ).form()
+            self.assertEqual(
+                len(w),
+                0,
+                f"Unexpected warning(s): {[str(warning.message) for warning in w]}",
+            )
 
         PathType = type(Path(""))  # PosixPath on Linux
         self.assertEqual(
@@ -71,6 +79,31 @@ the following arguments are required: STR, STR""",
 
         self.assertFalse(env.color)
         self.assertTrue(env.no_color)
+
+    def test_unimplemented_positionals(self):
+        """The original parser:
+
+        usage: program.py [-h] [--verbosity VERBOSITY] input_file {deploy,build} ...
+
+        Mininterface changes the order:
+
+        usage: program.py [-h] [-v] {deploy,build}
+        usage: program.py deploy [-h] [DEPLOY OPTIONS] STR
+        """
+        parser = ArgumentParser(description="Test parser for dataclass generation.")
+
+        parser.add_argument("input_file", type=str, help="Path to the input file.")
+        subparsers = parser.add_subparsers(dest="command", required=True)
+        subparsers.add_parser("build", help="Build something.")
+        sub2 = subparsers.add_parser("deploy", help="Deploy something.")
+        sub2.add_argument("--port", type=int, default=22, help="SSH port.")
+        parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
+        with self.assertWarnsRegex(UserWarning, r"This CLI parser"):
+            run(
+                parser,
+                args=["deploy", "/tmp/file", "--port", "23"],
+                interface=Mininterface,
+            )
 
     def test_failed_constant(self):
         parser = ArgumentParser()
