@@ -84,16 +84,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
     parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
     """
     subparser_fields: list[tuple[str, type]] = []
-    normal_fields: list[tuple[str, type, Field]] = []
-    pos_fields: list[tuple[str, type, Field]] = []
-    properties = defaultdict(Property)
-    """ Sometimes, the action.dest differs from the field name.
-    Field name is exposed to the CLI, action.dest is used in the program.
-    """
 
-    const_actions = defaultdict(list[ArgparseField])
+    other_fields = []
     for action in parser._actions:
-        af = ArgparseField(action, properties)
         if isinstance(action, _HelpAction):
             continue
 
@@ -102,8 +95,23 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
                 sub_dc = parser_to_dataclass(subparser, name=subname.capitalize())
                 subparser_fields.append((subname, sub_dc))  # required, no default
             continue
+        other_fields.append(action)
 
-        opt = {}
+    _make_dataclass_from_actions(other_fields)
+
+
+def _make_dataclass_from_actions(actions: list[Action]):
+    const_actions = defaultdict(list[ArgparseField])
+    normal_fields: list[tuple[str, type, Field]] = []
+    pos_fields: list[tuple[str, type, Field]] = []
+    properties = defaultdict(Property)
+    """ Sometimes, the action.dest differs from the field name.
+    Field name is exposed to the CLI, action.dest is used in the program.
+    """
+    opt = {}
+
+    for action in actions:
+        af = ArgparseField(action, properties)
 
         match action:
             case _AppendAction():
@@ -167,6 +175,7 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
         else:
             pos_fields.append((action.dest, Positional[arg_type], field(**met)))
 
+    # TODO
     return make_dataclass(
         name,
         subparser_fields + pos_fields + normal_fields,
