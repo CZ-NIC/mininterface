@@ -93,17 +93,40 @@ the following arguments are required: STR, STR""",
         parser = ArgumentParser(description="Test parser for dataclass generation.")
 
         parser.add_argument("input_file", type=str, help="Path to the input file.")
-        subparsers = parser.add_subparsers(dest="command", required=True)
-        subparsers.add_parser("build", help="Build something.")
-        sub2 = subparsers.add_parser("deploy", help="Deploy something.")
+        subs = parser.add_subparsers(dest="command", required=True)
+        subs.add_parser("build", help="Build something")
+        sub2 = subs.add_parser(
+            "deploy", help="Deploy something", description="My thorough description."
+        )
         sub2.add_argument("--port", type=int, default=22, help="SSH port.")
         parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
+
+        # warning for the positional arguments change
         with self.assertWarnsRegex(UserWarning, r"This CLI parser"):
             run(
                 parser,
                 args=["deploy", "/tmp/file", "--port", "23"],
                 interface=Mininterface,
             )
+
+        # Nice help text
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            with (
+                self.assertOutputs(
+                    contains="Deploy something: My thorough description."
+                ),
+                self.assertRaises(SystemExit),
+            ):
+                run(parser, args=["--help"], interface=Mininterface)
+
+            with (
+                self.assertOutputs(
+                    contains="Deploy something: My thorough description."
+                ),
+                self.assertRaises(SystemExit),
+            ):
+                run(parser, args=["deploy", "--help"], interface=Mininterface)
 
     def test_failed_constant(self):
         parser = ArgumentParser()

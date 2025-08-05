@@ -107,15 +107,33 @@ def parser_to_dataclass(
 
     if subparsers:
         return [
-            _make_dataclass_from_actions(normal_actions + subactions._actions, subname)
+            _make_dataclass_from_actions(
+                normal_actions + subactions._actions,
+                subname,
+                help_,
+                subactions.description,
+            )
             for subparser in subparsers
-            for subname, subactions in subparser.choices.items()
+            for subname, subactions, help_ in _loop_SubParsersAction(subparser)
         ]
     else:
-        return _make_dataclass_from_actions(normal_actions, name)
+        return _make_dataclass_from_actions(
+            normal_actions, name, None, parser.description
+        )
 
 
-def _make_dataclass_from_actions(actions: list[Action], name) -> DataClass:
+def _loop_SubParsersAction(subparser: _SubParsersAction):
+    return [
+        (subname, subactions, ch_act.help)
+        for (subname, subactions), ch_act in zip(
+            subparser.choices.items(), subparser._choices_actions
+        )
+    ]
+
+
+def _make_dataclass_from_actions(
+    actions: list[Action], name, helptext: str | None, description: str | None
+) -> DataClass:
     const_actions = defaultdict(list[ArgparseField])
     normal_fields: list[tuple[str, type, Field]] = []
     pos_fields: list[tuple[str, type, Field]] = []
@@ -136,9 +154,12 @@ def _make_dataclass_from_actions(actions: list[Action], name) -> DataClass:
                 # Note that there is only one _SubParsersAction in argparse
                 # but to be sure, we allow multiple of them
                 # This probably makes a different CLI output than the original argparse but should work.
-                for subname, subparser in action.choices.items():
+                for subname, subparser, help_ in _loop_SubParsersAction(action):
                     sub_dc = _make_dataclass_from_actions(
-                        subparser._actions, subname.capitalize()
+                        subparser._actions,
+                        subname.capitalize(),
+                        help_,
+                        subparser.description,
                     )
                     subparser_fields.append((subname, sub_dc))  # required, no default
                 continue
@@ -203,8 +224,18 @@ def _make_dataclass_from_actions(actions: list[Action], name) -> DataClass:
         else:
             pos_fields.append((action.dest, Positional[arg_type], field(**met)))
 
-    return make_dataclass(
+    dc = make_dataclass(
         name,
         subparser_fields + pos_fields + normal_fields,
         namespace={k: prop.generate_property() for k, prop in properties.items()},
     )
+    if helptext or description:
+        trimmed = (helptext or "").strip()
+        needs_colon = (
+            trimmed and description and trimmed[-1] not in (".", ":", "!", "?", "…")
+        )
+
+        separator = ": " if needs_colon else ("\n" if trimmed else "")
+        dc.__doc__ = trimmed + separator + (description or "")
+
+    return dc
