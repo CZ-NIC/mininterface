@@ -10,6 +10,7 @@ class TestArgparse(TestAbstract):
     def test_argparse(self):
         parser = ArgumentParser(description="Test parser for dataclass generation.")
         # positional
+        subparsers = parser.add_subparsers(dest="command", required=True)
         parser.add_argument("input_file", type=str, help="Path to the input file.")
         parser.add_argument(
             "output_dir", type=str, help="Directory where output will be saved."
@@ -30,7 +31,6 @@ class TestArgparse(TestAbstract):
         # append
         parser.add_argument("--tag", action="append", help="Add one or more tags.")
         # subparsers
-        subparsers = parser.add_subparsers(dest="command", required=True)
         sub1 = subparsers.add_parser("build", help="Build something.")
         sub1.add_argument(
             "--optimize", action="store_true", help="Enable optimizations."
@@ -51,18 +51,22 @@ the following arguments are required: STR, STR""",
             cm.exception.code,
         )
 
-        env = run(parser, args=["/tmp/file", "/tmp"], interface=Mininterface).form()
+        env = run(
+            parser, args=["build", "/tmp/file", "/tmp"], interface=Mininterface
+        ).form()
 
         PathType = type(Path(""))  # PosixPath on Linux
         self.assertEqual(
-            f"""Args(build=Build(optimize=False, target=''), deploy=Deploy(port=22, user='root'), input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, no_color=False, tag=[])""",
+            f"""build(input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, no_color=False, tag=[], optimize=False, target='')""",
             repr(env),
         )
         self.assertTrue(env.color)
         self.assertFalse(env.no_color)
 
         env = run(
-            parser, args=["/tmp/file", "/tmp", "--no-color"], interface=Mininterface
+            parser,
+            args=["build", "/tmp/file", "/tmp", "--no-color"],
+            interface=Mininterface,
         ).env
 
         self.assertFalse(env.color)

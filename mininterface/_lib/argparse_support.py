@@ -73,7 +73,9 @@ class ArgparseField:
         return self.action.dest in self.properties
 
 
-def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass:
+def parser_to_dataclass(
+    parser: ArgumentParser, name: str = "Args"
+) -> DataClass | list[DataClass]:
     """Note that in contrast to the argparse, we create default values.
     When an optional flag is not used, argparse put None, we have a default value.
 
@@ -83,24 +85,29 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
     Be aware that for Path this might pose a big difference:
     parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
     """
-    subparser_fields: list[tuple[str, type]] = []
+    subparsers: list[_SubParsersAction] = []
 
-    other_fields = []
+    normal_actions: list[Action] = []
     for action in parser._actions:
-        if isinstance(action, _HelpAction):
-            continue
+        match action:
+            case _HelpAction():
+                continue
+            case _SubParsersAction():
+                subparsers.append(action)
+            case _:
+                normal_actions.append(action)
 
-        if isinstance(action, _SubParsersAction):
-            for subname, subparser in action.choices.items():
-                sub_dc = parser_to_dataclass(subparser, name=subname.capitalize())
-                subparser_fields.append((subname, sub_dc))  # required, no default
-            continue
-        other_fields.append(action)
+    if subparsers:
+        return [
+            _make_dataclass_from_actions(normal_actions + subactions._actions, subname)
+            for subparser in subparsers
+            for subname, subactions in subparser.choices.items()
+        ]
+    else:
+        return _make_dataclass_from_actions(normal_actions, name)
 
-    _make_dataclass_from_actions(other_fields)
 
-
-def _make_dataclass_from_actions(actions: list[Action]):
+def _make_dataclass_from_actions(actions: list[Action], name) -> DataClass:
     const_actions = defaultdict(list[ArgparseField])
     normal_fields: list[tuple[str, type, Field]] = []
     pos_fields: list[tuple[str, type, Field]] = []
@@ -108,12 +115,25 @@ def _make_dataclass_from_actions(actions: list[Action]):
     """ Sometimes, the action.dest differs from the field name.
     Field name is exposed to the CLI, action.dest is used in the program.
     """
-    opt = {}
+    subparser_fields: list[tuple[str, type]] = []
 
     for action in actions:
         af = ArgparseField(action, properties)
+        opt = {}
 
         match action:
+            case _HelpAction():
+                continue
+            case _SubParsersAction():
+                # Note that there is only one _SubParsersAction in argparse
+                # but to be sure, we allow multiple of them
+                # This probably makes a different CLI output than the original argparse but should work.
+                for subname, subparser in action.choices.items():
+                    sub_dc = _make_dataclass_from_actions(
+                        subparser._actions, subname.capitalize()
+                    )
+                    subparser_fields.append((subname, sub_dc))  # required, no default
+                continue
             case _AppendAction():
                 arg_type = list[action.type or str]
                 opt["default_factory"] = list

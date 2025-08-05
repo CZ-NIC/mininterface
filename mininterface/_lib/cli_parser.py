@@ -174,17 +174,22 @@ def parse_cli(
         patches.append(patch.object(TyroArgumentParser, "error", Patches.custom_error))
     if add_verbose:  # Mock parser to add verbosity
         # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
-        if all("verbose" not in cl.__annotations__ for cl in env_classes):
-            patches.extend(
-                (
-                    patch.object(TyroArgumentParser, "__init__", Patches.custom_init),
-                    patch.object(
-                        TyroArgumentParser,
-                        "parse_known_args",
-                        Patches.custom_parse_known_args,
-                    ),
+        try:
+            if all("verbose" not in cl.__annotations__ for cl in env_classes):
+                patches.extend(
+                    (
+                        patch.object(
+                            TyroArgumentParser, "__init__", Patches.custom_init
+                        ),
+                        patch.object(
+                            TyroArgumentParser,
+                            "parse_known_args",
+                            Patches.custom_parse_known_args,
+                        ),
+                    )
                 )
-            )
+        except Exception as e:  # TODO
+            warnings.warn("Cannot add verbose flag")
 
     # Run the parser, with the mocks
     try:
@@ -225,7 +230,7 @@ def parse_cli(
                     parser: ArgumentParser = get_parser(env)
                     subargs = args[1:]
             if not env:
-                raise NotImplemented(
+                raise NotImplementedError(
                     "This case of nested dataclasses is not implemented. Raise an issue please."
                 )
 
