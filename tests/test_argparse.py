@@ -1,3 +1,4 @@
+import warnings
 from mininterface import Mininterface, run
 from shared import TestAbstract, runm
 
@@ -10,6 +11,7 @@ class TestArgparse(TestAbstract):
     def test_argparse(self):
         parser = ArgumentParser(description="Test parser for dataclass generation.")
         # positional
+        subparsers = parser.add_subparsers(dest="command", required=True)
         parser.add_argument("input_file", type=str, help="Path to the input file.")
         parser.add_argument(
             "output_dir", type=str, help="Directory where output will be saved."
@@ -30,7 +32,6 @@ class TestArgparse(TestAbstract):
         # append
         parser.add_argument("--tag", action="append", help="Add one or more tags.")
         # subparsers
-        subparsers = parser.add_subparsers(dest="command", required=True)
         sub1 = subparsers.add_parser("build", help="Build something.")
         sub1.add_argument(
             "--optimize", action="store_true", help="Enable optimizations."
@@ -51,22 +52,81 @@ the following arguments are required: STR, STR""",
             cm.exception.code,
         )
 
-        env = run(parser, args=["/tmp/file", "/tmp"], interface=Mininterface).form()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")  # zachytí všechna varování
+            env = run(
+                parser, args=["build", "/tmp/file", "/tmp"], interface=Mininterface
+            ).form()
+            self.assertEqual(
+                len(w),
+                0,
+                f"Unexpected warning(s): {[str(warning.message) for warning in w]}",
+            )
 
         PathType = type(Path(""))  # PosixPath on Linux
         self.assertEqual(
-            f"""Args(build=Build(optimize=False, target=''), deploy=Deploy(port=22, user='root'), input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, no_color=False, tag=[])""",
+            f"""build(input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, no_color=False, tag=[], optimize=False, target='')""",
             repr(env),
         )
         self.assertTrue(env.color)
         self.assertFalse(env.no_color)
 
         env = run(
-            parser, args=["/tmp/file", "/tmp", "--no-color"], interface=Mininterface
+            parser,
+            args=["build", "/tmp/file", "/tmp", "--no-color"],
+            interface=Mininterface,
         ).env
 
         self.assertFalse(env.color)
         self.assertTrue(env.no_color)
+
+    def test_unimplemented_positionals(self):
+        """The original parser:
+
+        usage: program.py [-h] [--verbosity VERBOSITY] input_file {deploy,build} ...
+
+        Mininterface changes the order:
+
+        usage: program.py [-h] [-v] {deploy,build}
+        usage: program.py deploy [-h] [DEPLOY OPTIONS] STR
+        """
+        parser = ArgumentParser(description="Test parser for dataclass generation.")
+
+        parser.add_argument("input_file", type=str, help="Path to the input file.")
+        subs = parser.add_subparsers(dest="command", required=True)
+        subs.add_parser("build", help="Build something")
+        sub2 = subs.add_parser(
+            "deploy", help="Deploy something", description="My thorough description."
+        )
+        sub2.add_argument("--port", type=int, default=22, help="SSH port.")
+        parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
+
+        # warning for the positional arguments change
+        with self.assertWarnsRegex(UserWarning, r"This CLI parser"):
+            run(
+                parser,
+                args=["deploy", "/tmp/file", "--port", "23"],
+                interface=Mininterface,
+            )
+
+        # Nice help text
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            with (
+                self.assertOutputs(
+                    contains="Deploy something: My thorough description."
+                ),
+                self.assertRaises(SystemExit),
+            ):
+                run(parser, args=["--help"], interface=Mininterface)
+
+            with (
+                self.assertOutputs(
+                    contains="Deploy something: My thorough description."
+                ),
+                self.assertRaises(SystemExit),
+            ):
+                run(parser, args=["deploy", "--help"], interface=Mininterface)
 
     def test_failed_constant(self):
         parser = ArgumentParser()

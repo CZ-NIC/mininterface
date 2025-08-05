@@ -1,7 +1,7 @@
 # Changelog
 
 ## 1.0.4
-* enh: better argparse support (const support, store_false matching)
+* enh: better argparse support (const support, store_false matching, subcommands)
 
 ## 1.0.3 (2025-06-18)
 * enh: Tk better file dialog
