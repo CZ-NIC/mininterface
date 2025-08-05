@@ -1,5 +1,4 @@
 import warnings
-from mininterface import Mininterface, run
 from shared import TestAbstract, runm
 
 from argparse import ArgumentParser
@@ -43,8 +42,19 @@ class TestArgparse(TestAbstract):
         sub2.add_argument("--port", type=int, default=22, help="SSH port.")
         sub2.add_argument("--user", type=str, default="root", help="SSH user.")
 
+        # Extremely peculiar situation. Do you know why the name of this file is not test_argparse.py?
+        # These are ok: test_a.py test_am.py test_run.py test_whatever.py
+        # These are not: test_ar.py test_arg.py test_arv.py test_argparse.py
+        # If we use one of not-ok names AND IF THERE IS the following run statement, we get:
+        #
+        # FAILED tests/test_log.py::TestLog::test_custom_verbosity - StopIteration
+        # self.sys("-v")
+        # with (self.assertStderr(contains="running-tests: error: unrecognized arguments: -v"), self.assertRaises(SystemExit)):
+        #     self.log(ConflictingEnv)
+        #
+        # Yes, the following run statement, the name of this file and the test_log file have NOTHING IN COMMON.
         with self.assertRaises(SystemExit) as cm:
-            run(parser, interface=Mininterface)
+            runm(parser)
         self.assertEqual(
             """input_file: Type must be str!
 output_dir: Type must be str!
@@ -54,9 +64,7 @@ the following arguments are required: STR, STR""",
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")  # zachytí všechna varování
-            env = run(
-                parser, args=["build", "/tmp/file", "/tmp"], interface=Mininterface
-            ).form()
+            env = runm(parser, args=["build", "/tmp/file", "/tmp"]).form()
             self.assertEqual(
                 len(w),
                 0,
@@ -71,10 +79,9 @@ the following arguments are required: STR, STR""",
         self.assertTrue(env.color)
         self.assertFalse(env.no_color)
 
-        env = run(
+        env = runm(
             parser,
             args=["build", "/tmp/file", "/tmp", "--no-color"],
-            interface=Mininterface,
         ).env
 
         self.assertFalse(env.color)
@@ -103,10 +110,9 @@ the following arguments are required: STR, STR""",
 
         # warning for the positional arguments change
         with self.assertWarnsRegex(UserWarning, r"This CLI parser"):
-            run(
+            runm(
                 parser,
                 args=["deploy", "/tmp/file", "--port", "23"],
-                interface=Mininterface,
             )
 
         # Nice help text
@@ -118,7 +124,7 @@ the following arguments are required: STR, STR""",
                 ),
                 self.assertRaises(SystemExit),
             ):
-                run(parser, args=["--help"], interface=Mininterface)
+                runm(parser, args=["--help"])
 
             with (
                 self.assertOutputs(
@@ -126,7 +132,7 @@ the following arguments are required: STR, STR""",
                 ),
                 self.assertRaises(SystemExit),
             ):
-                run(parser, args=["deploy", "--help"], interface=Mininterface)
+                runm(parser, args=["deploy", "--help"])
 
     def test_failed_constant(self):
         parser = ArgumentParser()
@@ -189,10 +195,10 @@ the following arguments are required: STR, STR""",
             const="two",
         )
 
-        env = run(parser, args=["--two"]).env
+        env = runm(parser, args=["--two"]).env
         self.assertListEqual(["two"], env.sections)
 
-        env = run(parser, args=["--one", "--two"]).env
+        env = runm(parser, args=["--one", "--two"]).env
         self.assertListEqual(["one", "two"], env.sections)
         # repeat the line, reading the property must not influence the result
         self.assertListEqual(["one", "two"], env.sections)
