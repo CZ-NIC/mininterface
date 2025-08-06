@@ -9,6 +9,7 @@ except ImportError:
     Calendar = None
 
 from ..tag.datetime_tag import DatetimeTag
+from .._lib.shortcuts import convert_to_tkinter_shortcut
 if TYPE_CHECKING:
     from mininterface._tk_interface.adaptor import TkAdaptor
 
@@ -76,8 +77,9 @@ class DateEntryFrame(tk.Frame):
         # Bind key release event to update calendar when user changes the input field
         spinbox.bind("<KeyRelease>", self.on_spinbox_change)
 
-        # Toggle calendar widget with ctrl+shift+c
-        spinbox.bind("<Control-Shift-C>", self.toggle_calendar)
+        # Toggle calendar widget with the shortcut from settings
+        tk_shortcut = convert_to_tkinter_shortcut(self.tk_app.options.toggle_widget)
+        spinbox.bind(tk_shortcut, self.toggle_calendar)
 
         # Select all in the spinbox with ctrl+a
         spinbox.bind("<Control-a>", self.select_all)
