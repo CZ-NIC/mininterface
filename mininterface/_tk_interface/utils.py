@@ -228,8 +228,6 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 # Create wrapper and store it in the widget list
                 wrapper = SecretEntryWrapper(master, tag, variable, grid_info, adaptor)
                 widget = wrapper.entry
-                # Add shortcut to the central shortcuts set
-                adaptor.shortcuts.add("Ctrl+T: Toggle visibility of password field")
             case _:
                 match tag._recommend_widget():
                     # Special type: Submit button

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, date as date_
 from typing import Union
 from .tag import Tag, TagValue, UiValue
 
@@ -69,10 +69,10 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
-    before: Union[datetime, None] = None
+    before: Union[date_, None] = None
     """ The maximum allowed date/datetime value. """
 
-    after: Union[datetime, None] = None
+    after: Union[date_, None] = None
     """ The minimum allowed date/datetime value. """
 
     # NOTE calling DatetimeTag("2025-02") should convert str to date?
@@ -102,6 +102,7 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
 
         # Add validation for before/after constraints
         if self.before is not None or self.after is not None:
+
             def validate_date_range(tag: Tag) -> Union[bool, str]:
                 val = tag.val
 
@@ -121,7 +122,9 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
 
             self._add_validation(validate_date_range)
 
-    def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
+    def __hash__(
+        self,
+    ):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
     def _make_default_value(self):

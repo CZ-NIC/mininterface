@@ -10,6 +10,7 @@ except ImportError:
 
 from ..tag.datetime_tag import DatetimeTag
 from .._lib.shortcuts import convert_to_tkinter_shortcut
+
 if TYPE_CHECKING:
     from mininterface._tk_interface.adaptor import TkAdaptor
 
@@ -78,8 +79,9 @@ class DateEntryFrame(tk.Frame):
         spinbox.bind("<KeyRelease>", self.on_spinbox_change)
 
         # Toggle calendar widget with the shortcut from settings
-        tk_shortcut = convert_to_tkinter_shortcut(self.tk_app.options.toggle_widget)
+        tk_shortcut = convert_to_tkinter_shortcut(self.tk_app.settings.toggle_widget)
         spinbox.bind(tk_shortcut, self.toggle_calendar)
+        self.tk_app.shortcuts.add(f"{tk_shortcut}: Toggle visibility of calendar")
 
         # Select all in the spinbox with ctrl+a
         spinbox.bind("<Control-a>", self.select_all)

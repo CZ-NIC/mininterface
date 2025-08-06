@@ -46,13 +46,11 @@ class GuiSettings(UiSettings):
 
 
 @dataclass
-class TuiSettings(UiSettings):
-    ...
+class TuiSettings(UiSettings): ...
 
 
 @dataclass
-class TextualSettings(TuiSettings):
-    ...
+class TextualSettings(TuiSettings): ...
 
 
 @dataclass
