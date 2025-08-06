@@ -4,23 +4,26 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, TypeVar,
-                    Union, get_args, get_origin)
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, TypeVar, Union, get_args, get_origin
 from warnings import warn
 
 from annotated_types import BaseMetadata, GroupedMetadata
 
-from .._lib.auxiliary import (common_iterables, flatten, guess_type,
-                              matches_annotation, serialize_structure,
-                              subclass_matches_annotation, validate_annotated_type)
+from .._lib.auxiliary import (
+    common_iterables,
+    flatten,
+    guess_type,
+    matches_annotation,
+    serialize_structure,
+    subclass_matches_annotation,
+    validate_annotated_type,
+)
 from ..experimental import FacetCallback, SubmitButton
-from .internal import (BoolWidget, CallbackButtonWidget, FacetButtonWidget,
-                       RecommendedWidget, SubmitButtonWidget)
+from .internal import BoolWidget, CallbackButtonWidget, FacetButtonWidget, RecommendedWidget, SubmitButtonWidget
 from .type_stubs import TagCallback
 
 if TYPE_CHECKING:
-    from typing import \
-        Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
 
     from ..facet import Facet
     from .._lib.form_dict import TagDict
@@ -33,12 +36,13 @@ else:
 try:  # Pydantic is not a dependency but integration
     from pydantic import ValidationError as PydanticValidationError
     from pydantic import create_model
+
     pydantic = True
 except ImportError:
     pydantic = False
     PydanticValidationError = None
     create_model = None
-try:   # Attrs is not a dependency but integration
+try:  # Attrs is not a dependency but integration
     import attr
 except ImportError:
     attr = None
@@ -88,8 +92,9 @@ m.form({"number", Tag(12, validation=(check, Lt(100)))})
 PydanticFieldInfo = TypeVar("PydanticFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 AttrsFieldInfo = TypeVar("AttrsFieldInfo", bound=Any)  # see why TagValue bounded to Any?
 ValsType = Iterable[tuple["Tag", UiValue]]
-ValidationCallback = Callable[["Tag"], ValidationResult |
-                              tuple[ValidationResult, TagValue]] | BaseMetadata | GroupedMetadata
+ValidationCallback = (
+    Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]] | BaseMetadata | GroupedMetadata
+)
 """ Being used at [Tag.validation][mininterface.Tag.validation].
 
 Either use a custom callback function, a provided [validator][mininterface.validators], or an [annotated-types predicate](https://github.com/annotated-types/annotated-types?#documentation). (You can use multiple validation callbacks combined into an itarable.)
@@ -162,7 +167,7 @@ run(AnnotatedTypes).env.age  # guaranteed to be >= 18
 
 
 class MissingTagValue:
-    """ The dataclass field has not received a value from the CLI, and this value is required.
+    """The dataclass field has not received a value from the CLI, and this value is required.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
 
     If we fail to fill a value (ex. in a CRON), the program ends.
@@ -182,28 +187,28 @@ class MissingTagValue:
 
 @dataclass
 class Tag(Generic[TagValue]):
-    """ Wrapper around a value that encapsulates a description, validation etc.
+    """Wrapper around a value that encapsulates a description, validation etc.
 
-        Bridge between the input values and a UI widget. The widget is created with the help of this object,
-        then transforms the value back (str to int conversion etc).
+    Bridge between the input values and a UI widget. The widget is created with the help of this object,
+    then transforms the value back (str to int conversion etc).
 
-        For dataclasses, use in as an annotation:
+    For dataclasses, use in as an annotation:
 
-        ```python
-        from mininterface import run
-        @dataclass
-        class Env:
-            my_str: Annotated[str, Tag(validation=not_empty)]
+    ```python
+    from mininterface import run
+    @dataclass
+    class Env:
+        my_str: Annotated[str, Tag(validation=not_empty)]
 
-        m = run(Env)
-        ```
+    m = run(Env)
+    ```
 
-        For dicts, use it as a value:
+    For dicts, use it as a value:
 
-        ```python
-        m.form({"My string": Tag(annotation=str, validation=not_empty)})
-        ```
-        """
+    ```python
+    m.form({"My string": Tag(annotation=str, validation=not_empty)})
+    ```
+    """
 
     val: TagValue = None
     """ The value wrapped by Tag. It can be any value.
@@ -318,7 +323,7 @@ class Tag(Generic[TagValue]):
 
     @property
     def facet(self) -> Facet:
-        """ Access to the UI [`facet`][mininterface._mininterface.Facet] from the front-end side.
+        """Access to the UI [`facet`][mininterface._mininterface.Facet] from the front-end side.
         (Read [`Mininterface.facet`][mininterface.Mininterface.facet] to access from the back-end side.)
 
         Use the UI facet from within a callback, ex. from a validator.
@@ -346,7 +351,7 @@ class Tag(Generic[TagValue]):
 
     @property
     def original_val(self) -> TagValue:
-        """ Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
+        """Meant to be read only in callbacks. The original value, preceding UI change. Handy while validating.
 
         ```python
         def check(tag.val):
@@ -407,7 +412,7 @@ class Tag(Generic[TagValue]):
             # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
             # We are using get_name() instead.
             # if self._is_a_callable():
-                #     self.label = self.val.__name__
+            #     self.label = self.val.__name__
         if not self.description and self._is_a_callable():
             # NOTE does not work, do a test, there is `(fixed to` instead
             self.description = self.val.__doc__
@@ -428,7 +433,7 @@ class Tag(Generic[TagValue]):
                 continue
 
             # Display 'validation=not_empty' instead of 'validation=<function not_empty at...>'
-            if field.name == 'validation' and (func_name := getattr(field_value, "__name__", "")):
+            if field.name == "validation" and (func_name := getattr(field_value, "__name__", "")):
                 v = func_name
             elif field.name == "val" and self._is_a_callable():
                 v = self.val.__name__
@@ -446,7 +451,7 @@ class Tag(Generic[TagValue]):
         return hash(str(self))
 
     def _fetch_from(self, tag: Union["Tag", dict], name: str = "", include_ref=False) -> "Self":
-        """ Fetches attributes from another instance. (Skips the attributes that are already set.)
+        """Fetches attributes from another instance. (Skips the attributes that are already set.)
         Register the fetched tag to be updated when we change.
 
         Note that without the parameters, __post_init__ might end up with a default and wrong annotation.
@@ -461,11 +466,11 @@ class Tag(Generic[TagValue]):
             tag = Tag(**tag)
             use_as_src = False
 
-        ignored = {'description', '_pydantic_field', '_attrs_field', '_last_ui_val'}
+        ignored = {"description", "_pydantic_field", "_attrs_field", "_last_ui_val"}
         if include_ref:
             use_as_src = False
         else:
-            ignored |= {'_src_dict', '_src_obj', '_src_key', '_src_class'}
+            ignored |= {"_src_dict", "_src_obj", "_src_key", "_src_class"}
         for attr in tag.__dict__:
             if attr in ignored:
                 continue
@@ -493,7 +498,7 @@ class Tag(Generic[TagValue]):
         self._update_source(self.val)
 
     def _is_a_callable(self) -> bool:
-        """ True, if the value is a callable function.
+        """True, if the value is a callable function.
         Why not checking isinstance(self.annotation, Callable)?
         Because a str is a Callable too. We disburden the user when instructing them to write
             `my_var: Callable = x` instead of `my_var: FunctionType = x`
@@ -505,7 +510,7 @@ class Tag(Generic[TagValue]):
         return self.val()
 
     def _on_change_trigger(self, ui_val):
-        """ Trigger on_change only if the value has changed and if the validation succeeds. """
+        """Trigger on_change only if the value has changed and if the validation succeeds."""
         if self._last_ui_val != ui_val:
             # NOTE we should refresh the Widget when update fails; see facet comment
             if self.update(ui_val) and self.on_change:
@@ -513,7 +518,7 @@ class Tag(Generic[TagValue]):
             self._last_ui_val = ui_val
 
     def _recommend_widget(self) -> RecommendedWidget | type["Self"] | None:
-        """ Recommend a widget type.
+        """Recommend a widget type.
         The tag should be handled this way:
         1. according to the inheritace (Tag children like PathTag)
         2. according to the result of this method
@@ -539,7 +544,7 @@ class Tag(Generic[TagValue]):
         return isinstance(annot, detect) or isinstance(annot, Callable) and isinstance(val, detect)
 
     def _is_right_instance(self, val) -> bool:
-        """ Check if the value conforms self.annotation.
+        """Check if the value conforms self.annotation.
 
         Like `isinstance` but able to parse complex annotation.
 
@@ -594,8 +599,9 @@ class Tag(Generic[TagValue]):
             # ex: checking that class_type=Path is subclass of annotation=list[Path] <=> subtype=Path
             if origin is tuple and isinstance(subtype, list):
                 # ex. tuple[int, int] -> origin = tuple, subtype = [int, int]
-                if get_origin(class_type) is tuple \
-                        and all(subt1 is subt2 for subt1, subt2 in zip(get_args(class_type), subtype)):
+                if get_origin(class_type) is tuple and all(
+                    subt1 is subt2 for subt1, subt2 in zip(get_args(class_type), subtype)
+                ):
                     return True
                 continue
             elif get_origin(subtype):
@@ -608,12 +614,13 @@ class Tag(Generic[TagValue]):
         return False
 
     def _get_possible_types(self) -> list[tuple[type | None, type | list[type]]]:
-        """ Possible types we can cast the value to.
+        """Possible types we can cast the value to.
         For annotation `list[int] | tuple[str] | str | None`,
         it returns `[(list,int), (tuple,str), (None,str)]`.
 
         Filters out None.
         """
+
         def _(annot):
             if origin := get_origin(annot):  # list[str] -> list, list -> None
                 if origin is abc.Callable:
@@ -629,7 +636,7 @@ class Tag(Generic[TagValue]):
                     return [_(subt) for subt in subtype]
                 if origin is tuple:
                     return origin, list(subtype)
-                elif (len(subtype) == 1):
+                elif len(subtype) == 1:
                     return origin, subtype[0]
                 else:
                     warn(f"This parametrized generic not implemented: {annot}")
@@ -637,6 +644,7 @@ class Tag(Generic[TagValue]):
                 # from UnionType, we get a NoneType
                 return None, annot
             return False  # to be filtered out
+
         out = _(self.annotation)
         return [x for x in (out if isinstance(out, list) else [out]) if x is not False]
 
@@ -663,7 +671,7 @@ class Tag(Generic[TagValue]):
         self._error_text = None
 
     def _get_name(self, make_effort=False):
-        """ It is not always wanted to set the callable name to the name.
+        """It is not always wanted to set the callable name to the name.
         When used as a form button, we prefer to use the dict key.
         However, when used as a choice, this might be the only way to get the name.
         """
@@ -695,7 +703,7 @@ class Tag(Generic[TagValue]):
             return self.annotation()
 
     def _add_validation(self, validators: Iterable[ValidationCallback] | ValidationCallback):
-        """ Prepend validators to the current validator. """
+        """Prepend validators to the current validator."""
         if not isinstance(validators, list):
             validators = list(validators) if isinstance(validators, Iterable) else [validators]
 
@@ -709,7 +717,7 @@ class Tag(Generic[TagValue]):
             self.validation = validators
 
     def _get_ui_val(self):
-        """ Get values as suitable for UI. Adaptor should not read the value directly.
+        """Get values as suitable for UI. Adaptor should not read the value directly.
         Some values are not expected to be parsed by any UI.
         But we will reconstruct them in self.update later.
 
@@ -734,7 +742,7 @@ class Tag(Generic[TagValue]):
         return self.val
 
     def _validate(self, out_value: TagValue) -> TagValue:
-        """ Runs
+        """Runs
             * self.validation callback
             * pydantic validation
             * annotation type validation
@@ -776,16 +784,15 @@ class Tag(Generic[TagValue]):
         # pydantic_check
         if self._pydantic_field:
             try:
-                create_model('ValidationModel', check=(self.annotation, self._pydantic_field))(check=out_value)
+                create_model("ValidationModel", check=(self.annotation, self._pydantic_field))(check=out_value)
             except PydanticValidationError as e:
                 raise ValueError(e.errors()[0]["msg"])
         # attrs check
         if self._attrs_field:
             try:
-                attr.make_class(
-                    'ValidationModel',
-                    {"check": attr.ib(validator=self._attrs_field.validator)}
-                )(check=out_value)
+                attr.make_class("ValidationModel", {"check": attr.ib(validator=self._attrs_field.validator)})(
+                    check=out_value
+                )
             except ValueError as e:
                 raise ValueError(str(e))
 
@@ -796,13 +803,13 @@ class Tag(Generic[TagValue]):
         return out_value
 
     def _set_val(self, val: TagValue) -> "Self":
-        """ Sets the value without any checks. Updates the sources. """
+        """Sets the value without any checks. Updates the sources."""
         self.val = val
         self._update_source(val)
         return self
 
     def update(self, ui_value: UiValue | str) -> bool:
-        """ Update the tag value with type conversion and checks.
+        """Update the tag value with type conversion and checks.
 
         UI → Tag → the object of origin.
 
@@ -857,8 +864,9 @@ class Tag(Generic[TagValue]):
                                 # (Maybe that's better now.)
                                 if isinstance(cast_to, list):
                                     # this is a tuple, tuple returns a list, each value is converted to another type
-                                    candidate = origin(cast_to_(v)
-                                                       for cast_to_, v in zip(cast_to, literal_eval(ui_value)))
+                                    candidate = origin(
+                                        cast_to_(v) for cast_to_, v in zip(cast_to, literal_eval(ui_value))
+                                    )
                                 else:
                                     candidate = origin(cast_to(v) for v in literal_eval(ui_value))
                             else:
@@ -876,7 +884,7 @@ class Tag(Generic[TagValue]):
 
         # User and type validation check
         try:
-            self.val = self._validate(out_value)   # checks succeeded, confirm the value
+            self.val = self._validate(out_value)  # checks succeeded, confirm the value
         except ValueError as e:
             self.set_error_text(str(e))
             return False
@@ -924,7 +932,7 @@ class Tag(Generic[TagValue]):
 
     @staticmethod
     def _submit_values(updater: ValsType) -> bool:
-        """ Returns whether the form is alright or whether we should revise it.
+        """Returns whether the form is alright or whether we should revise it.
         Input is tuple of the Tags and their new values from the UI.
         """
         # Why list? We need all the Tag values be updated from the UI.
@@ -934,7 +942,7 @@ class Tag(Generic[TagValue]):
 
     @staticmethod
     def _submit(fd: "TagDict", ui: dict):
-        """ Returns whether the form is alright or whether we should revise it.
+        """Returns whether the form is alright or whether we should revise it.
         Input is the TagDict and the UI dict in the very same form.
         """
         return Tag._submit_values(zip(flatten(fd), flatten(ui)))

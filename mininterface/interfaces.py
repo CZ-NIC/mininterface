@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 def _load(name, mod, attr):
-    """ Raises: InterfaceNotAvailable """
+    """Raises: InterfaceNotAvailable"""
     globals()[name] = getattr(import_module(mod, __name__), attr)
     return globals()[name]
 
@@ -56,7 +56,7 @@ def __getattr__(name):
 
 
 def _choose_settings(type_: Mininterface, settings: Optional[MininterfaceSettings]):
-    """ Pass only the relevant settings section suitable for the given interface type """
+    """Pass only the relevant settings section suitable for the given interface type"""
     opt = None
     if settings:
         match type_.__name__:
@@ -87,8 +87,13 @@ def _get_interface_type(interface: InterfaceType = None):
             raise InterfaceNotAvailable
 
 
-def get_interface(interface: InterfaceType = None, title: str = "", settings: Optional[MininterfaceSettings] = None, env: Optional[EnvClass] = None) -> Mininterface[EnvClass]:
-    """ Returns the best available interface.
+def get_interface(
+    interface: InterfaceType = None,
+    title: str = "",
+    settings: Optional[MininterfaceSettings] = None,
+    env: Optional[EnvClass] = None,
+) -> Mininterface[EnvClass]:
+    """Returns the best available interface.
 
     Similar to [mininterface.run][mininterface.run] but without CLI or config file parsing.
 
@@ -104,6 +109,7 @@ def get_interface(interface: InterfaceType = None, title: str = "", settings: Op
         settings: [MininterfaceSettings][mininterface.settings.MininterfaceSettings] objects
         env: You can specify the .env attribute of the returned object.
     """
+
     def call(type_):
         opt = _choose_settings(type_, settings)
         return type_(title, opt, env)

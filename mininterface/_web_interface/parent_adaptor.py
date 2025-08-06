@@ -34,18 +34,13 @@ class WebParentAdaptor(TextualAdaptor):
     def __init__(self, *args, environ=None, app=None):
         super().__init__(*args)
         self.process = subprocess.Popen(
-            sys.argv,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=None,
-            bufsize=0,
-            env=environ
+            sys.argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None, bufsize=0, env=environ
         )
         self.app = app = WebParentApp(self, submit=True)
         app.run()
 
     def receive(self):
-        """ Receives further instruction from the underlying ChildAdaptor. """
+        """Receives further instruction from the underlying ChildAdaptor."""
         p = self.process
         length_data = p.stdout.read(4)
         if not length_data:

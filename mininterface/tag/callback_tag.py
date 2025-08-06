@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 @dataclass
 class CallbackTag(Tag[TagValue | Callable]):
-    ''' Callback function is guaranteed to receive the [Tag][mininterface.Tag] as a parameter.
+    '''Callback function is guaranteed to receive the [Tag][mininterface.Tag] as a parameter.
 
     !!! warning
         Experimental. May change into a CallableTag.
@@ -75,6 +75,7 @@ class CallbackTag(Tag[TagValue | Callable]):
     m.form()
     ```
     '''
+
     val: Callable[[Tag], Any]
 
     def _run_callable(self):

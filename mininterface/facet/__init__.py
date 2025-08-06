@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Image:
-    """ NOTE. Experimental. """
+    """NOTE. Experimental."""
 
     src: str | Path
     """ Src to the image. """
@@ -27,12 +27,13 @@ LayoutElement = TypeVar("LayoutElement", str, Image, Path, "Self")
 
 
 class Facet(Generic[EnvClass]):
-    """ A frontend side of the interface. While a dialog is open,
+    """A frontend side of the interface. While a dialog is open,
         this allows to set frontend properties like the heading.
 
     Read [`Tag.facet`][mininterface.Tag.facet] to see how to access it from the front-end side.
     Read [`Mininterface.facet`][mininterface.Mininterface.facet] to see how to access it from the back-end side.
     """
+
     # Every UI adopts this object through BackendAdaptor methods.
 
     _form: TagDict | None = None
@@ -50,22 +51,22 @@ class Facet(Generic[EnvClass]):
         self._form = form
 
     def _clear(self):
-        """ Experimental.
-        Clear redirected text. """
+        """Experimental.
+        Clear redirected text."""
         if isinstance(self.adaptor.interface, Redirectable):
             self.adaptor.interface._redirected.clear()
 
     def set_title(self, text):
-        """ Set the main heading. """
+        """Set the main heading."""
         print("Title", text)
 
     def _layout(self, elements: list[LayoutElement]):
-        """ Experimental. Input is a list of `LayoutElements`."""
+        """Experimental. Input is a list of `LayoutElements`."""
         # NOTE remove warn when working in textual
         warn("Facet layout not implemented for this interface.")
 
     def submit(self, _post_submit=None):
-        """ Submits the whole form.
+        """Submits the whole form.
 
         ```python
         from mininterface import run, Tag

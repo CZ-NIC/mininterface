@@ -26,12 +26,13 @@ class AttrsModel:
     restrained: str = attr.ib(default="hello", validator=max_len(5))
 ```
 """
+
 from typing import overload
 from .tag import Tag
 
 
 def not_empty(tag: Tag):
-    """ Assures that Tag the user has written a value and did not let the field empty.
+    """Assures that Tag the user has written a value and did not let the field empty.
 
     ```python
     from mininterface import Tag, validators, run
@@ -77,17 +78,21 @@ def not_empty(tag: Tag):
 
 
 @overload
-def limit(maximum: int, lt: float | None = None, gt: float | None = None, transform=False):
-    ...
+def limit(maximum: int, lt: float | None = None, gt: float | None = None, transform=False): ...
 
 
 @overload
-def limit(minimum: int, maximum: int, lt: float | None = None, gt: float | None = None, transform=False):
-    ...
+def limit(minimum: int, maximum: int, lt: float | None = None, gt: float | None = None, transform=False): ...
 
 
-def limit(maxOrMin: int | None = None, max_: int | None = None, lt: float | None = None, gt: float | None = None, transform: bool = False):
-    """ Limit a number range or a string length.
+def limit(
+    maxOrMin: int | None = None,
+    max_: int | None = None,
+    lt: float | None = None,
+    gt: float | None = None,
+    transform: bool = False,
+):
+    """Limit a number range or a string length.
 
     Either use as `limit(maximum)` or `limit(minimum, maximum)`.
 
@@ -120,17 +125,27 @@ def limit(maxOrMin: int | None = None, max_: int | None = None, lt: float | None
         raise ValueError("Specify minimum, maximum, lt or gt.")
 
     def error(transformed):
-        msg = "Value must be " + ", ".join(filter(None, (
-            f"between {minimum} and {maximum}" if minimum is not None and maximum is not None else None,
-            f"greater than {gt}" if gt is not None else None,
-            f"lesser than {lt}" if lt is not None else None))) + "."
+        msg = (
+            "Value must be "
+            + ", ".join(
+                filter(
+                    None,
+                    (
+                        f"between {minimum} and {maximum}" if minimum is not None and maximum is not None else None,
+                        f"greater than {gt}" if gt is not None else None,
+                        f"lesser than {lt}" if lt is not None else None,
+                    ),
+                )
+            )
+            + "."
+        )
         if transform:
             return msg, transformed
         else:
             return msg
 
     def limiter(tag: Tag) -> bool | str | tuple[str, int]:
-        """ Limit value to the numerical range (or string length) with optional error message and transformation. """
+        """Limit value to the numerical range (or string length) with optional error message and transformation."""
         if isinstance(tag.val, str):
             value = len(tag.val)
             n = False  # we are dealing with string, which is not transformed

@@ -1,12 +1,12 @@
-""" FormDict tools.
-    FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
+"""FormDict tools.
+FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
+
 import logging
 from warnings import warn
 from dataclasses import fields, is_dataclass
 from types import FunctionType, MethodType, SimpleNamespace
-from typing import (TYPE_CHECKING, Any, Callable, Hashable, Optional, Type, TypeVar,
-                    Union, get_args, get_type_hints)
+from typing import TYPE_CHECKING, Any, Callable, Hashable, Optional, Type, TypeVar, Union, get_args, get_type_hints
 
 
 from .auxiliary import get_description
@@ -99,13 +99,13 @@ TagDict = dict[Hashable, Union["Self", Tag]]
 # to be edited too
 # TypeVar('FormDictOrEnv', FormDict, EnvClass)
 # FormDictOrEnv = TypeVar('FormDictOrEnv', bound = FormDict | Type[EnvClass] | EnvClass)
-FormDictOrEnv = TypeVar('FormDictOrEnv', bound=FormDict | DataClass)
+FormDictOrEnv = TypeVar("FormDictOrEnv", bound=FormDict | DataClass)
 # FormDictOrEnv = TypeVar('FormDictOrEnv', bound = FormDict | EnvClass)
 # FormDictOrEnv = TypeVar('FormDictOrEnv', FormDict, Type[EnvClass], EnvClass)
 
 
 def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
-    """ For the testing purposes, returns a new dict when all Tags are replaced with their values.
+    """For the testing purposes, returns a new dict when all Tags are replaced with their values.
 
     Args:
         extract_main: UI need the main section act as nested.
@@ -153,7 +153,7 @@ def tagdict_to_widgetdict(d: FormDict | Any, widgetize_callback: Callable, _key=
 
 
 def iterate_attributes(env: DataClass):
-    """ Iterate public attributes of a model, including its parents. """
+    """Iterate public attributes of a model, including its parents."""
     if is_dataclass(env):
         # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
         for f in fields(env):
@@ -173,7 +173,7 @@ def iterate_attributes(env: DataClass):
 
 
 def iterate_attributes_keys(env: DataClass):
-    """ Iterate public attributes of a model, including its parents. """
+    """Iterate public attributes of a model, including its parents."""
     if is_dataclass(env):
         # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
         for f in fields(env):
@@ -193,7 +193,7 @@ def iterate_attributes_keys(env: DataClass):
 
 
 def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] = None, _nested=False) -> TagDict:
-    """ Convert the dataclass produced by tyro into dict of dicts. """
+    """Convert the dataclass produced by tyro into dict of dicts."""
     main = {}
     if not _nested:  # root is nested under "" path
         subdict = {"": main} if not _nested else {}

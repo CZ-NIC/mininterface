@@ -14,6 +14,7 @@ class SerCommand(Enum):
 
 def w(*text):
     from pathlib import Path
+
     f = Path("/tmp/ram/log").open("a")
     f.write(" ".join(str(s) for s in text) + "\n")
     f.close()

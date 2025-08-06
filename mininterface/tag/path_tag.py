@@ -37,6 +37,7 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
 
     ![File picker](asset/file_picker.avif)
     """
+
     multiple: Optional[bool] = None
     """ The user can select multiple files. """
 
@@ -109,7 +110,7 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
         return value
 
     def _get_init_dir(self):
-        """ For ['/var/log/syslog'] start in '/var/log' """
+        """For ['/var/log/syslog'] start in '/var/log'"""
         v = self.val
         if not v:
             return Path().cwd()

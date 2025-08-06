@@ -18,7 +18,7 @@ V = TypeVar("V")
 
 
 class VariableAnyWrapper(Generic[T, V]):
-    """ Since tkinter is not able to hold objects as values, keep a mapping.
+    """Since tkinter is not able to hold objects as values, keep a mapping.
     You can use this object as a standard Variable (which is underlying and you can still access it).
     """
 
@@ -62,14 +62,14 @@ class SelectInputWrapper:
         self.taking_focus = widget
 
         self.frame = nested_frame = Frame(master)
-        nested_frame.grid(row=grid_info['row'], column=grid_info['column'], sticky='w')
+        nested_frame.grid(row=grid_info["row"], column=grid_info["column"], sticky="w")
 
         # highlight style
         style = Style()
         style.configure("Highlight.TRadiobutton", background="lightyellow")
         style.configure("Highlight.TCheckbutton", background="lightyellow")
 
-        bg = style.lookup('TRadioButton', 'background')
+        bg = style.lookup("TRadioButton", "background")
         self.init_phase = True
         """ Becomes False few ms after mainloop """
 
@@ -106,13 +106,14 @@ class SelectInputWrapper:
                 tag._last_ui_val = False
                 return tag._on_change_trigger(vw.get())
 
-            button = Checkbutton(nested_frame,
-                                 text=choice_label,
-                                 variable=var,
-                                 command=on_toggle,
-                                 style="Highlight.TCheckbutton" if tip else "",
-                                 #    takefocus=True
-                                 )
+            button = Checkbutton(
+                nested_frame,
+                text=choice_label,
+                variable=var,
+                command=on_toggle,
+                style="Highlight.TCheckbutton" if tip else "",
+                #    takefocus=True
+            )
 
             button.pack(anchor="w")
 
@@ -129,25 +130,25 @@ class SelectInputWrapper:
 
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
             is_selected = choice_val is tag.val
-            rb = Radiobutton(nested_frame,
-                             text="",
-                             variable=self.variable,
-                             value=choice_label,
-                             style="Highlight.TRadiobutton" if tip else "",
-                             takefocus=is_selected)
+            rb = Radiobutton(
+                nested_frame,
+                text="",
+                variable=self.variable,
+                value=choice_label,
+                style="Highlight.TRadiobutton" if tip else "",
+                takefocus=is_selected,
+            )
             if is_selected:
                 self.taking_focus = rb
             if adaptor.settings.radio_select_on_focus:
-                rb.bind("<FocusIn>",
-                        lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val),
-                        add='+')
+                rb.bind(
+                    "<FocusIn>", lambda _, var=self.variable, val=choice_label: self.select_on_focus(var, val), add="+"
+                )
 
                 # Set the Tab to refocus the currently selected button when getting back to widget
                 # The default tkinter behaviour is that Tab iterates over all radio buttons
                 # which does not make sense.
-            rb.bind("<FocusIn>",
-                    lambda _, rb=rb, buttons=buttons: self.change_takefocus(rb, buttons),
-                    add='+')
+            rb.bind("<FocusIn>", lambda _, rb=rb, buttons=buttons: self.change_takefocus(rb, buttons), add="+")
             rb.grid(row=i, column=1, sticky="w")
             buttons.append(rb)
 
@@ -155,13 +156,12 @@ class SelectInputWrapper:
             labs = []
             for i2, col in enumerate(tupled_key):
                 lab = Label(nested_frame, text=col + " " * 5)
-                lab.grid(row=i, column=1+1+i2, sticky="w")
+                lab.grid(row=i, column=1 + 1 + i2, sticky="w")
                 lab.bind("<Button-1>", lambda _, v=self.variable, ch=choice_label: v.set(ch))
                 # highlight whole line on hover
-                lab.bind('<Enter>', lambda _, labs=labs: [
-                    lab.config(background='lightblue')for lab in labs])
+                lab.bind("<Enter>", lambda _, labs=labs: [lab.config(background="lightblue") for lab in labs])
 
-                lab.bind('<Leave>', lambda _, labs=labs: [lab.config(background=bg) for lab in labs])
+                lab.bind("<Leave>", lambda _, labs=labs: [lab.config(background=bg) for lab in labs])
                 labs.append(lab)
 
         if not self.set_default_label() and buttons:
@@ -177,9 +177,9 @@ class SelectInputWrapper:
     def combobox(self):
         options = self.options
         widget = AutoCombobox(self.frame, textvariable=self.variable)
-        widget['values'] = [k for k, *_ in options]
+        widget["values"] = [k for k, *_ in options]
         widget.pack()
-        widget.bind('<Return>', lambda _: "break")  # override default enter that submits the form
+        widget.bind("<Return>", lambda _: "break")  # override default enter that submits the form
 
         self.set_default_label()
         return widget
@@ -188,7 +188,7 @@ class SelectInputWrapper:
         self.init_phase = False
 
     def change_takefocus(self, rb: Radiobutton, buttons: list[Radiobutton]):
-        """ Tab will jump on the next form element (not on the next radiobutton). """
+        """Tab will jump on the next form element (not on the next radiobutton)."""
         [b.configure(takefocus=0) for b in buttons]
         rb.configure(takefocus=1)
 

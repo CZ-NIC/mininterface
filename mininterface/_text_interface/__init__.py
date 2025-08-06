@@ -1,4 +1,3 @@
-
 import sys
 from pprint import pprint
 from typing import TYPE_CHECKING, Iterable, Type, TypeVar
@@ -18,7 +17,7 @@ T = TypeVar("T")
 
 
 class AssureInteractiveTerminal:
-    """ Try to make the non-interactive terminal interactive. """
+    """Try to make the non-interactive terminal interactive."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,8 +28,8 @@ class AssureInteractiveTerminal:
         self._reserve_stdin = self._reserve_stdout = None
         try:
             if not sys.stdin.isatty() or not sys.stdout.isatty():
-                self._reserve_stdin = open('/dev/tty', 'r')
-                self._reserve_stdout = open('/dev/tty', 'w')
+                self._reserve_stdin = open("/dev/tty", "r")
+                self._reserve_stdout = open("/dev/tty", "w")
                 if not self._reserve_stdin.isatty() or not self._reserve_stdout.isatty():
                     raise RuntimeError
         except Exception:
@@ -54,7 +53,7 @@ class AssureInteractiveTerminal:
 
 
 class StdinTTYWrapper:
-    """ Revive interactive features when piping into the program.
+    """Revive interactive features when piping into the program.
     Fail when in a cron job.
     """
 
@@ -72,16 +71,21 @@ class StdinTTYWrapper:
 
 
 class TextInterface(AssureInteractiveTerminal, Mininterface):
-    """ Plain text fallback interface. No dependencies. """
+    """Plain text fallback interface. No dependencies."""
 
     _adaptor: TextAdaptor
 
     def alert(self, text: str):
-        """ Display text and let the user hit any key. """
+        """Display text and let the user hit any key."""
         with StdinTTYWrapper():
             input(text + " Hit any key.")
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
+    def ask(
+        self,
+        text: str,
+        annotation: Type[TagValue] | Tag = str,
+        validation: Iterable[ValidationCallback] | ValidationCallback | None = None,
+    ) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
                 return super().ask(text, annotation=annotation, validation=validation)
@@ -96,12 +100,9 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                 else:
                     print(t.description)
 
-    def form(self,
-             form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = "",
-             *,
-             submit: str | bool = True
-             ) -> FormDict | DataClass | EnvClass:
+    def form(
+        self, form: DataClass | Type[DataClass] | FormDict | None = None, title: str = "", *, submit: str | bool = True
+    ) -> FormDict | DataClass | EnvClass:
         try:
             with StdinTTYWrapper():
                 return self._form(form, title, self._adaptor, submit=submit)
@@ -124,9 +125,11 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
             v = form
             try:
                 import ipdb
+
                 ipdb.set_trace()
             except ImportError:
                 import pdb
+
                 pdb.set_trace()
             return form
 
@@ -147,16 +150,18 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
 
 
 class ReplInterface(TextInterface):
-    """ Same as the base TuiInterface, except it starts the REPL. """
+    """Same as the base TuiInterface, except it starts the REPL."""
 
     def __getattr__(self, name):
-        """ Run _Mininterface method if exists and starts a REPL. """
+        """Run _Mininterface method if exists and starts a REPL."""
         attr = getattr(super(), name, None)
         if callable(attr):
+
             def wrapper(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 breakpoint()
                 return result
+
             return wrapper
         else:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")

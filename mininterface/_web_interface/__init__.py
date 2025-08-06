@@ -1,4 +1,5 @@
-""" Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
+"""Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive."""
+
 import os
 from pathlib import Path
 import sys
@@ -19,6 +20,7 @@ try:
     from textual.app import App as _ImportCheck
 except ImportError:
     from ..exceptions import InterfaceNotAvailable
+
     raise InterfaceNotAvailable
 
 from ..exceptions import DependencyRequired, InterfaceNotAvailable
@@ -29,11 +31,15 @@ class WebInterface(TextualInterface):
 
     _adaptor: MinAdaptor
 
-    def __init__(self,
-                 title: str = "",
-                 settings: Optional[UiSettings] = None,
-                 _env: EnvClass | SimpleNamespace | None = None,
-                 cmd: Optional[Path] = None, port=64646, **kwargs):
+    def __init__(
+        self,
+        title: str = "",
+        settings: Optional[UiSettings] = None,
+        _env: EnvClass | SimpleNamespace | None = None,
+        cmd: Optional[Path] = None,
+        port=64646,
+        **kwargs,
+    ):
         # NOTE missing
         # * lambda, print, on_change, layout, SubmitTrue support
         # * Docs image.
@@ -65,12 +71,12 @@ class WebInterface(TextualInterface):
 
         super().__init__(title, settings, _env, need_atty=False, **kwargs)
         match os.environ.get("MININTERFACE_ENFORCED_WEB"):
-            case '_web-child-serialized':
+            case "_web-child-serialized":
                 self._adaptor = SerializedChildAdaptor(self, settings)
                 return
-            case '_web-parent':
+            case "_web-parent":
                 envir = os.environ.copy()
-                envir["MININTERFACE_ENFORCED_WEB"] = '_web-child-serialized'
+                envir["MININTERFACE_ENFORCED_WEB"] = "_web-child-serialized"
                 self._adaptor = WebParentAdaptor(self, settings, environ=envir)
                 self._adaptor.disconnect()
                 quit()
@@ -79,7 +85,7 @@ class WebInterface(TextualInterface):
                     from textual_serve.server import Server
                 except ImportError:
                     raise DependencyRequired("web")
-                os.environ["MININTERFACE_ENFORCED_WEB"] = '_web-parent'
+                os.environ["MININTERFACE_ENFORCED_WEB"] = "_web-parent"
 
                 server = Server(str(cmd.absolute()) if cmd else " ".join(sys.argv), port=port)
                 server.serve()

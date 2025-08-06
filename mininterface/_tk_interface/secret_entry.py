@@ -18,7 +18,7 @@ class SecretEntryWrapper:
         adaptor.shortcuts.add(f"{tk_shortcut}: Toggle visibility of password field")
 
         if tag.show_toggle:
-            self.button = Button(master, text='👁', command=self.toggle_show)
+            self.button = Button(master, text="👁", command=self.toggle_show)
             self.button.grid(row=row, column=col + 1)
 
     def _on_toggle(self, event=None):
@@ -28,8 +28,8 @@ class SecretEntryWrapper:
 
     def toggle_show(self):
         if self.tag.toggle_visibility():
-            self.entry.config(show='•')
+            self.entry.config(show="•")
             self.button.config(text="👁")
         else:
-            self.entry.config(show='')
+            self.entry.config(show="")
             self.button.config(text="🙈")

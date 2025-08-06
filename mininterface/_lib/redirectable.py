@@ -8,7 +8,7 @@ else:
 
 
 class RedirectText:
-    """ Helps to redirect text from stdout to a text widget. """
+    """Helps to redirect text from stdout to a text widget."""
 
     def __init__(self) -> None:
         self.max_lines = 1000
@@ -33,7 +33,8 @@ class RedirectText:
 
 
 class Redirectable:
-    """ When enwraped in a with statement, the prints go to the UI instead of a stdout."""
+    """When enwraped in a with statement, the prints go to the UI instead of a stdout."""
+
     # NOTE When used in the with statement, the TUI window should not vanish between dialogs.
     # The same way the GUI does not vanish.
     # NOTE: Current implementation will show only after a dialog submit, not continuously.

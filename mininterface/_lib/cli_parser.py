@@ -106,18 +106,14 @@ class Patches:
 
     @staticmethod
     def custom_parse_known_args(self: TyroArgumentParser, args=None, namespace=None):
-        namespace, args = super(TyroArgumentParser, self).parse_known_args(
-            args, namespace
-        )
+        namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
         # NOTE We may check that the Env does not have its own `verbose``
         if hasattr(namespace, "verbose"):
             if namespace.verbose > 0:
                 log_level = {1: logging.INFO, 2: logging.DEBUG, 3: logging.NOTSET}.get(
                     namespace.verbose, logging.NOTSET
                 )
-                logging.basicConfig(
-                    level=log_level, format="%(levelname)s - %(message)s"
-                )
+                logging.basicConfig(level=log_level, format="%(levelname)s - %(message)s")
             delattr(namespace, "verbose")
         return namespace, args
 
@@ -153,9 +149,7 @@ def parse_cli(
         # to type hint a union type, only a union instance.
         # def sugg(a: UnionType[EnvClass]) -> EnvClass: ...
         # sugg(Subcommand1 | Subcommand2). -> IDE will not suggest anything
-        type_form = Union[
-            tuple(env_or_list)
-        ]  # Union[*env_or_list] not supported in Python3.10
+        type_form = Union[tuple(env_or_list)]  # Union[*env_or_list] not supported in Python3.10
         env_classes = env_or_list
     else:
         type_form = env_or_list
@@ -178,9 +172,7 @@ def parse_cli(
             if all("verbose" not in cl.__annotations__ for cl in env_classes):
                 patches.extend(
                     (
-                        patch.object(
-                            TyroArgumentParser, "__init__", Patches.custom_init
-                        ),
+                        patch.object(TyroArgumentParser, "__init__", Patches.custom_init),
                         patch.object(
                             TyroArgumentParser,
                             "parse_known_args",
@@ -219,20 +211,14 @@ def parse_cli(
                 subargs = args
             elif len(args):
                 env = next(
-                    (
-                        env
-                        for env in env_classes
-                        if to_kebab_case(env.__name__) == args[0]
-                    ),
+                    (env for env in env_classes if to_kebab_case(env.__name__) == args[0]),
                     None,
                 )
                 if env:
                     parser: ArgumentParser = get_parser(env)
                     subargs = args[1:]
             if not env:
-                raise NotImplementedError(
-                    "This case of nested dataclasses is not implemented. Raise an issue please."
-                )
+                raise NotImplementedError("This case of nested dataclasses is not implemented. Raise an issue please.")
 
             # Determine missing argument of the given dataclass
             positionals = (p for p in parser._actions if p.default != argparse.SUPPRESS)
@@ -243,16 +229,12 @@ def parse_cli(
                     # Positional
                     # Ex: `The following arguments are required: PATH, INT, STR`
                     argument = next(positionals)
-                    register_wrong_field(
-                        env, kwargs, wf, argument, exception, eavesdrop
-                    )
+                    register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
                 else:
                     # required arguments
                     # Ex: `the following arguments are required: --foo, --bar`
                     if argument := identify_required(parser, arg):
-                        register_wrong_field(
-                            env, kwargs, wf, argument, exception, eavesdrop
-                        )
+                        register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
 
             # Second attempt to parse CLI.
             # We have just put a default values for missing fields so that tyro will not fail.
@@ -296,9 +278,7 @@ def identify_required(parser: ArgumentParser, arg: str) -> None | Action:
         # we should never come here, as treating missing subcommand should be treated by run/start.choose_subcommand
         return
     try:
-        argument: Action = next(
-            iter(p for p in parser._actions if arg in p.option_strings)
-        )
+        argument: Action = next(iter(p for p in parser._actions if arg in p.option_strings))
     except:
         # missing subcommand flag not implemented (correction: might be implemented and we never come here anymore)
         return
@@ -463,9 +443,7 @@ def coerce_type_to_annotation(value, annotation):
     if origin is tuple and isinstance(value, list):
         args = get_args(annotation)
         if args and len(args) == len(value):
-            return tuple(
-                coerce_type_to_annotation(v, arg) for v, arg in zip(value, args)
-            )
+            return tuple(coerce_type_to_annotation(v, arg) for v, arg in zip(value, args))
         return tuple(value)
 
     # Handle list[...] conversion
@@ -479,10 +457,7 @@ def coerce_type_to_annotation(value, annotation):
     if origin is dict and isinstance(value, dict):
         key_type, val_type = get_args(annotation)
         return {
-            coerce_type_to_annotation(k, key_type): coerce_type_to_annotation(
-                v, val_type
-            )
-            for k, v in value.items()
+            coerce_type_to_annotation(k, key_type): coerce_type_to_annotation(v, val_type) for k, v in value.items()
         }
 
     # For nested dataclass or BaseModel etc.

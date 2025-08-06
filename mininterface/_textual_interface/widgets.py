@@ -9,7 +9,8 @@ from ..tag.tag import Tag, TagValue
 
 
 class TagWidget:
-    """ Widget that has a tag inside, this can implement on_change method etc. """
+    """Widget that has a tag inside, this can implement on_change method etc."""
+
     # Since every TagWidget has two parent, continue from the constructor to the other brach via `super`.
     # For an unknown reason, the TagWidget cannot inherit directly from Widget, as
     # `MyInput(TagWidget, Input)` would not work would continue here directly to `Widget`, skipping the `Input`.
@@ -73,7 +74,7 @@ class MyCheckbox(TagWidget, Checkbox):
 
 
 class MyRadioButton(RadioButton):
-    def __init__(self, ref_ui,  *args, **kwargs):
+    def __init__(self, ref_ui, *args, **kwargs):
         self.ref_ui = ref_ui
         super().__init__(*args, **kwargs)
 

@@ -74,9 +74,7 @@ class ArgparseField:
         return self.action.dest in self.properties
 
 
-def parser_to_dataclass(
-    parser: ArgumentParser, name: str = "Args"
-) -> DataClass | list[DataClass]:
+def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass | list[DataClass]:
     """Note that in contrast to the argparse, we create default values.
     When an optional flag is not used, argparse put None, we have a default value.
 
@@ -117,17 +115,13 @@ def parser_to_dataclass(
             for subname, subactions, help_ in _loop_SubParsersAction(subparser)
         ]
     else:
-        return _make_dataclass_from_actions(
-            normal_actions, name, None, parser.description
-        )
+        return _make_dataclass_from_actions(normal_actions, name, None, parser.description)
 
 
 def _loop_SubParsersAction(subparser: _SubParsersAction):
     return [
         (subname, subactions, ch_act.help)
-        for (subname, subactions), ch_act in zip(
-            subparser.choices.items(), subparser._choices_actions
-        )
+        for (subname, subactions), ch_act in zip(subparser.choices.items(), subparser._choices_actions)
     ]
 
 
@@ -173,11 +167,7 @@ def _make_dataclass_from_actions(
                 const_actions[af.action.dest].append(af)
                 af.add(
                     lambda self, af=af: (
-                        [
-                            _af.action.const
-                            for _af in const_actions[af.action.dest]
-                            if getattr(self, _af.name)
-                        ]
+                        [_af.action.const for _af in const_actions[af.action.dest] if getattr(self, _af.name)]
                     )
                 )
             case _StoreTrueAction():
@@ -190,9 +180,7 @@ def _make_dataclass_from_actions(
                 arg_type = bool
                 opt["default"] = False
                 af.add(
-                    lambda self, field_name=af.name, const=action.const: (
-                        const if getattr(self, field_name) else None
-                    )
+                    lambda self, field_name=af.name, const=action.const: (const if getattr(self, field_name) else None)
                 )
             case _CountAction():
                 arg_type = int
@@ -231,9 +219,7 @@ def _make_dataclass_from_actions(
     )
     if helptext or description:
         trimmed = (helptext or "").strip()
-        needs_colon = (
-            trimmed and description and trimmed[-1] not in (".", ":", "!", "?", "…")
-        )
+        needs_colon = trimmed and description and trimmed[-1] not in (".", ":", "!", "?", "…")
 
         separator = ": " if needs_colon else ("\n" if trimmed else "")
         dc.__doc__ = trimmed + separator + (description or "")

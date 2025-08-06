@@ -6,6 +6,7 @@ try:
     from simple_term_menu import TerminalMenu
 except ImportError:
     from ..exceptions import InterfaceNotAvailable
+
     raise InterfaceNotAvailable
 
 from .._lib.auxiliary import flatten
@@ -30,7 +31,7 @@ class TextAdaptor(BackendAdaptor):
     settings: TextSettings
 
     def widgetize(self, tag: Tag, only_label=False):
-        """ Represent Tag in a text form """
+        """Represent Tag in a text form"""
 
         if not only_label:
             label = tag.label
@@ -44,8 +45,9 @@ class TextAdaptor(BackendAdaptor):
         match tag:
             # NOTE: PathTag, DatetimeTag not implemented
             case SelectTag():
-                options, values = zip(*((label + (" <--" if tip else " "), v)
-                                        for label, v, tip, _ in tag._get_options(delim=" - ")))
+                options, values = zip(
+                    *((label + (" <--" if tip else " "), v) for label, v, tip, _ in tag._get_options(delim=" - "))
+                )
                 if tag.multiple:
                     if only_label:
                         return tag._get_selected_keys() or f"({len(options)} options)"
@@ -100,7 +102,7 @@ class TextAdaptor(BackendAdaptor):
         return ""
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """ Let the user edit the form_dict values in a GUI window.
+        """Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
         while True:
@@ -126,8 +128,10 @@ class TextAdaptor(BackendAdaptor):
             if single:
                 key = next(iter(form))
             else:
-                index = self._choose([f"{self._get_tag_mnemonic(val)}{key}{self._get_tag_val(val)}" for key,
-                                      val in form.items()], append_ok=True)
+                index = self._choose(
+                    [f"{self._get_tag_mnemonic(val)}{key}{self._get_tag_val(val)}" for key, val in form.items()],
+                    append_ok=True,
+                )
                 key = list(form)[index]
 
             match form[key]:
@@ -161,9 +165,14 @@ class TextAdaptor(BackendAdaptor):
         if not multiple:
             if len(items) < 10:
                 # use number as shorcuts when no shortcuts are given `[c]`
-                it = [item if item.startswith("[")  # field already starts with a shortcut, ex. `[f] foo`
-                      else f"[{i+1}] {item}"  # add a number shorctu, ex. `[1] foo`
-                      for i, item in enumerate(items)]
+                it = [
+                    (
+                        item
+                        if item.startswith("[")  # field already starts with a shortcut, ex. `[f] foo`
+                        else f"[{i+1}] {item}"
+                    )  # add a number shorctu, ex. `[1] foo`
+                    for i, item in enumerate(items)
+                ]
             else:
                 kwargs = {"show_search_hint": True}
 
@@ -187,7 +196,7 @@ class TextAdaptor(BackendAdaptor):
             if append_ok:
                 if 0 in index:
                     raise Submit
-                index = tuple(i-1 for i in index)
+                index = tuple(i - 1 for i in index)
         else:
             index: int
             if append_ok:

@@ -160,13 +160,10 @@ class FileBrowser(Vertical):
     def _add_directory(self, path: Path, node: TreeNode) -> None:
         """Add directory contents to the tree."""
         try:
-            paths = sorted(
-                path.iterdir(),
-                key=lambda p: (not p.is_dir(), p.name.lower())
-            )
+            paths = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
 
             for item in paths:
-                if item.name.startswith('.'):
+                if item.name.startswith("."):
                     continue
 
                 try:

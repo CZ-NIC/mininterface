@@ -1,4 +1,3 @@
-
 from io import BytesIO, TextIOWrapper
 import pickle
 import struct
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class SerializedChildAdaptor(TextualAdaptor):
-    """ Serialized output, piped to the parent process.
+    """Serialized output, piped to the parent process.
 
     Even though this is a TextualAdaptor,
     it is missing .widgetize method.

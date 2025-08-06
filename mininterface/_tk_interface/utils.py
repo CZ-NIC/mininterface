@@ -54,7 +54,7 @@ def recursive_set_focus(widget: Widget):
 
 
 class AnyVariable(Variable):
-    """ Original Variable is not able to hold lambdas. """
+    """Original Variable is not able to hold lambdas."""
 
     def __init__(self, val):
         # super().__init__()
@@ -70,6 +70,7 @@ class AnyVariable(Variable):
 
 def choose_file_handler(variable: Variable, tag: PathTag):
     """Handler for file/directory selection on PathTag"""
+
     def _(*_):
         initialdir = str(tag._get_init_dir())
 
@@ -120,7 +121,8 @@ def choose_file_handler(variable: Variable, tag: PathTag):
 
 
 def on_change_handler(variable: Variable | VariableAnyWrapper, tag: Tag):
-    """ Closure handler """
+    """Closure handler"""
+
     def _(*_):
         try:
             return tag._on_change_trigger(variable.get())
@@ -130,6 +132,7 @@ def on_change_handler(variable: Variable | VariableAnyWrapper, tag: Tag):
             # _tkinter.TclError: expected floating-point number but got ""
             # NOTE we should refresh the Widget; see facet comment
             pass
+
     return _
 
 
@@ -137,13 +140,14 @@ def _set_true(variable: Variable, tag: Tag):
     def _(*_):
         variable.set(True)
         tag._facet.submit()
+
     return _
 
 
 def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
     def replace_variable(variable):
-        """ On form submit, tkinter_form will return the output of this variable. """
-        if widget.winfo_manager() == 'grid':
+        """On form submit, tkinter_form will return the output of this variable."""
+        if widget.winfo_manager() == "grid":
             grid_info = widget.grid_info()
             widget.grid_forget()
             field_form.variable = variable
@@ -179,7 +183,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         # But still allow Tab key to work normally
         if isinstance(widget, Entry):
             # Only bind the Enter key, not Tab key
-            widget.bind('<Return>', prevent_submit, add="+")
+            widget.bind("<Return>", prevent_submit, add="+")
 
         # We implement some of the types the tkinter_form don't know how to handle
         match tag:
@@ -205,22 +209,22 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 file_handler = choose_file_handler(variable, tag)
                 button_text = "📁" if tag.is_dir else "…"  # Folder icon for directories
                 widget2 = Button(master, text=button_text, command=file_handler)
-                widget2.grid(row=grid_info['row'], column=grid_info['column']+1)
+                widget2.grid(row=grid_info["row"], column=grid_info["column"] + 1)
 
                 # Handle Enter key for file picker button
                 def handle_return(event):
                     file_handler()
                     return "break"  # Prevent event propagation
 
-                widget2.bind('<Return>', handle_return)
+                widget2.bind("<Return>", handle_return)
 
                 # For input field, just prevent form submission on Enter without opening file dialog
-                widget.bind('<Return>', prevent_submit)
+                widget.bind("<Return>", prevent_submit)
             case DatetimeTag():
                 grid_info = widget.grid_info()
                 widget.grid_forget()
                 nested_frame = DateEntryFrame(master, adaptor, tag, variable)
-                nested_frame.grid(row=grid_info['row'], column=grid_info['column'], sticky="w")
+                nested_frame.grid(row=grid_info["row"], column=grid_info["column"], sticky="w")
                 widget = nested_frame.spinbox
             case SecretTag():
                 grid_info = widget.grid_info()
@@ -236,20 +240,23 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                         widget.config(command=_set_true(variable, tag))
                     case FacetButtonWidget():  # NOTE EXPERIMENTAL
                         # Special type: FacetCallback button
-                        variable, widget = create_button(master, replace_variable, tag, label1,
-                                                         lambda tag=tag: tag.val(tag._facet))
+                        variable, widget = create_button(
+                            master, replace_variable, tag, label1, lambda tag=tag: tag.val(tag._facet)
+                        )
 
                     case CallbackButtonWidget():
                         # Replace with a callback button
                         def inner(tag: Tag):
                             tag._facet.submit(_post_submit=tag._run_callable)
-                        variable, widget = create_button(master, replace_variable, tag,
-                                                         label1, lambda tag=tag: inner(tag))
+
+                        variable, widget = create_button(
+                            master, replace_variable, tag, label1, lambda tag=tag: inner(tag)
+                        )
                     case _:
                         grid_info = replace_variable(variable)
                         # Reposition to the grid so that the Tab order is restored.
                         # (As we replace some widgets with ex. custom DateEntry, these new would have Tab order broken.)
-                        widget.grid(row=grid_info['row'], column=grid_info['column'], sticky="we")
+                        widget.grid(row=grid_info["row"], column=grid_info["column"], sticky="we")
 
         # Add event handler
         if process_change_handler:
@@ -275,7 +282,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 label += f" ({char})"
                 underline = label.lower().index(char)
             # NOTE in case of a radio, put here
-            adaptor.bind_shortcut(f'<Alt-{char}>', taking_focus)
+            adaptor.bind_shortcut(f"<Alt-{char}>", taking_focus)
 
             if adaptor.settings.mnemonic_hidden:
                 label = tag.label
@@ -292,13 +299,13 @@ def create_button(master, _fetch, tag: Tag, label1, command=None):
     variable = AnyVariable(tag.val)
     grid_info = _fetch(variable)
     widget2 = Button(master, text=tag.label, command=command)
-    widget2.grid(row=grid_info['row'], column=grid_info['column'])
+    widget2.grid(row=grid_info["row"], column=grid_info["column"])
     label1.grid_forget()
     return variable, widget2
 
 
 def widgets_to_dict(widgets_dict) -> dict[str, dict | FieldForm]:
-    """ Convert tkinter_form.widgets to a dict """
+    """Convert tkinter_form.widgets to a dict"""
     result = {}
     for key, value in widgets_dict.items():
         if isinstance(value, dict):

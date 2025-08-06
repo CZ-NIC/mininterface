@@ -8,8 +8,14 @@ from .tag import Tag, TagValue
 OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 OptionLabel = str
 RichOptionLabel = OptionLabel | tuple[OptionLabel]
-OptionsType = (list[TagValue] | tuple[TagValue, ...] | set[TagValue]
-               | dict[RichOptionLabel, TagValue] | Iterable[Enum] | Type[Enum])
+OptionsType = (
+    list[TagValue]
+    | tuple[TagValue, ...]
+    | set[TagValue]
+    | dict[RichOptionLabel, TagValue]
+    | Iterable[Enum]
+    | Type[Enum]
+)
 """ You can denote the options in many ways.
 Either put options in an iterable or to a dict `{labels: value}`.
 Values might be Tags as well. Let's take a detailed look. We will use the [`run.select(OptionsType)`][mininterface.Mininterface.select] to illustrate the examples.
@@ -98,7 +104,7 @@ See [mininterface.select][mininterface.Mininterface.select] or [`SelectTag.optio
 
 @dataclass(repr=False)
 class SelectTag(Tag[TagValue]):
-    """ Handle options – radio buttons / select box.
+    """Handle options – radio buttons / select box.
     The value serves as the initially selected choice.
     It is constrained to those defined in the `options` attribute.
     """
@@ -190,7 +196,7 @@ class SelectTag(Tag[TagValue]):
 
     @classmethod
     def _get_tag_val(cls, v) -> TagValue:
-        """ TagValue can be anything, except the Tag. The nested Tag returns its value instead. """
+        """TagValue can be anything, except the Tag. The nested Tag returns its value instead."""
         if isinstance(v, Tag):
             return cls._get_tag_val(v.val)
         return v
@@ -219,14 +225,16 @@ class SelectTag(Tag[TagValue]):
         return str(v)
 
     def _build_options(self) -> dict[OptionLabel, TagValue]:
-        """ Whereas self.options might have different format, this returns a canonic dict. """
+        """Whereas self.options might have different format, this returns a canonic dict."""
 
         if self.options is None:
             return {}
         if isinstance(self.options, dict):
             # assure the key is a str or their tuple
-            return {(tuple(str(k) for k in key) if isinstance(key, tuple) else str(key)): self._get_tag_val(v)
-                    for key, v in self.options.items()}
+            return {
+                (tuple(str(k) for k in key) if isinstance(key, tuple) else str(key)): self._get_tag_val(v)
+                for key, v in self.options.items()
+            }
         if isinstance(self.options, Iterable):
             return {self._repr_val(v): self._get_tag_val(v) for v in self.options}
         if isinstance(self.options, type) and issubclass(self.options, Enum):  # Enum type, ex: options=ColorEnum
@@ -235,7 +243,7 @@ class SelectTag(Tag[TagValue]):
         warn(f"Not implemented options: {self.options}")
 
     def _get_options(self, delim=" - ") -> OptionsReturnType:
-        """ Return a list of tuples (label, choice value, is tip, tupled-label).
+        """Return a list of tuples (label, choice value, is tip, tupled-label).
 
         User has the possibility to write tuples instead of labels. We should produce a table then.
         In label, we are sure the keys are strings (possibly joined with a dash)
@@ -274,7 +282,7 @@ class SelectTag(Tag[TagValue]):
         return front + back
 
     def _span_to_lengths(self, keys: Iterable[tuple[str]], delim=" - "):
-        """ Span key tuple into a table
+        """Span key tuple into a table
         Ex: [ ("one", "two"), ("hello", "world") ]
             one   - two
             hello - world"
@@ -289,7 +297,7 @@ class SelectTag(Tag[TagValue]):
             return [(delim.join(key), key) for key in keys]
 
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:
-        """ ui_value is one of the self.options values  """
+        """ui_value is one of the self.options values"""
         ch = self._build_options()
 
         if self.multiple:

@@ -32,8 +32,12 @@ class FormContents(Static):
         # since textual 1.0.0 we have to build widgets not earlier than the context app is ready
 
         self.widgets.clear()
-        self.widgets.extend(flatten(tagdict_to_widgetdict(
-            self.adaptor.facet._form, self.adaptor.widgetize), include_keys=self.adaptor.header))
+        self.widgets.extend(
+            flatten(
+                tagdict_to_widgetdict(self.adaptor.facet._form, self.adaptor.widgetize),
+                include_keys=self.adaptor.header,
+            )
+        )
 
         # there are multiple sections in the list, <hr>ed by Rule elements. However, the first takes much space.
         if len(self.widgets) and isinstance(self.widgets[0], Rule):
@@ -81,13 +85,13 @@ class FormContents(Static):
             # traversing its elements, unless we are at the edge.
             case "down":
                 # (Unfortunaly, I don't know how to implement allowing navigation directly to the RadioSet and SelectionList.)
-                if (not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1) \
-                        and not isinstance(ff, SelectionList):
+                if (not isinstance(ff, RadioSet) or ff._selected == len(ff._nodes) - 1) and not isinstance(
+                    ff, SelectionList
+                ):
                     f[(index + 1) % len(f)].focus()
                     event.stop()
             case "up":
-                if (not isinstance(ff, RadioSet) or ff._selected == 0) \
-                        and not isinstance(ff, SelectionList):
+                if (not isinstance(ff, RadioSet) or ff._selected == 0) and not isinstance(ff, SelectionList):
                     f[(index - 1) % len(f)].focus()
                     event.stop()
             case "enter":
@@ -97,7 +101,7 @@ class FormContents(Static):
                     self.app.action_confirm()
                     event.stop()
             case letter if len(letter) == 1:  # navigate by letters
-                for inp_ in f[index+1:] + f[:index]:
+                for inp_ in f[index + 1 :] + f[:index]:
                     match inp_:
                         case Checkbox():
                             label = inp_.label

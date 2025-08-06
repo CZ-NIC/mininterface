@@ -9,6 +9,7 @@ try:
     from tyro.conf import Positional
 except ImportError:
     from .exceptions import DependencyRequired
+
     raise DependencyRequired("basic").exit()
 
 from . import run
@@ -36,7 +37,7 @@ Showcase_Type = Literal[1, 2]
 
 @dataclass
 class Alert(Command):
-    """ Dialog: Display the OK dialog with text. """
+    """Dialog: Display the OK dialog with text."""
 
     text: Positional[str]
 
@@ -46,7 +47,7 @@ class Alert(Command):
 
 @dataclass
 class Ask(Command):
-    """ Dialog: Prompt the user to input a value.
+    """Dialog: Prompt the user to input a value.
     By default, we input a str, by the second parameter, you can infer a type,
     ex. `mininterface --ask 'My heading' int`
     """
@@ -77,12 +78,15 @@ class Ask(Command):
                 v = Path
             case "date":
                 from datetime import date
+
                 v = date
             case "datetime":
                 from datetime import datetime
+
                 v = datetime
             case "time":
                 from datetime import time
+
                 v = time
             case "file":
                 v = PathTag(is_file=True)
@@ -95,7 +99,7 @@ class Ask(Command):
 
 @dataclass
 class Confirm(Command):
-    """ Dialog: Display confirm box. Returns 0 / 1. """
+    """Dialog: Display confirm box. Returns 0 / 1."""
 
     text: Positional[str]
     focus: Positional[Literal["yes", "no"]] = "yes"
@@ -108,7 +112,8 @@ class Confirm(Command):
 
 @dataclass
 class Select(Command):
-    """ Dialog: Prompt the user to select. """
+    """Dialog: Prompt the user to select."""
+
     options: Positional[list[str]]
     title: str = ""
 
@@ -118,7 +123,7 @@ class Select(Command):
 
 @dataclass
 class Integrate(Command):
-    """ Integrate to the system. Generates a bash completion for the given program. """
+    """Integrate to the system. Generates a bash completion for the given program."""
 
     cmd: Positional[File]
     """Path to the program using mininterface.
@@ -126,17 +131,18 @@ class Integrate(Command):
     """
 
     def run(self):
-        environ["MININTERFACE_INTEGRATE_TO_SYSTEM"] = '1'
+        environ["MININTERFACE_INTEGRATE_TO_SYSTEM"] = "1"
         srun(self.cmd.absolute(), env=environ)
         quit()
 
 
 @dataclass
 class Showcase:
-    """ Prints various form just to show what's possible.
+    """Prints various form just to show what's possible.
     Choose the interface by MININTERFACE_INTERFACE=...
     Ex. MININTERFACE_INTERFACE=tui mininterface showcase 2
     """
+
     showcase: Positional[Showcase_Type] = 1
 
 
@@ -151,11 +157,17 @@ class Web(Command):
 
     def run(self):
         from ._web_interface import WebInterface
+
         WebInterface(cmd=self.cmd, port=self.port)
 
 
 def main():
-    with run([Alert, Ask, Confirm, Select, Integrate, Showcase,  Web], prog="Mininterface", description=__doc__, ask_for_missing=False) as m:
+    with run(
+        [Alert, Ask, Confirm, Select, Integrate, Showcase, Web],
+        prog="Mininterface",
+        description=__doc__,
+        ask_for_missing=False,
+    ) as m:
         pass
 
     if isinstance(m.env, Showcase):

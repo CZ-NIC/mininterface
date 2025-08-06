@@ -1,4 +1,5 @@
-""" Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive. """
+"""Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive."""
+
 import sys
 from typing import Optional, Type
 
@@ -8,6 +9,7 @@ try:
     from textual.app import App as _ImportCheck
 except ImportError:
     from ..exceptions import InterfaceNotAvailable
+
     raise InterfaceNotAvailable
 
 from ..exceptions import InterfaceNotAvailable

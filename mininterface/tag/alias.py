@@ -5,7 +5,7 @@ from typing import Callable
 
 
 def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResult, TagValue]]):
-    """ Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
+    """Alias to [`Tag(validation=...)`][mininterface.Tag.validation]
 
     ```python
     from mininterface import Tag, Validation
@@ -24,7 +24,7 @@ def Validation(check: Callable[["Tag"], ValidationResult | tuple[ValidationResul
 
 
 def Options(*options: list[str]):
-    """ An alias, see [`SelectTag.options`][mininterface.tag.SelectTag.options]
+    """An alias, see [`SelectTag.options`][mininterface.tag.SelectTag.options]
 
     Example:
     ```python

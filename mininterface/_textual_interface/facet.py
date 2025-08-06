@@ -9,6 +9,7 @@ from humanize import naturalsize
 
 from ..exceptions import DependencyRequired
 from ..facet import Facet, Image, LayoutElement
+
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
 
@@ -35,6 +36,7 @@ class TextualFacet(Facet):
         try:
             from PIL import Image as ImagePIL
             from textual_imageview.viewer import ImageViewer
+
             PIL = True
         except:
             PIL = False

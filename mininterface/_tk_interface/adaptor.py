@@ -8,6 +8,7 @@ try:
     from tkinter_form import Form, Value
 except ImportError:
     from ..exceptions import DependencyRequired
+
     raise DependencyRequired("basic")
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
@@ -21,7 +22,7 @@ from .utils import recursive_set_focus, replace_widgets
 
 
 class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
-    """ An editing Tk window. """
+    """An editing Tk window."""
 
     facet: TkFacet
     settings: GuiSettings
@@ -39,14 +40,10 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self._result = None
         self._event_bindings = {}
         # NOTE: I'd prefer to have shortcuts somewhere ex. in the status bar ad hoc
-        self.shortcuts = set([
-            "F1: Show this help",
-            "Enter: Submit form",
-            "Escape: Cancel"
-        ])
+        self.shortcuts = set(["F1: Show this help", "Enter: Submit form", "Escape: Cancel"])
         self.title(self.interface.title)
-        self.bind('<Escape>', lambda _: self._ok(Cancelled))
-        self.bind('<F1>', self._show_help)  # Help with Ctrl+H
+        self.bind("<Escape>", lambda _: self._ok(Cancelled))
+        self.bind("<F1>", self._show_help)  # Help with Ctrl+H
 
         # NOTE it would be nice to auto-hide the scrollbars if not needed
         self.sf = ScrolledFrame(self, use_ttk=True)
@@ -62,7 +59,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self.label_frame.pack()
         self.label = Label(self.label_frame, text="")
 
-        self.text_widget = Text(self.frame, wrap='word', height=20, width=80)
+        self.text_widget = Text(self.frame, wrap="word", height=20, width=80)
         self.text_widget.pack_forget()
         self.pending_buffer = []
         """ Text that has been written to the text widget but might not be yet seen by user.
@@ -76,14 +73,13 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
 
         # Display all shortcuts
         help_text = "Keyboard Shortcuts:\n" + "\n".join(f"- {hint}" for hint in sorted(self.shortcuts))
-        help_label = Label(
-            help_window, text=help_text, justify=LEFT, padx=20, pady=20)
+        help_label = Label(help_window, text=help_text, justify=LEFT, padx=20, pady=20)
         help_label.pack()
-        help_window.bind('<Escape>', lambda e: help_window.destroy())
+        help_window.bind("<Escape>", lambda e: help_window.destroy())
         help_window.focus_set()
 
     def widgetize(self, tag: Tag) -> Value:
-        """ Wrap Tag to a textual widget. """
+        """Wrap Tag to a textual widget."""
         v = tag._get_ui_val()
         if tag.annotation is bool and not isinstance(v, bool):
             # tkinter_form unfortunately needs the bool type to display correct widget,
@@ -94,19 +90,20 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         return Value(v, tag.description)
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """ Let the user edit the form_dict values in a GUI window.
+        """Let the user edit the form_dict values in a GUI window.
         On abrupt window close, the program exits.
         """
         super().run_dialog(form, title, submit)
         if title:
             self.facet.set_title(title)
 
-        self.form = Form(self.frame,
-                         name_form="",
-                         form_dict=tagdict_to_widgetdict(form, self.widgetize),
-                         name_button=submit if isinstance(submit, str) else "Ok",
-                         button_command=self._ok if submit else None
-                         )
+        self.form = Form(
+            self.frame,
+            name_form="",
+            form_dict=tagdict_to_widgetdict(form, self.widgetize),
+            name_button=submit if isinstance(submit, str) else "Ok",
+            button_command=self._ok if submit else None,
+        )
         self.form.pack()
 
         # Add radio etc.
@@ -140,7 +137,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         return form
 
     def yes_no(self, text: str, focus_no=True):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1)
 
     def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1):
         label = Label(self.frame, text=text)
@@ -149,7 +146,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         for i, (text, value) in enumerate(buttons):
             button = Button(self.frame, text=text, command=lambda v=value: self._ok(v))
             button.pack(side=LEFT, padx=10)
-            if i == focused-1:
+            if i == focused - 1:
                 button.focus_set()
                 b = button
                 button.bind("<Return>", lambda _: b.invoke())
@@ -160,7 +157,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self.bind(event, handler)
 
     def _refresh_size(self):
-        """ Autoshow scrollbars."""
+        """Autoshow scrollbars."""
         self.update_idletasks()  # finish drawing
         width = self.frame.winfo_width()
         height = self.frame.winfo_height()
@@ -219,4 +216,5 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         def _(event=None):
             widget.focus_set()
             return "break"
+
         self.bind(shortcut, _)

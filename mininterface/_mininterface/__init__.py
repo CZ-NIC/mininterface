@@ -16,8 +16,7 @@ from ..settings import UiSettings
 from ..exceptions import DependencyRequired
 
 from ..facet import Facet
-from .._lib.form_dict import (DataClass, EnvClass, FormDict, dataclass_to_tagdict,
-                              dict_to_tagdict, formdict_resolve)
+from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
 from ..tag.tag import Tag, TagValue, ValidationCallback
 
 try:
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class Mininterface(Generic[EnvClass]):
-    """ The base interface.
+    """The base interface.
         You get one through [`mininterface.run`](run.md) which fills CLI arguments and config file to `mininterface.env`
         or you can create [one](Interfaces.md) directly (without benefiting from the CLI parsing).
 
@@ -42,6 +41,7 @@ class Mininterface(Generic[EnvClass]):
     Raise:
         [InterfaceNotAvailable][mininterface.exceptions.InterfaceNotAvailable]: Interface failed to init, ex. display not available in GUI. You don't have to check for it when invoking an interface through safe methods [`run`][mininterface.run] or [`get_interface`][mininterface.interfaces.get_interface].
     """
+
     # This base interface does not require any user input and hence is suitable for headless testing.
 
     _adaptor: MinAdaptor
@@ -59,11 +59,7 @@ class Mininterface(Generic[EnvClass]):
     ![Facet back-end](asset/facet_backend.avif)
     """
 
-    def __init__(self,
-                 title: str = "",
-                 settings: Optional[UiSettings] = None,
-                 _env: Optional[EnvClass] = None
-                 ):
+    def __init__(self, title: str = "", settings: Optional[UiSettings] = None, _env: Optional[EnvClass] = None):
         self.title = title or "Mininterface"
 
         # Why `or SimpleNamespace()`?
@@ -100,7 +96,7 @@ class Mininterface(Generic[EnvClass]):
         self._adaptor = self.__annotations__["_adaptor"](self, settings)
 
     def __enter__(self) -> "Self":
-        """ Usage within the with statement makes the program to attempt for the following benefits:
+        """Usage within the with statement makes the program to attempt for the following benefits:
 
         # Continual window
 
@@ -172,12 +168,17 @@ class Mininterface(Generic[EnvClass]):
         pass
 
     def alert(self, text: str) -> None:
-        """ Prompt the user to confirm the text. """
+        """Prompt the user to confirm the text."""
         print("Alert text", text)
         return
 
-    def ask(self, text: str, annotation: Type[TagValue] | Tag[TagValue] = str, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> TagValue:
-        """ Prompt the user to input a value – text, number, ...
+    def ask(
+        self,
+        text: str,
+        annotation: Type[TagValue] | Tag[TagValue] = str,
+        validation: Iterable[ValidationCallback] | ValidationCallback | None = None,
+    ) -> TagValue:
+        """Prompt the user to input a value – text, number, ...
 
         By default, it resembles the `input()` built-in.
 
@@ -250,7 +251,7 @@ class Mininterface(Generic[EnvClass]):
         return assure_tag(annotation, validation)._make_default_value()
 
     def confirm(self, text: str, default: bool = True) -> bool:
-        """ Display confirm box and returns bool.
+        """Display confirm box and returns bool.
 
         ```python
         m = run()
@@ -273,61 +274,67 @@ class Mininterface(Generic[EnvClass]):
 
     # default + multiple none -> single
     @overload
-    def select(self,
-               options: OptionsType[TagValue],
-               title: str = "",
-               default: None = ...,
-               tips: OptionsType[TagValue] | None = None,
-               multiple: None = ...,
-               skippable: bool = True,
-               launch: bool = True
-               ) -> TagValue: ...
+    def select(
+        self,
+        options: OptionsType[TagValue],
+        title: str = "",
+        default: None = ...,
+        tips: OptionsType[TagValue] | None = None,
+        multiple: None = ...,
+        skippable: bool = True,
+        launch: bool = True,
+    ) -> TagValue: ...
 
     # Multiple is True → list
     @overload
-    def select(self,
-               options: OptionsType[TagValue],
-               title: str = "",
-               default: None = None,
-               tips: OptionsType[TagValue] | None = None,
-               multiple: Literal[True] = True,
-               skippable: bool = True,
-               launch: bool = True
-               ) -> list[TagValue]: ...
+    def select(
+        self,
+        options: OptionsType[TagValue],
+        title: str = "",
+        default: None = None,
+        tips: OptionsType[TagValue] | None = None,
+        multiple: Literal[True] = True,
+        skippable: bool = True,
+        launch: bool = True,
+    ) -> list[TagValue]: ...
 
     # default is iterable -> list
     @overload
-    def select(self,
-               options: OptionsType[TagValue],
-               title: str = "",
-               default: OptionsType[TagValue] = ...,
-               tips: OptionsType[TagValue] | None = None,
-               multiple: None = None,
-               skippable: bool = True,
-               launch: bool = True
-               ) -> list[TagValue]: ...
+    def select(
+        self,
+        options: OptionsType[TagValue],
+        title: str = "",
+        default: OptionsType[TagValue] = ...,
+        tips: OptionsType[TagValue] | None = None,
+        multiple: None = None,
+        skippable: bool = True,
+        launch: bool = True,
+    ) -> list[TagValue]: ...
 
     # multiple is False or unspecified, default is singular → single
     @overload
-    def select(self,
-               options: OptionsType[TagValue],
-               title: str = "",
-               default: TagValue = ...,
-               tips: OptionsType[TagValue] | None = None,
-               multiple: Literal[False] = False,
-               skippable: bool = True,
-               launch: bool = True
-               ) -> TagValue: ...
+    def select(
+        self,
+        options: OptionsType[TagValue],
+        title: str = "",
+        default: TagValue = ...,
+        tips: OptionsType[TagValue] | None = None,
+        multiple: Literal[False] = False,
+        skippable: bool = True,
+        launch: bool = True,
+    ) -> TagValue: ...
 
-    def select(self, options: OptionsType[TagValue],
-               title: str = "",
-               default: TagValue | OptionsType[TagValue] | None = None,
-               tips: OptionsType[TagValue] | None = None,
-               multiple: Optional[bool] = None,
-               skippable: bool = True,
-               launch: bool = True
-               ) -> TagValue | list[TagValue] | Any:
-        """ Prompt the user to select. Useful for a menu creation.
+    def select(
+        self,
+        options: OptionsType[TagValue],
+        title: str = "",
+        default: TagValue | OptionsType[TagValue] | None = None,
+        tips: OptionsType[TagValue] | None = None,
+        multiple: Optional[bool] = None,
+        skippable: bool = True,
+        launch: bool = True,
+    ) -> TagValue | list[TagValue] | Any:
+        """Prompt the user to select. Useful for a menu creation.
 
         Args:
             options:
@@ -404,6 +411,7 @@ class Mininterface(Generic[EnvClass]):
                 # Nested Tag: `m.select([CallbackTag(callback_tag)])` -> `Tag(val=CallbackTag)`
                 return tag.val._run_callable()
         return tag.val
+
     # NOTE possibility to un/check all (shortcut)
 
     @overload
@@ -415,13 +423,10 @@ class Mininterface(Generic[EnvClass]):
     @overload
     def form(self, form: DataClass, title: str = "") -> DataClass: ...
 
-    def form(self,
-             form: DataClass | Type[DataClass] | FormDict | None = None,
-             title: str = "",
-             *,
-             submit: str | bool = True
-             ) -> FormDict | DataClass | EnvClass:
-        """ Prompt the user to fill up an arbitrary form.
+    def form(
+        self, form: DataClass | Type[DataClass] | FormDict | None = None, title: str = "", *, submit: str | bool = True
+    ) -> FormDict | DataClass | EnvClass:
+        """Prompt the user to fill up an arbitrary form.
 
         Use scalars, enums, enum instances, objects like datetime, Paths or their list.
 
@@ -524,15 +529,18 @@ class Mininterface(Generic[EnvClass]):
         print(f"Asking the form {title}".strip(), f)
         return self._form(form, title, self._adaptor, submit)
 
-    def _form(self,
-              form: DataClass | Type[DataClass] | FormDict | None,
-              title: str,
-              adaptor: BackendAdaptor,
-              submit: str | bool = True
-              ) -> FormDict | DataClass | EnvClass:
+    def _form(
+        self,
+        form: DataClass | Type[DataClass] | FormDict | None,
+        title: str,
+        adaptor: BackendAdaptor,
+        submit: str | bool = True,
+    ) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
         if isinstance(_form, dict):
-            return formdict_resolve(adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True)
+            return formdict_resolve(
+                adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True
+            )
         if isinstance(_form, type):  # form is a class, not an instance
             _form, wf = parse_cli(_form, {}, False, False, args=[])  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)
@@ -549,4 +557,5 @@ class Mininterface(Generic[EnvClass]):
 
     def is_no(self, text: str) -> bool:
         raise NotImplementedError(
-            "Method `is_no` removed as it was counterintuitive. Use `.confirm(text, False)` instead.")
+            "Method `is_no` removed as it was counterintuitive. Use `.confirm(text, False)` instead."
+        )

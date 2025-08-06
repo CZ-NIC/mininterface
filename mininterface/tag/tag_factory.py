@@ -15,7 +15,7 @@ from .type_stubs import TagCallback
 
 def _get_annotation_from_class_hierarchy(cls, key):
     for base in cls.__mro__:
-        if key in getattr(base, '__annotations__', {}):
+        if key in getattr(base, "__annotations__", {}):
             return base.__annotations__[key]
     return None
 
@@ -29,8 +29,8 @@ def get_type_hint_from_class_hierarchy(cls, key):
 
 
 def _get_tag_type(tag: Tag) -> Type[Tag]:
-    """ Return the most specific Tag child that a tag value can be expressed with.
-        Ex. Return PathTag for a Tag having a Path as a value.
+    """Return the most specific Tag child that a tag value can be expressed with.
+    Ex. Return PathTag for a Tag having a Path as a value.
     """
     if tag._is_subclass(Path):
         return PathTag
@@ -41,7 +41,9 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     return type(tag)
 
 
-def assure_tag(type_or_tag: Type[TagValue] | Tag, validation: Iterable[ValidationCallback] | ValidationCallback | None = None) -> Tag:
+def assure_tag(
+    type_or_tag: Type[TagValue] | Tag, validation: Iterable[ValidationCallback] | ValidationCallback | None = None
+) -> Tag:
     if isinstance(type_or_tag, Tag):
         if validation:
             type_or_tag._add_validation(validation)
@@ -51,7 +53,7 @@ def assure_tag(type_or_tag: Type[TagValue] | Tag, validation: Iterable[Validatio
 
 
 def tag_assure_type(tag: Tag):
-    """ morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)` """
+    """morph to correct class `Tag("", annotation=Path)` -> `PathTag("", annotation=Path)`"""
     if (type_ := _get_tag_type(tag)) is not Tag and not isinstance(tag, type_):
         # I cannot use type_._fetch_from(tag) here as SelectTag.__post_init__
         # needs the self.val which would not be yet set.
@@ -63,7 +65,9 @@ def tag_assure_type(tag: Tag):
     return tag
 
 
-def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=None, _src_key=None, _src_class=None, **kwargs):
+def tag_factory(
+    val=None, description=None, annotation=None, *args, _src_obj=None, _src_key=None, _src_class=None, **kwargs
+):
     if _src_obj and not _src_class:
         # NOTE it seems _src_obj is sometimes accepts Type[DataClass], and not a DataClass,
         # unless I find out why, here is the workaround:
@@ -84,7 +88,7 @@ def tag_factory(val=None, description=None, annotation=None, *args, _src_obj=Non
                 # But there might be still a better annotation in metadata `field: Annotated[list[Path], Tag(...)]`.
                 field_type = _get_annotation_from_class_hierarchy(_src_class, _src_key)
                 if field_type:
-                    if hasattr(field_type, '__metadata__'):
+                    if hasattr(field_type, "__metadata__"):
                         for metadata in field_type.__metadata__:
                             if isinstance(metadata, Tag):  # NOTE might fetch from a pydantic model too
                                 # The type of the Tag is another Tag

@@ -4,7 +4,7 @@ from .._lib.redirectable import RedirectText
 
 
 class RedirectTextTkinter(RedirectText):
-    """ Helps to redirect text from stdout to a text widget. """
+    """Helps to redirect text from stdout to a text widget."""
 
     def __init__(self, widget: Text, window: Tk) -> None:
         super().__init__()
@@ -12,7 +12,7 @@ class RedirectTextTkinter(RedirectText):
         self.window = window
 
     def write(self, text):
-        self.widget.pack(expand=True, fill='both')
+        self.widget.pack(expand=True, fill="both")
         self.widget.insert(END, text)
         self.widget.see(END)  # scroll to the end
         self.trim()
@@ -25,10 +25,10 @@ class RedirectTextTkinter(RedirectText):
         # quit() -> should be printed here
 
     def trim(self):
-        lines = int(self.widget.index('end-1c').split('.')[0])
+        lines = int(self.widget.index("end-1c").split(".")[0])
         if lines > self.max_lines:
             self.widget.delete(1.0, f"{lines - self.max_lines}.0")
 
     def clear(self):
-        self.widget.delete('1.0', END)
+        self.widget.delete("1.0", END)
         super().clear()

@@ -41,14 +41,7 @@ def run(
     add_verbose: bool = True,
     ask_for_missing: bool = True,
     # We do not use InterfaceType as a type here because we want the documentation to show full alias:
-    interface: (
-        Type[Mininterface]
-        | Literal["gui"]
-        | Literal["tui"]
-        | Literal["text"]
-        | Literal["web"]
-        | None
-    ) = None,
+    interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
     args: Optional[Sequence[str]] = None,
     settings: Optional[MininterfaceSettings] = None,
     **kwargs
@@ -219,24 +212,18 @@ def run(
         if superform_args is not None:
             # Run Superform as multiple subcommands exist and we have to decide which one to run.
             m = get_interface(interface, title, settings, None)
-            ChooseSubcommandOverview(
-                env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing
-            )
+            ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
             return m  # m with added `m.env`
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
 
     # Parse CLI arguments, possibly merged from a config file.
-    kwargs, settings = parse_config_file(
-        env_or_list or _Empty, config_file, settings, **kwargs
-    )
+    kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
     if env_or_list:
         # B) single Env object
         # Load configuration from CLI and a config file
-        env, wrong_fields = parse_cli(
-            env_or_list, kwargs, add_verbose, ask_for_missing, args
-        )
+        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
         m = get_interface(interface, title, settings, env)
 
         # Empty CLI → GUI edit

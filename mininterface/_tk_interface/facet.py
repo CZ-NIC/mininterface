@@ -25,6 +25,7 @@ class TkFacet(Facet):
     def _layout(self, elements: list[LayoutElement]):
         try:
             from PIL import ImageTk, Image as ImagePIL
+
             PIL = True
         except:
             PIL = False

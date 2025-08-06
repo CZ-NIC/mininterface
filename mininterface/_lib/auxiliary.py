@@ -25,7 +25,7 @@ common_iterables = list, tuple, set
 
 
 def flatten(d: dict[str, T | dict], include_keys: Optional[Callable[[str], list]] = None) -> Iterable[T]:
-    """ Recursively traverse whole dict """
+    """Recursively traverse whole dict"""
     for k, v in d.items():
         if isinstance(v, dict):
             if include_keys:
@@ -37,7 +37,7 @@ def flatten(d: dict[str, T | dict], include_keys: Optional[Callable[[str], list]
 
 # NOTE: Not used.
 def flatten_keys(d: dict[KT, T | dict]) -> Iterable[tuple[KT, T]]:
-    """ Recursively traverse whole dict """
+    """Recursively traverse whole dict"""
     for k, v in d.items():
         if isinstance(v, dict):
             yield from flatten_keys(v)
@@ -61,17 +61,19 @@ def get_terminal_size():
         # stty: 'standard input': Inappropriate ioctl for device
         # I do not know how to suppress this warning.
         # NOTE why not using os.get_terminal_size()
-        height, width = (int(s) for s in os.popen('stty size', 'r').read().split())
+        height, width = (int(s) for s in os.popen("stty size", "r").read().split())
         return height, width
     except (OSError, ValueError):
         return 0, 0
 
 
 def get_descriptions(parser: ArgumentParser) -> dict:
-    """ Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form. """
+    """Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form."""
     # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
-    return {action.dest.replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
-            for action in parser._actions}
+    return {
+        action.dest.replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
+        for action in parser._actions
+    }
 
 
 def get_description(obj, param: str) -> str:
@@ -90,7 +92,7 @@ def yield_annotations(dataclass):
 
 
 def matches_annotation(value, annotation) -> bool:
-    """ Check whether the value type corresponds to the annotation.
+    """Check whether the value type corresponds to the annotation.
     Because built-in isinstance is not enough, it cannot determine parametrized generics.
     """
     # union, including Optional and UnionType
@@ -155,7 +157,7 @@ def subclass_matches_annotation(cls, annotation) -> bool:
 
 
 def serialize_structure(obj):
-    """ Ex: [Path("/tmp"), Path("/usr"), 1] -> ["/tmp", "/usr", 1]. """
+    """Ex: [Path("/tmp"), Path("/usr"), 1] -> ["/tmp", "/usr", 1]."""
     if isinstance(obj, (str, int, float)):
         return obj
     elif isinstance(obj, Iterable) and not isinstance(obj, (str, bytes)):
@@ -165,7 +167,7 @@ def serialize_structure(obj):
 
 
 def dataclass_asdict_no_defaults(obj) -> dict:
-    """ Ignore the dataclass default values. """
+    """Ignore the dataclass default values."""
     if not hasattr(obj, "__dataclass_fields__"):
         return obj
 
@@ -182,7 +184,7 @@ def dataclass_asdict_no_defaults(obj) -> dict:
 
 
 def merge_dicts(d1: dict, d2: dict):
-    """ Recursively merge second dict to the first. """
+    """Recursively merge second dict to the first."""
     for key, value in d2.items():
         if isinstance(value, dict) and isinstance(d1.get(key), dict):
             merge_dicts(d1[key], value)
@@ -192,14 +194,14 @@ def merge_dicts(d1: dict, d2: dict):
 
 
 def naturalsize(value: float | str, *args) -> str:
-    """ For a bare interface, humanize might not be installed. """
+    """For a bare interface, humanize might not be installed."""
     if naturalsize_:
         return naturalsize_(value, *args)
     return str(value)
 
 
 def validate_annotated_type(meta, value) -> bool:
-    """ Raises: ValueError, NotImplementedError """
+    """Raises: ValueError, NotImplementedError"""
     if isinstance(meta, Gt):
         if not value > meta.gt:
             raise ValueError(f"Value {value} must be > {meta.gt}")

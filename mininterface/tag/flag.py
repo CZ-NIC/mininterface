@@ -41,9 +41,11 @@ m.env.my_dir  # guaranteed to be an existing dir
 """
 # NOTE missing test
 
-_blank_error = "Unrecognised value '{}'. Allowed values are blank for True/1/on / False/0/off" \
-    " (case insensitive). Should the value be considered a positional parameter,"\
+_blank_error = (
+    "Unrecognised value '{}'. Allowed values are blank for True/1/on / False/0/off"
+    " (case insensitive). Should the value be considered a positional parameter,"
     " move the parameter behind."
+)
 
 
 def _assure_blank_or_bool(args):
@@ -68,7 +70,8 @@ BlankTrue = Annotated[
         instance_from_str=_assure_blank_or_bool,
         is_instance=lambda instance: True,  # NOTE not sure
         str_from_instance=lambda instance: [instance],
-    )]
+    ),
+]
 """
 When left blank, this flag produces True.
 
@@ -104,6 +107,7 @@ class Blank:
         Experimental.
 
     """
+
     # NOTE untested
     # NOTE Works bad with static type checking. Because `Blank[str]` pylance never matches with 'my text'.
     # We had to have Blank=Annotated instead, which would prevent instantianting str_from_instance and dynamic metavar.
@@ -136,5 +140,5 @@ class Blank:
                 instance_from_str=instance_from_str,
                 is_instance=is_instance,
                 str_from_instance=str_from_instance,
-            )
+            ),
         ]

@@ -1,11 +1,10 @@
-
 # SubmitButton = TypeVar("SubmitButton")
 
 from types import FunctionType
 
 
 class SubmitButton:
-    """ Create a button. When clicked, the form submits.
+    """Create a button. When clicked, the form submits.
             If submission succeeds (validation checks pass), its value becomes True.
 
     ```python
@@ -34,6 +33,7 @@ class SubmitButton:
 
     ![Submit button](asset/submitButton.avif)
     """
+
     pass
     # NOTE I would prefer this is Xa mere type , not a class.
     # a SubmitTag, inherited from the Tag.
@@ -46,10 +46,12 @@ class SubmitButton:
 
 # class Bar(Foo):
 
+
 # FunctionType is not acceptable base type
-class FacetCallback():
-    """ This type denotes the Tag value is a function.
+class FacetCallback:
+    """This type denotes the Tag value is a function.
     A button should be created. When clicked, it gets the facet as the argument.
     """
+
     pass
     # NOTE, just a stub. Deprecated, use CallbackTag instead.

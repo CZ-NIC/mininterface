@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any,  Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -17,7 +17,7 @@ ButtonAppType = bool | tuple[str, list[tuple[MySubmitButton, bool]]]
 
 
 class ButtonContents(Center):
-    """ A helper TextualApp, just for static dialogs, does not inherit from BackendAdaptor and thus has not Facet. """
+    """A helper TextualApp, just for static dialogs, does not inherit from BackendAdaptor and thus has not Facet."""
 
     def __init__(self, adaptor: "TextualAdaptor", buttons: ButtonAppType):
         super().__init__()
@@ -47,7 +47,7 @@ class ButtonContents(Center):
 
     def on_key(self, event: events.Key) -> None:
         match event.key:
-            case  "right":
+            case "right":
                 self.move_focus(1)
             case "left":
                 self.move_focus(-1)

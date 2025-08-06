@@ -7,9 +7,7 @@ from tkinter_form import Form, Value, FieldForm
 orig = Form._Form__create_widgets
 
 
-def __create_widgets_monkeypatched(
-    self, form_dict: dict, name_config: str, button_command: callable
-) -> None:
+def __create_widgets_monkeypatched(self, form_dict: dict, name_config: str, button_command: callable) -> None:
     """
     Create form widgets
 
@@ -65,9 +63,7 @@ def __create_widgets_monkeypatched(
 
     if button_command:
         self._Form__command = button_command
-        self.button = ttk.Button(
-            self, text=name_config, command=self._Form__command_button
-        )
+        self.button = ttk.Button(self, text=name_config, command=self._Form__command_button)
         self.button.grid(row=last_index + 1, column=0, columnspan=3, sticky="nesw")
 
 

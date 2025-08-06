@@ -26,7 +26,7 @@ class Start:
         self.interface = interface
 
     def integrate(self, env=None):
-        """ Integrate to the system
+        """Integrate to the system
 
         Bash completion uses argparse.prog, so do not set prog="Program Name" as bash completion would stop working.
 
@@ -35,7 +35,7 @@ class Start:
         m = get_interface(self.interface, self.title)
         comp_dir = Path("/etc/bash_completion.d/")
         prog = Path(sys.argv[0]).name
-        target = comp_dir/prog
+        target = comp_dir / prog
 
         if comp_dir.exists():
             if target.exists():
@@ -129,4 +129,5 @@ class ChooseSubcommandOverview:
             self.m.env = form
             if isinstance(form, Command):
                 form.run()
+
         return _

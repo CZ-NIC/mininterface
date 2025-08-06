@@ -18,6 +18,7 @@ class BackendAdaptor(ABC):
     """
     Connection point between a Mininterface and an external UI library.
     """
+
     facet: Facet
     post_submit_action: Optional[Callable] = None
     interface: "Mininterface"
@@ -30,12 +31,12 @@ class BackendAdaptor(ABC):
 
     @abstractmethod
     def widgetize(self, tag: Tag):
-        """ Wrap Tag to a UI widget. """
+        """Wrap Tag to a UI widget."""
         pass
 
     @abstractmethod
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """ Let the user edit the dict values.
+        """Let the user edit the dict values.
 
         Setups the facet._fetch_from_adaptor.
         """
@@ -44,7 +45,7 @@ class BackendAdaptor(ABC):
             self._determine_mnemonic(form, self.settings.mnemonic is True)
 
     def _determine_mnemonic(self, form: TagDict, also_nones=False):
-        """ also_nones – Also determine those tags when Tag.mnemonic=None. """
+        """also_nones – Also determine those tags when Tag.mnemonic=None."""
         # Determine mnemonic
         used_mnemonic = set()
         to_be_determined: list[Tag] = []
@@ -97,7 +98,7 @@ class BackendAdaptor(ABC):
         return Tag._submit_values(vals) and self.submit_done()
 
     def _destroy(self):
-        """ This interface will not be used any more.
+        """This interface will not be used any more.
         This is due to TkInterface tkinter window:
         1. Create one interface
         2. Create second without destroying the first
@@ -136,8 +137,9 @@ class MinAdaptor(BackendAdaptor):
             if eavesdrop:
                 tyro_error = "\n" + "\n".join(s for s in eavesdrop)
 
-            validation_fails = "\n".join(f"{tag._original_label}: {tag._error_text}"
-                                         for tag in tags if tag._error_text)
+            validation_fails = "\n".join(
+                f"{tag._original_label}: {tag._error_text}" for tag in tags if tag._error_text
+            )
 
             raise SystemExit(validation_fails + tyro_error)
 

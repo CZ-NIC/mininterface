@@ -16,13 +16,20 @@ from .._mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
 from ..tag.tag import Tag, ValsType
 from ..tag.secret_tag import SecretTag
-from ..tag.internal import (BoolWidget, CallbackButtonWidget,
-                            SubmitButtonWidget)
+from ..tag.internal import BoolWidget, CallbackButtonWidget, SubmitButtonWidget
 from .facet import TextualFacet
 from .file_picker_input import FilePickerInputFactory
 from .textual_app import TextualApp
-from .widgets import (TagWidget, MyButton, MyCheckbox, MyInput, MyRadioSet, MyRadioButton, MySelectionList,
-                      MySubmitButton)
+from .widgets import (
+    TagWidget,
+    MyButton,
+    MyCheckbox,
+    MyInput,
+    MyRadioSet,
+    MyRadioButton,
+    MySelectionList,
+    MySubmitButton,
+)
 
 if TYPE_CHECKING:
     from . import TextualInterface
@@ -42,7 +49,7 @@ class TextualAdaptor(BackendAdaptor):
         self.button_app: ButtonAppType = False
 
     def widgetize(self, tag: Tag) -> Widget | TagWidget:
-        """ Wrap Tag to a textual widget. """
+        """Wrap Tag to a textual widget."""
 
         v = tag._get_ui_val()
 
@@ -51,11 +58,12 @@ class TextualAdaptor(BackendAdaptor):
             case SelectTag():
                 if tag.multiple:
                     selected = set(tag.val)
-                    o = MySelectionList(tag, *((label, val, val in selected)
-                                        for label, val, *_ in tag._get_options()))
+                    o = MySelectionList(tag, *((label, val, val in selected) for label, val, *_ in tag._get_options()))
                 else:
-                    radio_buttons = [MyRadioButton(val, label, value=val == tag.val, classes="enum-highlight" if tip else None)
-                                     for label, val, tip, _ in tag._get_options(" | ")]
+                    radio_buttons = [
+                        MyRadioButton(val, label, value=val == tag.val, classes="enum-highlight" if tip else None)
+                        for label, val, tip, _ in tag._get_options(" | ")
+                    ]
                     o = MyRadioSet(tag, *radio_buttons)
             case PathTag():
                 o = FilePickerInputFactory(self, tag, placeholder=tag.label or "")
@@ -86,14 +94,14 @@ class TextualAdaptor(BackendAdaptor):
         return o
 
     def header(self, text: str):
-        """ Generates a section header """
+        """Generates a section header"""
         if text:
             return [Rule(), Label(f" === {text} ===")]
         else:
             return []
 
     def yes_no(self, text: str, focus_no=True):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no)+1)
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1)
 
     def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1):
         self._build_buttons(text, buttons, focused)
@@ -103,9 +111,13 @@ class TextualAdaptor(BackendAdaptor):
         return self._get_buttons_val()
 
     def _build_buttons(self, text, buttons, focused):
-        self.button_app = (text,
-                           [(MySubmitButton(Tag(value, _facet=self.facet, label=label)), i == focused-1)
-                               for i, (label, value) in enumerate(buttons)])
+        self.button_app = (
+            text,
+            [
+                (MySubmitButton(Tag(value, _facet=self.facet, label=label)), i == focused - 1)
+                for i, (label, value) in enumerate(buttons)
+            ],
+        )
 
     def _get_buttons_val(self):
         for button, _ in self.button_app[1]:

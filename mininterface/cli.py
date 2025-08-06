@@ -1,4 +1,5 @@
-""" Useful objects meaningful for CLI handling only. """
+"""Useful objects meaningful for CLI handling only."""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -7,6 +8,7 @@ try:
     from tyro.conf import Positional
 except ImportError:
     from .exceptions import DependencyRequired
+
     raise DependencyRequired("basic")
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
@@ -53,7 +55,7 @@ https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.Positional
 
 @dataclass
 class Command(ABC):
-    """ The Command is automatically run while instantanied.
+    """The Command is automatically run while instantanied.
 
     It adapts [`init`][mininterface.cli.Command.init] and [`run`][mininterface.cli.Command.init] methods.
     It receives attributes [`self.facet`][mininterface.facet.Facet] and [`self.interface`][mininterface.Mininterface] set.
@@ -151,6 +153,7 @@ class Command(ABC):
 
     Note we use `from tyro.conf import Positional` to denote the positional argument. We did not have to write `--files` to put there HTML files.
     """
+
     # Why to not document the Subcommand in the Subcommand class itself? It would be output to the user with --help,
     # I need the text to be available to the developer in the docs, not to the user.
 
@@ -165,7 +168,7 @@ class Command(ABC):
         self.interface: 'Mininterface["EnvClass"]'
 
     def init(self):
-        """ Just before the form appears.
+        """Just before the form appears.
         As the `__post_init__` method is not guaranteed to run just once (internal CLI behaviour),
         you are welcome to override this method instead. You can use [self.facet][mininterface.facet.Facet] from within.
         """
@@ -173,7 +176,7 @@ class Command(ABC):
 
     @abstractmethod
     def run(self):
-        """ This method is run automatically when the command is chosen.
+        """This method is run automatically when the command is chosen.
         (Either directly in the CLI or by a successive dialog.)
 
         Raises:
@@ -184,10 +187,9 @@ class Command(ABC):
 
 @dataclass
 class SubcommandPlaceholder(Command):
-    """ Use this placeholder to choose the subcommand via a UI."""
+    """Use this placeholder to choose the subcommand via a UI."""
 
-    def run(self):
-        ...
+    def run(self): ...
 
 
 SubcommandPlaceholder.__name__ = "subcommand"  # show just the shortcut in the CLI

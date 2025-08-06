@@ -75,7 +75,7 @@ class Env:
     my_validated: Annotated[str, Validation(not_empty)] = "hello"
     """ A validated field """
 
-    my_complex: list[tuple[int, str]] = field(default_factory=lambda: [(1, 'foo')])
+    my_complex: list[tuple[int, str]] = field(default_factory=lambda: [(1, "foo")])
     """ List of tuples. """
 
     my_password: Annotated[str, SecretTag()] = "TOKEN"
