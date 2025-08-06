@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from typing import Union
 from .tag import Tag, TagValue, UiValue
 
 
 @dataclass(repr=False)
-class DatetimeTag(Tag[TagValue | date | time | datetime]):
+class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
     """
     Datetime, date and time types are supported.
 
@@ -68,6 +69,12 @@ class DatetimeTag(Tag[TagValue | date | time | datetime]):
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
+    before: Union[datetime, None] = None
+    """ The maximum allowed date/datetime value. """
+
+    after: Union[datetime, None] = None
+    """ The minimum allowed date/datetime value. """
+
     # NOTE calling DatetimeTag("2025-02") should convert str to date?
     def __post_init__(self):
         super().__post_init__()
@@ -92,6 +99,27 @@ class DatetimeTag(Tag[TagValue | date | time | datetime]):
             # I think it's a good idea to put a now-date instead of an empty string in dialogs like:
             # m.ask(f"My date", DatetimeTag(date=True))
             self.val = self._make_default_value()
+
+        # Add validation for before/after constraints
+        if self.before is not None or self.after is not None:
+            def validate_date_range(tag: Tag) -> Union[bool, str]:
+                val = tag.val
+
+                if self.before is not None:
+                    if isinstance(val, datetime) and isinstance(self.before, date):
+                        val = val.date()
+                    if val > self.before:
+                        return f"Date must be before {self.before}"
+
+                if self.after is not None:
+                    if isinstance(val, datetime) and isinstance(self.after, date):
+                        val = val.date()
+                    if val < self.after:
+                        return f"Date must be after {self.after}"
+
+                return True
+
+            self._add_validation(validate_date_range)
 
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
