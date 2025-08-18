@@ -804,7 +804,17 @@ TextSettings --&gt; TuiSettings
 <code class="highlight language-python"><span class="n">toggle_widget</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'f4'</span></code>
 </h4>
 <div class="doc doc-contents">
-<p>Shortcuts to toggle ex. calendar or file picker.</p>
+<p>Shortcut to toggle widgets like secret fields, file picker, and datetime dialog.</p>
+<p>The shortcut should be in Textual format (e.g., "ctrl+t", "f4").
+This format will be automatically converted to the appropriate format
+for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
+<p><span class="doc-section-title">Examples:</span></p>
+<ul>
+<li>"ctrl+t" for Control+T</li>
+<li>"alt+f" for Alt+F</li>
+<li>"f4" for F4 key</li>
+<li>"cmd+s" for Command+S (macOS)</li>
+</ul>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
