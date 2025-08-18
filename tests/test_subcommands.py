@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from typing import Literal, Optional
+
+from tyro.conf import OmitSubcommandPrefixes, Positional
 from mininterface.cli import SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
 from mininterface.tag import PathTag
@@ -10,13 +14,37 @@ from io import StringIO
 from pathlib import Path
 
 
+@dataclass
+class Console:
+    type_: str = "my-console"
+
+
+@dataclass
+class Message:
+    kind: Positional[Literal["get", "pop", "send"]]
+    msg: Positional[Optional[str]]
+
+
+@dataclass
+class Run:
+    bot_id: Positional[Literal["id-one", "id-two"]]
+    _subcommands: OmitSubcommandPrefixes[Positional[Message | Console]]
+
+
+@dataclass
+class List:
+    kind: Positional[Literal["bots", "queues"]]
+
+
 class TestSubcommands(TestAbstract):
 
-    form1 = "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, label='foo'), "\
-        "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, label='a'), "\
-        "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}, "\
-        "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, label='b'), "\
+    form1 = (
+        "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, label='foo'), "
+        "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, label='a'), "
+        "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}, "
+        "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, label='b'), "
         "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}}"
+    )
 
     wf1 = "Asking the form {'foo': Tag(val=MISSING, description='', annotation=<class 'int'>, label='foo')}"
     wf2 = "Asking the form {'b': Tag(val=MISSING, description='', annotation=<class 'int'>, label='b')}"
@@ -55,19 +83,50 @@ class TestSubcommands(TestAbstract):
         self.maxDiff = None
         form2 = "Asking the form {'SubcommandB1': {'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, label='a'), 'SubcommandB1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}, 'SubcommandB2': {'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, label='b'), 'SubcommandB2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}, 'PydModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, label='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, label='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, label=None)}}, 'AttrsModel': {'': {'test': Tag(val=False, description='My testing flag ', annotation=<class 'bool'>, label='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=<class 'str'>, label='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=<class 'str'>, label=None)}}}"
         warn2 = """UserWarning: Subcommand dataclass PydModel does not inherit from the Command."""
-        self.assertForms([
-            {'SubcommandB1': {'':
-                              {'foo': Tag(val=7, description='', annotation=int, label='foo'),
-                               'a': Tag(val=1, description='', annotation=int, label='a'),
-                               'SubcommandB1': Tag(val=lambda: True, description=None, annotation=Callable, label=None)}},
-             'SubcommandB2': {'':
-                              {'foo': Tag(val=7, description='', annotation=int, label='foo'), 'b': Tag(val=2, description='', annotation=int, label='b'), 'SubcommandB2': Tag(val=lambda: True, description=None, annotation=Callable, label=None)
-                               }},
-             'PydModel': {'':
-                          {'test': Tag(val=False, description='My testing flag ', annotation=bool, label='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=str, label='name'), 'PydModel': Tag(val='disabled', description='Subcommand PydModel does not inherit from the Command. Hence it is disabled.', annotation=str, label=None)}},
-             'AttrsModel': {'':
-                            {'test': Tag(val=False, description='My testing flag ', annotation=bool, label='test'), 'name': Tag(val='hello', description='Restrained name ', annotation=str, label='name'), 'AttrsModel': Tag(val='disabled', description='Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.', annotation=str, label=None)}}}
-        ])
+        self.assertForms(
+            [
+                {
+                    "SubcommandB1": {
+                        "": {
+                            "foo": Tag(val=7, description="", annotation=int, label="foo"),
+                            "a": Tag(val=1, description="", annotation=int, label="a"),
+                            "SubcommandB1": Tag(val=lambda: True, description=None, annotation=Callable, label=None),
+                        }
+                    },
+                    "SubcommandB2": {
+                        "": {
+                            "foo": Tag(val=7, description="", annotation=int, label="foo"),
+                            "b": Tag(val=2, description="", annotation=int, label="b"),
+                            "SubcommandB2": Tag(val=lambda: True, description=None, annotation=Callable, label=None),
+                        }
+                    },
+                    "PydModel": {
+                        "": {
+                            "test": Tag(val=False, description="My testing flag ", annotation=bool, label="test"),
+                            "name": Tag(val="hello", description="Restrained name ", annotation=str, label="name"),
+                            "PydModel": Tag(
+                                val="disabled",
+                                description="Subcommand PydModel does not inherit from the Command. Hence it is disabled.",
+                                annotation=str,
+                                label=None,
+                            ),
+                        }
+                    },
+                    "AttrsModel": {
+                        "": {
+                            "test": Tag(val=False, description="My testing flag ", annotation=bool, label="test"),
+                            "name": Tag(val="hello", description="Restrained name ", annotation=str, label="name"),
+                            "AttrsModel": Tag(
+                                val="disabled",
+                                description="Subcommand AttrsModel does not inherit from the Command. Hence it is disabled.",
+                                annotation=str,
+                                label=None,
+                            ),
+                        }
+                    },
+                }
+            ]
+        )
         with self.assertOutputs(form2), self.assertStderr(contains=warn2):
             runm([SubcommandB1, SubcommandB2, PydModel, AttrsModel], args=[])
 
@@ -77,8 +136,10 @@ class TestSubcommands(TestAbstract):
     def DISABLED_test_choose_subcommands(self):
         # NOTE Subcommand changed a bit. Now, it's a bigger task to test it. Do first self.DISABLED_test_integrations().
         return
-        values = ["{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, label='a')}}",
-                  "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, label='b')}}"]
+        values = [
+            "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, label='a')}}",
+            "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, label='b')}}",
+        ]
 
         def check_output(*args):
             ret = dataclass_to_tagdict(*args)
@@ -122,16 +183,38 @@ class TestSubcommands(TestAbstract):
 
         # main help works
         # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
-        with (self.assertOutputs(contains="Use this placeholder to choose the subcommand via"), self.assertRaises(SystemExit)):
+        with (
+            self.assertOutputs(contains="Use this placeholder to choose the subcommand via"),
+            self.assertRaises(SystemExit),
+        ):
             r(["--help"])
 
         # placeholder help works and shows shared arguments of other subcommands
-        with (self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit)):
+        with self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit):
             r(["subcommand", "--help"])
 
     def test_common_field_annotation(self):
-        with self.assertForms([
-            ({'paths': PathTag(val=MISSING, description='', annotation=list[Path], label='paths')},
-             {"paths": "['/tmp']"}
-             )]), self.assertRaises(Cancelled):
+        with self.assertForms(
+            [
+                (
+                    {"paths": PathTag(val=MISSING, description="", annotation=list[Path], label="paths")},
+                    {"paths": "['/tmp']"},
+                )
+            ]
+        ), self.assertRaises(Cancelled):
             runm([ParametrizedGeneric, ParametrizedGeneric])
+
+    def test_complicated(self):
+        # NOTE these all use cases should display nice form
+        # env = runm([List, Run], args=[]).env
+        # env = runm([List, Run], args=["run"]).env
+        # env = runm([List, Run], args=["run", "message"]).env
+
+        with self.assertStderr(contains="The following arguments are required: {None}|STR"), self.assertRaises(SystemExit) as cm:
+            runm([List, Run], args=["run", "message", "get"])
+
+        env = runm([List, Run], args=["run", "message", "get", "None", "id-one"]).env
+        self.assertEqual(
+            f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg=None))""",
+            repr(env),
+        )

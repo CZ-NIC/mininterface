@@ -23,6 +23,12 @@ class TestSelectTag(TestAbstract):
         self.assertFalse(d[""]["options"].update(""))
         self.assertTrue(d[""]["options"].update("two"))
 
+        # Literal annotations
+        self.assertEqual(d[""]["liter1"].val, "one")
+        self.assertFalse(d[""]["liter1"].update("two"))
+        self.assertEqual(d[""]["liter2"].val, "two")
+        self.assertTrue(d[""]["liter2"].update("one"))
+
         # dict is the input
         t = SelectTag(1, options={"one": 1, "two": 2})
         self.assertFalse(t.update("two"))

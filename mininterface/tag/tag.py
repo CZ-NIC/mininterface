@@ -4,12 +4,13 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Optional, TypeVar, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal, Optional, TypeVar, Union, get_args, get_origin
 from warnings import warn
 
 from annotated_types import BaseMetadata, GroupedMetadata
 
 from .._lib.auxiliary import (
+    allows_none,
     common_iterables,
     flatten,
     guess_type,
@@ -577,6 +578,7 @@ class Tag(Generic[TagValue]):
             return False
 
     def _is_subclass(self, class_type: type | tuple[type]):
+        # Any type is for Literal. I see no other option to annotate the Literal itself.
         # if origin := get_origin(self.annotation):  # list[str] -> list, list -> None
         #     subtype = get_args(self.annotation)  # list[str] -> (str,), list -> ()
         #     if origin in [UnionType, Union]:  # ex: `int | None`, `list[int] | None`, `Optional[list[int]]`
@@ -593,7 +595,7 @@ class Tag(Generic[TagValue]):
                 # in the 'scalar' part – I don't clearly see the use-case, we can identify it and limit it.
                 # Until then, this reverse check will do.
                 return False
-        except TypeError:  # None, Union etc cast an error
+        except TypeError:  # None, Union, Literal etc cast an error
             pass
         for origin, subtype in self._get_possible_types():
             # ex: checking that class_type=Path is subclass of annotation=list[Path] <=> subtype=Path
@@ -636,6 +638,11 @@ class Tag(Generic[TagValue]):
                     return [_(subt) for subt in subtype]
                 if origin is tuple:
                     return origin, list(subtype)
+                # elif origin is Literal:
+                #     ss=set(type(t) for t in subtype)
+                #     if len(ss) == 1:
+                #         return origin, ss.pop()
+                #     warn(f"This parametrized Literal generic not implemented: {annot}")
                 elif len(subtype) == 1:
                     return origin, subtype[0]
                 else:
@@ -687,20 +694,20 @@ class Tag(Generic[TagValue]):
         return self.annotation.__name__
 
     def _make_default_value(self):
-        # NOTE: Works bad for var: tuple[str]
-        if get_origin(self.annotation) in (UnionType, Union):
-            # for cases `int|None` and `Optional[int]``
-            if NoneType in get_args(self.annotation):
-                return None
-            return get_args(self.annotation)[0]()
-        elif origin := get_origin(self.annotation):  # list[Path]
-            if isinstance(origin, type) and issubclass(origin, tuple):
-                # tuple of scalars, ex. tuple[str, str]
-                # Whereas `[]` is a valid list[str], an empty `()` is not a valid tuple[str].
-                return tuple(subt() for subt in get_args(self.annotation))
+        if allows_none(self.annotation):
+            return None
+        try:
+            # NOTE: Works bad for var: tuple[str]
+            if get_origin(self.annotation) in (UnionType, Union):
+                return get_args(self.annotation)[0]()
+            elif origin := get_origin(self.annotation):  # list[Path]
+                if isinstance(origin, type) and issubclass(origin, tuple):
+                    # tuple of scalars, ex. tuple[str, str]
+                    # Whereas `[]` is a valid list[str], an empty `()` is not a valid tuple[str].
+                    return tuple(subt() for subt in get_args(self.annotation))
             return self.annotation()
-        else:
-            return self.annotation()
+        except TypeError:  # Ex. annotation=Literal
+            return None # we failed, we do not know what to return
 
     def _add_validation(self, validators: Iterable[ValidationCallback] | ValidationCallback):
         """Prepend validators to the current validator."""

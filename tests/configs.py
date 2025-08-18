@@ -7,7 +7,7 @@ from typing import Annotated, Callable, Optional
 from annotated_types import Gt, Le, Len, Lt
 from tyro.conf import Positional, arg
 
-from mininterface import Tag
+from mininterface import Literal, Tag
 from mininterface.cli import Command
 from mininterface.tag.callback_tag import CallbackTag
 from mininterface.tag.path_tag import PathTag
@@ -162,6 +162,9 @@ class ConstrainedEnv:
     test2: Annotated[str, Validation(not_empty)] = "hello"
 
     options: Annotated[str, SelectTag(options=("one", "two"))] = "one"
+
+    liter1: Literal["one"] = "one"
+    liter2: Literal["one", "two"] = "two"
 
 
 @dataclass

@@ -2,7 +2,7 @@ from copy import copy
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, Type, get_type_hints
+from typing import Any, Iterable, Literal, Type, get_origin, get_type_hints
 
 from annotated_types import BaseMetadata, GroupedMetadata
 
@@ -32,6 +32,8 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     """Return the most specific Tag child that a tag value can be expressed with.
     Ex. Return PathTag for a Tag having a Path as a value.
     """
+    if get_origin(tag.annotation) is Literal:
+        return SelectTag
     if tag._is_subclass(Path):
         return PathTag
     if tag._is_subclass(date) or tag._is_subclass(time):

@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-from datetime import date, datetime, time, date as date_
+from datetime import date, datetime, time, date as date_, time as time_
 from typing import Union
+
+from .._lib.auxiliary import allows_none
+
 from .tag import Tag, TagValue, UiValue
 
 
@@ -69,11 +72,13 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
     full_precision: bool = False
     """ Include full time precison, seconds, microseconds. """
 
-    before: Union[date_, None] = None
+    before: date_ | None = None
     """ The maximum allowed date/datetime value. """
 
-    after: Union[date_, None] = None
+    after: date_ | None = None
     """ The minimum allowed date/datetime value. """
+
+    _caster: type[date_|time_|datetime] = date_
 
     # NOTE calling DatetimeTag("2025-02") should convert str to date?
     def __post_init__(self):
@@ -122,12 +127,20 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
 
             self._add_validation(validate_date_range)
 
+        self._caster = self.annotation
+        if allows_none(self.annotation):
+            for _, subtype in self._get_possible_types():
+                self._caster = subtype
+                break
+
     def __hash__(
         self,
     ):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
     def _make_default_value(self):
+        if allows_none(self.annotation):
+            return None
         if self.annotation is datetime:
             return datetime.now()
         if self.annotation is date:
@@ -137,11 +150,12 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
         raise ValueError("Could not determine the default value for %s", self)
 
     def update(self, ui_value: UiValue) -> bool:
+        if ui_value == "" and allows_none(self.annotation):
+            return True
         if isinstance(ui_value, str):
             try:
-                ui_value = self.annotation.fromisoformat(ui_value)
-            except ValueError:
-                # allow annotations like `time | None`
-                # Empty input will still have chance to be resolved further.
-                pass
+                ui_value = self._caster.fromisoformat(ui_value)
+            except ValueError as e:
+                self.set_error_text(str(e))
+                return False
         return super().update(ui_value)

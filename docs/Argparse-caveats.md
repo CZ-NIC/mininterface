@@ -1,6 +1,5 @@
 Be aware that in contrast to the argparse:
 
-* We create default values. This does make sense for most values but might pose a confusion for ex. `parser.add_argument("--path", type=Path)` which becomes `Path('.')`, not `None`.
 * When storing multiple `store_const` action to the same `dest`, order does not matter.
 * When using positional arguments before the subcommands, the order changes
 

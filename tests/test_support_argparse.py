@@ -61,6 +61,16 @@ output_dir: Type must be str!
 the following arguments are required: STR, STR""",
             cm.exception.code,
         )
+        # NOTE: It should rather ask for subcommand, ex: `Choose: Must be one of ['build', 'deploy']`
+
+        with self.assertRaises(SystemExit) as cm:
+            runm(parser, args=["build"])
+        self.assertEqual(
+            """input_file: Type must be str!
+output_dir: Type must be str!
+the following arguments are required: STR, STR""",
+            cm.exception.code,
+        )
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")  # zachytí všechna varování
@@ -71,9 +81,8 @@ the following arguments are required: STR, STR""",
                 f"Unexpected warning(s): {[str(warning.message) for warning in w]}",
             )
 
-        PathType = type(Path(""))  # PosixPath on Linux
         self.assertEqual(
-            f"""build(input_file='/tmp/file', output_dir='/tmp', verbosity=1, config={PathType.__name__}('.'), debug=False, no_color=False, tag=[], optimize=False, target='')""",
+            f"""build(input_file='/tmp/file', output_dir='/tmp', verbosity=1, config=None, debug=False, no_color=False, tag=[], optimize=False, target=None)""",
             repr(env),
         )
         self.assertTrue(env.color)
@@ -202,3 +211,32 @@ the following arguments are required: STR, STR""",
         self.assertListEqual(["one", "two"], env.sections)
         # repeat the line, reading the property must not influence the result
         self.assertListEqual(["one", "two"], env.sections)
+
+    def test_default(self):
+        parser = ArgumentParser()
+        parser.add_argument('number', default=10, type=int, nargs='?')
+
+        env = runm(parser, args=[]).env
+        self.assertEqual(env.number, 10)
+
+        env = runm(parser, args=["2"]).env
+        self.assertEqual(env.number, 2)
+
+        parser = ArgumentParser()
+        parser.add_argument('--n', default=10, type=int, nargs='?')
+
+        env = runm(parser, args=[]).env
+        self.assertEqual(env.n, 10)
+        env = runm(parser, args=["--n", "2"]).env
+        self.assertEqual(env.n, 2)
+
+    # NOTE this is not supported now
+    # def test_official_example(self):
+    #     parser = ArgumentParser()
+    #     parser.add_argument( 'integers', metavar='int', type=int, choices=range(10), nargs='+', help='an integer in the range 0..9')
+    #     parser.add_argument( '--sum', dest='accumulate', action='store_const', const=sum, default=max, help='sum the integers (default: find the max)')
+
+    #     env = runm(parser, args=['1', '2', '3', '4']).env
+    #     # parser.parse_args(['1', '2', '3', '4'])
+    #     # Namespace(accumulate=<built-in function max>, integers=[1, 2, 3, 4])
+    #     # parser.parse_args(['1', '2', '3', '4', '--sum'])

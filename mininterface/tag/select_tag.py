@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, Optional, Type
+from typing import Iterable, Literal, Optional, Type, get_args, get_origin
 from warnings import warn
 
 from .tag import Tag, TagValue
@@ -167,6 +167,10 @@ class SelectTag(Tag[TagValue]):
             if self.multiple:
                 raise ValueError("Multiple cannot be set to True when value is not a list")
             self.multiple = False
+
+        # Determine options from annotation
+        if not self.options and get_origin(self.annotation) is Literal:
+            self.options = get_args(self.annotation)
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
         self.annotation = type(self)
