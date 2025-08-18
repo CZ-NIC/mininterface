@@ -8,22 +8,28 @@ from argparse import (
     _StoreFalseAction,
     _StoreTrueAction,
     _SubParsersAction,
+    _VersionAction,
     Action,
     ArgumentParser,
 )
 from collections import defaultdict
-from dataclasses import Field, dataclass, field, make_dataclass
+from dataclasses import MISSING, Field, dataclass, field, make_dataclass
 from functools import cached_property
 import re
-from typing import Callable
+import sys
+from typing import Annotated, Callable, Literal, Optional
 from warnings import warn
 
+from tyro.conf import OmitSubcommandPrefixes
+
+from .. import Options
+
 from .form_dict import DataClass
-from ..tag import Tag
 
 
 try:
-    from tyro.conf import Positional
+    from tyro.constructors import PrimitiveConstructorSpec
+    from tyro.conf import Positional, arg
 except ImportError:
     from ..exceptions import DependencyRequired
 
@@ -75,14 +81,8 @@ class ArgparseField:
 
 
 def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass | list[DataClass]:
-    """Note that in contrast to the argparse, we create default values.
-    When an optional flag is not used, argparse put None, we have a default value.
-
-    This does make sense for most values and should not pose problems for truthy-values.
-    Ex. checking `if namespace.my_int` still returns False for both argparse-None and our-0.
-
-    Be aware that for Path this might pose a big difference:
-    parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
+    """
+    Note: Ex. parser.add_argument("--time", type=time) -> does work at all in argparse, here it works.
     """
     subparsers: list[_SubParsersAction] = []
 
@@ -144,6 +144,22 @@ def _make_dataclass_from_actions(
         match action:
             case _HelpAction():
                 continue
+            case _VersionAction():
+                # NOTE Should be probably implemented in tyro. Here that way:
+                # run(add_version="1.2.3")
+                # run(add_version_package="intelmq") -> get pip version
+                arg_type = Annotated[
+                    None,
+                    PrimitiveConstructorSpec(
+                        nargs="*",
+                        metavar="",
+                        instance_from_str=lambda _, v=action.version: print(v) or sys.exit(0),
+                        is_instance=lambda _: True,
+                        # NOTE tyro might not diplay anything here,
+                        # but it displays `(default: )`
+                        str_from_instance=(lambda _, v=action.version: [str(v)]),
+                    ),
+                ]
             case _SubParsersAction():
                 # Note that there is only one _SubParsersAction in argparse
                 # but to be sure, we allow multiple of them
@@ -156,6 +172,14 @@ def _make_dataclass_from_actions(
                         subparser.description,
                     )
                     subparser_fields.append((subname, sub_dc))  # required, no default
+
+                from functools import reduce
+
+                union_type = reduce(lambda a, b: a | b, [aa[1] for aa in subparser_fields])
+
+                result = OmitSubcommandPrefixes[Positional[union_type]]
+                pos_fields.append(("_subparsers", result))
+                subparser_fields.clear()
                 continue
             case _AppendAction():
                 arg_type = list[action.type or str]
@@ -185,36 +209,69 @@ def _make_dataclass_from_actions(
             case _CountAction():
                 arg_type = int
             case _:
-                arg_type = action.type or str
+                if action.type:
+                    arg_type = action.type
+                elif action.default:
+                    arg_type = type(action.default)
+                else:
+                    arg_type = str
+
+        metavar = None
+        if "default" not in opt and "default_factory" not in opt:
+            if action.choices:
+                # With the drop of Python 3.10, use:
+                # arg_type = Literal[*action.choices]
+                arg_type = Annotated[arg_type, Options(*action.choices)]
+
+            if not action.option_strings and action.default is None and action.nargs != "?":
+                opt["default"] = MISSING
+            else:
                 if action.default is None:
-                    # parser.add_argument("--path", type=Path) -> becomes Path('.'), not None!
+                    # parser.add_argument("--path", type=Path) -> becomes None, not Path('.').
                     # By default, argparse put None if not used in the CLI.
                     # Which makes tyro output the warning: annotated with type `<class 'str'>`, but the default value `None`
                     # We either make None an option by `arg_type |= None`
                     # or else we default the value.
-                    # This creates a slightly different behaviour, however, the behaviour is slightly different
-                    # nevertheless.
-                    # Ex. parser.add_argument("--time", type=time) -> does work poorly in argparse.
-                    action.default = Tag(annotation=arg_type)._make_default_value()
-        if "default" not in opt and "default_factory" not in opt:
-            opt["default"] = action.default if action.default != SUPPRESS else None
+                    if arg_type is not None:
+                        arg_type |= None
+                opt["default"] = action.default if action.default != SUPPRESS else None
 
         # build a dataclass field, either optional, or positional
-        met = {"metadata": {"help": action.help}}
+        opt["metadata"] = {"help": action.help}
         if action.option_strings:
             # normal_fields.append((action.dest, arg_type, field(**opt, **met)))
-            normal_fields.append((af.name, arg_type, field(**opt, **met)))
+            # Annotated[arg_type, arg(metavar=metavar)]
+            normal_fields.append((af.name, arg_type, field(**opt)))
 
             # Generate back-compatible property if dest != field_name
             if af.name != action.dest and not af.has_property:
                 af.add(lambda self, field_name=af.name: getattr(self, field_name))
-
         else:
-            pos_fields.append((action.dest, Positional[arg_type], field(**met)))
+            pos_fields.append((action.dest, Positional[arg_type], field(**opt)))
+
+    # Subparser can have the same field name as the parser. We use the latter.
+    # Ex:
+    #   parser.add_argument('--level', type=int, default=1)
+    #   subparsers = parser.add_subparsers(dest='command')
+    #   run_parser = subparsers.add_parser('run')
+    #   run_parser.add_argument('--level', type=int, default=5)
+    uniq_fields = []
+    seen = set()
+    # for f in reversed(subparser_fields + pos_fields + normal_fields):
+    for f in reversed(pos_fields + normal_fields):
+        if f[0] not in seen:
+            seen.add(f[0])
+            uniq_fields.append(f)
+
+    # if subparser_fields:
+    #     from functools import reduce
+    #     union_type = reduce(lambda a, b: a | b, [aa[1] for aa in subparser_fields])
+    #     result = OmitSubcommandPrefixes[Positional[union_type]]
+    #     uniq_fields.append(("_subparsers",  result ))
 
     dc = make_dataclass(
         name,
-        subparser_fields + pos_fields + normal_fields,
+        reversed(uniq_fields),
         namespace={k: prop.generate_property() for k, prop in properties.items()},
     )
     if helptext or description:

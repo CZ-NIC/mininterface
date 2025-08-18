@@ -212,8 +212,11 @@ def run(
         if superform_args is not None:
             # Run Superform as multiple subcommands exist and we have to decide which one to run.
             m = get_interface(interface, title, settings, None)
-            ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
-            return m  # m with added `m.env`
+            try:
+                ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
+                return m  # m with added `m.env`
+            except Exception as e:  # some nested subcommands would fail in overview
+                env_or_list = m.select({cl.__name__: cl for cl in env_or_list if cl is not SubcommandPlaceholder})
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object

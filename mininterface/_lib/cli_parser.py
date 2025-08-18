@@ -70,6 +70,7 @@ eavesdrop = ""
 """ Used to intercept an error message from tyro """
 reraise: Optional[Callable] = None
 """ Reraise the intercepted tyro error message """
+subparser_used = None
 
 
 class Patches:
@@ -82,9 +83,10 @@ class Patches:
         the error message function. Then, we reconstruct the missing options.
         Thanks to this we will be able to invoke a UI dialog with the missing options only.
         """
-        global eavesdrop, reraise
+        global eavesdrop, reraise, subparser_used
         if not message.startswith("the following arguments are required:"):
             return super(TyroArgumentParser, self).error(message)
+        subparser_used = self
         eavesdrop = message
 
         def reraise():
@@ -168,20 +170,17 @@ def parse_cli(
         patches.append(patch.object(TyroArgumentParser, "error", Patches.custom_error))
     if add_verbose:  # Mock parser to add verbosity
         # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
-        try:
-            if all("verbose" not in cl.__annotations__ for cl in env_classes):
-                patches.extend(
-                    (
-                        patch.object(TyroArgumentParser, "__init__", Patches.custom_init),
-                        patch.object(
-                            TyroArgumentParser,
-                            "parse_known_args",
-                            Patches.custom_parse_known_args,
-                        ),
-                    )
+        if all("verbose" not in cl.__annotations__ for cl in env_classes):
+            patches.extend(
+                (
+                    patch.object(TyroArgumentParser, "__init__", Patches.custom_init),
+                    patch.object(
+                        TyroArgumentParser,
+                        "parse_known_args",
+                        Patches.custom_parse_known_args,
+                    ),
                 )
-        except Exception as e:  # TODO
-            warnings.warn("Cannot add verbose flag")
+            )
 
     # Run the parser, with the mocks
     try:
@@ -204,7 +203,7 @@ def parse_cli(
             # Some required arguments are missing. Determine which.
             wf: dict[str, Tag] = {}
 
-            # There are multiple dataclasses, query which is chosen
+            # # There are multiple dataclasses, query which is chosen
             if len(env_classes) == 1:
                 env = env_classes[0]
                 parser: ArgumentParser = get_parser(type_form, **kwargs)
@@ -219,6 +218,8 @@ def parse_cli(
                     subargs = args[1:]
             if not env:
                 raise NotImplementedError("This case of nested dataclasses is not implemented. Raise an issue please.")
+            # NOTE For subparsers, I might directly use the subparser that failed.
+            # parser = subparser_used
 
             # Determine missing argument of the given dataclass
             positionals = (p for p in parser._actions if p.default != argparse.SUPPRESS)
@@ -228,6 +229,7 @@ def parse_cli(
                 if "--" not in arg:
                     # Positional
                     # Ex: `The following arguments are required: PATH, INT, STR`
+                    # Ex: `The following arguments are required: {get,pop,send}`
                     argument = next(positionals)
                     register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
                 else:
@@ -296,6 +298,7 @@ def argument_to_field_name(env_class: EnvClass, argument: Action):
     # Why using mro? Find the field in the dataclass and all of its parents.
     # Useful when handling subcommands, they share a common field.
     field_name = argument.dest
+    field_name = field_name.replace(" (positional)", "")
     if not any(field_name in ann for ann in yield_annotations(env_class)):
         field_name = field_name.replace("-", "_")
     if not any(field_name in ann for ann in yield_annotations(env_class)):

@@ -242,11 +242,11 @@ from pathlib import Path
 from mininterface import run
 
 parser = ArgumentParser()
-parser.add_argument("input_file", type=Path, help="Path to the input file.")
-parser.add_argument("--time", type=time, help="Given time")
 subparsers = parser.add_subparsers(dest="command", required=True)
 sub1 = subparsers.add_parser("build", help="Build something.")
 sub1.add_argument("--optimize", action="store_true", help="Enable optimizations.")
+parser.add_argument("input_file", type=Path, help="Path to the input file.")
+parser.add_argument("--time", type=time, help="Given time")
 
 # Old version
 # env = parser.parse_args()

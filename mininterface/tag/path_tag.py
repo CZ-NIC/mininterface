@@ -1,5 +1,5 @@
-from typing import Generic, Optional
-from .._lib.auxiliary import common_iterables
+from typing import Optional
+from .._lib.auxiliary import allows_none, common_iterables
 from .tag import Tag, TagValue
 
 
@@ -87,6 +87,10 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
         # Convert to list for validation
         paths = value if isinstance(value, list) else [value]
 
+        # Allows `path: Optional[Path] = None`
+        if len(paths) == 1 and paths[0] is None and allows_none(paths[0]):
+            return value
+
         # Validate each path
         for path in paths:
             if not isinstance(path, Path):
@@ -116,6 +120,9 @@ class PathTag(Tag[Path | list[Path] | TagValue]):
             return Path().cwd()
         if isinstance(v, list):
             v = v[0]
-        v = Path(v)
+        try:
+            v = Path(v)
+        except:  # ex: v is instance of MissingTagValue. We cannot test it directly due to circular imports.
+            return Path().cwd()
         v = v if v.is_dir() else v.parent
         return v

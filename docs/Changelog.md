@@ -4,6 +4,7 @@
 * enh: better argparse support (const support, store_false matching, subcommands)
 * feat: Added time constraint to the DatetimeTag #28
 * feat: implement unified toggle widget shortcut system across interfaces #29
+* feat: correctly handles `Path|None` and `datetime|None` syntax
 
 ## 1.0.3 (2025-06-18)
 * enh: Tk better file dialog

@@ -1,5 +1,5 @@
 import sys
-from tkinter import LEFT, Button, Frame, Label, TclError, Text, Tk, Widget
+from tkinter import LEFT, Button, Frame, Label, StringVar, TclError, Text, Tk, Widget
 from typing import TYPE_CHECKING, Any, Callable
 
 try:
@@ -125,7 +125,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
 
         # status bar would look like this
         # status_var = StringVar()
-        # status_var.set("F1 – help")
+        # status_var.set("|".join(self.shortcuts))
         # status_label = Label(self.frame, textvariable=status_var, relief="sunken", anchor="w", padx=5)
         # status_label.pack(side="bottom", fill="x", pady=(20, 0))
 

@@ -226,3 +226,16 @@ def validate_annotated_type(meta, value) -> bool:
     else:
         raise NotImplementedError(f"Unknown predicated {meta}")
     return True
+
+def allows_none(annotation) -> bool:
+    """True, if annotation allows None: `int | None`, `Optional[int]`, `Union[int,None]`."""
+    if annotation is None:
+        return True
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    # if NoneType in get_args(self.annotation):
+
+    if origin is Union or origin is UnionType:
+        return any(arg is type(None) for arg in args)
+    return False

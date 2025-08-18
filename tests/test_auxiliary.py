@@ -1,5 +1,7 @@
-from typing import Optional
-from mininterface._lib.auxiliary import matches_annotation, subclass_matches_annotation
+from pathlib import Path
+from typing import Optional, Union
+
+from mininterface._lib.auxiliary import allows_none, matches_annotation, subclass_matches_annotation
 from mininterface.tag import Tag
 from shared import TestAbstract
 
@@ -28,3 +30,19 @@ class TestAuxiliary(TestAbstract):
         self.assertTrue(Tag(annotation=annotation)._is_subclass(tuple[int, str]))
         # NOTE but this should work too
         # self.assertTrue(Tag(annotation=annotation)._is_subclass(list[int]))
+
+    def test_allows_none(self):
+        cases = [
+            (int, False),
+            (Optional[int], True),
+            (int | None, True),
+            (Union[int, None], True),
+            (Union[int, str], False),
+            (Path, False),
+            (Optional[Path], True),
+            (Path | None, True),
+        ]
+
+        for annotation, expected in cases:
+            with self.subTest(annotation=annotation):
+                self.assertEqual(allows_none(annotation), expected)
