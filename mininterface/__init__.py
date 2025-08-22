@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
 
+
 from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
@@ -22,6 +23,7 @@ try:
         assure_args,
         parse_cli,
         parse_config_file,
+        choose_subcommand
     )
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
@@ -202,21 +204,34 @@ def run(
         env_or_list = parser_to_dataclass(env_or_list)
 
     # A) Superform – overview of the subcommands
-    if ask_for_missing and isinstance(env_or_list, list):
-        superform_args = None
-        if SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-            superform_args = args[1:]
-        elif not args:
-            superform_args = []
+    m = None
+    has_sub_placeholder = False
+    if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list:
+        env_or_list.remove(SubcommandPlaceholder)
+        has_sub_placeholder = True
 
-        if superform_args is not None:
-            # Run Superform as multiple subcommands exist and we have to decide which one to run.
-            m = get_interface(interface, title, settings, None)
-            try:
-                ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
-                return m  # m with added `m.env`
-            except Exception as e:  # some nested subcommands would fail in overview
-                env_or_list = m.select({cl.__name__: cl for cl in env_or_list if cl is not SubcommandPlaceholder})
+    if ask_for_missing and has_sub_placeholder and args and args[0] == "subcommand":
+        m = get_interface(interface, title, settings, None)
+        args[0] = choose_subcommand(env_or_list,m).__name__.casefold()
+
+    # if ask_for_missing and isinstance(env_or_list, list):
+        # superform_args = None
+
+        # if SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
+        #     superform_args = args[1:]
+        # elif not args:
+        #     superform_args = []
+
+        # if superform_args is not None:
+        #     m = get_interface(interface, title, settings, None)
+        #     env_or_list = choose_subcommand(env_or_list,m)
+            # # Run Superform as multiple subcommands exist and we have to decide which one to run.
+            # m = get_interface(interface, title, settings, None)
+            # try:
+            #     ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
+            #     return m  # m with added `m.env`
+            # except Exception as e:  # some nested subcommands would fail in overview
+            #     env_or_list = m.select({cl.__name__: cl for cl in env_or_list if cl is not SubcommandPlaceholder})
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
@@ -226,13 +241,17 @@ def run(
     if env_or_list:
         # B) single Env object
         # Load configuration from CLI and a config file
-        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args)
+        if not m:
+            # as getting the interface is a costly operation and it is not always needed (just if there are some nested subcommands), we wrap it in a lambda
+            m = lambda: get_interface(interface, title, settings, None)
+        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args, m)
         m = get_interface(interface, title, settings, env)
 
         # Empty CLI → GUI edit
         if ask_for_missing and wrong_fields:
-            # Some fields must be set.
-            m.form(wrong_fields)
+            # Some fields must have been set.
+            # TODO m.form(wrong_fields)
+            pass
         elif ask_on_empty_cli and len(sys.argv) <= 1:
             m.form()
 

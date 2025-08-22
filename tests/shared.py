@@ -97,6 +97,15 @@ class TestAbstract(TestCase):
         check_ = iter(it if isinstance(it, tuple) else (it, None) for it in check)
         this = self
 
+
+        def apply_setter(form, setter: dict):
+            for k, v in setter.items():
+                if isinstance(v, dict):
+                    # rekurze do podformu
+                    apply_setter(form[k], v)
+                else:
+                    form[k].val = v
+
         class MockAdaptor(MinAdaptor):
             def run_dialog(
                 self, form: TagDict, title: str = "", submit: bool | str = True
@@ -106,8 +115,8 @@ class TestAbstract(TestCase):
                     if model:
                         this.assertEqual(repr(form), repr(model))
                     if setter:
-                        for k, v in setter.items():
-                            form[k].val = v
+                        apply_setter(form, setter)
+
                 except StopIteration:
                     # further form calls are without checks
                     pass

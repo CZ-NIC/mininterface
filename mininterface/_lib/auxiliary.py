@@ -1,4 +1,5 @@
-from typing import get_args, get_origin, Union
+from functools import lru_cache
+from typing import Any, get_args, get_origin, Union, get_type_hints
 from dataclasses import fields, is_dataclass
 import os
 import re
@@ -90,6 +91,74 @@ def get_description(obj, param: str) -> str:
 def yield_annotations(dataclass):
     yield from (cl.__annotations__ for cl in dataclass.__mro__ if is_dataclass(cl))
 
+def get_annotation(class_, dest: str, crawled:list):
+    """ Get the attribute annotation according to the path in `dest` (dot means a nested subclass).
+    Works for dataclass, pydantic, attrs.
+
+    Ex: get_annotation(AppConfig, "bot.bot_id"))
+
+    Ex: get_annotation(AppConfig, "app.subcommand.bot_id"), "message")
+        class AppConfig:
+            subcommand: Message|Console
+
+        class Message:
+            bot_id: int
+    """
+    parts = dest.split(".")
+    current_cls = class_
+    for part, class_name in zip(parts, crawled):
+        if not isinstance(current_cls, type): # `(Message | Console)`
+            for cl in get_args(current_cls):
+                if cl.__name__.casefold() == class_name:
+                    current_cls = cl
+                    break
+            else:
+                raise KeyError(f"Field {part!r} not accessible in {current_cls}")
+
+        hints = get_type_hints(current_cls)
+
+        if part not in hints:
+            raise KeyError(f"Field {part!r} not found in {current_cls}")
+        current_cls = hints[part]   # přejdi na typ dalšího levelu
+    return current_cls
+
+def get_or_create_parent_dict(d: dict, fname: str, ignore_last=False) -> dict:
+    """
+    Return the subdict for the path in `fname`, but ignore the last part.
+    If a subdict does not exist, create it.
+    If `fname` has only one part, return `d` directly.
+    """
+    parts = fname.split(".")
+    # if len(parts) == 1:
+    #     return d
+    if ignore_last:
+        parts = parts[:-1]
+
+    current = d
+    for part in parts:
+        if part not in current or not isinstance(current[part], dict):
+            current[part] = {}
+        current = current[part]
+    return current
+
+def get_nested_class(class_: type, fname: str, ignore_last=False) -> type:
+    """
+    Traverse the class attributes according to the dot-separated path in `fname`
+    and return the type of the most deeply nested attribute.
+    Works for dataclasses, Pydantic models, and attrs classes.
+    """
+    parts = fname.split(".")
+    if ignore_last:
+        parts = parts[:-1]
+    current = class_
+
+
+    for part in parts:
+        if not hasattr(current, part):
+            raise AttributeError(f"{part} not found in {current}")
+        current = getattr(current, part)
+
+    return current
 
 def matches_annotation(value, annotation) -> bool:
     """Check whether the value type corresponds to the annotation.
@@ -239,3 +308,11 @@ def allows_none(annotation) -> bool:
     if origin is Union or origin is UnionType:
         return any(arg is type(None) for arg in args)
     return False
+
+@lru_cache(maxsize=1024)
+def _get_origin(tp: Any):
+    """
+    Cached version of typing.get_origin.
+    Faster when called repeatedly on the same type hints.
+    """
+    return get_origin(tp)

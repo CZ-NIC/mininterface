@@ -210,6 +210,7 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
+            # TODO union of classes → dialog
             subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)
         else:  # scalar or Tag value
             d = {"description": get_description(env.__class__, param), "_facet": getattr(mininterface, "facet", None)}

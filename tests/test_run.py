@@ -78,6 +78,7 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_wrong_fields(self):
+        # TODO wf is now bool. Check forms instead.
         kwargs, _ = parse_config_file(AnnotatedClass)
         _, wf = parse_cli(AnnotatedClass, kwargs, args=[])
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
@@ -104,6 +105,7 @@ class TestRun(TestAbstract):
         self.assertListEqual([], m2.env.files)
 
     def test_missing_combined(self):
+        # TODO wf is now bool, check forms instead
         with self.assertRaises(SystemExit):
             run(MissingCombined, interface=Mininterface)
 

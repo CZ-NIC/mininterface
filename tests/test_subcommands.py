@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import Literal, Optional
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
+from mininterface import Tag
 from mininterface.cli import SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
-from mininterface.tag import PathTag
+from mininterface.tag import PathTag, SelectTag
 from configs import ParametrizedGeneric, Subcommand1, Subcommand2
 from shared import MISSING, TestAbstract, runm
 
@@ -15,20 +16,62 @@ from pathlib import Path
 
 
 @dataclass
-class Console:
-    type_: str = "my-console"
+class Subc1:
+    pass
 
+@dataclass
+class Subc2:
+    # NOTE Due to I suppose tyro error, this arg must have a default.
+    # Instead, running
+    #  `$./program.py run console  --rrr A  subc2   id-one`
+    # when tyro gets its default, it claims
+    # 'Unrecognized arguments: id-one', probably consumed by Subc2 parser.
+    #
+    # cli(env, args=subargs) correctly returns
+    # ╭─ Required options ────────────────────────────────────╮
+    # │ The following arguments are required: --bar           │
+    # │ ───────────────────────────────────────────────────── │
+    # │ Argument helptext:                                    │
+    # │     --bar STR                                         │
+    # │                                                       │
+    # │         = "BAR" (required)                            │
+    # │             in _debug.py console subc2 --help         │
+    # │ ───────────────────────────────────────────────────── │
+    # │ For full helptext, run _debug.py console subc2 --help │
+    # ╰───────────────────────────────────────────────────────╯
+    # whereas
+    # cli(env, args=subargs, **kwargs)
+    # kwargs = {'default': Run(bot_id='id-one', _subcommands=Console(_subcommandsTODO=Subc2(bar=''), name='my-console', rrr='RRR'))}
+    # ╭─ Parsing error ─────────────────────────╮
+    # │ Unrecognized arguments: id-one          │
+    # │ ─────────────────────────────────────── │
+    # │ For full helptext, run _debug.py --help │
+    # ╰─────────────────────────────────────────╯
+
+
+    bar: str = "BAR"
+@dataclass
+class Console:
+    _subcommandsTODO: OmitSubcommandPrefixes[Subc1 | Subc2]
+
+    # NOTE Due to I suppose tyro error, this arg cannot be changed from cli.
+    # If the default value is removed, it can be.
+
+    name: Positional[str] = "my-console"
+
+    rrr: str = "RRR"
 
 @dataclass
 class Message:
     kind: Positional[Literal["get", "pop", "send"]]
     msg: Positional[Optional[str]]
+    foo: str = "hello"
 
 
 @dataclass
 class Run:
     bot_id: Positional[Literal["id-one", "id-two"]]
-    _subcommands: OmitSubcommandPrefixes[Positional[Message | Console]]
+    _subcommands: OmitSubcommandPrefixes[Message | Console]
 
 
 @dataclass
@@ -205,16 +248,47 @@ class TestSubcommands(TestAbstract):
             runm([ParametrizedGeneric, ParametrizedGeneric])
 
     def test_complicated(self):
-        # NOTE these all use cases should display nice form
+        # TODO these all use cases should display nice form
         # env = runm([List, Run], args=[]).env
-        # env = runm([List, Run], args=["run"]).env
+
+        with self.assertForms(
+            [
+               ( {
+                    "message": {
+                        "kind": SelectTag(
+                            val=MISSING, description="", annotation=None, label="kind", options=["get", "pop", "send"]
+                        ),
+                        "msg": Tag(val=MISSING, description="", annotation=Optional[str], label="msg"),
+                    },
+                    "bot_id": SelectTag(
+                        val=MISSING,
+                        description="bot-id ",
+                        annotation=None,
+                        label="bot_id",
+                        options=["id-one", "id-two"],
+                    ),
+                },
+                {"message": {"kind": "get", "msg": "hey"}, "bot_id" : "id-two"}
+                )
+            ]
+        ):
+            env = runm([List, Run], args=["run"]).env
+            self.assertEqual(
+                f"""Run(bot_id='id-two', _subcommands=Message(kind='get', msg='hey', foo='hello'))""",
+                repr(env),
+            )
+        return
+
+        # TODO test this
         # env = runm([List, Run], args=["run", "message"]).env
 
-        with self.assertStderr(contains="The following arguments are required: {None}|STR"), self.assertRaises(SystemExit) as cm:
+        with self.assertStderr(contains="The following arguments are required: {None}|STR"), self.assertRaises(
+            SystemExit
+        ) as cm:
             runm([List, Run], args=["run", "message", "get"])
 
         env = runm([List, Run], args=["run", "message", "get", "None", "id-one"]).env
         self.assertEqual(
-            f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg=None))""",
+            f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg=None, foo='hello'))""",
             repr(env),
         )

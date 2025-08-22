@@ -542,7 +542,7 @@ class Mininterface(Generic[EnvClass]):
                 adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True
             )
         if isinstance(_form, type):  # form is a class, not an instance
-            _form, wf = parse_cli(_form, {}, False, False, args=[])  # NOTE what to do with wf?
+            _form, wf = parse_cli(_form, {}, False, False, args=[], m=self)  # NOTE what to do with wf?
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)
             # the original dataclass is updated, hence we do not need to catch the output from .run_dialog
             adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)

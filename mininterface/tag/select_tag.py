@@ -300,6 +300,12 @@ class SelectTag(Tag[TagValue]):
             # Ex: [ ("one", "two", "three"), ("hello", "world") ]
             return [(delim.join(key), key) for key in keys]
 
+    def _make_default_value(self, try_hard=False):
+        if try_hard and (d:=self._build_options()) :
+            return next(iter(d.values()))
+        return None
+
+
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:
         """ui_value is one of the self.options values"""
         ch = self._build_options()

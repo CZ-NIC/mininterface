@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.0.4
+## 1.1.0
+* feat: interactive CLI (nested configuration missing fields dialogs)
+
+## 1.0.4 (2025-08-18)
 * enh: better argparse support (const support, store_false matching, subcommands)
 * feat: Added time constraint to the DatetimeTag #28
 * feat: implement unified toggle widget shortcut system across interfaces #29

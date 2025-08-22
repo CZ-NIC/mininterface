@@ -49,6 +49,7 @@ class Start:
         m.alert("Cannot auto-detect. Use --tyro-print-completion {bash/zsh/tcsh} to get the sh completion script.")
 
 
+# NOTE deprecated
 class ChooseSubcommandOverview:
     def __init__(self, env_classes: list[Type[DataClass]], m: Mininterface[EnvClass], args, ask_for_missing=True):
         self.m = m
@@ -69,12 +70,13 @@ class ChooseSubcommandOverview:
         # Process help
         # The help should produce only shared arguments
         if "--help" in args and len(common_bases):
-            parse_cli(next(iter(common_bases)), {}, False, True, args=args)
+            parse_cli(next(iter(common_bases)), {}, False, True, args=args,m=m)
             raise NotImplementedError("We should never come here. Help failed.")
 
         # Raise a form with all the subcommands in groups
         for env_class in env_classes:
-            form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args)
+            # NOTE – wf is now bool, not implemented here as the method seems deprecated.
+            form, wf = parse_cli(env_class, {}, False, ask_for_missing, args=args,m=m)
 
             if wf:  # We have some wrong fields.
                 if not common_fields_missing_defaults:
