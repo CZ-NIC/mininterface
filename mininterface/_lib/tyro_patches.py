@@ -1,9 +1,19 @@
+"""Various mocking patches."""
+import logging
+from collections import deque
 from contextvars import ContextVar
 from gettext import gettext as _
+from typing import Optional, Callable
+
 from tyro import _argparse as argparse
-from tyro._argparse import Action
+from tyro._argparse import Action, _SubParsersAction
+from tyro._argparse_formatter import TyroArgumentParser
 
 failed_fields: ContextVar[list[Action]] = ContextVar("failed_fields", default=[])
+_orig_call = _SubParsersAction.__call__
+_crawling = ContextVar("_crawling", default=deque())
+
+
 
 # NOTE This function is too long to monkeypatch. I'd be great we do a PR to tyro
 # so that it refactors to a smaller method it would be easier to monkeypatch & maintain.
@@ -294,3 +304,50 @@ def patched_parse_known_args(  # type: ignore
 
         # return the updated namespace and the extra arguments
         return namespace, extras
+
+
+
+
+def custom_error(self: TyroArgumentParser, message: str):
+    """Fetch missing required options in GUI.
+    On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
+    the error message function. Then, we reconstruct the missing options.
+    Thanks to this we will be able to invoke a UI dialog with the missing options only.
+    """
+    if not message.startswith("the following arguments are required:"):
+        return super(TyroArgumentParser, self).error(message)
+
+    exc = SystemExit(2)
+    exc.add_note(message)
+    raise exc  # will be catched
+
+def custom_init(self: TyroArgumentParser, *args, **kwargs):
+    super(TyroArgumentParser, self).__init__(*args, **kwargs)
+    default_prefix = "-" if "-" in self.prefix_chars else self.prefix_chars[0]
+    self.add_argument(
+        default_prefix + "v",
+        default_prefix * 2 + "verbose",
+        action="count",
+        default=0,
+        help="Verbosity level. Can be used twice to increase.",
+    )
+
+def custom_parse_known_args(self: TyroArgumentParser, args=None, namespace=None):
+    namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
+    # NOTE We may check that the Env does not have its own `verbose``
+    if hasattr(namespace, "verbose"):
+        if namespace.verbose > 0:
+            log_level = {1: logging.INFO, 2: logging.DEBUG, 3: logging.NOTSET}.get(
+                namespace.verbose, logging.NOTSET
+            )
+            logging.basicConfig(level=log_level, format="%(levelname)s - %(message)s")
+        delattr(namespace, "verbose")
+    return namespace, args
+
+def subparser_call(self, parser, namespace, values, option_string=None):
+    # '_subcommands._subcommandsNested (positional)' -> '_subcommandsNested'
+    field_name = self.dest.replace(" (positional)", "").rsplit(".", 1)[-1]
+
+    _crawling.get().append((self, values[0], field_name))
+    _orig_call(self, parser, namespace, values, option_string)
+    # I cannot use, I don't know why  super(_SubParsersAction, self).__call__

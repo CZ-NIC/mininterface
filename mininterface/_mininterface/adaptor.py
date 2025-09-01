@@ -8,7 +8,7 @@ from ..exceptions import Cancelled, ValidationFail
 from ..facet import Facet
 from .._lib.form_dict import TagDict
 from ..settings import UiSettings
-from ..tag.tag import Tag, ValsType, MissingTagValue
+from ..tag.tag import Tag, ValsType
 
 if TYPE_CHECKING:
     from . import Mininterface
@@ -131,16 +131,10 @@ class MinAdaptor(BackendAdaptor):
 
         tags = list(flatten(form))
         if not self._try_submit((tag, tag.val) for tag in tags):
-            tyro_error = ""
-            # I think the eavesdrop is always the same text but to be sure, join them
-            eavesdrop = set(tag.val.eavesdrop for tag in tags if isinstance(tag.val, MissingTagValue))
-            if eavesdrop:
-                tyro_error = "\n" + "\n".join(s for s in eavesdrop)
-
             validation_fails = "\n".join(
                 f"{tag._original_label}: {tag._error_text}" for tag in tags if tag._error_text
             )
 
-            raise SystemExit(validation_fails + tyro_error)
+            raise SystemExit(validation_fails)
 
         return form

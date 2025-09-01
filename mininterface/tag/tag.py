@@ -173,17 +173,19 @@ class MissingTagValue:
 
     If we fail to fill a value (ex. in a CRON), the program ends.
     """
+    # NOTE in the future, we might use simple dataclasses.MISSING instead. When we are sure this is not needed,
+    # see: test_run_message_args comment.
 
-    def __init__(self, exception: BaseException, eavesdrop):
-        self.exception = exception
-        self.eavesdrop = eavesdrop
+    # def __init__(self, exception: BaseException, eavesdrop):
+    #     self.exception = exception
+    #     self.eavesdrop = eavesdrop
 
     def __repr__(self):
         return "MISSING"
 
-    def fail(self):
-        print(self.eavesdrop)
-        raise self.exception
+    # def fail(self):
+    #     print(self.eavesdrop)
+    #     raise self.exception
 
 
 @dataclass

@@ -12,7 +12,7 @@ from mininterface._mininterface import MinAdaptor
 
 SYS_ARGV = None  # To be redirected
 
-MISSING = MissingTagValue(BaseException(), None)
+MISSING = MissingTagValue()
 
 logger = logging.getLogger(__name__)
 

@@ -7,6 +7,7 @@ from typing import Literal, Optional, Sequence, Type
 
 
 
+
 from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
@@ -22,9 +23,9 @@ try:
     from ._lib.cli_parser import (
         assure_args,
         parse_cli,
-        parse_config_file,
-        choose_subcommand
+        parse_config_file
     )
+    from ._lib.dataclass_creation import choose_subcommand
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
     ChooseSubcommandOverview, Start, SubcommandPlaceholder = (e,) * 3

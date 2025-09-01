@@ -125,7 +125,10 @@ class TestSubcommands(TestAbstract):
             ]
         ), self.assertRaises(SystemExit) as cm:
             r([])
-        self.assertEqual("foo: Type must be int!", cm.exception.code)
+        # Even though we failed on "foo: Type must be int!" in the second form, the tyro's message from the first is displayed.
+        # This is due to the testing case environment while we inject the first form response as if it is not a Minadaptor.
+        # Normally, the user using the Minadaptor won't make it to the second form.
+        self.assertEqual("the following arguments are required: {subcommand1,subcommand2}", cm.exception.code)
 
         # NOTE we should implement this better, see Command comment
         # missing subcommand params (inherited --foo and proper --b)
