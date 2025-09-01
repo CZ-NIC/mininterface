@@ -31,8 +31,8 @@ class TestAttrsIntegration(TestAbstract):
 
         f: Tag = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
-        self.assertEqual("Restrained name ", f.description)
+        self.assertEqual("Restrained name", f.description)
         self.assertFalse(f.update("long words"))
-        self.assertEqual("Length of 'check' must be <= 5: 10 Restrained name ", f.description)
+        self.assertEqual("Length of 'check' must be <= 5: 10 Restrained name", f.description)
         self.assertTrue(f.update(""))
-        self.assertEqual("Restrained name ", f.description)
+        self.assertEqual("Restrained name", f.description)

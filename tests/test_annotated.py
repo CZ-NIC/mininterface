@@ -85,4 +85,4 @@ class TestAnnotated(TestAbstract):
         m = run(MissingPositional, interface=Mininterface)
         d = dataclass_to_tagdict(m.env)[""]
         self.assertReprEqual(
-            {'files': PathTag(val=[], description='files ', annotation=list[Path], label='files')}, d)
+            {'files': PathTag(val=[], description='files', annotation=list[Path], label='files')}, d)

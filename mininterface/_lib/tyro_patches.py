@@ -1,8 +1,9 @@
+from contextvars import ContextVar
 from gettext import gettext as _
 from tyro import _argparse as argparse
 from tyro._argparse import Action
 
-failed_fields: list [Action] = []
+failed_fields: ContextVar[list[Action]] = ContextVar("failed_fields", default=[])
 
 # NOTE This function is too long to monkeypatch. I'd be great we do a PR to tyro
 # so that it refactors to a smaller method it would be easier to monkeypatch & maintain.
@@ -249,7 +250,7 @@ def patched_parse_known_args(  # type: ignore
         for action in self._actions:
             if action not in seen_actions:
                 if action.required:
-                    failed_fields.append(action) # WE ADDED THIS LINE
+                    failed_fields.get().append(action) # WE ADDED THIS LINE
                     required_actions.append(argparse._get_action_name(action))
                 else:
                     # Convert action default now instead of doing it before

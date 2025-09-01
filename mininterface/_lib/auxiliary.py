@@ -76,10 +76,10 @@ def get_descriptions(parser: ArgumentParser) -> dict:
         for action in parser._actions
     }
 
-
+@lru_cache
 def get_description(obj, param: str) -> str:
     if get_parser:
-        return get_descriptions(get_parser(obj))[param]
+        return get_descriptions(get_parser(obj))[param].strip()
     else:
         # We are missing mininterface[basic] requirement. Tyro is missing.
         # Without tyro, we are not able to evaluate the class: m.form(Env),
@@ -316,3 +316,11 @@ def _get_origin(tp: Any):
     Faster when called repeatedly on the same type hints.
     """
     return get_origin(tp)
+
+def remove_empty_dicts(d:dict):
+    """Recursively remove empty dicts from a nested dict, in place."""
+    for k in list(d):
+        if isinstance(d[k], dict):
+            remove_empty_dicts(d[k])
+            if not d[k]:
+                d.pop(k)

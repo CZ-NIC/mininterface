@@ -31,11 +31,11 @@ class TestPydanticIntegration(TestAbstract):
 
         f: Tag = dataclass_to_tagdict(m.env)["inner"]["name"]
         self.assertTrue(f.update("short"))
-        self.assertEqual("Restrained name ", f.description)
+        self.assertEqual("Restrained name", f.description)
         self.assertFalse(f.update("long words"))
-        self.assertEqual("String should have at most 5 characters Restrained name ", f.description)
+        self.assertEqual("String should have at most 5 characters Restrained name", f.description)
         self.assertTrue(f.update(""))
-        self.assertEqual("Restrained name ", f.description)
+        self.assertEqual("Restrained name", f.description)
 
     # NOTE
     # def test_run_ask_for_missing(self):

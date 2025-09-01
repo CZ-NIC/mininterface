@@ -199,6 +199,13 @@ def run(
         Start(title, interface).integrate(env_or_list or _Empty)
         quit()
 
+    # TODO
+    # As this works badly, lets make sure we use single interface now
+    # and will not need the second one.
+    # get_interface("gui")
+    # m = get_interface("gui")
+    # m.select([1,2,3])
+
     # Convert argparse
     if isinstance(env_or_list, ArgumentParser):
         env_or_list = parser_to_dataclass(env_or_list)

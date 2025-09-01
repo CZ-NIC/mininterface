@@ -1,5 +1,6 @@
 import warnings
-from shared import TestAbstract, runm
+from mininterface.tag import Tag, SelectTag
+from shared import TestAbstract, runm,MISSING
 
 from argparse import ArgumentParser
 from pathlib import Path
@@ -12,9 +13,7 @@ class TestArgparse(TestAbstract):
         # positional
         subparsers = parser.add_subparsers(dest="command", required=True)
         parser.add_argument("input_file", type=str, help="Path to the input file.")
-        parser.add_argument(
-            "output_dir", type=str, help="Directory where output will be saved."
-        )
+        parser.add_argument("output_dir", type=str, help="Directory where output will be saved.")
         # optional with/out defaults
         parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
         # attention, an empty path will become Path('.'), not None
@@ -32,9 +31,7 @@ class TestArgparse(TestAbstract):
         parser.add_argument("--tag", action="append", help="Add one or more tags.")
         # subparsers
         sub1 = subparsers.add_parser("build", help="Build something.")
-        sub1.add_argument(
-            "--optimize", action="store_true", help="Enable optimizations."
-        )
+        sub1.add_argument("--optimize", action="store_true", help="Enable optimizations.")
         sub1.add_argument("--target", type=str, help="Build target platform.")
         sub2 = subparsers.add_parser("deploy", help="Deploy something.")
         # NOTE handling missing values in subparsers is not implemented (we defer to tyro exception)
@@ -53,24 +50,29 @@ class TestArgparse(TestAbstract):
         #     self.log(ConflictingEnv)
         #
         # Yes, the following run statement, the name of this file and the test_log file have NOTHING IN COMMON.
-        with self.assertRaises(SystemExit) as cm:
+        #
+        #         with self.assertRaises(SystemExit) as cm:
+        #             runm(parser)
+        #         self.assertEqual(
+        #             """input_file: Type must be str!
+        # output_dir: Type must be str!
+        # the following arguments are required: STR, STR""",
+        #             cm.exception.code,
+        #         )
+        # Now, we rather ask for subcommand (`Choose: Must be one of ['build', 'deploy']`) but I leave the comment intact.
+        with self.assertForms(
+            [
+                ({"Choose": SelectTag(val=None, annotation=None, label="Choose", options=["build", "deploy"])}),
+            ]
+        ), self.assertRaises(SystemExit):
             runm(parser)
-        self.assertEqual(
-            """input_file: Type must be str!
-output_dir: Type must be str!
-the following arguments are required: STR, STR""",
-            cm.exception.code,
-        )
-        # NOTE: It should rather ask for subcommand, ex: `Choose: Must be one of ['build', 'deploy']`
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertForms(
+            [
+                ({'input_file': Tag(val=MISSING, description='Path to the input file.', annotation=str, label='input_file'), 'output_dir': Tag(val=MISSING, description='Directory where output will be saved.', annotation=str, label='output_dir')}),
+            ]
+        ), self.assertRaises(SystemExit):
             runm(parser, args=["build"])
-        self.assertEqual(
-            """input_file: Type must be str!
-output_dir: Type must be str!
-the following arguments are required: STR, STR""",
-            cm.exception.code,
-        )
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")  # zachytí všechna varování
@@ -80,6 +82,7 @@ the following arguments are required: STR, STR""",
                 0,
                 f"Unexpected warning(s): {[str(warning.message) for warning in w]}",
             )
+
 
         self.assertEqual(
             f"""build(input_file='/tmp/file', output_dir='/tmp', verbosity=1, config=None, debug=False, no_color=False, tag=[], optimize=False, target=None)""",
@@ -111,9 +114,7 @@ the following arguments are required: STR, STR""",
         parser.add_argument("input_file", type=str, help="Path to the input file.")
         subs = parser.add_subparsers(dest="command", required=True)
         subs.add_parser("build", help="Build something")
-        sub2 = subs.add_parser(
-            "deploy", help="Deploy something", description="My thorough description."
-        )
+        sub2 = subs.add_parser("deploy", help="Deploy something", description="My thorough description.")
         sub2.add_argument("--port", type=int, default=22, help="SSH port.")
         parser.add_argument("--verbosity", type=int, default=1, help="Verbosity level.")
 
@@ -128,17 +129,13 @@ the following arguments are required: STR, STR""",
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             with (
-                self.assertOutputs(
-                    contains="Deploy something: My thorough description."
-                ),
+                self.assertOutputs(contains="Deploy something: My thorough description."),
                 self.assertRaises(SystemExit),
             ):
                 runm(parser, args=["--help"])
 
             with (
-                self.assertOutputs(
-                    contains="Deploy something: My thorough description."
-                ),
+                self.assertOutputs(contains="Deploy something: My thorough description."),
                 self.assertRaises(SystemExit),
             ):
                 runm(parser, args=["deploy", "--help"])
@@ -214,7 +211,7 @@ the following arguments are required: STR, STR""",
 
     def test_default(self):
         parser = ArgumentParser()
-        parser.add_argument('number', default=10, type=int, nargs='?')
+        parser.add_argument("number", default=10, type=int, nargs="?")
 
         env = runm(parser, args=[]).env
         self.assertEqual(env.number, 10)
@@ -223,7 +220,7 @@ the following arguments are required: STR, STR""",
         self.assertEqual(env.number, 2)
 
         parser = ArgumentParser()
-        parser.add_argument('--n', default=10, type=int, nargs='?')
+        parser.add_argument("--n", default=10, type=int, nargs="?")
 
         env = runm(parser, args=[]).env
         self.assertEqual(env.n, 10)

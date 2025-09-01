@@ -693,12 +693,9 @@ class Tag(Generic[TagValue]):
         # ex: `list` (without name it would be <class list>)
         return self.annotation.__name__
 
-    def _make_default_value(self, try_hard=False):
-        """Invents a value.
-
-        Args:
-            try_hard: The value will not be used anywhere, we need it temporarily for (ex. pydantic) model to pass.
-        """
+    def _make_default_value(self):
+        """Invents a value."""
+        # X try_hard: The value will not be used anywhere, we need it temporarily for (ex. pydantic) model to pass.
         if allows_none(self.annotation):
             return None
         try:

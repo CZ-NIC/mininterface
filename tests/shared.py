@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from io import StringIO
@@ -13,12 +14,14 @@ SYS_ARGV = None  # To be redirected
 
 MISSING = MissingTagValue(BaseException(), None)
 
+logger = logging.getLogger(__name__)
 
 def runm(
     env_class: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None,
     args=None,
     **kwargs
 ) -> Mininterface[EnvClass]:
+    logger.debug("Running %s with %s", env_class, args)
     return run(env_class, interface=Mininterface, args=args, **kwargs)
 
 
@@ -89,19 +92,19 @@ class TestAbstract(TestCase):
         """Intercepts every form call, checks it and possibly modify it (simulating the user input).
 
         Args:
-            check: tuple of model and setter (or just model). (If the list is shorter then the form call count, it's okay.)
+            check: List of form calls. Form is represented by a tuple of model and setter (or just model). (If the list is shorter then the form call count, it's okay.)
                 Model is compared to the form call.
                 Values from setter are taken and injected into the form call, simulating the user input.
         """
         # normalize - assure items are tuples
         check_ = iter(it if isinstance(it, tuple) else (it, None) for it in check)
         this = self
+        logger.debug("Intercepting %d form calls...", len(check))
 
 
         def apply_setter(form, setter: dict):
             for k, v in setter.items():
                 if isinstance(v, dict):
-                    # rekurze do podformu
                     apply_setter(form[k], v)
                 else:
                     form[k].val = v
@@ -114,12 +117,18 @@ class TestAbstract(TestCase):
                     model, setter = next(check_)
                     if model:
                         this.assertEqual(repr(form), repr(model))
+                        logger.debug("Form passed %s", form)
+                    else:
+                        logger.debug("Form not checked %s", form)
                     if setter:
                         apply_setter(form, setter)
 
                 except StopIteration:
                     # further form calls are without checks
                     pass
+                except AssertionError:
+                    logger.debug("Form failed %s", form)
+                    raise
 
                 # if not submit:
                 #     submit = True # I should have the mechanism to choose the Tag to be submitted.

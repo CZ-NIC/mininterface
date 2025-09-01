@@ -154,4 +154,4 @@ class TestTagAnnotation(TestAbstract):
         m = run(DynamicDescription, interface=Mininterface)
         d = dataclass_to_tagdict(m.env)[""]
         # tyro seems to add a space after the description in such case, I don't know why
-        self.assertEqual("My dynamic str ", d["foo"].description)
+        self.assertEqual("My dynamic str", d["foo"].description)

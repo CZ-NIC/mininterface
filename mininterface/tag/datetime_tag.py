@@ -138,7 +138,7 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
     ):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
 
-    def _make_default_value(self, try_hard=False):
+    def _make_default_value(self):
         if allows_none(self.annotation):
             return None
         if self.annotation is datetime:

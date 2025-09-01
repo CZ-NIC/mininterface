@@ -3,6 +3,7 @@
 #
 import argparse
 from collections import deque
+from contextvars import ContextVar
 import logging
 import re
 import sys
@@ -38,9 +39,11 @@ from .auxiliary import (
     _get_origin,
     dataclass_asdict_no_defaults,
     get_annotation,
+    get_description,
     get_nested_class,
     get_or_create_parent_dict,
     merge_dicts,
+    remove_empty_dicts,
     yield_annotations,
 )
 from .form_dict import EnvClass, MissingTagValue, DataClass
@@ -48,7 +51,6 @@ from ..settings import MininterfaceSettings
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
 from ..validators import not_empty
-
 
 
 try:
@@ -87,7 +89,7 @@ reraise: Optional[Callable] = None
 subparser_used = None
 
 _orig_call = _SubParsersAction.__call__
-_crawling = deque()
+_crawling = ContextVar("_crawling", default=deque())
 
 
 @dataclass(slots=True)
@@ -132,16 +134,6 @@ class Patches:
 
     @staticmethod
     def custom_parse_known_args(self: TyroArgumentParser, args=None, namespace=None):
-        subp = None
-        for arg in self._actions:
-            if isinstance(arg, _SubParsersAction):
-                subp = arg
-                # print("SUBP", list(subp.choices.keys()), args)
-                # from pprint import pprint
-                # pprint(self._actions)
-                # import ipdb; ipdb.set_trace()  # TODO
-                break
-
         namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
         # NOTE We may check that the Env does not have its own `verbose``
         if hasattr(namespace, "verbose"):
@@ -158,7 +150,7 @@ class Patches:
         # '_subcommands._subcommandsNested (positional)' -> '_subcommandsNested'
         field_name = self.dest.replace(" (positional)", "").rsplit(".", 1)[-1]
 
-        _crawling.append((self, values[0], field_name))
+        _crawling.get().append((self, values[0], field_name))
         _orig_call(self, parser, namespace, values, option_string)
         # I cannot use, I don't know why  super(_SubParsersAction, self).__call__
 
@@ -188,7 +180,8 @@ def parse_cli(
     args: Optional[Sequence[str]] = None,
     # as getting the interface is a costly operation and it is not always needed, we can wrap it in a lambda
     m: "Mininterface" | Callable[[], "Mininterface"] | None = None,
-    _crawled = None
+    _crawled=None,
+    _wf=None,
 ) -> tuple[EnvClass, bool]:
     """Run the tyro parser to fetch program configuration from CLI
 
@@ -240,6 +233,8 @@ def parse_cli(
             )
 
     # Run the parser, with the mocks
+    failed_fields.set([])
+    _crawling.set(deque())
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
@@ -256,24 +251,29 @@ def parse_cli(
                 pass
             return res, False
     except BaseException as exception:
-        if ask_for_missing and getattr(exception, "code", None) == 2 and eavesdrop and failed_fields:
+        if ask_for_missing and getattr(exception, "code", None) == 2 and eavesdrop and failed_fields.get():
             # Some required arguments are missing. Determine which.
-            wf: dict[str, Tag] = {}
+            wf: dict[str, Tag] = _wf or {}
+            _wf = wf
 
             # # There are multiple dataclasses, query which is chosen
+            env = None
             if len(env_classes) == 1:
                 env = env_classes[0]
-                parser: ArgumentParser = get_parser(type_form, **kwargs)
-                subargs = args
+                # parser: ArgumentParser = get_parser(type_form, **kwargs)
+                # subargs = args
             elif len(args):
                 env = next(
                     (env for env in env_classes if to_kebab_case(env.__name__) == args[0]),
                     None,
                 )
                 if env:
-                    parser: ArgumentParser = get_parser(env)
-                    subargs = args[1:]
-                    _crawling.popleft()
+                    # parser: ArgumentParser = get_parser(env)
+                    # subargs = args[1:]
+                    _crawling.get().popleft()
+            elif len(env_classes):
+                m = assure_m(m)
+                env = choose_subcommand(env_classes, m)
             if not env:
                 raise NotImplementedError("This case of nested dataclasses is not implemented. Raise an issue please.")
 
@@ -291,7 +291,7 @@ def parse_cli(
                 # So in further run, there is no need to rebuild the data. We just process new failed_fields reported by tyro.
                 disk = d = kwargs.get("default", {})
                 _crawled = [None]
-                for _, val, field_name in _crawling:
+                for _, val, field_name in _crawling.get():
                     # NOTE this might be ameliorated so that config file can define subcommands too, now we throw everything out
                     subd = {}
                     d[field_name] = ChosenSubcommand(val, subd)
@@ -303,37 +303,47 @@ def parse_cli(
                 kwargs["default"] = defaulted_class
 
             wfi = {}
-            for field in failed_fields:
+            for field in failed_fields.get():
                 # ex: `_subcommands._nested_subcommands (positional)`
                 fname = field.dest.replace(" (positional)", "").replace("-", "_")  # `_subcommands._nested_subcommands`
                 fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
+
                 if isinstance(field, _SubParsersAction):
                     # The function _create_with_missing don't makes every encountered field a wrong field
                     # (with the exception of the config fields, defined in the kwargs["default"] earlier).
                     # The CLI options are unknown to it.
                     # Here, we pick the field unknown to the CLI parser too.
                     # As whole subparser was unknown here, we safely consider all its fields wrong fields.
-                    wfi_ = get_or_create_parent_dict(wf, fname)
-                    if wfi_:
-                        # there might not be any wrong fields in the subparsers,
-                        # empty dict would raise an empty form
-                        wfi[fname_raw] = wfi_
+                    if fname:
+                        wfi_ = get_or_create_parent_dict(wf, fname)
+                        if wfi_:
+                            # there might not be any wrong fields in the subparsers,
+                            # empty dict would raise an empty form
+                            wfi[fname_raw] = wfi_
+                    else:
+                        # This is the default subparser, without a field name:
+                        # ex. `run([List, Run])`
+                        wfi[""] = wf
                 else:
                     # NOTE
                     # * ann might be part of _get_wrong_field
-                    # import ipdb; ipdb.set_trace()  # TODO
                     ann = get_annotation(env, fname, _crawled)
-                    tag = wfi[fname_raw] = _get_wrong_field(env, field, exception, eavesdrop, fname_raw, ann)
-                    # tag._src_obj = None
-                    # tag._src_dict = get_or_create_parent_dict(kwargs["default"], fname, True)
+                    help_ = ""
+                    if m_ := re.search(r"\[helptext\](.*?)\[/helptext\]", field.help, flags=re.DOTALL):
+                        help_ = m_.group(1)
+
+                    wfi_ = get_or_create_parent_dict(wf, fname, True)
+                    tag = wfi[fname_raw] = wfi_[fname_raw]
+                    # tag = wfi[fname_raw] = _get_wrong_field(env, help_, exception, eavesdrop, fname_raw, ann)
                     tag._src_obj = get_nested_class(kwargs["default"], fname, True)
 
             # Ask for the wrong fields
-            # import ipdb; ipdb.set_trace()  # TODO
+
+            # We might have added a subsection with no fields in _create_with_missing,
+            # remove them so that no empty subgroup is displayed
+            remove_empty_dicts(wfi)
             if wfi:
                 m.form(wfi)
-            failed_fields.clear()
-            _crawling.clear()
 
             if False:
                 # Determine missing argument of the given dataclass
@@ -341,7 +351,7 @@ def parse_cli(
                 for arg in _fetch_eavesdrop_args():
                     # We handle both Positional and required arguments
                     # Ex: `The following arguments are required: PATH, --foo`
-                    print("ARG", arg)  # TODO
+
                     if "--" not in arg:
                         # Positional
                         # Ex: `The following arguments are required: PATH, INT, STR`
@@ -420,7 +430,7 @@ def parse_cli(
                         if argument := identify_required(parser, arg):
                             register_wrong_field(env, kwargs, wf, argument, exception, eavesdrop)
 
-            env_, _ = parse_cli(env_classes, kwargs, add_verbose, ask_for_missing, args, m, _crawled)
+            env_, _ = parse_cli(env_classes, kwargs, add_verbose, ask_for_missing, args, m, _crawled, _wf)
             return env_, True
 
             # # Second attempt to parse CLI.
@@ -437,7 +447,6 @@ def parse_cli(
             # with warnings.catch_warnings():
             #     warnings.simplefilter("ignore")
             #     try:
-            #         import ipdb; ipdb.set_trace()  # TODO
             #         env = cli(env, args=subargs, **kwargs)
             #     except AssertionError:
             #         # Since it is a labyrinth of subcommands, required flags and positional arguments,
@@ -496,41 +505,43 @@ def argument_to_field_name(env_class: EnvClass, argument: Action):
     return field_name
 
 
-def register_wrong_field(
-    env_class: EnvClass,
-    kwargs: dict,
-    wf: dict,
-    argument: Action,
-    exception: BaseException,
-    eavesdrop,
-):
-    """The field is missing.
-    We prepare it to the list of wrong fields to be filled up
-    and make a temporary default value so that tyro will not fail.
-    """
-    field_name = argument_to_field_name(env_class, argument)
-    # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
-    # However, the UI then is not able to use ex. the number filtering capabilities.
-    # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
-    tag = wf[field_name] = _get_wrong_field(env_class, argument, exception, eavesdrop, field_name)
-    # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
-    # A None would be enough because Mininterface will ask for the missing values
-    # promply, however, Pydantic model would fail.
-    # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
-    set_default(kwargs, field_name, tag._make_default_value())
+# def register_wrong_field(
+#     env_class: EnvClass,
+#     kwargs: dict,
+#     wf: dict,
+#     argument: Action,
+#     exception: BaseException,
+#     eavesdrop,
+# ):
+#     """The field is missing.
+#     We prepare it to the list of wrong fields to be filled up
+#     and make a temporary default value so that tyro will not fail.
+#     """
+#     field_name = argument_to_field_name(env_class, argument)
+#     # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
+#     # However, the UI then is not able to use ex. the number filtering capabilities.
+#     # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
+#     tag = wf[field_name] = _get_wrong_field(env_class, argument, exception, eavesdrop, field_name)
+#     # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
+#     # A None would be enough because Mininterface will ask for the missing values
+#     # promply, however, Pydantic model would fail.
+#     # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
+#     set_default(kwargs, field_name, tag._make_default_value())
 
 
 def _get_wrong_field(
     env_class: EnvClass,
-    argument: Action | str,
     exception: BaseException,
     eavesdrop: str,
     field_name: str,
     annotation=None,
 ) -> Tag:
+    desc = get_description(env_class, field_name)
+    if desc == field_name:
+        desc = ""
     return tag_factory(
         MissingTagValue(exception, eavesdrop),
-        argument if isinstance(argument, str) else (argument.help or "").replace("(required)", ""),
+        desc,
         annotation,
         validation=not_empty,
         _src_class=env_class,
@@ -722,15 +733,14 @@ def _create_with_missing(env, disk: dict, wf: Optional[dict] = None, mint: Optio
         if v == MISSING_NONPROP and wf is not None:
             # For building config file, the MISSING_NONPROP is alright as we expect tyro to fail
             # if the value is not taken from the CLI.
-            # However, when grabbing wrong fields (`wf`), the tyro already failed
+            # TODO NOT TRUE ANYMORE: However, when grabbing wrong fields (`wf`), the tyro already failed
             # and we need to make up a real default value so that it passes in the second run.
             # Then, these values are thrown and mininterface will prompt for wrong fields.
-            tag = wf[name] = _get_wrong_field(env, "", ValueError("TODO"), "missing field TODO", name)
+            tag = wf[name] = _get_wrong_field(env, ValueError("TODO"), "missing field TODO", name)
             missings.append(tag)
             # TODO
-            # out[name] =tag._make_default_value(try_hard=True)
+            # out[name] =tag._make_default_value(try_hard=True) # TODO get rid of try_hard
             # TODO
-        print("NAME", name, v)
         disk.pop(name, None)
 
     # Check for unknown fields
@@ -744,78 +754,115 @@ def _create_with_missing(env, disk: dict, wf: Optional[dict] = None, mint: Optio
     return model
 
 
-# TODO wf
-def _process_pydantic(env, disk):
+def _process_pydantic(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = None):
     for name, f in env.model_fields.items():
         if name in disk:
-            if isinstance(f.default, BaseModel):
-                v = _create_with_missing(f.default.__class__, disk[name])
-            else:
-                v = coerce_type_to_annotation(disk[name], f.annotation)
+            default_value = f.default if f.default is not None else MISSING
+            v = _process_field(name, f.annotation, disk[name], wf, m, default_value)
+            # if isinstance(f.default, BaseModel):
+            #     v = _create_with_missing(f.default.__class__, disk[name])
+            # else:
+            #     v = coerce_type_to_annotation(disk[name], f.annotation)
         elif f.default is not None:
             v = f.default
+        else:
+            v = _process_field(name, f.annotation, MISSING, wf, m, default_value=MISSING)
         yield name, v
 
 
-# TODO wf
-def _process_attr(env, disk):
+def _process_attr(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = None):
     for f in attr.fields(env):
+        has_default = f.default is not attr.NOTHING
+        default_val = f.default if has_default else MISSING
         if f.name in disk:
-            if attr.has(f.default):
-                v = _create_with_missing(f.default.__class__, disk[f.name])
-            else:
-                v = coerce_type_to_annotation(disk[f.name], f.type)
-        elif f.default is not attr.NOTHING:
+            v = _process_field(f.name, f.type, disk[f.name], wf, m, default_val)
+            # if attr.has(f.default):
+            #     v = _create_with_missing(f.default.__class__, disk[f.name])
+            # else:
+            #     v = coerce_type_to_annotation(disk[f.name], f.type)
+        elif has_default:
             v = f.default
         else:
-            v = MISSING_NONPROP
+            v = _process_field(f.name, f.type, MISSING, wf, m, default_val)
         yield f.name, v
+
+
+def _is_struct_type(t) -> bool:
+    """Vrátí True pro dataclass, attrs class nebo Pydantic model (třída)."""
+    try:
+        return bool(is_dataclass(t) or attr.has(t) or (isinstance(t, type) and issubclass(t, BaseModel)))
+    except TypeError:
+        # když t není typ (např. parametrizované anotace), vrať False
+        return False
+
+
+def _resolve_ftype(ftype, default_value):
+    """Rozbalí Annotated, případně nahradí typem z defaultní hodnoty (dataclass/attrs/pydantic)."""
+    ftype = _unwrap_annotated(ftype)
+    # default_value může určit přesnější strukturální typ
+    if default_value is not MISSING and default_value is not None:
+        if is_dataclass(default_value):
+            return default_value.__class__
+        if attr.has(default_value):
+            return default_value.__class__
+        if isinstance(default_value, BaseModel):
+            return default_value.__class__
+    return ftype
+
+
+def _init_struct_value(ftype, disk_value, wf, fname, m):
+    """Init structural type (dataclass/attrs/pydantic)."""
+    if wf is not None:
+        subwf = wf[fname] = {}
+    else:
+        subwf = None
+    v = _create_with_missing(ftype, disk_value, subwf, m)
+    if wf and not subwf:  # prevent having an empty section to edit
+        del wf[fname]
+    return v
+
+
+def _process_field(fname, ftype, disk_value, wf, m, default_value=MISSING):
+    ftype = _resolve_ftype(ftype, default_value)
+    origin = _get_origin(ftype)
+
+    # the subcommand has been already chosen by CLI parser
+    if isinstance(disk_value, ChosenSubcommand):  # `(class Message | class Console)`
+        for _subcomm in get_args(_unwrap_annotated(ftype)):
+            if disk_value.name == getattr(_subcomm, "__name__", "").casefold():
+                ftype = _subcomm  # `class Message` only
+                disk_value = disk_value.subdict
+                break
+        else:
+            raise ValueError(f"Type {disk_value} not found in {ftype}")
+
+    if disk_value is not MISSING:
+        if _is_struct_type(ftype):
+            return _init_struct_value(ftype, disk_value, wf, fname, m)
+        return coerce_type_to_annotation(disk_value, ftype)
+
+    # We must handle the case when there are multiple subcommands possible.
+    # The user decides now which way to go (choose a subcommand).
+    if (origin is Union or origin is UnionType) and all(_is_struct_type(cl) for cl in get_args(ftype)):
+        ftype = choose_subcommand(get_args(ftype), m)
+        return _init_struct_value(ftype, {}, wf, fname, m)
+
+    return MISSING_NONPROP
 
 
 def _process_dataclass(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = None):
     for f in fields(_unwrap_annotated(env)):
-        print("Field", f)
+
         if f.name.startswith("__"):
             continue
         elif f.name in disk:
-
-            # TODO add to pydantic, attr
-            ftype = _unwrap_annotated(f.type)
-            origin = _get_origin(ftype)
-            disk_fname = disk[f.name]
-            # print("FNAME", fname)
-            if isinstance(disk_fname, ChosenSubcommand):  # `(class Message | class Console)`
-                for _subcomm in get_args(_unwrap_annotated(ftype)):
-                    if disk_fname.name == _subcomm.__name__.casefold():
-                        ftype = _subcomm  # 'class Message'
-                        disk_fname = disk_fname.subdict
-                        break
-                else:
-                    raise ValueError(f"Type {disk_fname} not found in {ftype}")
-
-            if is_dataclass(ftype):
-                subwf = wf[f.name] = {} if wf is not None else None
-                v = _create_with_missing(ftype, disk_fname, subwf, m)
-            else:
-                v = coerce_type_to_annotation(disk_fname, ftype)
+            v = _process_field(f.name, f.type, disk[f.name], wf, m, f.default)
         elif f.default_factory is not MISSING:
             v = f.default_factory()
         elif f.default is not MISSING:
             v = f.default
         else:
-
-            # TODO add to pydantic, attr
-            # import ipdb; ipdb.set_trace()  # TODO
-            ftype = _unwrap_annotated(f.type)
-            origin = _get_origin(ftype)
-            if (origin is Union or origin is UnionType) and all(is_dataclass(cl) for cl in get_args(ftype)):
-                ftype = choose_subcommand(get_args(ftype), m)
-                subwf = wf[f.name] = {} if wf is not None else None
-                v = _create_with_missing(ftype, {}, subwf, m)
-                # TODO missing wf
-
-            else:
-                v = MISSING_NONPROP
+            v = _process_field(f.name, f.type, MISSING, wf, m)
         yield f.name, v
 
 
@@ -826,7 +873,10 @@ def to_kebab_case(name: str) -> str:
 
 
 def choose_subcommand(env_classes: list[Type[DataClass]], m: "Mininterface[EnvClass]"):
-    # m.select
+    # NOTE I d like to display help text of subcommands. But currently,
+    # select allows only names. Make that if a Tag is used as key,
+    # its 'description' displays somewhere.
+    # Also, make select display buttons if there is a little amount of options.
     env = m.select({cl.__name__: cl for cl in env_classes})
     return env
 
