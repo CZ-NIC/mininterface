@@ -10,8 +10,7 @@ from unittest.mock import patch
 
 from mininterface import EnvClass, Mininterface, Type, run
 from mininterface._lib.auxiliary import dict_diff
-from mininterface._lib.cli_parser import dict_added_main
-from mininterface._lib.form_dict import MissingTagValue, TagDict, dict_has_main, dict_removed_main, tagdict_resolve
+from mininterface._lib.form_dict import MissingTagValue, TagDict, dict_has_main, dict_removed_main, tagdict_resolve, dict_added_main
 from mininterface._mininterface import MinAdaptor
 
 SYS_ARGV = None  # To be redirected

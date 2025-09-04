@@ -6,14 +6,13 @@ from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
 
-from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable, ValidationFail
+from .exceptions import Cancelled, DependencyRequired, ValidationFail
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
-from ._mininterface import EnvClass, Mininterface, dataclass_to_tagdict
+from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings
 from .tag import Tag
 from .tag.alias import Options, Validation
-from ._lib.auxiliary import flatten
 
 try:
     from ._lib.start import Start
