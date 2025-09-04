@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+import sys
 from typing import Literal, Optional
+from unittest import skipIf
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
 from mininterface import Tag
@@ -105,7 +107,7 @@ class Cl2(Cl1):
     def run(self):
         pass
 
-
+@skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestSubcommands(TestAbstract):
 
     def subcommands(self, subcommands: list):
@@ -320,7 +322,7 @@ class TestSubcommands(TestAbstract):
         ):
             runm([ParametrizedGeneric, ParametrizedGeneric])
 
-
+@skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestNested(TestAbstract):
     def test_no_args(self):
         with self.assertForms(
