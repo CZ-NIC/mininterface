@@ -220,7 +220,7 @@ def _make_dataclass_from_actions(
             if action.choices:
                 # With the drop of Python 3.10, use mere:
                 # arg_type = Literal[*action.choices]
-                if sys.version_info > (3,10):
+                if sys.version_info >= (3,11):
                     from .future_compatibility import literal
                     arg_type = literal(action.choices)
                 else:

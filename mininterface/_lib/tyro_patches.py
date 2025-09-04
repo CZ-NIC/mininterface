@@ -319,7 +319,7 @@ def custom_error(self: TyroArgumentParser, message: str):
         return super(TyroArgumentParser, self).error(message)
 
     exc = SystemExit(2)
-    if sys.version_info > (3,10):
+    if sys.version_info >= (3,11):
         exc.add_note(message)
     raise exc  # will be catched
 
