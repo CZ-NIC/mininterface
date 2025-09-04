@@ -209,7 +209,7 @@ class SelectTag(Tag[TagValue]):
         if self.multiple:
             raise AttributeError
         for k, val, *_ in self._get_options():
-            if val is self.val:
+            if val == self.val:
                 return k
         return None
 
@@ -254,7 +254,7 @@ class SelectTag(Tag[TagValue]):
         but some interfaces (Tk) want to do the keys into the table processing on their own.
         So they use tupled-label when they are guaranteed to find a tuple.
 
-        The interface should display label or tupled-label, hightlight options with is tip
+        The interface should display label or tupled-label, highlight options with is tip
         and keep the choice value invisible under the hood. When the user makes the choice,
         call tag.update() with the invisible choice value.
 
@@ -304,6 +304,9 @@ class SelectTag(Tag[TagValue]):
     #     if try_hard and (d:=self._build_options()) :
     #         return next(iter(d.values()))
     #     return None
+    def _make_default_value(self):
+        if (d:=self._build_options()) :
+            return next(iter(d.values()))
 
 
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:

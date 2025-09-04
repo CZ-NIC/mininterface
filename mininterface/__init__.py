@@ -1,14 +1,12 @@
 from argparse import ArgumentParser
-import os
+from  os import environ
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
 
-
-
-from .exceptions import Cancelled, DependencyRequired, InterfaceNotAvailable
+from .exceptions import Cancelled, DependencyRequired, ValidationFail
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
 from ._mininterface import EnvClass, Mininterface
@@ -17,18 +15,16 @@ from .tag import Tag
 from .tag.alias import Options, Validation
 
 try:
-    from ._lib.start import ChooseSubcommandOverview, Start
+    from ._lib.start import Start
     from .cli import Command, SubcommandPlaceholder
     from ._lib.argparse_support import parser_to_dataclass
-    from ._lib.cli_parser import (
-        assure_args,
-        parse_cli,
-        parse_config_file
-    )
+    from ._lib.cli_parser import assure_args, parse_cli, to_kebab_case
     from ._lib.dataclass_creation import choose_subcommand
+    from ._lib.config_file import parse_config_file
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
-    ChooseSubcommandOverview, Start, SubcommandPlaceholder = (e,) * 3
+    Start, SubcommandPlaceholder = (e,) * 2
+    to_kebab_case, choose_subcommand= (e,) * 2
 
 
 @dataclass
@@ -184,8 +180,8 @@ def run(
     # Determine title
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
     if not interface:
-        interface = os.environ.get("MININTERFACE_INTERFACE")
-    if os.environ.get("MININTERFACE_ENFORCED_WEB"):
+        interface = environ.get("MININTERFACE_INTERFACE")
+    if environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
 
     if isinstance(assure_args, DependencyRequired) and not env_or_list:
@@ -195,91 +191,67 @@ def run(
     args = assure_args(args)
 
     # Hidden meta-commands in args
-    if os.environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
-        del os.environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
+    if environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
+        del environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
         Start(title, interface).integrate(env_or_list or _Empty)
         quit()
-
-    # TODO
-    # As this works badly, lets make sure we use single interface now
-    # and will not need the second one.
-    # get_interface("gui")
-    # m = get_interface("gui")
-    # m.select([1,2,3])
 
     # Convert argparse
     if isinstance(env_or_list, ArgumentParser):
         env_or_list = parser_to_dataclass(env_or_list)
 
+    # Parse CLI arguments, possibly merged from a config file.
     # A) Superform – overview of the subcommands
-    m = None
+    m = get_interface(interface, title, settings)
     has_sub_placeholder = False
     if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list:
-        env_or_list.remove(SubcommandPlaceholder)
+        # TODO SubcommandPlaceholder cannot be removed, else it is not seen in the help text
+        # pop out the placeholder but without modifying to user implanted list
+        env_or_list = [cl for cl in env_or_list if cl is not SubcommandPlaceholder]
         has_sub_placeholder = True
 
     if ask_for_missing and has_sub_placeholder and args and args[0] == "subcommand":
-        m = get_interface(interface, title, settings, None)
-        args[0] = choose_subcommand(env_or_list,m).__name__.casefold()
-
-    # if ask_for_missing and isinstance(env_or_list, list):
-        # superform_args = None
-
-        # if SubcommandPlaceholder in env_or_list and args and args[0] == "subcommand":
-        #     superform_args = args[1:]
-        # elif not args:
-        #     superform_args = []
-
-        # if superform_args is not None:
-        #     m = get_interface(interface, title, settings, None)
-        #     env_or_list = choose_subcommand(env_or_list,m)
-            # # Run Superform as multiple subcommands exist and we have to decide which one to run.
-            # m = get_interface(interface, title, settings, None)
-            # try:
-            #     ChooseSubcommandOverview(env_or_list, m, args=superform_args, ask_for_missing=ask_for_missing)
-            #     return m  # m with added `m.env`
-            # except Exception as e:  # some nested subcommands would fail in overview
-            #     env_or_list = m.select({cl.__name__: cl for cl in env_or_list if cl is not SubcommandPlaceholder})
+        args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
 
-    # Parse CLI arguments, possibly merged from a config file.
     kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
     if env_or_list:
         # B) single Env object
         # Load configuration from CLI and a config file
-        if not m:
-            # as getting the interface is a costly operation and it is not always needed (just if there are some nested subcommands), we wrap it in a lambda
-            m = lambda: get_interface(interface, title, settings, None)
-        env, wrong_fields = parse_cli(env_or_list, kwargs, add_verbose, ask_for_missing, args, m)
-        m = get_interface(interface, title, settings, env)
+        try:
+            parse_cli(env_or_list, kwargs, m, add_verbose, ask_for_missing, args, ask_on_empty_cli)
+        except Exception as e:
+            # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
+            from ast import literal_eval
+            if literal_eval(environ.get("MININTERFACE_DEBUG", "0")):
+                import traceback
+                import ipdb
+                traceback.print_exception(e)
+                ipdb.post_mortem()
+            else:
+                raise
 
-        # Empty CLI → GUI edit
-        if ask_for_missing and wrong_fields:
-            # Some fields must have been set.
-            # TODO m.form(wrong_fields)
-            pass
-        elif ask_on_empty_cli and len(sys.argv) <= 1:
-            m.form()
 
-        # Even though Command is not documented to work with run(Env) (but only as run([Env])), it works.
-        # Why? Because the subcommand chosen by CLI and not here in the SubcommandOverview will get here.
-        # Why it is not documented? – What use-case would it have?
-        # And if this env.run() raises a ValidationFail (as suggested in the documentation),
-        # should we repeat? And will not it cycle in a cron script?
-        if isinstance(env, Command):
-            env.facet = m.facet
-            env.interface = m
-            env.init()
-            env.run()
+        # Command run
+        _ensure_command_run(m)
     else:
         # C) No Env object
         # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-        parse_cli(_Empty, {}, add_verbose, ask_for_missing, args)
-        m = get_interface(interface, title, settings, None)
+        parse_cli(_Empty, {}, m, add_verbose, ask_for_missing, args)
 
     return m
+
+def _ensure_command_run(m: "Miniterface"):
+    env = m.env
+    if isinstance(env, Command):
+        while True:
+            try:
+                env.run()
+                break
+            except ValidationFail:
+                m.form()
 
 
 __all__ = ["run", "Mininterface", "Tag", "Cancelled", "Validation", "Options"]

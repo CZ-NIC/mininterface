@@ -12,7 +12,13 @@ Apart from the default [`Mininterface`][mininterface.Mininterface], the base int
 
 ### Ordering
 
-We try to obtain the best interface available. By preference, it is **gui** , then **> tui** (textual or at least **> text**), then the original non-interactive **> Mininterface** is used. The ensures the program to still work in cron jobs etc.
+We try to obtain the best interface available. By preference, it is **gui** , then **> tui** (textual or at least **> text**), then the original non-interactive **> min** is used. The ensures the program to still work in cron jobs etc. (**Web** is never chosen automatically.)
+
+```mermaid
+graph LR
+gui --> tk{ tk } --> tui --> textual{ textual } --> text{ text } --> min
+web
+```
 
 ### Getting one
 
@@ -48,6 +54,65 @@ From outside, you may override the default interface choice by the environment v
 
 The base interface.
 
+Not interactive, behaves as if the user confirmed everyting. It is being used in ex. cron scripts.
+
+```bash
+$ MININTERFACE_INTERFACE=min ./program.py
+Asking the form Env(my_flag=False, my_number=4)
+4
+```
+
+??? Code
+    ```python
+    from dataclasses import dataclass
+    from mininterface import run
+
+    @dataclass
+    class Env:
+        """ This calculates something. """
+
+        my_flag: bool = False
+        """ This switches the functionality """
+
+        my_number: int = 4
+        """ This number is very important """
+
+    if __name__ == "__main__":
+        m = run(Env, title="My application")
+        m.form()
+        # Attributes are suggested by the IDE
+        # along with the hint text 'This number is very important'.
+        print(m.env.my_number)
+    ```
+
+If not possible, the program ends with a warning.
+
+```bash
+$ MININTERFACE_INTERFACE=gui ./program.py
+Asking the form Env(my_flag=MISSING, my_number=4)
+the following arguments are required: --my-flag
+```
+
+??? Code
+    ```python
+    from dataclasses import dataclass
+    from mininterface import run
+
+    @dataclass
+    class Env:
+        """ This calculates something. """
+
+        my_flag: bool # no default value here
+        """ This switches the functionality """
+
+        my_number: int = 4
+        """ This number is very important """
+
+    if __name__ == "__main__":
+        m = run(Env, title="My application")
+        m.form()
+    ```
+
 # `GuiInterface` or `TkInterface` or 'gui'
 
 A tkinter window. It inherits from [`GuiSettings`][mininterface.settings.GuiSettings].
@@ -57,7 +122,7 @@ $ MININTERFACE_INTERFACE=gui ./program.py
 ```
 
 ![Hello world example: GUI window](asset/hello-gui.avif "A minimal use case – GUI")
-<br>*The code for generating screenshots is taken from the [Introduction](index.md).*
+
 
 # `TuiInterface` or 'tui'
 

@@ -1,44 +1,51 @@
 #
 # CLI and config file parsing.
 #
+from dataclasses import MISSING, asdict
 import re
 import sys
-import warnings
 from collections import deque
 from contextlib import ExitStack
-from pathlib import Path
 from types import FunctionType, SimpleNamespace
-from typing import (Annotated, Callable, Optional, Sequence, Type, Union,
-                    get_args, get_origin)
+from typing import Annotated, Callable, Optional, Sequence, Type, Union, get_args, get_origin
 from unittest.mock import patch
 
+from ..cli import Command
+
 from ..exceptions import Cancelled
-from ..settings import MininterfaceSettings
 from ..tag import Tag
-from .auxiliary import (dataclass_asdict_no_defaults, get_nested_class,
-                        get_or_create_parent_dict, merge_dicts,
-                        remove_empty_dicts)
-from .dataclass_creation import (ChosenSubcommand, choose_subcommand,
-                                 create_with_missing)
-from .form_dict import EnvClass
+from .auxiliary import (
+    get_or_create_parent_dict,
+    remove_empty_dicts,
+    flatten,
+)
+from .dataclass_creation import (
+    ChosenSubcommand,
+    _unwrap_annotated,
+    choose_subcommand,
+    create_with_missing,
+)
+from .form_dict import EnvClass, TagDict, dataclass_to_tagdict, MissingTagValue, dict_added_main
 
 try:
-    import yaml
     from tyro import cli
     from tyro._argparse import _SubParsersAction
     from tyro._argparse_formatter import TyroArgumentParser
     from tyro._singleton import MISSING_NONPROP
 
-    from .tyro_patches import (_crawling, custom_error, custom_init,
-                               custom_parse_known_args, failed_fields,
-                               patched_parse_known_args, subparser_call)
+    from .tyro_patches import (
+        _crawling,
+        custom_error,
+        custom_init,
+        custom_parse_known_args,
+        failed_fields,
+        patched_parse_known_args,
+        subparser_call,
+    )
 except ImportError:
     from ..exceptions import DependencyRequired
 
     raise DependencyRequired("basic")
-
-
-WrongFields = dict[str, Tag]
 
 
 def assure_args(args: Optional[Sequence[str]] = None):
@@ -61,20 +68,21 @@ def assure_args(args: Optional[Sequence[str]] = None):
 def parse_cli(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     kwargs: dict,
+    m: "Mininterface",
     add_verbose: bool = True,
     ask_for_missing: bool = True,
     args: Optional[Sequence[str]] = None,
-    # as getting the interface is a costly operation and it is not always needed, we can wrap it in a lambda
-    m: "Mininterface" | Callable[[], "Mininterface"] | None = None,
+    ask_on_empty_cli: Optional[bool] = None,
     _crawled=None,
-    _wf=None,
+    _req_fields=None,
 ) -> tuple[EnvClass, bool]:
     """Run the tyro parser to fetch program configuration from CLI
 
     Returns:
         EnvClass
-        bool: True if there were some wrong field the user dealed with.
+        bool: Dialog raised? True if there were some wrong field the user dealed with.
     """
+    # Xint: The depth we crawled into. The number of subcommands in args.
     # NOTE ask_on_empty_cli might reveal all fields (in cli_parser), not just wrongs. Eg. when using a subparser `$ prog run`, reveal all subparsers.
 
     if isinstance(env_or_list, list):
@@ -92,14 +100,111 @@ def parse_cli(
     # unwrap annotated
     # ex: `run(FlagConversionOff[OmitArgPrefixes[Env]])` -> Env
     for i, candidate in enumerate(env_classes):
-        while get_origin(candidate) is Annotated:
-            candidate = get_args(candidate)[0]
-        env_classes[i] = candidate
+        env_classes[i] = _unwrap_annotated(candidate)
 
     # Mock parser, inject special options into
+    patches = _apply_patches(add_verbose, ask_for_missing, env_classes)
+
+    # Run the parser, with the mocks
+    failed_fields.set([])
+    _crawling.set(deque())
+    final_call = _crawled is None
+    """ This is the upmost parse_cli call.
+    See the `_crawled` creation comment to know how to simulate nested parse_cli calls.
+    """
+
+    try:
+        with ExitStack() as stack:
+            [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
+            try:
+                env = cli(type_form, args=args, **kwargs)
+            except BaseException:
+                # Why this exception handling? Try putting this out and test_strange_error_mitigation fails.
+                if len(env_classes) > 1 and kwargs.get("default"):
+                    env = cli(kwargs["default"].__class__, args=args[1:], **kwargs)
+                else:
+                    raise
+            # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
+            # 1. Getting the interface is a costly operation
+            # 2. There is this bug so that we need to use single interface
+            # TODO
+            # As this works badly, lets make sure we use single interface now
+            # and will not need the second one.
+            # get_interface("gui")
+            # m = get_interface("gui")
+            # m.select([1,2,3])
+            m.env = env
+            if env is MISSING_NONPROP:
+                # TODO
+                # NOTE not true any more, I've implemented and might go furhter:
+                # NOTE tyro does not work if a required positional is missing tyro.cli()
+                # returns just NonpropagatingMissingType (MISSING_NONPROP).
+                # If this is supported, I might set other attributes like required (date, time).
+                # Fail if missing:
+                #   files: Positional[list[Path]]
+                # Works if missing but imposes following attributes are non-required (have default values):
+                #   files: Positional[list[Path]] = field(default_factory=list)
+                pass
+    except BaseException as exception:
+        if ask_for_missing and getattr(exception, "code", None) == 2 and failed_fields.get():
+            env = _dialog_missing(env_classes, kwargs, m, add_verbose, ask_for_missing, args, _crawled, _req_fields)
+
+            if final_call:
+                # Ask for the wrong fields
+                # Why first_attempt? We display the wrong-fields-form only once.
+                _ensure_command_init(env, m)
+
+                try:
+                    m.form(env)
+                except Cancelled as e:
+                    raise
+                except SystemExit as e:
+                    if sys.version_info < (3, 11):
+                        raise
+                    # Form did not work, cancelled or run through minadaptor.
+                    # We use the original tyro exception message, caught in tyro_patches.custom_error
+                    # instead of a validation error the minadaptor might produce.
+                    # NOTE We might add minadaptor validation error. But it seems too similar to the better tyro's one.
+                    # if str(e):
+                    #     exception.add_note(str(e))
+                    raise SystemExit("\n".join(exception.__notes__))
+
+            return env, True
+
+        # Parsing wrong fields failed. The program ends with a nice tyro message.
+        raise
+    else:
+        dialog_raised = False
+        if final_call:
+            _ensure_command_init(env, m)
+
+            # Subsequent validation
+            # Do a subsequent validation as tyro cannot validate ie. annotated_types or our custom validators.
+            # (This is not needed when we raise a wrong-fields-dialog as any dialog validates everything.)
+            dc = dataclass_to_tagdict(m.env)
+            for tag in flatten(dc):
+                try:
+                    tag._validate(tag.val)
+                except Exception as e:
+                    tag.set_error_text(str(e))
+                    m.form(dc)
+                    dialog_raised = True
+
+            # Empty CLI → GUI edit
+            subcommand_count = len(_crawling.get())
+            if not dialog_raised and ask_on_empty_cli and len(sys.argv) <= 1 + subcommand_count:
+                # Raise a dialog if the command line is empty.
+                # This still means empty because 'run' and 'message' are just subcommands: `program.py run message`
+                m.form()
+                dialog_raised = True
+
+        return env, dialog_raised
+
+
+def _apply_patches(add_verbose, ask_for_missing, env_classes):
     patches = []
 
-    patches.append(patch.object(_SubParsersAction, "__call__", subparser_call))  # TODO
+    patches.append(patch.object(_SubParsersAction, "__call__", subparser_call))
     patches.append(patch.object(TyroArgumentParser, "_parse_known_args", patched_parse_known_args))
 
     if ask_for_missing:  # Get the missing flags from the parser
@@ -118,261 +223,171 @@ def parse_cli(
                 )
             )
 
-    # Run the parser, with the mocks
-    failed_fields.set([])
-    _crawling.set(deque())
-    try:
-        with ExitStack() as stack:
-            [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
-            res = cli(type_form, args=args, **kwargs)
-            if res is MISSING_NONPROP:
-                # NOTE not true any more, I've implemented and might go furhter:
-                # NOTE tyro does not work if a required positional is missing tyro.cli()
-                # returns just NonpropagatingMissingType (MISSING_NONPROP).
-                # If this is supported, I might set other attributes like required (date, time).
-                # Fail if missing:
-                #   files: Positional[list[Path]]
-                # Works if missing but imposes following attributes are non-required (have default values):
-                #   files: Positional[list[Path]] = field(default_factory=list)
-                pass
-            return res, False
-    except BaseException as exception:
-        if ask_for_missing and getattr(exception, "code", None) == 2 and failed_fields.get():
-            # Some required arguments are missing. Determine which.
-            wf: dict[str, Tag] = _wf or {}
-            _wf = wf
-
-            # # There are multiple dataclasses, query which is chosen
-            env = None
-            if len(env_classes) == 1:
-                env = env_classes[0]
-                # parser: ArgumentParser = get_parser(type_form, **kwargs)
-                # subargs = args
-            elif len(args):
-                env = next(
-                    (env for env in env_classes if to_kebab_case(env.__name__) == args[0]),
-                    None,
-                )
-                if env:
-                    # parser: ArgumentParser = get_parser(env)
-                    # subargs = args[1:]
-                    _crawling.get().popleft()
-            elif len(env_classes):
-                m = assure_m(m)
-                env = choose_subcommand(env_classes, m)
-            if not env:
-                raise NotImplementedError("This case of nested dataclasses is not implemented. Raise an issue please.")
-
-            if _crawled is None:
-                # This is the first correction attempt.
-                # We create default instance etc.
-                # It may fail for another reasons, ex. a super-parser claim:
-                # 1. run inserts: `$ prog.py run message` ->  `$ prog.py run message MSG` (resolved 'message' subparser)
-                # 2. run inserts: `$ prog.py run message MSG RUN-ID`. (resolved 'run' subparser)
-                # So in further run, there is no need to rebuild the data. We just process new failed_fields reported by tyro.
-                disk = d = kwargs.get("default", {})
-                _crawled = [None]
-                for _, val, field_name in _crawling.get():
-                    # NOTE this might be ameliorated so that config file can define subcommands too, now we throw everything out
-                    subd = {}
-                    d[field_name] = ChosenSubcommand(val, subd)
-                    d = subd
-                    _crawled.append(val)
-                m = assure_m(m)
-
-                defaulted_class = create_with_missing(env, disk, wf, m)
-                kwargs["default"] = defaulted_class
-
-            wfi = {}
-            for field in failed_fields.get():
-                # ex: `_subcommands._nested_subcommands (positional)`
-                fname = field.dest.replace(" (positional)", "").replace("-", "_")  # `_subcommands._nested_subcommands`
-                fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
-
-                if isinstance(field, _SubParsersAction):
-                    # The function _create_with_missing don't makes every encountered field a wrong field
-                    # (with the exception of the config fields, defined in the kwargs["default"] earlier).
-                    # The CLI options are unknown to it.
-                    # Here, we pick the field unknown to the CLI parser too.
-                    # As whole subparser was unknown here, we safely consider all its fields wrong fields.
-                    if fname:
-                        wfi_ = get_or_create_parent_dict(wf, fname)
-                        if wfi_:
-                            # there might not be any wrong fields in the subparsers,
-                            # empty dict would raise an empty form
-                            wfi[fname_raw] = wfi_
-                    else:
-                        # This is the default subparser, without a field name:
-                        # ex. `run([List, Run])`
-                        wfi[""] = wf
-                else:
-                    wfi_ = get_or_create_parent_dict(wf, fname, True)
-                    tag = wfi[fname_raw] = wfi_[fname_raw]
-                    tag._src_obj = get_nested_class(kwargs["default"], fname, True)
-
-            # Ask for the wrong fields
-
-            # We might have added a subsection with no fields in _create_with_missing,
-            # remove them so that no empty subgroup is displayed
-            remove_empty_dicts(wfi)
-            if wfi:
-                try:
-                    m.form(wfi)
-                except Cancelled as e:
-                    raise
-                except SystemExit as e:
-                    # Form did not work, cancelled or run through minadaptor.
-                    # We use the original tyro exception message, caught in tyro_patches.custom_error
-                    # instead of a validation error the minadaptor might produce.
-                    # NOTE We might add minadaptor validation error. But it seems too similar to the better tyro's one.
-                    # if str(e):
-                    #     exception.add_note(str(e))
-                    raise SystemExit("\n".join(exception.__notes__))
-
-            env_, _ = parse_cli(env_classes, kwargs, add_verbose, ask_for_missing, args, m, _crawled, _wf)
-            return env_, True
-
-            # # Second attempt to parse CLI.
-            # # We have just put a default values for missing fields so that tyro will not fail.
-            # # If we succeeded (no exotic case), this will pass through.
-            # # Then, we impose the user to fill the missing values.
-            # #
-            # # Why catching warnings? All the meaningful warnings
-            # # have been produces during the first attempt.
-            # # Now, when we defaulted all the missing fields with None,
-            # # tyro produces 'UserWarning: The field (...) but the default value has type <class 'str'>.'
-            # # (This is not true anymore; to support pydantic we put a default value of the type,
-            # # so there is probably no more warning to be caught.)
-            # with warnings.catch_warnings():
-            #     warnings.simplefilter("ignore")
-            #     try:
-            #         env = cli(env, args=subargs, **kwargs)
-            #     except AssertionError:
-            #         # Since it is a labyrinth of subcommands, required flags and positional arguments,
-            #         # and something is messed up, raise the original tyro message.
-            #         # When the user fulfills the error message,
-            #         # the program will still work (even without our UI wizzard).
-            #         raise reraise()
-            #     return env, bool(wfi)
-
-        # Parsing wrong fields failed. The program ends with a nice tyro message.
-        raise
+    return patches
 
 
-# NOTE Remove when we are sure this is not needed, see test_run_message_args comment.
-# def register_wrong_field(
-#     env_class: EnvClass,
-#     kwargs: dict,
-#     wf: dict,
-#     argument: Action,
-#     exception: BaseException,
-#     eavesdrop,
-# ):
-#     """The field is missing.
-#     We prepare it to the list of wrong fields to be filled up
-#     and make a temporary default value so that tyro will not fail.
-#     """
-#     field_name = argument_to_field_name(env_class, argument)
-#     # NOTE: We put MissingTagValue to the UI to clearly state that the value is missing.
-#     # However, the UI then is not able to use ex. the number filtering capabilities.
-#     # Putting there None is not a good idea as dataclass_to_tagdict fails if None is not allowed by the annotation.
-#     tag = wf[field_name] = _get_wrong_field(env_class, argument, exception, eavesdrop, field_name)
-#     # Why `_make_default_value`? We need to put a default value so that the parsing will not fail.
-#     # A None would be enough because Mininterface will ask for the missing values
-#     # promply, however, Pydantic model would fail.
-#     # As it serves only for tyro parsing and the field is marked wrong, the made up value is never used or seen.
-#     set_default(kwargs, field_name, tag._make_default_value())
+def _dialog_missing(
+    env_classes,
+    kwargs: dict,
+    m: "Mininterface",
+    add_verbose: bool,
+    ask_for_missing: bool,
+    args: Optional[Sequence[str]],
+    crawled,
+    req_fields: Optional[TagDict],
+) -> EnvClass:
+    """Some required arguments are missing. Determine which and ask for them.
 
+    * kwargs["default"]. Struct (dataclass). The fields that must be filled are marked as MISSING_NONPROP.
+        If marked directly with `tag._make_default_value()`, tyro would resolve CLI instantly with no further problem but we would never known which were missing CLI flags were missing.
+    * failed_fields – Argparse Actions. Parser needs them filled. (It might not tell us about all of them. There is a use-case when superparser is resolved after subparser. And if whole subparser command is missing, its fields are not there either.)
+    * req_fields – Tags. The same form as kwargs["default"]. Recursively all fields, needed to build up a dataclass for mininterface. The fields that must be filled are marked as MissingTagValue().
+    * missing_req – Tags. Those req_fields which are missing from CLI. Merge of failed_fields and req_fields. (Subset of req_fields.)
+        Their values are `tag._make_default_value()`.
+        The default value is never seen, it's used just to build up `env`. Might have the same form as req_fields or a subset when we parse a subcommand.
+        After resolving the class, we use missing_req to reset the `env` fields to MissingTagValue() so that the user must fill them in a raised form.
+        (SelectTag has no value, nor in CLI. We give it a random value, build the struct through tyro (which enriches the kwargs["default"] with the CLI fields), then we reset the value to MissingTagValue() so that the user must choose. In the form, we see the SelectTag with no default value selected.)
+    * env – Tyro's merge of CLI and kwargs["default"].
 
-def set_default(kwargs, field_name, val):
-    if "default" not in kwargs:
-        kwargs["default"] = SimpleNamespace()
-    setattr(kwargs["default"], field_name, val)
-
-
-def parse_config_file(
-    env_or_list: Type[EnvClass] | list[Type[EnvClass]],
-    config_file: Path | None = None,
-    settings: Optional[MininterfaceSettings] = None,
-    **kwargs,
-) -> tuple[dict, MininterfaceSettings | None]:
-    """Fetches the config file into the program defaults kwargs["default"] and UI settings.
-
-    Args:
-        env_class: Class with the configuration.
-        config_file: File to load YAML to be merged with the configuration.
-            You do not have to re-define all the settings in the config file, you can choose a few.
-        settings: Used to complement the 'mininterface' config file section-
-    Kwargs:
-        The same as for argparse.ArgumentParser.
-
-    Returns:
-        Tuple of kwargs and settings.
     """
-    if isinstance(env_or_list, list):
-        subcommands, env = env_or_list, None
-    else:
-        subcommands, env = None, env_or_list
+    req_fields = req_fields or {}
 
-    # Load config file
-    if config_file and subcommands:
-        # Reading config files when using subcommands is not implemented.
-        kwargs.pop("default", None)
-        warnings.warn(
-            f"Config file {config_file} is ignored because subcommands are used."
-            " It is not easy to set how this should work."
-            " Describe the developer your usecase so that they might implement this."
+    # There are multiple dataclasses, query which is chosen
+    m, env_cl = _ensure_chosen_env(env_classes, args, m)
+
+    if crawled is None:
+        # This is the first correction attempt.
+        # We create default instance etc.
+        # It may fail for another reasons, ex. a super-parser claim:
+        # 1. run inserts: `$ prog.py run message` ->  `$ prog.py run message MSG` (resolved 'message' subparser)
+        # 2. run inserts: `$ prog.py run message MSG RUN-ID`. (resolved 'run' subparser)
+        # So in further run, there is no need to rebuild the data. We just process new failed_fields reported by tyro.
+
+        # Merge with the config file defaults.
+        disk = d = asdict(dc) if (dc := kwargs.get("default")) else {}
+        crawled = [None]
+        for _, val, field_name in _crawling.get():
+            # NOTE this might be ameliorated so that config file can define subcommands too, now we throw everything out
+            subd = {}
+            d[field_name] = ChosenSubcommand(val, subd)
+            d = subd
+            crawled.append(val)
+
+        kwargs["default"] = create_with_missing(env_cl, disk, req_fields, m)
+
+    missing_req = _fetch_currently_failed(req_fields)
+    """ Fields required and missing from CLI """
+
+    # These fields are known to be missing in the CLI.
+    # Adds a temporary default value to the fields in the default_dataclass
+    # so that tyro can join the rest from CLI.
+    # Why we make a default values instead of putting None?
+    # It would be good as Mininterface will ask for it as a missing value if None is not allowed by the field.
+    # However, tyro produces 'UserWarning: The field (...) but the default value has type <class 'str'>.'
+    # And pydantic model would fail.
+    # As it serves only for tyro parsing and the field is marked wrong, the temporarily made up value is never used or seen.
+    for tag in flatten(missing_req):
+        tag._update_source(tag._make_default_value())
+
+    # Merge CLI args with the defaults (and the temporary defaults)
+    # Second attempt to parse CLI.
+    # We have just put a default values for missing fields so that tyro will not fail.
+    # If we succeeded (no exotic case), this will pass through.
+    # Then, we impose the user to fill the missing values.
+    env, _ = parse_cli(env_classes, kwargs, m, add_verbose, ask_for_missing, args, None, crawled, req_fields)
+    td = dataclass_to_tagdict(env, m)
+    # Remove teporary defaults to be correctly displayed in the dialog form
+    # so that user must fill them.
+    _reset_missing_fields(td, missing_req)
+
+    return env
+
+
+def _ensure_chosen_env(env_classes, args, m):
+    env = None
+    if len(env_classes) == 1:
+        env = env_classes[0]
+    elif len(args):
+        env = next(
+            (env for env in env_classes if to_kebab_case(env.__name__) == args[0]),
+            None,
         )
-
-    if "default" not in kwargs and not subcommands and config_file:
-        # Undocumented feature. User put a namespace into kwargs["default"]
-        # that already serves for defaults. We do not fetch defaults yet from a config file.
-        disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
-        try:
-            if confopt := disk.pop("mininterface", None):
-                # Section 'mininterface' in the config file.
-                settings = _merge_settings(settings, confopt)
-
-            kwargs["default"] = create_with_missing(env, disk)
-        except TypeError:
-            raise SyntaxError(f"Config file parsing failed for {config_file}")
-
-    return kwargs, settings
+        if env:
+            _crawling.get().popleft()
+    elif len(env_classes):
+        env = choose_subcommand(env_classes, m)
+    if not env:
+        raise NotImplementedError("This case of nested dataclasses is not implemented. Raise an issue please.")
+    return m, env
 
 
-def _merge_settings(
-    runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings
-) -> MininterfaceSettings:
-    # Settings inheritance:
-    # Config file > program-given through run(settings=) > the default settings (original dataclasses)
+def _fetch_currently_failed(requireds) -> TagDict:
+    """Get missings.
+    We get all fields from the dataclass and choose only those
+    who pose problem for tyro (through implanted failed_fields)."""
+    missing_req = {}
+    for field in failed_fields.get():
+        # ex: `_subcommands._nested_subcommands (positional)`
+        fname = field.dest.replace(" (positional)", "").replace("-", "_")  # `_subcommands._nested_subcommands`
+        fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
 
-    # Assure the default settings
-    # Either the program-given or create fresh defaults
-    if runopt:
-        # Merge the program-given settings to the config file settings if not yet present.
-        confopt = merge_dicts(dataclass_asdict_no_defaults(runopt), confopt)
-    else:
-        runopt = _def_fact()
+        if isinstance(field, _SubParsersAction):
+            # The function _create_with_missing don't makes every encountered field a wrong field
+            # (with the exception of the config fields, defined in the kwargs["default"] earlier).
+            # The CLI options are unknown to it.
+            # Here, we pick the field unknown to the CLI parser too.
+            # As whole subparser was unknown here, we safely consider all its fields wrong fields.
+            if fname:
+                missing_req[fname_raw] = get_or_create_parent_dict(requireds, fname)
+            else:
+                # This is the default subparser, without a field name:
+                # ex. `run([List, Run])`
+                # Convert
+                # {'bot_id': 'a', '_subcommands': {'my_int': 1}}
+                #   into
+                # {'': {'bot_id': 'a'}, {'_subcommands': {'my_int': 1}}}
+                missing_req[""] = {}
+                for k, v in requireds.items():
+                    if isinstance(v, dict):
+                        missing_req[k] = v
+                    else:
+                        missing_req[""][k] = v
+        else:
+            get_or_create_parent_dict(missing_req, fname, True)[fname_raw] = get_or_create_parent_dict(
+                requireds, fname, True
+            )[fname_raw]
 
-    # Merge option sections.
-    # Ex: TextSettings will derive from both Tui and Ui. You may specify a Tui default value, common for all Tui interfaces.
-    for sources in [
-        ("ui", "gui"),
-        ("ui", "tui"),
-        ("ui", "tui", "textual"),
-        ("ui", "tui", "text"),
-        ("ui", "tui", "textual", "web"),
-    ]:
-        target = sources[-1]
-        confopt[target] = {
-            **{k: v for s in sources for k, v in confopt.get(s, {}).items()},
-            **confopt.get(target, {}),
-        }
+    # We might have added a subsection with no fields in _create_with_missing,
+    # remove them so that no empty subgroup is displayed
+    remove_empty_dicts(missing_req)
 
-    for key, value in vars(create_with_missing(_def_fact, confopt)).items():
-        if value is not MISSING_NONPROP:
-            setattr(runopt, key, value)
-    return runopt
+    # modify out to the same form as env_ derived tagdict
+    # (adds the main "" section)
+    return dict_added_main(missing_req)
+
+
+def _reset_missing_fields(td: TagDict, missing_req: TagDict):
+    """Those fields were given a temporary default value so that tyro
+    can recover and join the rest of the CLI fields.
+    Now, it's time to reset them so that in a dialog form,
+    these fields are not pre-filled. (Ex. SelectTag must not have a chosen default.)
+    """
+    for key, val in missing_req.items():
+        if isinstance(val, dict):
+            _reset_missing_fields(td[key], val)
+        else:
+            tag = td[key]
+            # Why we don't put None here? The only difference is
+            # that when we use the bare Mininterface, val=MISSING is output instead of val=None
+            # which is more meaningful.
+            tag._set_val(MissingTagValue())
+            # NOTE See the comment test_subcommands.Message.msg:
+            # Even though this field is optional, tyro finds it as required
+            # and we mark it as required when handling failed fields.
+            # But if left empty, nothing happens.
+            # If needed, we might detect whether it is optional and do not
+            # mark it required.
+            tag.set_error_text()
 
 
 def to_kebab_case(name: str) -> str:
@@ -381,9 +396,12 @@ def to_kebab_case(name: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()
 
 
-def assure_m(m) -> "Mininterface":
-    if isinstance(m, FunctionType):
-        m = m()
-    elif not m:  # we should never come here
-        raise ValueError("Interface missing so that I can choose a subcommand")
-    return m
+def _ensure_command_init(env: EnvClass, m: "Miniterface"):
+    if isinstance(env, Command):
+        # If dialog was raised in parse_cli, we are sure the init has been already called.
+        env.facet = m.facet
+        env.interface = m
+
+        # Undocumented as I'm not sure whether I can recommend it or there might be a better design.
+        # Init is launched before tagdict creation so that it can modify class __annotation__.
+        env.init()

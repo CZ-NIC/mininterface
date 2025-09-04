@@ -16,7 +16,7 @@ from ..settings import UiSettings
 from ..exceptions import DependencyRequired
 
 from ..facet import Facet
-from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
+from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
 from ..tag.tag import Tag, TagValue, ValidationCallback
 
 try:
@@ -128,7 +128,7 @@ class Mininterface(Generic[EnvClass]):
 
         ![Asking number](asset/ask-number.avif)
 
-        However, when run in a non-interactive session with TUI (ex. no display), [TextInterface](Interfaces.md#textinterface)
+        However, when run in a non-interactive session with TUI (ex. no display + piped in content), [TextInterface](Interfaces.md#textinterface)
         is used which is able to turn it into an interactive one.
 
         ```python
@@ -242,12 +242,19 @@ class Mininterface(Generic[EnvClass]):
         # But what should be the callable parameter, tag, or the value? The same as in the Tag(validation=).
         # So that we can have `ask("My number", int, Gt(0))`
         # NOTE Missing tests.
+        # NOTE Missing default= param. (Should be same as passing `ask("My number", Tag(5))`)
 
         if annotation is int:
             print("Asking number:", text)
         else:
             print("Asking:", text)
 
+        # NOTE With no default specified, maybe the behaviour might be changed
+        # to Cancelled rather than inventing a default value?
+        #
+        # MININTERFACE_INTERFACE=min ./_debug.py 0<&-
+        # Asking: Foo
+        # Output:
         return assure_tag(annotation, validation)._make_default_value()
 
     def confirm(self, text: str, default: bool = True) -> bool:
@@ -538,14 +545,18 @@ class Mininterface(Generic[EnvClass]):
     ) -> FormDict | DataClass | EnvClass:
         _form = self.env if form is None else form
         if isinstance(_form, dict):
-            return formdict_resolve(
+            return tagdict_resolve(
                 adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True
             )
         if isinstance(_form, type):  # form is a class, not an instance
-            _form, wf = parse_cli(_form, {}, False, False, args=[], m=self)  # NOTE what to do with wf?
+            _form, dialog_raised = parse_cli(_form, {}, self, False, True, args=[])
+            if dialog_raised:  # form has already been raised due to dataclass validation, do not re-raise
+                return _form
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)
             # the original dataclass is updated, hence we do not need to catch the output from .run_dialog
-            adaptor.run_dialog(dataclass_to_tagdict(_form, self), title=title, submit=submit)
+            dc = dataclass_to_tagdict(_form, self)
+            if dc != {"": {}}:  # empty class
+                adaptor.run_dialog(dc, title=title, submit=submit)
             return _form
         if isinstance(_form, SimpleNamespace) and not vars(_form):
             # There is no env, return the empty env. Not well documented.

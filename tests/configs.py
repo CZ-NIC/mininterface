@@ -232,8 +232,6 @@ class AnnotatedClass:
     # files8: Annotated[list[Path], Tag(annotation=str)]
     files3: list[Path] = field(default_factory=list)
     files5: Annotated[list[Path], None] = field(default_factory=list)
-    files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
-    """ Files """
 
 
 @dataclass
@@ -246,7 +244,11 @@ class AnnotatedClassInner:
     files3: list[Path] = field(default_factory=list)
     files4: Positional[list[Path]] = field(default_factory=list)
     files5: Annotated[list[Path], None] = field(default_factory=list)
-    files6: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
+    files6: Annotated[list[Path], Tag(annotation=list)] = field(default_factory=list)
+
+@dataclass
+class AnnotatedClass4:
+    bad: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
     """ Files """
 
 
@@ -335,6 +337,9 @@ class AnnotatedTypes:
     )  # Valid: [], [10, 20, 30, 40, 50]
     # Invalid: (1, 2), ["abc"], [0] * 20
     percent: Annotated[int, Gt(0), Le(100)] = 5
+
+    # NOTE TkInterface would take this as int and you cannot write a float unless you submit with the empty field.
+
     percent_fl: Annotated[float, Gt(0), Le(100)] = 5
 
 

@@ -1,5 +1,7 @@
+from unittest import skipUnless
 from mininterface import Mininterface, run
-from mininterface._lib.cli_parser import _merge_settings, parse_cli, parse_config_file
+from mininterface._lib.cli_parser import parse_cli
+from mininterface._lib.config_file import _merge_settings, parse_config_file
 from mininterface.settings import UiSettings
 from mininterface.tag import PathTag, Tag
 from attrs_configs import AttrsNested
@@ -39,15 +41,13 @@ from tyro.conf import FlagConversionOff, OmitArgPrefixes
 
 class TestRun(TestAbstract):
     def test_run_ask_empty(self):
-        with self.assertOutputs(
-            "Asking the form SimpleEnv(test=False, important_number=4)"
-        ):
+        with self.assertOutputs("Asking the form SimpleEnv(test=False, important_number=4)"):
             run(SimpleEnv, True, interface=Mininterface)
         with self.assertOutputs(""):
             run(SimpleEnv, interface=Mininterface)
 
     def test_run_ask_for_missing(self):
-        form = """Asking the form {'token': Tag(val=MISSING, description='', annotation=<class 'str'>, label='token')}"""
+        form = """Asking the form FurtherEnv2(token=MISSING, host='example.org')"""
         # Ask for missing, no interference with ask_on_empty_cli
         with self.assertOutputs(form), self.assertRaises(SystemExit):
             run(FurtherEnv2, True, interface=Mininterface)
@@ -65,9 +65,10 @@ class TestRun(TestAbstract):
             run(FurtherEnv2, True, ask_for_missing=False, interface=Mininterface)
             self.assertEqual("", stdout.getvalue().strip())
 
+    @skipUnless(sys.version_info >= (3, 11), "requires Python 3.11+")
     def test_run_ask_for_missing_underscored(self):
         # Treating underscores
-        form2 = """Asking the form {'token_underscore': Tag(val=MISSING, description='', annotation=<class 'str'>, label='token_underscore')}"""
+        form2 = """Asking the form MissingUnderscore(token_underscore=MISSING, host='example.org')"""
         with self.assertOutputs(form2), self.assertRaises(SystemExit):
             run(MissingUnderscore, True, interface=Mininterface)
 
@@ -87,11 +88,30 @@ class TestRun(TestAbstract):
         self.assertEqual(["files2"], list(wf))
 
     def test_run_ask_for_missing_union(self):
-        form = """Asking the form {'path': PathTag(val=MISSING, description='', annotation=str | pathlib._local.Path, label='path'), 'combined': Tag(val=MISSING, description='', annotation=int | tuple[int, int] | None, label='combined'), 'simple_tuple': Tag(val=MISSING, description='', annotation=tuple[int, int], label='simple_tuple')}"""
+        form = """Asking the form MissingNonscalar(path=MISSING, combined=MISSING, simple_tuple=MISSING)"""
         if sys.version_info[:2] <= (3, 12):  # NOTE remove with Python 3.12
             form = form.replace("pathlib._local.Path", "pathlib.Path")
 
         with self.assertOutputs(form), self.assertRaises(SystemExit):
+            runm(MissingNonscalar)
+
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "path": PathTag(val=MISSING, description="", annotation=str | Path, label="path"),
+                        "combined": Tag(
+                            val=MISSING, description="", annotation=int | tuple[int, int] | None, label="combined"
+                        ),
+                        "simple_tuple": Tag(
+                            val=MISSING, description="", annotation=tuple[int, int], label="simple_tuple"
+                        ),
+                    }
+                },
+                {"": {"path": "/tmp", "combined": None, "simple_tuple": (1, 1)}},
+            )
+        ):
+
             runm(MissingNonscalar)
 
     def test_missing_required_fail(self):
@@ -111,9 +131,7 @@ class TestRun(TestAbstract):
 
         _, wf = parse_cli(MissingCombined, {})
         r = {
-            "file": PathTag(
-                val=MISSING, description="file ", annotation=Path, label="file"
-            ),
+            "file": PathTag(val=MISSING, description="file ", annotation=Path, label="file"),
             "foo": Tag(val=MISSING, description="", annotation=str, label="foo"),
         }
         self.assertEqual(repr(r), repr(wf))
@@ -123,39 +141,28 @@ class TestRun(TestAbstract):
         sys.argv = ["SimpleEnv.py"]
         self.assertEqual(
             10,
-            run(
-                SimpleEnv, config_file=True, interface=Mininterface
-            ).env.important_number,
+            run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number,
         )
         self.assertEqual(
             4,
-            run(
-                SimpleEnv, config_file=False, interface=Mininterface
-            ).env.important_number,
+            run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number,
         )
         self.assertEqual(
             20,
-            run(
-                SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface
-            ).env.important_number,
+            run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number,
         )
         self.assertEqual(
             20,
-            run(
-                SimpleEnv, config_file=Path("SimpleEnv2.yaml"), interface=Mininterface
-            ).env.important_number,
+            run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"), interface=Mininterface).env.important_number,
         )
         self.assertEqual(
             4,
-            run(
-                SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface
-            ).env.important_number,
+            run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number,
         )
         with self.assertRaises(FileNotFoundError):
             run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
 
     def test_complex_config(self):
-        self.maxDiff = None
         pattern = ComplexEnv(
             a1={1: "a"},
             a2={2: ("b", 22), 3: ("c", 33), 4: ("d", 44)},
@@ -165,9 +172,7 @@ class TestRun(TestAbstract):
             a6=["i", 9],
             a7=[("j", 10.0), ("k", 11), ("l", 12)],
         )
-        self.assertEqual(
-            pattern, runm(ComplexEnv, config_file="tests/complex.yaml").env
-        )
+        self.assertEqual(pattern, runm(ComplexEnv, config_file="tests/complex.yaml").env)
 
     def test_run_annotated(self):
         m = run(FlagConversionOff[OmitArgPrefixes[SimpleEnv]])
@@ -182,9 +187,7 @@ class TestRun(TestAbstract):
         for model in (PydNested, SimpleEnv, AttrsNested):
             with warnings.catch_warnings(record=True) as w:
                 r(model)
-                self.assertIn(
-                    "Unknown fields in the configuration file", str(w[0].message)
-                )
+                self.assertIn("Unknown fields in the configuration file", str(w[0].message))
 
     def test_settings(self):
         # NOTE
@@ -207,9 +210,7 @@ class TestRun(TestAbstract):
 
         opt3 = MininterfaceSettings(
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
-            gui=GuiSettings(
-                foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False
-            ),
+            gui=GuiSettings(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
             tui=TuiSettings(foo=3, p_config=2, p_dynamic=0),
             textual=TextualSettings(foo=3, p_config=1, p_dynamic=0, foobar=74),
             text=TextSettings(foo=3, p_config=2, p_dynamic=0),
@@ -233,9 +234,7 @@ class TestRun(TestAbstract):
 
         res4 = MininterfaceSettings(
             ui=UiDumb(foo=3, p_config=0, p_dynamic=0),
-            gui=GuiSettings(
-                foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False
-            ),
+            gui=GuiSettings(foo=3, p_config=0, p_dynamic=0, combobox_since=5, test=False),
             tui=TuiSettings(foo=100, p_config=2, p_dynamic=100),
             textual=TextualSettings(foo=100, p_config=1, p_dynamic=100, foobar=74),
             text=TextSettings(foo=100, p_config=2, p_dynamic=200),

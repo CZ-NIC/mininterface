@@ -3,7 +3,7 @@ from mininterface.tag import DatetimeTag, Tag
 from mininterface.tag.tag_factory import assure_tag
 from mininterface.validators import limit, not_empty
 from configs import AnnotatedTypes, AnnotatedTypesCombined
-from shared import TestAbstract
+from shared import TestAbstract, runm
 
 
 from annotated_types import Gt, Lt
@@ -42,6 +42,7 @@ class TestValidators(TestAbstract):
     def test_bare_limit(self):
         def f(val):
             return Tag(val)
+
         self.assertTrue(all(limit(1, 10)(f(v)) is True for v in (1, 2, 9, 10)))
         self.assertTrue(any(limit(1, 10)(f(v)) is not True for v in (-1, 0, 11)))
         self.assertTrue(all(limit(5)(f(v)) is True for v in (0, 2, 5)))
@@ -52,7 +53,7 @@ class TestValidators(TestAbstract):
         self.assertTrue(all(limit(1, 10, lt=2)(f(v)) is not True for v in (3, 11)))
 
         # valid for checking str length
-        self.assertTrue(all(limit(1, 10)(f("a"*v)) is True for v in (1, 2, 9, 10)))
+        self.assertTrue(all(limit(1, 10)(f("a" * v)) is True for v in (1, 2, 9, 10)))
         self.assertTrue(any(limit(1, 10)(f(v)) is not True for v in (-1, 0, 11)))
 
     def test_limited_field(self):
@@ -100,10 +101,10 @@ class TestValidators(TestAbstract):
             self.assertFalse(d["percent_fl"].update(i), i)
 
         for i in (0, 9, 10):
-            self.assertTrue(d["my_list"].update([0]*i), i)
+            self.assertTrue(d["my_list"].update([0] * i), i)
 
         for i in (11, 100):
-            self.assertFalse(d["my_list"].update([0]*i), i)
+            self.assertFalse(d["my_list"].update([0] * i), i)
 
     def test_annotated_types_combined(self):
         d: TagDict = dataclass_to_tagdict(AnnotatedTypesCombined())[""]
@@ -124,3 +125,40 @@ class TestValidators(TestAbstract):
         self.assertTrue(d["combined2"].update(i), i)
         self.assertTrue(d["combined3"].update(i), i)
         self.assertFalse(d["combined4"].update(i), i)
+
+    def test_subsequent_validation(self):
+        """CLI parser will not validate certain things.
+        However, subsequent validation works.
+        """
+
+        # This should raise a form as percent-fl is needed to be filled up.
+        # However, tyro don't know about this.
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "age": Tag(val=20, description="Valid: 19, 20, ...", annotation=int, label="age"),
+                        "my_list": Tag(
+                            val=[],
+                            description="Valid: [], [10, 20, 30, 40, 50]",
+                            annotation=list[int],
+                            label="my_list",
+                        ),
+                        "percent": Tag(
+                            val=5, description='Invalid: (1, 2), ["abc"], [0] * 20', annotation=int, label="percent"
+                        ),
+                        "percent_fl": Tag(
+                            val=5,
+                            description='Type must be float! ',
+                            annotation=float,
+                            label="* percent_fl",
+                        ),
+                    }
+                },
+                {"": {"percent_fl": 5.0}},
+            )
+        ):
+            runm(AnnotatedTypes)
+
+        # This works, as "5" in CLI gets transformed to float automatically by tyro and is equal to int 5 we are comparing.
+        self.assertEqual(5, runm(AnnotatedTypes, ["--percent-fl", "5"]).env.percent_fl)

@@ -216,12 +216,17 @@ def _make_dataclass_from_actions(
                 else:
                     arg_type = str
 
-        metavar = None
         if "default" not in opt and "default_factory" not in opt:
             if action.choices:
-                # With the drop of Python 3.10, use:
+                # With the drop of Python 3.10, use mere:
                 # arg_type = Literal[*action.choices]
-                arg_type = Annotated[arg_type, Options(*action.choices)]
+                if sys.version_info >= (3,11):
+                    from .future_compatibility import literal
+                    arg_type = literal(action.choices)
+                else:
+                    # we do not prefer this option as tyro does not understand it
+                    # and won't display options in the help
+                    arg_type = Annotated[arg_type, Options(*action.choices)]
 
             if not action.option_strings and action.default is None and action.nargs != "?":
                 opt["default"] = MISSING

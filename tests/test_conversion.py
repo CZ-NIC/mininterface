@@ -1,6 +1,6 @@
 from mininterface import Mininterface, run
 from mininterface._lib.auxiliary import flatten
-from mininterface._lib.form_dict import TagDict, dataclass_to_tagdict, dict_to_tagdict, formdict_resolve
+from mininterface._lib.form_dict import TagDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
 from mininterface.tag import Tag
 from configs import ConstrainedEnv, OptionalFlagEnv
 from shared import TestAbstract
@@ -13,11 +13,11 @@ from pathlib import Path
 class TestConversion(TestAbstract):
 
     def test_tagdict_resolve(self):
-        self.assertEqual({"one": 1}, formdict_resolve({"one": 1}))
-        self.assertEqual({"one": 1}, formdict_resolve({"one": Tag(1)}))
-        self.assertEqual({"one": 1}, formdict_resolve({"one": Tag(Tag(1))}))
-        self.assertEqual({"": {"one": 1}}, formdict_resolve({"": {"one": Tag(Tag(1))}}))
-        self.assertEqual({"one": 1}, formdict_resolve({"": {"one": Tag(Tag(1))}}, extract_main=True))
+        self.assertEqual({"one": 1}, tagdict_resolve({"one": 1}))
+        self.assertEqual({"one": 1}, tagdict_resolve({"one": Tag(1)}))
+        self.assertEqual({"one": 1}, tagdict_resolve({"one": Tag(Tag(1))}))
+        self.assertEqual({"": {"one": 1}}, tagdict_resolve({"": {"one": Tag(Tag(1))}}))
+        self.assertEqual({"one": 1}, tagdict_resolve({"": {"one": Tag(Tag(1))}}, extract_main=True))
 
     def test_normalize_types(self):
         """ Conversion str("") to None and back.
@@ -113,7 +113,7 @@ class TestConversion(TestAbstract):
         self.assertIsNone(env1.severity)
 
         fd = dataclass_to_tagdict(env1)
-        ui = formdict_resolve(fd)
+        ui = tagdict_resolve(fd)
         self.assertEqual({'': {'severity': None, 'msg': None, 'msg2': 'Default text'},
                           'further': {'deep': {'flag': False}, 'numb': 0}}, ui)
         self.assertIsNone(env1.severity)

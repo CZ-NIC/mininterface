@@ -3,6 +3,7 @@ import logging
 from collections import deque
 from contextvars import ContextVar
 from gettext import gettext as _
+import sys
 from typing import Optional, Callable
 
 from tyro import _argparse as argparse
@@ -318,7 +319,8 @@ def custom_error(self: TyroArgumentParser, message: str):
         return super(TyroArgumentParser, self).error(message)
 
     exc = SystemExit(2)
-    exc.add_note(message)
+    if sys.version_info >= (3,11):
+        exc.add_note(message)
     raise exc  # will be catched
 
 def custom_init(self: TyroArgumentParser, *args, **kwargs):

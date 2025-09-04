@@ -129,7 +129,7 @@ class SelectInputWrapper:
         buttons = []
 
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
-            is_selected = choice_val is tag.val
+            is_selected = choice_val == tag.val
             rb = Radiobutton(
                 nested_frame,
                 text="",

@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+import sys
 from typing import Literal, Optional
+from unittest import skipIf
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
 from mininterface import Tag
-from mininterface.cli import SubcommandPlaceholder
+from mininterface.cli import Command, SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
 from mininterface.tag import PathTag, SelectTag
 from configs import ParametrizedGeneric, Subcommand1, Subcommand2
@@ -42,7 +44,7 @@ class Subc2:
     # ╰───────────────────────────────────────────────────────╯
     # whereas
     # cli(env, args=subargs, **kwargs)
-    # kwargs = {'default': Run(bot_id='id-one', _subcommands=Console(_subcommandsTODO=Subc2(bar=''), name='my-console', rrr='RRR'))}
+    # kwargs = {'default': Run(bot_id='id-one', _subcommands=Console(my_subcommands=Subc2(bar=''), name='my-console', rrr='RRR'))}
     # ╭─ Parsing error ─────────────────────────╮
     # │ Unrecognized arguments: id-one          │
     # │ ─────────────────────────────────────── │
@@ -54,9 +56,11 @@ class Subc2:
 
 @dataclass
 class Console:
-    _subcommandsTODO: OmitSubcommandPrefixes[Subc1 | Subc2]
+    my_subcommands: OmitSubcommandPrefixes[Subc1 | Subc2]
 
-    # NOTE Due to I suppose tyro error, this arg cannot be changed from cli.
+    my_int: int
+
+    # NOTE Due to I suppose tyro error, this arg `name` cannot be changed from cli.
     # If the default value is removed, it can be.
 
     name: Positional[str] = "my-console"
@@ -69,6 +73,10 @@ class Message:
     kind: Positional[Literal["get", "pop", "send"]]
     """ This is my help text """
 
+    # NOTE even though this field is optional, tyro finds it as required
+    # and we mark it as required when handling failed fields.
+    # But if left empty, nothing happens.
+    # See cli_parser.reset_missing_fields
     msg: Positional[Optional[str]]
     """My message"""
 
@@ -88,41 +96,47 @@ class List:
     kind: Positional[Literal["bots", "queues"]]
 
 
+@dataclass
+class Cl1(Command):
+    s: str
+
+
+@dataclass
+class Cl2(Cl1):
+
+    def run(self):
+        pass
+
+@skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestSubcommands(TestAbstract):
-
-    form1 = (
-        "Asking the form {'foo': Tag(val=0, description='', annotation=<class 'int'>, label='foo'), "
-        "'Subcommand1': {'': {'a': Tag(val=1, description='', annotation=<class 'int'>, label='a'), "
-        "'Subcommand1': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}, "
-        "'Subcommand2': {'': {'b': Tag(val=0, description='', annotation=<class 'int'>, label='b'), "
-        "'Subcommand2': Tag(val=<lambda>, description=None, annotation=<class 'function'>, label=None)}}}"
-    )
-
-    wf1 = "Asking the form {'foo': Tag(val=MISSING, description='', annotation=<class 'int'>, label='foo')}"
-    wf2 = "Asking the form {'b': Tag(val=MISSING, description='', annotation=<class 'int'>, label='b')}"
 
     def subcommands(self, subcommands: list):
         def r(args):
             return runm(subcommands, args=args)
 
-        # # missing subcommand
-        # with self.assertOutputs(self.form1): <- wrong fields dialog appear instead of the whole form
+        # missing subcommand
         with self.assertForms(
-            [
-                (
-                    {
-                        "Choose": SelectTag(
-                            val=None,
-                            description="",
-                            annotation=None,
-                            label="Choose",
-                            options=["Subcommand1", "Subcommand2"],
-                        )
-                    },
-                    {"Choose": Subcommand1},
-                ),
-                ({"": {"foo": Tag(val=MISSING, description="", annotation=int, label="foo")}}, {"": {"foo": "foo"}}),
-            ]
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label="Choose",
+                        options=["Subcommand1", "Subcommand2"],
+                    )
+                },
+                {"Choose": Subcommand1},
+            ),
+            (
+                {
+                    "": {
+                        "foo": Tag(val=MISSING, description="", annotation=int, label="foo"),
+                        "a": Tag(val=1, description="", annotation=int, label="a"),
+                    }
+                },
+                {"": {"foo": "foo"}},
+            ),
         ), self.assertRaises(SystemExit) as cm:
             r([])
         # Even though we failed on "foo: Type must be int!" in the second form, the tyro's message from the first is displayed.
@@ -130,18 +144,17 @@ class TestSubcommands(TestAbstract):
         # Normally, the user using the Minadaptor won't make it to the second form.
         self.assertEqual("the following arguments are required: {subcommand1,subcommand2}", cm.exception.code)
 
-        # NOTE we should implement this better, see Command comment
         # missing subcommand params (inherited --foo and proper --b)
         with self.assertForms(
-            [
-                (
-                    {
+            (
+                {
+                    "": {
                         "foo": Tag(val=MISSING, description="", annotation=int, label="foo"),
                         "b": Tag(val=MISSING, description="", annotation=int, label="b"),
-                    },
-                    {"foo": 1, "b": 2},
-                )
-            ]
+                    }
+                },
+                {"": {"foo": 1, "b": 2}},
+            )
         ):
             env = r(["subcommand2"]).env
             self.assertEqual(
@@ -219,92 +232,114 @@ class TestSubcommands(TestAbstract):
         m = runm([SubcommandB1, SubcommandB2, PydModel, AttrsModel], args=["pyd-model", "--name", "me"])
         self.assertEqual("me", m.env.name)
 
-    def DISABLED_test_choose_subcommands(self):
-        # NOTE Subcommand changed a bit. Now, it's a bigger task to test it. Do first self.DISABLED_test_integrations().
-        return
-        values = [
-            "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'a': Tag(val=1, description='', annotation=<class 'int'>, label='a')}}",
-            "{'': {'foo': Tag(val=7, description='', annotation=<class 'int'>, label='foo'), 'b': Tag(val=2, description='', annotation=<class 'int'>, label='b')}}",
-        ]
-
-        def check_output(*args):
-            ret = dataclass_to_tagdict(*args)
-            self.assertEqual(values.pop(0), str(ret))
-            return ret
-
-        with self.assertForms(["ADD HERE"]):
-            # with patch('mininterface._lib.start.dataclass_to_tagdict', side_effect=check_output) as mocked, \
-            #         redirect_stdout(StringIO()), redirect_stderr(StringIO()), self.assertRaises(Cancelled):
-            ChooseSubcommandOverview([SubcommandB1, SubcommandB2], Mininterface(), [])
-            # self.assertEqual(2, mocked.call_count)
-
     def test_subcommands(self):
         self.subcommands([Subcommand1, Subcommand2])
-
 
     def test_placeholder(self):
         subcommands = [Subcommand1, Subcommand2, SubcommandPlaceholder]
 
         def r(args):
-            return runm(subcommands, args=args)
+            return runm(list(subcommands), args=args)
 
         self.subcommands(subcommands)
-        return  # TODO this test should be restored
 
         # with the placeholder, the form is raised
-        # with self.assertOutputs(self.form1):   <- wrong fields dialog appear instead of the whole form
-        with self.assertOutputs(self.wf1), self.assertRaises(SystemExit):
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label="Choose",
+                        options=["Subcommand1", "Subcommand2"],
+                    )
+                },
+                {"Choose": Subcommand2},
+            ),
+            (
+                {
+                    "": {
+                        "foo": Tag(val=MISSING, description="", annotation=int, label="foo"),
+                        "b": Tag(val=MISSING, description="", annotation=int, label="b"),
+                    }
+                },
+                {"": {"foo": 5, "b": 5}},
+            ),
+        ):
+
             r(["subcommand"])
 
         # calling a placeholder works for shared arguments of all subcommands
-        # with self.assertOutputs(self.form1.replace("'foo': Tag(val=0", "'foo': Tag(val=999")):
-        # <- wrong fields dialog appear instead of the whole form
-        with self.assertOutputs(self.wf2), self.assertRaises(SystemExit):
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label="Choose",
+                        options=["Subcommand1", "Subcommand2"],
+                    )
+                },
+                {"Choose": Subcommand2},
+            ),
+            (
+                {
+                    "": {
+                        "foo": Tag(val=999, description="", annotation=int, label="foo"),
+                        "b": Tag(val=MISSING, description="", annotation=int, label="b"),
+                    }
+                },
+                {"": {"foo": 2, "b": 2}},
+            ),
+        ):
+
             r(["subcommand", "--foo", "999"])
 
-        # main help works
-        # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
-        with (
-            self.assertOutputs(contains="Use this placeholder to choose the subcommand via"),
-            self.assertRaises(SystemExit),
-        ):
-            r(["--help"])
+        # TODO Subcommand is not removed so it is not seen in the help text
+        if False:
+            # main help works
+            # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
+            with (
+                self.assertOutputs(contains="Use this placeholder to choose the subcommand via"),
+                self.assertRaises(SystemExit),
+            ):
+                r(["--help"])
 
-        # placeholder help works and shows shared arguments of other subcommands
-        with self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit):
-            r(["subcommand", "--help"])
+            # TODO if --help in args, do not emit choose_subcommand
+            # placeholder help works and shows shared arguments of other subcommands
+            with self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit):
+                r(["subcommand", "--help"])
 
-    def DISABLED_test_common_field_annotation(self):
+    def test_common_field_annotation(self):
         with self.assertForms(
-            [
-                (
-                    {"paths": PathTag(val=MISSING, description="", annotation=list[Path], label="paths")},
-                    {"paths": "['/tmp']"},
-                )
-            ]
-        ), self.assertRaises(Cancelled):
+            (
+                {"": {"paths": PathTag(val=MISSING, description="", annotation=list[Path], label="paths")}},
+                {"": {"paths": "['/tmp']"}},
+            ),
+            wizzard=False,
+        ):
             runm([ParametrizedGeneric, ParametrizedGeneric])
 
-
+@skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestNested(TestAbstract):
     def test_no_args(self):
         with self.assertForms(
-            [
-                (
-                    {"Choose": SelectTag(val=None, annotation=None, label="Choose", options=["List", "Run"])},
-                    {"Choose": List},
-                ),
-                (
-                    {
-                        "": {
-                            "kind": SelectTag(
-                                val=MISSING, description="", annotation=None, label="kind", options=["bots", "queues"]
-                            )
-                        }
-                    },
-                    {"": {"kind": "bots"}},
-                ),
-            ]
+            (
+                {"Choose": SelectTag(val=None, annotation=None, label="Choose", options=["List", "Run"])},
+                {"Choose": List},
+            ),
+            (
+                {
+                    "": {
+                        "kind": SelectTag(
+                            val=MISSING, description="", annotation=None, label="kind", options=["bots", "queues"]
+                        )
+                    }
+                },
+                {"": {"kind": "bots"}},
+            ),
         ):
             env = runm([List, Run], args=[]).env
             self.assertEqual(
@@ -314,38 +349,39 @@ class TestNested(TestAbstract):
 
     def test_run_arg(self):
         with self.assertForms(
-            [
-                (
-                    {
-                        "Choose": SelectTag(
-                            val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
-                        )
-                    },
-                    {"Choose": Message},
-                ),
-                (
-                    {
-                        "_subcommands": {
-                            "kind": SelectTag(
-                                val=MISSING,
-                                description="This is my help text",
-                                annotation=None,
-                                label="kind",
-                                options=["get", "pop", "send"],
-                            ),
-                            "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
-                        },
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    )
+                },
+                {"Choose": Message},
+            ),
+            (
+                {
+                    "": {
                         "bot_id": SelectTag(
                             val=MISSING,
                             description="Choose a value",
                             annotation=None,
                             label="bot_id",
                             options=["id-one", "id-two"],
-                        ),
+                        )
                     },
-                    {"_subcommands": {"kind": "get", "msg": "hey"}, "bot_id": "id-two"},
-                ),
-            ]
+                    "_subcommands": {
+                        "kind": SelectTag(
+                            val=MISSING,
+                            description="This is my help text",
+                            annotation=None,
+                            label="kind",
+                            options=["get", "pop", "send"],
+                        ),
+                        "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
+                        "foo": Tag(val="hello", description="", annotation=str, label="foo"),
+                    },
+                },
+                {"_subcommands": {"kind": "get", "msg": "hey"}, "": {"bot_id": "id-two"}},
+            ),
         ):
             env = runm([List, Run], args=["run"]).env
             self.assertEqual(
@@ -357,22 +393,9 @@ class TestNested(TestAbstract):
         # NOTE I'd prefer calling 'run message' would create a single call,
         # now, there is two steps while the bot-id is in the second.
         with self.assertForms(
-            [
-                (
-                    {
-                        "kind": SelectTag(
-                            val=MISSING,
-                            description="This is my help text",
-                            annotation=None,
-                            label="kind",
-                            options=["get", "pop", "send"],
-                        ),
-                        "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
-                    },
-                    {"kind": "pop", "msg": "hey"},
-                ),
-                (
-                    {
+            (
+                {
+                    "": {
                         "bot_id": SelectTag(
                             val=MISSING,
                             description="Choose a value",
@@ -381,9 +404,20 @@ class TestNested(TestAbstract):
                             options=["id-one", "id-two"],
                         )
                     },
-                    {"bot_id": "id-two"},
-                ),
-            ]
+                    "_subcommands": {
+                        "kind": SelectTag(
+                            val=MISSING,
+                            description="This is my help text",
+                            annotation=None,
+                            label="kind",
+                            options=["get", "pop", "send"],
+                        ),
+                        "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
+                        "foo": Tag(val="hello", description="", annotation=str, label="foo"),
+                    },
+                },
+                {"": {"bot_id": "id-two"}, "_subcommands": {"kind": "pop", "msg": "hey"}},
+            ),
         ):
             env = runm([List, Run], args=["run", "message"]).env
             self.assertEqual(
@@ -395,25 +429,9 @@ class TestNested(TestAbstract):
         # Here, user writes get as the message positional arg,
         # but it's interpreted as a bot id.
         # NOTE It would be better if we could raise a bot id dialog instead of the error.
-        with self.assertForms(
-            [
-                (
-                    {
-                        "kind": SelectTag(
-                            val=MISSING,
-                            description="This is my help text",
-                            annotation=None,
-                            label="kind",
-                            options=["get", "pop", "send"],
-                        ),
-                        "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
-                    },
-                    {"kind": "pop", "msg": "hey"},
-                ),
-            ]
-        ), self.assertStderr(contains="invalid choice: 'get' (choose from 'id-one', 'id-two')"), self.assertRaises(
-            SystemExit
-        ):
+        with self.assertForms(), self.assertStderr(
+            contains="invalid choice: 'get' (choose from 'id-one', 'id-two')"
+        ), self.assertRaises(SystemExit):
             runm([List, Run], args=["run", "message", "get"])
 
     def test_full_args(self):
@@ -422,3 +440,179 @@ class TestNested(TestAbstract):
             f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg=None, foo='hello'))""",
             repr(env),
         )
+
+
+    def test_optional_flag(self):
+        """ Message param is missing, hence the form is output. But we let it None. """
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "bot_id": SelectTag(
+                            val="id-one",
+                            description="Choose a value",
+                            annotation=None,
+                            label="bot_id",
+                            options=["id-one", "id-two"],
+                        )
+                    },
+                    "_subcommands": {
+                        "kind": SelectTag(
+                            val="get",
+                            description="This is my help text",
+                            annotation=None,
+                            label="kind",
+                            options=["get", "pop", "send"],
+                        ),
+                        "msg": Tag(
+                            val=MISSING, description="My message", annotation=Optional[str], label="msg"
+                        ),
+                        "foo": Tag(val="my-foo", description="", annotation=str, label="foo"),
+                    },
+                },
+                {"_subcommands": {"msg": None}},
+            )
+        ):
+            env = runm([List, Run], args=["run", "message", "get", "--foo", "my-foo", "id-one"]).env
+            self.assertIsNone(env._subcommands.msg)
+
+    def test_full_args_including_optional(self):
+        env = runm([List, Run], args=["run", "message", "get", "my-message", "--foo", "foo-set", "id-one"]).env
+        self.assertEqual(
+            f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg='my-message', foo='foo-set'))""",
+            repr(env),
+        )
+
+
+    def test_choose__run_console_subc1(self):
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["List", "Run"]
+                    )
+                },
+                {"Choose": Run},
+            ),
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    )
+                },
+                {"Choose": Console},
+            ),
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    )
+                },
+                {"Choose": Subc1},
+            ),
+            (
+                {
+                    "": {
+                        "bot_id": SelectTag(
+                            val=MISSING,
+                            description="Choose a value",
+                            annotation=None,
+                            label="bot_id",
+                            options=["id-one", "id-two"],
+                        )
+                    },
+                    "_subcommands": {
+                        "my_subcommands": {},
+                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my_int"),
+                        "name": Tag(val="my-console", description="", annotation=str, label="name"),
+                        "rrr": Tag(val="RRR", description="", annotation=str, label="rrr"),
+                    },
+                },
+                {"": {"bot_id": "id-one"}, "_subcommands": {"my_int": 5, "rrr": "RRR2"}},
+            ),
+        ):
+            runm([List, Run])
+
+    def test_run__choose_console_subc1(self):
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    )
+                },
+                {"Choose": Console},
+            ),
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    )
+                },
+                {"Choose": Subc1},
+            ),
+            (
+                {
+                    "": {
+                        "bot_id": SelectTag(
+                            val=MISSING,
+                            description="Choose a value",
+                            annotation=None,
+                            label="bot_id",
+                            options=["id-one", "id-two"],
+                        )
+                    },
+                    "_subcommands": {
+                        "my_subcommands": {},
+                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my_int"),
+                        "name": Tag(val="my-console", description="", annotation=str, label="name"),
+                        "rrr": Tag(val="RRR", description="", annotation=str, label="rrr"),
+                    },
+                },
+                {"": {"bot_id": "id-one"}, "_subcommands": {"my_int": 5, "rrr": "RRR2"}},
+            ),
+        ):
+            runm([List, Run], ["run"])
+
+    def test_subc1(self):
+        self.assertIsInstance(runm([Subc1, Subc2], ["subc1"]).env, Subc1)
+
+    def test_subc2(self):
+        self.assertEqual("BAR", runm([Subc1, Subc2], ["subc2"]).env.bar)
+
+    def test_choose_subc1(self):
+        """No surplus form created, because Subc1 is empty"""
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    )
+                },
+                {"Choose": Subc1},
+            ),
+            end=True,
+        ):
+            runm([Subc1, Subc2])
+
+    def test_choose_subc2(self):
+        with self.assertForms(
+            (
+                {
+                    "Choose": SelectTag(
+                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    )
+                },
+                {"Choose": Subc2},
+            ),
+            ({"": {"bar": Tag(val="BAR", description="", annotation=str, label="bar")}}, {"": {"bar": "A"}}),
+        ):
+
+            self.assertEqual("A", runm([Subc1, Subc2]).env.bar)
+
+    def test_strange_error_mitigation(self):
+        """Seems like a tyro error."""
+        with self.assertForms(
+            ({"": {"s": Tag(val=MISSING, description="", annotation=str, label="s")}}, {"": {"s": "s"}})
+        ):
+            runm([Cl1, Cl2], ["cl2"])

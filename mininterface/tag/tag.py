@@ -175,6 +175,7 @@ class MissingTagValue:
     """
     # NOTE in the future, we might use simple dataclasses.MISSING instead. When we are sure this is not needed,
     # see: test_run_message_args comment.
+    # Update: No, in mininterface, the repr would be '<dataclasses._MISSING_TYPE object at 0x7610556c21e0>' instead of 'MISSING'
 
     # def __init__(self, exception: BaseException, eavesdrop):
     #     self.exception = exception
@@ -186,6 +187,13 @@ class MissingTagValue:
     # def fail(self):
     #     print(self.eavesdrop)
     #     raise self.exception
+
+    # TODO
+    # Command.init() method might access the class that has MissingTagValue still set.
+    # (Just before the wrong fields dialog.)
+    # So for the convenience, we add this method.
+    def __bool__(self):
+        return False
 
 
 @dataclass
@@ -412,6 +420,8 @@ class Tag(Generic[TagValue]):
         if not self.label:
             if self._src_key:
                 self.label = self._src_key
+                # TODO:
+                # self.label = self._src_key.replace("_", " ")
             # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
             # We are using get_name() instead.
             # if self._is_a_callable():
@@ -440,6 +450,10 @@ class Tag(Generic[TagValue]):
                 v = func_name
             elif field.name == "val" and self._is_a_callable():
                 v = self.val.__name__
+            elif field.name == "annotation" and not get_origin(field_value) and hasattr(field_value, "__name__"):
+                # Display: repr(int) = <class 'int'>
+                # Cases that will not come here: repr(list[int]) = list[int], repr(None) = None
+                v = field_value.__name__
             else:
                 v = repr(field_value)
 
@@ -484,6 +498,7 @@ class Tag(Generic[TagValue]):
         if self.description == "":
             self.description = tag.description
         if name and self.label is None:
+            # TODO name.replace("_", " ") CLI args have underscores. Implement and do a test.
             self._original_label = self.label = name
         return self
 
@@ -666,8 +681,10 @@ class Tag(Generic[TagValue]):
             self._src_obj.append(src)
         return self
 
-    def set_error_text(self, s):
-        self.description = f"{s} {self._original_desc}"
+    def set_error_text(self, s=""):
+        """ Mark the field as required and possibly adds an error text to the description. """
+        if s:
+            self.description = f"{s} {self._original_desc}"
         if n := self._original_label:
             # Why checking self._original_label?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
