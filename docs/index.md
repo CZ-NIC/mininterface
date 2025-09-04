@@ -1,5 +1,5 @@
 # Mininterface – access to GUI, TUI, web, CLI and config files
-[![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg)](https://github.com/CZ-NIC/mininterface/actions)
+[![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg?branch=main)](https://github.com/CZ-NIC/mininterface/actions)
 [![Downloads](https://static.pepy.tech/badge/mininterface)](https://pepy.tech/project/mininterface)
 
 Write the program core, do not bother with the input/output.

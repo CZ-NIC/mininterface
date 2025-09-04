@@ -11,6 +11,7 @@ from io import StringIO
 
 
 class TestSelectTag(TestAbstract):
+
     def test_options_param(self):
         t = SelectTag("one", options=["one", "two"])
         t.update("two")

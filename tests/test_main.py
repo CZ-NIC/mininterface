@@ -1,5 +1,6 @@
 from mininterface import Mininterface, run
-from mininterface._lib.cli_parser import _merge_settings, parse_cli, parse_config_file
+from mininterface._lib.cli_parser import parse_cli
+from mininterface._lib.config_file import _merge_settings, parse_config_file
 from mininterface.settings import UiSettings
 from mininterface.tag import PathTag, Tag
 from attrs_configs import AttrsNested

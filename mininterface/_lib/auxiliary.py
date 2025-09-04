@@ -76,10 +76,20 @@ def get_descriptions(parser: ArgumentParser) -> dict:
         for action in parser._actions
     }
 
+
 @lru_cache
-def get_description(obj, param: str) -> str:
+def _get_parser(obj):
     if get_parser:
-        return get_descriptions(get_parser(obj))[param].strip()
+        return get_parser(obj)
+
+
+def get_description(obj, param: str) -> str:
+    if p := _get_parser(obj):
+        d = get_descriptions(p)[param].strip()
+        if d.replace("-", "_") == param:
+            # field `bot_id` is reported as `bot-id` in tyro
+            return ""
+        return d
     else:
         # We are missing mininterface[basic] requirement. Tyro is missing.
         # Without tyro, we are not able to evaluate the class: m.form(Env),
@@ -91,8 +101,9 @@ def get_description(obj, param: str) -> str:
 def yield_annotations(dataclass):
     yield from (cl.__annotations__ for cl in dataclass.__mro__ if is_dataclass(cl))
 
-def get_annotation(class_, dest: str, crawled:list):
-    """ Get the attribute annotation according to the path in `dest` (dot means a nested subclass).
+
+def get_annotation(class_, dest: str, crawled: list):
+    """Get the attribute annotation according to the path in `dest` (dot means a nested subclass).
     Works for dataclass, pydantic, attrs.
 
     Ex: get_annotation(AppConfig, "bot.bot_id"))
@@ -107,7 +118,7 @@ def get_annotation(class_, dest: str, crawled:list):
     parts = dest.split(".")
     current_cls = class_
     for part, class_name in zip(parts, crawled):
-        if not isinstance(current_cls, type): # `(Message | Console)`
+        if not isinstance(current_cls, type):  # `(Message | Console)`
             for cl in get_args(current_cls):
                 if cl.__name__.casefold() == class_name:
                     current_cls = cl
@@ -119,8 +130,9 @@ def get_annotation(class_, dest: str, crawled:list):
 
         if part not in hints:
             raise KeyError(f"Field {part!r} not found in {current_cls}")
-        current_cls = hints[part]   # přejdi na typ dalšího levelu
+        current_cls = hints[part]  # přejdi na typ dalšího levelu
     return current_cls
+
 
 def get_or_create_parent_dict(d: dict, fname: str, ignore_last=False) -> dict:
     """
@@ -141,24 +153,26 @@ def get_or_create_parent_dict(d: dict, fname: str, ignore_last=False) -> dict:
         current = current[part]
     return current
 
-def get_nested_class(class_: type, fname: str, ignore_last=False) -> type:
-    """
-    Traverse the class attributes according to the dot-separated path in `fname`
-    and return the type of the most deeply nested attribute.
-    Works for dataclasses, Pydantic models, and attrs classes.
-    """
-    parts = fname.split(".")
-    if ignore_last:
-        parts = parts[:-1]
-    current = class_
 
+# NOTE Deprecated
+# def get_nested_class(class_: type, fname: str, ignore_last=False) -> type:
+#     """
+#     Traverse the class attributes according to the dot-separated path in `fname`
+#     and return the type of the most deeply nested attribute.
+#     Works for dataclasses, Pydantic models, and attrs classes.
+#     """
+#     parts = fname.split(".")
+#     if ignore_last:
+#         parts = parts[:-1]
+#     current = class_
 
-    for part in parts:
-        if not hasattr(current, part):
-            raise AttributeError(f"{part} not found in {current}")
-        current = getattr(current, part)
+#     for part in parts:
+#         if not hasattr(current, part):
+#             raise AttributeError(f"{part} not found in {current}")
+#         current = getattr(current, part)
 
-    return current
+#     return current
+
 
 def matches_annotation(value, annotation) -> bool:
     """Check whether the value type corresponds to the annotation.
@@ -261,6 +275,17 @@ def merge_dicts(d1: dict, d2: dict):
             d1[key] = value
     return d1
 
+def dict_diff(a: dict, b: dict) -> dict:
+    """ Returns the B values where they differ. """
+    result = {}
+    for k in b:
+        if isinstance(a.get(k), dict) and isinstance(b.get(k), dict):
+            nested = dict_diff(a[k], b[k])
+            if nested:
+                result[k] = nested
+        elif a.get(k) != b.get(k):
+            result[k] = b[k]
+    return result
 
 def naturalsize(value: float | str, *args) -> str:
     """For a bare interface, humanize might not be installed."""
@@ -296,6 +321,7 @@ def validate_annotated_type(meta, value) -> bool:
         raise NotImplementedError(f"Unknown predicated {meta}")
     return True
 
+
 def allows_none(annotation) -> bool:
     """True, if annotation allows None: `int | None`, `Optional[int]`, `Union[int,None]`."""
     if annotation is None:
@@ -309,6 +335,7 @@ def allows_none(annotation) -> bool:
         return any(arg is type(None) for arg in args)
     return False
 
+
 @lru_cache(maxsize=1024)
 def _get_origin(tp: Any):
     """
@@ -317,7 +344,8 @@ def _get_origin(tp: Any):
     """
     return get_origin(tp)
 
-def remove_empty_dicts(d:dict):
+
+def remove_empty_dicts(d: dict):
     """Recursively remove empty dicts from a nested dict, in place."""
     for k in list(d):
         if isinstance(d[k], dict):

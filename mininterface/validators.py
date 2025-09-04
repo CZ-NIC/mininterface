@@ -28,11 +28,12 @@ class AttrsModel:
 """
 
 from typing import overload
-from .tag import Tag
+
+from .tag import Tag, SelectTag
 
 
 def not_empty(tag: Tag):
-    """Assures that Tag the user has written a value and did not let the field empty.
+    """Ensures that the user has entered a value and did not leave the field empty.
 
     ```python
     from mininterface import Tag, validators, run
@@ -50,7 +51,7 @@ def not_empty(tag: Tag):
     Note that for Path, an empty string is converted to an empty Path('.'),
     hence '.' too is considered as an empty input and the user
     is not able to set '.' as a value.
-    This does not seem to me as a bad behaviour as in CLI you clearly see the CWD,
+    We do not consider this a bad behaviour as in CLI you clearly see the CWD,
     whereas in a UI the CWD is not evident.
 
     Args:
@@ -70,7 +71,10 @@ def not_empty(tag: Tag):
         # Complex object are considered empty when the val is the same as their default value.
         # We might to design the other way. Look, a DatetimeTag makes default value current time,
         # hence passing `time() -> 00:00` would pass (if it's not midnight).
-        if v == tag._make_default_value():
+        if v == tag._make_default_value() and not isinstance(tag, SelectTag):
+            # Comparing SelectTag here is not nice.
+            # However I don't know to handle this better, without importing and involving SelectTag.
+            # It takes the first value, the default value is not wrong here.
             return "Fill in the value"
     except:
         pass

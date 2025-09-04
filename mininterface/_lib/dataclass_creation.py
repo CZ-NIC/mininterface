@@ -75,8 +75,6 @@ def coerce_type_to_annotation(value, annotation):
 
 def _get_wrong_field(
     env_class: EnvClass,
-    exception: BaseException,
-    eavesdrop: str,
     field_name: str,
     annotation=None,
 ) -> Tag:
@@ -97,6 +95,11 @@ def _unwrap_annotated(tp):
     """
     Annotated[Inner, ...] -> `Inner`,
     """
+    # TODO do a test nested Annotated
+    # and use the while cycle from parse_cli
+    # while _get_origin(tp) is Annotated:
+    #     tp, *_ = get_args(tp)
+    # return tp
     if _get_origin(tp) is Annotated:
         inner, *_ = get_args(tp)
         return inner
@@ -130,30 +133,24 @@ def create_with_missing(env, disk: dict, wf: Optional[dict] = None, mint: Option
 
     # Determine model
     if pydantic and issubclass(_unwrap_annotated(env), BaseModel):
-        m = _process_pydantic
+        proc_method = _process_pydantic
     elif attr and attr.has(env):
-        m = _process_attr
+        proc_method = _process_attr
     else:  # dataclass
-        m = _process_dataclass
+        proc_method = _process_dataclass
 
     # Fill default fields with the config file values or leave the defaults.
     # Unfortunately, we have to fill the defaults, we cannot leave them empty
     # as the default value takes the precedence over the hard coded one, even if missing.
     out = {}
     missings: list[Tag] = []
-    for name, v in m(env, disk, wf, mint):
+    for name, v in proc_method(env, disk, wf, mint):
         out[name] = v
         if v == MISSING_NONPROP and wf is not None:
             # For building config file, the MISSING_NONPROP is alright as we expect tyro to fail
             # if the value is not taken from the CLI.
-            # TODO NOT TRUE ANYMORE: However, when grabbing wrong fields (`wf`), the tyro already failed
-            # and we need to make up a real default value so that it passes in the second run.
-            # Then, these values are thrown and mininterface will prompt for wrong fields.
-            tag = wf[name] = _get_wrong_field(env, ValueError("TODO"), "missing field TODO", name)
+            tag = wf[name] = _get_wrong_field(env, name)
             missings.append(tag)
-            # TODO
-            # out[name] =tag._make_default_value(try_hard=True) # TODO get rid of try_hard
-            # TODO
         disk.pop(name, None)
 
     # Check for unknown fields
@@ -172,10 +169,6 @@ def _process_pydantic(env, disk, wf: Optional[dict], m: Optional["Mininterface"]
         if name in disk:
             default_value = f.default if f.default is not None else MISSING
             v = _process_field(name, f.annotation, disk[name], wf, m, default_value)
-            # if isinstance(f.default, BaseModel):
-            #     v = _create_with_missing(f.default.__class__, disk[name])
-            # else:
-            #     v = coerce_type_to_annotation(disk[name], f.annotation)
         elif f.default is not None:
             v = f.default
         else:
@@ -189,10 +182,6 @@ def _process_attr(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = N
         default_val = f.default if has_default else MISSING
         if f.name in disk:
             v = _process_field(f.name, f.type, disk[f.name], wf, m, default_val)
-            # if attr.has(f.default):
-            #     v = _create_with_missing(f.default.__class__, disk[f.name])
-            # else:
-            #     v = coerce_type_to_annotation(disk[f.name], f.type)
         elif has_default:
             v = f.default
         else:
@@ -201,24 +190,27 @@ def _process_attr(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = N
 
 
 def _is_struct_type(t) -> bool:
-    """Vrátí True pro dataclass, attrs class nebo Pydantic model (třída)."""
+    """True for dataclass / attrs / pydantic model classes."""
     try:
-        return bool(is_dataclass(t) or attr.has(t) or (isinstance(t, type) and issubclass(t, BaseModel)))
-    except TypeError:
-        # když t není typ (např. parametrizované anotace), vrať False
-        return False
+        if is_dataclass(t):
+            return True
+        if attr and attr.has(t):
+            return True
+        if pydantic and isinstance(t, type) and issubclass(t, BaseModel):
+            return True
+    except TypeError:  # ex. parametrized annotation
+        pass
+    return False
 
 
 def _resolve_ftype(ftype, default_value):
-    """Rozbalí Annotated, případně nahradí typem z defaultní hodnoty (dataclass/attrs/pydantic)."""
     ftype = _unwrap_annotated(ftype)
-    # default_value může určit přesnější strukturální typ
     if default_value is not MISSING and default_value is not None:
         if is_dataclass(default_value):
             return default_value.__class__
-        if attr.has(default_value):
+        if attr and attr.has(default_value):
             return default_value.__class__
-        if isinstance(default_value, BaseModel):
+        if pydantic and isinstance(default_value, BaseModel):
             return default_value.__class__
     return ftype
 
@@ -257,6 +249,8 @@ def _process_field(fname, ftype, disk_value, wf, m, default_value=MISSING):
     # We must handle the case when there are multiple subcommands possible.
     # The user decides now which way to go (choose a subcommand).
     if (origin is Union or origin is UnionType) and all(_is_struct_type(cl) for cl in get_args(ftype)):
+        if not m:  # we should not come here
+            raise RuntimeError("Missing interface, report the issue please.")
         ftype = choose_subcommand(get_args(ftype), m)
         return _init_struct_value(ftype, {}, wf, fname, m)
 

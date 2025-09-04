@@ -2,6 +2,9 @@
 
 ## 1.1.0
 * feat: interactive CLI (nested configuration missing fields dialogs)
+* feat: add utility for generating unit tests
+* fix: SelectTag preset value
+* enh: custom validation is done at dataclass built, not later on the form call
 
 ## 1.0.4 (2025-08-18)
 * enh: better argparse support (const support, store_false matching, subcommands)

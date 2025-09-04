@@ -104,7 +104,7 @@ FormDictOrEnv = TypeVar("FormDictOrEnv", bound=FormDict | DataClass)
 # FormDictOrEnv = TypeVar('FormDictOrEnv', FormDict, Type[EnvClass], EnvClass)
 
 
-def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
+def tagdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
     """For the testing purposes, returns a new dict when all Tags are replaced with their values.
 
     Args:
@@ -117,13 +117,36 @@ def formdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
     for k, v in d.items():
         while isinstance(v, Tag):
             v = v.val
-        out[k] = formdict_resolve(v, _root=False) if isinstance(v, dict) else v
+        out[k] = tagdict_resolve(v, _root=False) if isinstance(v, dict) else v
     if extract_main and _root and "" in out:
         main = out[""]
         del out[""]
         return {**main, **out}
     return out
 
+def dict_added_main(data:dict):
+    """ Gets a dict modified to the same form as a TagDict (adds the main "" section) """
+    out = {}
+    out[""] = {}
+    for key, val in data.items():
+        if isinstance(val, dict):
+            out[key] = val
+        else:
+            out[""][key] = val
+
+    return out
+
+def dict_removed_main(data:dict):
+    """ Expand the main "" section among other keys. Change in place. """
+    for key, val in data[""].items():
+        if key in data:
+            raise ValueError(f"Key duplicity {key}")
+        data[key] = val
+    del data[""]
+    return data
+
+def dict_has_main(data:dict):
+    return "" in data
 
 def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -> TagDict:
     fd = {}
@@ -204,10 +227,7 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
         raise ValueError(f"We got a namespace instead of class, CLI probably failed: {env}")
 
     for param, val in iterate_attributes(env):
-        if isinstance(val, MissingTagValue):
-            assert False  # we come here no more
-            val = None  # need to convert as MissingTagValue has .__dict__ too
-        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType)):  # nested config hierarchy
+        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType, MissingTagValue)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
             # TODO union of classes → dialog
