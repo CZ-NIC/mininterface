@@ -132,7 +132,9 @@ class MinAdaptor(BackendAdaptor):
         tags = list(flatten(form))
         if not self._try_submit((tag, tag.val) for tag in tags):
             validation_fails = "\n".join(
-                f"{tag._original_label}: {tag._error_text}" for tag in tags if tag._error_text
+                f"{tag._original_label}: {tag._error_text}" if tag._original_label else tag._error_text
+                for tag in tags
+                if tag._error_text
             )
 
             raise SystemExit(validation_fails)

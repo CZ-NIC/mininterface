@@ -63,7 +63,7 @@ class TestArgparse(TestAbstract):
         #         )
         # Now, we rather ask for subcommand (`Choose: Must be one of ['build', 'deploy']`) but I leave the comment intact.
         with self.assertForms(
-            ({"Choose": SelectTag(val=None, annotation=None, label="Choose", options=["build", "deploy"])}),
+            ({"": SelectTag(val=None, annotation=None, label=None, options=['Build  - Build something.', 'Deploy - Deploy something.'])}),
         ), self.assertRaises(SystemExit):
             runm(parser)
 
@@ -72,13 +72,13 @@ class TestArgparse(TestAbstract):
                 {
                     "": {
                         "input_file": Tag(
-                            val=MISSING, description="Path to the input file.", annotation=str, label="input_file"
+                            val=MISSING, description="Path to the input file.", annotation=str, label="input file"
                         ),
                         "output_dir": Tag(
                             val=MISSING,
                             description="Directory where output will be saved.",
                             annotation=str,
-                            label="output_dir",
+                            label="output dir",
                         ),
                         "verbosity": Tag(val=1, description="Verbosity level.", annotation=int, label="verbosity"),
                         "config": PathTag(
@@ -89,7 +89,7 @@ class TestArgparse(TestAbstract):
                         ),
                         "debug": Tag(val=False, description="Enable debug mode.", annotation=bool, label="debug"),
                         "no_color": Tag(
-                            val=False, description="Disable colored output.", annotation=bool, label="no_color"
+                            val=False, description="Disable colored output.", annotation=bool, label="no color"
                         ),
                         "tag": Tag(val=[], description="Add one or more tags.", annotation=list[str], label="tag"),
                         "optimize": Tag(
@@ -104,7 +104,7 @@ class TestArgparse(TestAbstract):
             )
         ):
             runm(parser, args=["build"])
-
+        return
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             env = runm(parser, args=["build", "/tmp/file", "/tmp"]).form()

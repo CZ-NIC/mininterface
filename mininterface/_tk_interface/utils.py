@@ -189,7 +189,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         match tag:
             case SelectTag():
                 grid_info = widget.grid_info()
-                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor)
+                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor, len(form) == 1)
                 select_tag = True
                 variable = wrapper.variable_wrapper
                 # since tkinter variables do not allow objects,
@@ -201,6 +201,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 taking_focus = wrapper.taking_focus
                 if tag.multiple:
                     process_change_handler = False
+
 
             case PathTag():
                 grid_info = widget.grid_info()

@@ -52,7 +52,12 @@ class SetVar(set):
 
 class SelectInputWrapper:
 
-    def __init__(self, master, tag: SelectTag, grid_info, widget: Widget, adaptor: "TkAdaptor"):
+    def __init__(self, master, tag: SelectTag, grid_info, widget: Widget, adaptor: "TkAdaptor", single=False):
+        """
+
+        Args:
+            single: True if this is the single option in the dialog
+        """
         # Replace with radio buttons
         self.tag = tag
         self.adaptor = adaptor
@@ -77,8 +82,11 @@ class SelectInputWrapper:
             self.variable_wrapper = SetVar()
             self.checkboxes(bg)
         else:
+            # NOTE I would prefer a button-like menu if single==True.
             self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.options})
-            if len(self.options) >= adaptor.settings.combobox_since and AutoCombobox:
+            if not single and len(self.options) >= adaptor.settings.combobox_since and AutoCombobox:
+                if not tag.label.strip(): # ensure the label as combobox looks bad without it
+                    tag.label = "Choose"
                 self.widget = self.combobox()
             else:
                 self.radio(bg)
@@ -122,6 +130,7 @@ class SelectInputWrapper:
                 self.taking_focus = button  # NOTE should be better, to the first one
 
     def radio(self, bg):
+        # NOTE I would like Home/End, PgUp/Down, search by typing support
         options = self.options
         tag = self.tag
         adaptor = self.adaptor

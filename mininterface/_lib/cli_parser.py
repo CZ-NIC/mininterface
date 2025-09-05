@@ -1,19 +1,16 @@
 #
 # CLI and config file parsing.
 #
-from dataclasses import MISSING, asdict
-import re
+from dataclasses import asdict
 import sys
 from collections import deque
 from contextlib import ExitStack
-from types import FunctionType, SimpleNamespace
-from typing import Annotated, Callable, Optional, Sequence, Type, Union, get_args, get_origin
+from typing import Optional, Sequence, Type, Union
 from unittest.mock import patch
 
 from ..cli import Command
 
 from ..exceptions import Cancelled
-from ..tag import Tag
 from .auxiliary import (
     get_or_create_parent_dict,
     remove_empty_dicts,
@@ -24,6 +21,7 @@ from .dataclass_creation import (
     _unwrap_annotated,
     choose_subcommand,
     create_with_missing,
+    to_kebab_case
 )
 from .form_dict import EnvClass, TagDict, dataclass_to_tagdict, MissingTagValue, dict_added_main
 
@@ -126,25 +124,14 @@ def parse_cli(
                     raise
             # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
             # 1. Getting the interface is a costly operation
-            # 2. There is this bug so that we need to use single interface
-            # TODO
-            # As this works badly, lets make sure we use single interface now
-            # and will not need the second one.
-            # get_interface("gui")
-            # m = get_interface("gui")
-            # m.select([1,2,3])
+            # 2. There is this bug so that we need to use single interface:
+            #    TODO
+            #    As this works badly, lets make sure we use single interface now
+            #    and will not need the second one.
+            #    get_interface("gui")
+            #    m = get_interface("gui")
+            #    m.select([1,2,3])
             m.env = env
-            if env is MISSING_NONPROP:
-                # TODO
-                # NOTE not true any more, I've implemented and might go furhter:
-                # NOTE tyro does not work if a required positional is missing tyro.cli()
-                # returns just NonpropagatingMissingType (MISSING_NONPROP).
-                # If this is supported, I might set other attributes like required (date, time).
-                # Fail if missing:
-                #   files: Positional[list[Path]]
-                # Works if missing but imposes following attributes are non-required (have default values):
-                #   files: Positional[list[Path]] = field(default_factory=list)
-                pass
     except BaseException as exception:
         if ask_for_missing and getattr(exception, "code", None) == 2 and failed_fields.get():
             env = _dialog_missing(env_classes, kwargs, m, add_verbose, ask_for_missing, args, _crawled, _req_fields)
@@ -388,12 +375,6 @@ def _reset_missing_fields(td: TagDict, missing_req: TagDict):
             # If needed, we might detect whether it is optional and do not
             # mark it required.
             tag.set_error_text()
-
-
-def to_kebab_case(name: str) -> str:
-    """MyClass -> my-class"""
-    # I did not find where tyro does it. If I find it, I might use its function instead.
-    return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()
 
 
 def _ensure_command_init(env: EnvClass, m: "Miniterface"):

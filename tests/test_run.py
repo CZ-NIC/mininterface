@@ -78,14 +78,46 @@ class TestRun(TestAbstract):
             run(MissingUnderscore, True, ask_for_missing=True, interface=Mininterface)
             self.assertEqual("", stdout.getvalue().strip())
 
-    def TODO_test_wrong_fields(self):
-        # TODO wf is now bool. Check forms instead.
-        kwargs, _ = parse_config_file(AnnotatedClass)
-        _, wf = parse_cli(AnnotatedClass, kwargs, args=[])
+    def test_wrong_fields(self):
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "files1": PathTag(
+                            val=[],
+                            description="NOTE some of the entries are not well supported",
+                            annotation=list[Path],
+                            label="files1",
+                        ),
+                        "files2": PathTag(
+                            val=MISSING,
+                            description="NOTE some of the entries are not well supported",
+                            annotation=list[Path],
+                            label="files2",
+                        ),
+                        "files3": PathTag(
+                            val=[],
+                            description="files4: Positional[list[Path]] = field",
+                            annotation=list[Path],
+                            label="files3",
+                        ),
+                        "files5": PathTag(
+                            val=[],
+                            description="files4: Positional[list[Path]] = field",
+                            annotation=list[Path],
+                            label="files5",
+                        ),
+                    }
+                },
+                {"": {"files2": []}},
+            )
+        ):
+            runm(AnnotatedClass)
+
+
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
         # too to support default_factory,
         # ex: `my_complex: tuple[int, str] = field(default_factory=lambda: [(1, 'foo')])`
-        self.assertEqual(["files2"], list(wf))
 
     def test_run_ask_for_missing_union(self):
         form = """Asking the form MissingNonscalar(path=MISSING, combined=MISSING, simple_tuple=MISSING)"""
@@ -104,7 +136,7 @@ class TestRun(TestAbstract):
                             val=MISSING, description="", annotation=int | tuple[int, int] | None, label="combined"
                         ),
                         "simple_tuple": Tag(
-                            val=MISSING, description="", annotation=tuple[int, int], label="simple_tuple"
+                            val=MISSING, description="", annotation=tuple[int, int], label="simple tuple"
                         ),
                     }
                 },
@@ -118,23 +150,37 @@ class TestRun(TestAbstract):
         with self.assertRaises(SystemExit):
             run(MissingPositionalScalar, interface=Mininterface)
 
-        # Since the positional is list, we infer an empty list
-        # This might be not the desired behaviour, we might change it to fail too.
-        m2 = run(MissingPositional, interface=Mininterface)
-        m2.form()
+        with self.assertForms(
+            (
+                {"": {"file": PathTag(val=MISSING, description="", annotation=Path, label="file")}},
+                {"": {"file": Path("/tmp")}},
+            )
+        ):
+            runm(MissingPositionalScalar)
+
+        with self.assertForms(
+            ({"": {"files": PathTag(val=[], description="", annotation=list[Path], label="files")}}, {})
+        ):
+            # Since the positional is list, we infer an empty list
+            # This might be not the desired behaviouro.
+            m2 = runm(MissingPositional)
+            m2.form()
         self.assertListEqual([], m2.env.files)
 
-    def TODO_test_missing_combined(self):
-        # TODO wf is now bool, check forms instead
-        with self.assertRaises(SystemExit):
-            run(MissingCombined, interface=Mininterface)
-
-        _, wf = parse_cli(MissingCombined, {})
-        r = {
-            "file": PathTag(val=MISSING, description="file ", annotation=Path, label="file"),
-            "foo": Tag(val=MISSING, description="", annotation=str, label="foo"),
-        }
-        self.assertEqual(repr(r), repr(wf))
+    def test_missing_combined(self):
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "file": PathTag(val=MISSING, description="", annotation=Path, label="file"),
+                        "foo": Tag(val=MISSING, description="", annotation=str, label="foo"),
+                        "bar": Tag(val="hello", description="", annotation=str, label="bar"),
+                    }
+                },
+                {"": {"file": Path("."), "foo": ""}},
+            )
+        ):
+            runm(MissingCombined)
 
     def test_run_config_file(self):
         os.chdir("tests")

@@ -3,7 +3,16 @@ from mininterface.exceptions import Cancelled
 from mininterface.interfaces import TextInterface
 from mininterface.tag import CallbackTag, DatetimeTag, SelectTag, Tag
 from mininterface.tag.datetime_tag import date
-from configs import ColorEnumSingle, NestedDefaultedEnv, SimpleEnv, callback_raw, callback_tag, callback_tag2
+from configs import (
+    ColorEnumSingle,
+    FurtherEnv1,
+    NestedDefaultedEnv,
+    NestedUnion,
+    SimpleEnv,
+    callback_raw,
+    callback_tag,
+    callback_tag2,
+)
 from shared import TestAbstract, runm, mock_interactive_terminal
 
 
@@ -12,7 +21,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 
-class TestInteface(TestAbstract):
+class TestInterface(TestAbstract):
 
     @mock_interactive_terminal
     def test_ask(self):
@@ -20,15 +29,15 @@ class TestInteface(TestAbstract):
         self.assertEqual(0, m0.ask("Test input", int))
 
         m1: TextInterface = run(NestedDefaultedEnv, interface=TextInterface, prog="My application")
-        with patch('builtins.input', return_value=5):
+        with patch("builtins.input", return_value=5):
             self.assertEqual(5, m1.ask("Number", int))
-        with patch('builtins.input', side_effect=["invalid", 1]):
+        with patch("builtins.input", side_effect=["invalid", 1]):
             self.assertEqual(1, m1.ask("Number", int))
-        with patch('builtins.input', side_effect=["invalid", EOFError]):
+        with patch("builtins.input", side_effect=["invalid", EOFError]):
             with self.assertRaises(Cancelled):
                 self.assertEqual(1, m1.ask("Number", int))
 
-        with patch('builtins.input', side_effect=["", "", "y", "Y", "n", "n", "N", "y", "hello"]):
+        with patch("builtins.input", side_effect=["", "", "y", "Y", "n", "n", "N", "y", "hello"]):
             self.assertTrue(m1.confirm(""))
             self.assertFalse(m1.confirm("", False))
 
@@ -53,20 +62,22 @@ class TestInteface(TestAbstract):
     def test_ask_form(self):
         m = TextInterface()
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
-        with patch('builtins.input', side_effect=["v['nested']['inner'] = 'another'", "c"]):
+        with patch("builtins.input", side_effect=["v['nested']['inner'] = 'another'", "c"]):
             m.form(dict1)
 
-        self.assertEqual(repr({"my label": Tag(True, "my description", label="my label"),
-                         "nested": {"inner": "another"}}), repr(dict1))
+        self.assertEqual(
+            repr({"my label": Tag(True, "my description", label="my label"), "nested": {"inner": "another"}}),
+            repr(dict1),
+        )
 
         # Empty form invokes editing self.env, which is empty
-        with patch('builtins.input', side_effect=["c"]):
+        with patch("builtins.input", side_effect=["c"]):
             self.assertEqual(SimpleNamespace(), m.form())
 
         # Empty form invokes editing self.env, which contains a dataclass
         m2 = run(SimpleEnv, interface=TextInterface, prog="My application")
         self.assertFalse(m2.env.test)
-        with patch('builtins.input', side_effect=["v.test = True", "c"]):
+        with patch("builtins.input", side_effect=["v.test = True", "c"]):
             self.assertEqual(m2.env, m2.form())
             self.assertTrue(m2.env.test)
 
@@ -118,20 +129,33 @@ class TestInteface(TestAbstract):
         form = """Asking the form {'My choice': SelectTag(val=None, description='', annotation=None, label=None, options=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
         form2 = """Asking the form {'My choice': SelectTag(val=callback_raw, description='', annotation=None, label=None, options=['callback_raw', 'callback_tag', 'callback_tag2'])}"""
         with self.assertOutputs(form), self.assertRaises(SystemExit):
-            m.form({"My choice": SelectTag(options=[
-                callback_raw,
-                CallbackTag(callback_tag),
-                # This case works here but is not supported as such form cannot be submit in GUI:
-                Tag(callback_tag2, annotation=CallbackTag)
-            ])})
+            m.form(
+                {
+                    "My choice": SelectTag(
+                        options=[
+                            callback_raw,
+                            CallbackTag(callback_tag),
+                            # This case works here but is not supported as such form cannot be submit in GUI:
+                            Tag(callback_tag2, annotation=CallbackTag),
+                        ]
+                    )
+                }
+            )
 
         # the default value causes no SystemExit is raised in Mininterface interface
-        out = m.form({"My choice": SelectTag(callback_raw, options=[
-            callback_raw,
-            CallbackTag(callback_tag),
-            # This case works here but is not supported as such form cannot be submit in GUI:
-            Tag(callback_tag2, annotation=CallbackTag)
-        ])})
+        out = m.form(
+            {
+                "My choice": SelectTag(
+                    callback_raw,
+                    options=[
+                        callback_raw,
+                        CallbackTag(callback_tag),
+                        # This case works here but is not supported as such form cannot be submit in GUI:
+                        Tag(callback_tag2, annotation=CallbackTag),
+                    ],
+                )
+            }
+        )
         self.assertEqual(callback_raw, out["My choice"])
 
         options = {
@@ -159,7 +183,7 @@ class TestInteface(TestAbstract):
         m = runm()
         with self.assertRaises(SystemExit) as cm:
             m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2})
-        self.assertEqual("Choose: Must be one of ['Open file...', 'Apply filter...']", str(cm.exception))
+        self.assertEqual("Must be one of ['Open file...', 'Apply filter...']", str(cm.exception))
 
         ret = m.select({"Open file...": do_cmd1, "Apply filter...": do_cmd2}, default=do_cmd1)
         self.assertEqual("cmd1", ret)
@@ -172,3 +196,85 @@ class TestInteface(TestAbstract):
 
         with self.assertRaises(SystemExit) as cm:
             m.select({"Apply filter...": do_cmd2}, skippable=False)
+
+    def test_nested_union_from_cli(self):
+        with self.assertForms(
+            (
+                {
+                    "": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label=None,
+                        options=["Further env1 -", "Simple env   - Set of options."],
+                    )
+                },
+                {"": SimpleEnv},
+            ),
+            (
+                {
+                    "": {},
+                    "further": {
+                        "test": Tag(val=False, description="My testing flag", annotation=bool, label="test"),
+                        "important_number": Tag(
+                            val=4,
+                            description="This number is very important",
+                            annotation=int,
+                            label="important number",
+                        ),
+                    },
+                },
+                {"further": {"important_number": 12}},
+            ),
+        ):
+            self.assertEqual(12, runm(NestedUnion).env.further.important_number)
+
+        with self.assertForms(
+            (
+                {
+                    "": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label=None,
+                        options=["Further env1 -", "Simple env   - Set of options."],
+                    )
+                },
+                {"": FurtherEnv1},
+            ),
+            (
+                {
+                    "": {},
+                    "further": {
+                        "token": Tag(val="filled", description="", annotation=str, label="token"),
+                        "host": Tag(val="example.org", description="", annotation=str, label="host"),
+                    },
+                },
+                {},
+            ),
+        ):
+            runm(NestedUnion)
+
+    def test_nested_union_as_dialog(self):
+        with self.assertForms(
+            (
+                {
+                    "": SelectTag(
+                        val=None,
+                        description="",
+                        annotation=None,
+                        label=None,
+                        options=["Further env1 -", "Simple env   - Set of options."],
+                    )
+                },
+                {"": FurtherEnv1},
+            ),
+            {
+                "": {},
+                "further": {
+                    "token": Tag(val="filled", description="", annotation=str, label="token"),
+                    "host": Tag(val="example.org", description="", annotation=str, label="host"),
+                },
+            },
+        ):
+            runm().form(NestedUnion)

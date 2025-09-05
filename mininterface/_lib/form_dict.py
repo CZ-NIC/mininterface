@@ -105,7 +105,7 @@ FormDictOrEnv = TypeVar("FormDictOrEnv", bound=FormDict | DataClass)
 
 
 def tagdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
-    """For the testing purposes, returns a new dict when all Tags are replaced with their values.
+    """ Returns a new dict when all Tags are replaced with their values.
 
     Args:
         extract_main: UI need the main section act as nested.
@@ -118,7 +118,7 @@ def tagdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
         while isinstance(v, Tag):
             v = v.val
         out[k] = tagdict_resolve(v, _root=False) if isinstance(v, dict) else v
-    if extract_main and _root and "" in out:
+    if extract_main and _root and dict_has_main(out):
         main = out[""]
         del out[""]
         return {**main, **out}
@@ -137,16 +137,22 @@ def dict_added_main(data:dict):
     return out
 
 def dict_removed_main(data:dict):
-    """ Expand the main "" section among other keys. Change in place. """
-    for key, val in data[""].items():
-        if key in data:
+    """ Expand the main "" section among other keys. """
+    out = dict(data.get("", {}))
+
+    for key, val in data.items():
+        if key == "":
+            continue
+        elif key in data:
             raise ValueError(f"Key duplicity {key}")
-        data[key] = val
-    del data[""]
-    return data
+        out[key] = val
+    return out
 
 def dict_has_main(data:dict):
-    return "" in data
+    """
+    Calling `m.select(title="")` would raise `m.form({'': SelectTag(...)})`. The tag with the empty name != main section (which is dict).
+    """
+    return isinstance(data.get(""), dict)
 
 def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -> TagDict:
     fd = {}
@@ -230,7 +236,6 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
         if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType, MissingTagValue)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
-            # TODO union of classes → dialog
             subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)
         else:  # scalar or Tag value
             d = {"description": get_description(env.__class__, param), "_facet": getattr(mininterface, "facet", None)}

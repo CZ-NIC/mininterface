@@ -6,6 +6,7 @@ from warnings import warn
 from .tag import Tag, TagValue
 
 OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
+""" label, choice value, is-tip, tupled-label """
 OptionLabel = str
 RichOptionLabel = OptionLabel | tuple[OptionLabel]
 OptionsType = (
@@ -278,36 +279,42 @@ class SelectTag(Tag[TagValue]):
             labels = ((key, (key,)) for key in keys)
 
         for (label, tupled), v in zip(labels, options.values()):
-            tupled: tuple[str]
+            tupled: tuple[str, ...]
+            label = label.strip()
             if v in index:
                 front.append((label, v, True, tupled))
             else:
                 back.append((label, v, False, tupled))
         return front + back
 
-    def _span_to_lengths(self, keys: Iterable[tuple[str]], delim=" - "):
+    def _span_to_lengths(self, keys: Iterable[tuple[str, ...]], delim=" - "):
         """Span key tuple into a table
         Ex: [ ("one", "two"), ("hello", "world") ]
             one   - two
             hello - world"
         """
-        a_key = next(iter(keys))
-        try:
-            col_widths = [max(len(row[i]) for row in keys) for i in range(len(a_key))]
-            return [(delim.join(cell.ljust(col_widths[i]) for i, cell in enumerate(key)), key) for key in keys]
-        except IndexError:
+        # check all the option tuples have the same length (the same number of columns)
+        if len(set(len(i) for i in keys)) == 1:
+            # strip cells and remove empty columns
+            table = [tuple(cell.strip() for cell in key) for key in keys]
+            if not table:
+                return []
+            # find indexes of columns that are not empty
+            non_empty_cols = [i for i in range(len(table[0])) if any(row[i] != "" for row in table)]
+            # filter out empty
+            table = [tuple(row[i] for i in non_empty_cols) for row in table]
+
+            a_key = next(iter(table))
+            col_widths = [max(len(row[i]) for row in table) for i in range(len(a_key))]
+            return [(delim.join(cell.ljust(col_widths[i]) for i, cell in enumerate(key)), key) for key in table]
+        else:
             # different lengths, table does not work
             # Ex: [ ("one", "two", "three"), ("hello", "world") ]
             return [(delim.join(key), key) for key in keys]
 
-    # def _make_default_value(self, try_hard=False):
-    #     if try_hard and (d:=self._build_options()) :
-    #         return next(iter(d.values()))
-    #     return None
     def _make_default_value(self):
-        if (d:=self._build_options()) :
+        if d := self._build_options():
             return next(iter(d.values()))
-
 
     def update(self, ui_value: TagValue | list[TagValue]) -> bool:
         """ui_value is one of the self.options values"""

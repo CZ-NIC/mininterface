@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from ast import literal_eval
 import logging
-from os import environ
+from os import environ, replace
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from io import StringIO
@@ -10,7 +10,14 @@ from unittest.mock import patch
 
 from mininterface import EnvClass, Mininterface, Type, run
 from mininterface._lib.auxiliary import dict_diff
-from mininterface._lib.form_dict import MissingTagValue, TagDict, dict_has_main, dict_removed_main, tagdict_resolve, dict_added_main
+from mininterface._lib.form_dict import (
+    MissingTagValue,
+    TagDict,
+    dict_has_main,
+    dict_removed_main,
+    tagdict_resolve,
+    dict_added_main,
+)
 from mininterface._mininterface import MinAdaptor
 
 SYS_ARGV = None  # To be redirected
@@ -105,6 +112,8 @@ class TestAbstract(TestCase):
     def assertForms(self, *check: dict | None | tuple[dict | None, dict | None], end=True, wizzard=False):
         """Intercepts every form call, checks it and possibly modify it (simulating the user input).
 
+        Connected to `runm` testing function.
+
         Args:
             check: Form calls. Form is represented by a tuple of model and setter (or just model).
                 The length of checks must match the form call count (unless changed by `end`).
@@ -119,11 +128,11 @@ class TestAbstract(TestCase):
                 1. Make a test stub
                     ```
                     def test_stub(self):
-                        with self.assertForms():
+                        with self.assertForms(wizzard=True):
                             runm([Subc1, Subc2])
                     ```
 
-                2. Run `MININTERFACE_WIZZARD=1 pytest -s tests/test_...::test_stub`
+                2. Run in IDE.
                 3. Do whatever in the GUI.
                 4. Your passage is recorded to the clipboard. Just paste it into the test stub.
         """
@@ -150,7 +159,12 @@ class TestAbstract(TestCase):
         class MockAdaptor(MinAdaptor):
             def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
                 if wizzard:
-                    origr = repr(form).replace(", annotation=typing.", ", annotation=")  # typing.Optional -> Optional
+                    origr = (
+                        repr(form)
+                        .replace(", annotation=typing.", ", annotation=")  # typing.Optional -> Optional
+                        .replace("pathlib.Path", "Path")
+                        .replace("PosixPath", "Path")
+                    )
                     main = dict_has_main(form)
                     out = dict_diff(tagdict_resolve(form), dict_added_main(mint.form(form)))
                     if not main:

@@ -108,6 +108,21 @@ class TestSelectTag(TestAbstract):
             ('third  - half', 33, False, ('third', 'half')),
         ], t1._get_options())
 
+    def test_stripped_tupled_label(self):
+        t1 = SelectTag(options={("one", "half "): 11, (" second ", "half"): 22, ("third ", "half "): 33})
+        self.assertListEqual([
+            ('one    - half', 11, False, ('one', 'half')),
+            ('second - half', 22, False, ('second', 'half')),
+            ('third  - half', 33, False, ('third', 'half')),
+        ], t1._get_options())
+
+    def test_stripped_out_tupled_label(self):
+        t1 = SelectTag(options={("one", ""): 11, ("second", ""): 22})
+        self.assertListEqual([
+            ('one', 11, False, ('one', )),
+            ('second', 22, False, ('second', )),
+        ], t1._get_options())
+
     def test_label_resilience(self):
         """ Convert the labels to str. """
         # In this test, we are using a type as label.

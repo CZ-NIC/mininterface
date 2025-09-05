@@ -408,8 +408,7 @@ class Mininterface(Generic[EnvClass]):
             tag = Tag([out] if multiple else out)
         else:  # Trigger the dialog
             tag = SelectTag(val=default, options=options, tips=tips, multiple=multiple)
-            key = title or "Choose"
-            self.form({key: tag})[key]
+            self.form({title: tag})
 
         if launch:
             if tag._is_a_callable():  # NOTE this does not work for multiple choice

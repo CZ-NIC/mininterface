@@ -1,10 +1,13 @@
+import re
+import warnings
 from dataclasses import MISSING, dataclass, fields, is_dataclass
 from types import UnionType
 from typing import Annotated, Optional, Type, Union, get_args, get_origin
-import warnings
 
 try:
     from tyro._singleton import MISSING_NONPROP
+
+    from ..cli import SubcommandPlaceholder
 except ImportError:
     from ..exceptions import DependencyRequired
 
@@ -14,7 +17,7 @@ except ImportError:
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
 from ..validators import not_empty
-from .auxiliary import _get_origin, get_description
+from .auxiliary import _get_origin, _get_parser, get_description
 from .form_dict import DataClass, EnvClass, MissingTagValue
 
 # Pydantic is not a project dependency, that is just an optional integration
@@ -93,13 +96,8 @@ def _get_wrong_field(
 
 def _unwrap_annotated(tp):
     """
-    Annotated[Inner, ...] -> `Inner`,
+    Annotated[Annotated[Inner, ...], ...] -> `Inner`,
     """
-    # TODO do a test nested Annotated
-    # and use the while cycle from parse_cli
-    # while _get_origin(tp) is Annotated:
-    #     tp, *_ = get_args(tp)
-    # return tp
     if _get_origin(tp) is Annotated:
         inner, *_ = get_args(tp)
         return inner
@@ -274,9 +272,11 @@ def _process_dataclass(env, disk, wf: Optional[dict], m: Optional["Mininterface"
 
 
 def choose_subcommand(env_classes: list[Type[DataClass]], m: "Mininterface[EnvClass]"):
-    # NOTE I d like to display help text of subcommands. But currently,
-    # select allows only names. Make that if a Tag is used as key,
-    # its 'description' displays somewhere.
-    # Also, make select display buttons if there is a little amount of options.
-    env = m.select({cl.__name__: cl for cl in env_classes})
+    # NOTE make select display buttons if there is a little amount of options.
+    env = m.select({(to_kebab_case(cl.__name__).replace("-", " ").capitalize(), _get_parser(cl).description): cl for cl in env_classes  if cl is not SubcommandPlaceholder})
     return env
+
+def to_kebab_case(name: str) -> str:
+    """MyClass -> my-class"""
+    # I did not find where tyro does it. If I find it, I might use its function instead.
+    return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()

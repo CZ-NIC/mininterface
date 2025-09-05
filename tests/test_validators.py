@@ -142,7 +142,7 @@ class TestValidators(TestAbstract):
                             val=[],
                             description="Valid: [], [10, 20, 30, 40, 50]",
                             annotation=list[int],
-                            label="my_list",
+                            label="my list",
                         ),
                         "percent": Tag(
                             val=5, description='Invalid: (1, 2), ["abc"], [0] * 20', annotation=int, label="percent"
@@ -151,7 +151,7 @@ class TestValidators(TestAbstract):
                             val=5,
                             description='Type must be float! ',
                             annotation=float,
-                            label="* percent_fl",
+                            label="* percent fl",
                         ),
                     }
                 },

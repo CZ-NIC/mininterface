@@ -1,14 +1,16 @@
 from dataclasses import dataclass
+from datetime import date
 import sys
 from typing import Literal, Optional
 from unittest import skipIf
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
 from mininterface import Tag
+from mininterface._lib.form_dict import MissingTagValue
 from mininterface.cli import Command, SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
-from mininterface.tag import PathTag, SelectTag
-from configs import ParametrizedGeneric, Subcommand1, Subcommand2
+from mininterface.tag import DatetimeTag, PathTag, SelectTag
+from configs import CommandWithInitedMissing, ParametrizedGeneric, Subcommand1, Subcommand2
 from shared import MISSING, TestAbstract, runm
 
 
@@ -107,6 +109,7 @@ class Cl2(Cl1):
     def run(self):
         pass
 
+
 @skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestSubcommands(TestAbstract):
 
@@ -118,15 +121,15 @@ class TestSubcommands(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
+                    "": SelectTag(
                         val=None,
                         description="",
                         annotation=None,
-                        label="Choose",
-                        options=["Subcommand1", "Subcommand2"],
+                        label=None,
+                        options=["Subcommand1 - Class inheriting from SharedArgs.", "Subcommand2 -"],
                     )
                 },
-                {"Choose": Subcommand1},
+                {"": Subcommand1},
             ),
             (
                 {
@@ -142,7 +145,7 @@ class TestSubcommands(TestAbstract):
         # Even though we failed on "foo: Type must be int!" in the second form, the tyro's message from the first is displayed.
         # This is due to the testing case environment while we inject the first form response as if it is not a Minadaptor.
         # Normally, the user using the Minadaptor won't make it to the second form.
-        self.assertEqual("the following arguments are required: {subcommand1,subcommand2}", cm.exception.code)
+        self.assertEqual("the following arguments are required: {subcommand1,subcommand2,subcommand}", cm.exception.code)
 
         # missing subcommand params (inherited --foo and proper --b)
         with self.assertForms(
@@ -247,15 +250,15 @@ class TestSubcommands(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
+                    "": SelectTag(
                         val=None,
                         description="",
                         annotation=None,
-                        label="Choose",
-                        options=["Subcommand1", "Subcommand2"],
+                        label=None,
+                        options=["Subcommand1 - Class inheriting from SharedArgs.", "Subcommand2 -"],
                     )
                 },
-                {"Choose": Subcommand2},
+                {"": Subcommand2},
             ),
             (
                 {
@@ -274,15 +277,15 @@ class TestSubcommands(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
+                    "": SelectTag(
                         val=None,
                         description="",
                         annotation=None,
-                        label="Choose",
-                        options=["Subcommand1", "Subcommand2"],
+                        label=None,
+                        options=["Subcommand1 - Class inheriting from SharedArgs.", "Subcommand2 -"],
                     )
                 },
-                {"Choose": Subcommand2},
+                {"": Subcommand2},
             ),
             (
                 {
@@ -297,20 +300,21 @@ class TestSubcommands(TestAbstract):
 
             r(["subcommand", "--foo", "999"])
 
-        # TODO Subcommand is not removed so it is not seen in the help text
-        if False:
-            # main help works
-            # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
-            with (
-                self.assertOutputs(contains="Use this placeholder to choose the subcommand via"),
-                self.assertRaises(SystemExit),
-            ):
-                r(["--help"])
+        # main help works
+        # with (self.assertOutputs("XUse this placeholder to choose the subcomannd via"), self.assertRaises(SystemExit)):
+        with (
+            self.assertOutputs(contains="Use this placeholder to choose the subcommand via"),
+            self.assertRaises(SystemExit),
+        ):
+            r(["--help"])
 
-            # TODO if --help in args, do not emit choose_subcommand
-            # placeholder help works and shows shared arguments of other subcommands
-            with self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit):
-                r(["subcommand", "--help"])
+        return
+        # NOTE this stopped working when we removed SubcommandOverview.
+        #   We might take its code to determine common attributes, create a dataclass model on-the-fly
+        #   and give it to tyro to restore the behaviour.
+        # placeholder help works and shows shared arguments of other subcommands
+        with self.assertOutputs(contains="Class with a shared argument."), self.assertRaises(SystemExit):
+            r(["subcommand", "--help"])
 
     def test_common_field_annotation(self):
         with self.assertForms(
@@ -322,13 +326,15 @@ class TestSubcommands(TestAbstract):
         ):
             runm([ParametrizedGeneric, ParametrizedGeneric])
 
+
 @skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestNested(TestAbstract):
     def test_no_args(self):
+
         with self.assertForms(
             (
-                {"Choose": SelectTag(val=None, annotation=None, label="Choose", options=["List", "Run"])},
-                {"Choose": List},
+                {"": SelectTag(val=None, annotation=None, label=None, options=["List", "Run"])},
+                {"": List},
             ),
             (
                 {
@@ -351,11 +357,11 @@ class TestNested(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
                     )
                 },
-                {"Choose": Message},
+                {"": Message},
             ),
             (
                 {
@@ -364,7 +370,7 @@ class TestNested(TestAbstract):
                             val=MISSING,
                             description="Choose a value",
                             annotation=None,
-                            label="bot_id",
+                            label="bot id",
                             options=["id-one", "id-two"],
                         )
                     },
@@ -400,7 +406,7 @@ class TestNested(TestAbstract):
                             val=MISSING,
                             description="Choose a value",
                             annotation=None,
-                            label="bot_id",
+                            label="bot id",
                             options=["id-one", "id-two"],
                         )
                     },
@@ -441,9 +447,8 @@ class TestNested(TestAbstract):
             repr(env),
         )
 
-
     def test_optional_flag(self):
-        """ Message param is missing, hence the form is output. But we let it None. """
+        """Message param is missing, hence the form is output. But we let it None."""
         with self.assertForms(
             (
                 {
@@ -452,7 +457,7 @@ class TestNested(TestAbstract):
                             val="id-one",
                             description="Choose a value",
                             annotation=None,
-                            label="bot_id",
+                            label="bot id",
                             options=["id-one", "id-two"],
                         )
                     },
@@ -464,9 +469,7 @@ class TestNested(TestAbstract):
                             label="kind",
                             options=["get", "pop", "send"],
                         ),
-                        "msg": Tag(
-                            val=MISSING, description="My message", annotation=Optional[str], label="msg"
-                        ),
+                        "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
                         "foo": Tag(val="my-foo", description="", annotation=str, label="foo"),
                     },
                 },
@@ -483,32 +486,31 @@ class TestNested(TestAbstract):
             repr(env),
         )
 
-
     def test_choose__run_console_subc1(self):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["List", "Run"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["List", "Run"]
                     )
                 },
-                {"Choose": Run},
+                {"": Run},
             ),
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
                     )
                 },
-                {"Choose": Console},
+                {"": Console},
             ),
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
                     )
                 },
-                {"Choose": Subc1},
+                {"": Subc1},
             ),
             (
                 {
@@ -517,13 +519,13 @@ class TestNested(TestAbstract):
                             val=MISSING,
                             description="Choose a value",
                             annotation=None,
-                            label="bot_id",
+                            label="bot id",
                             options=["id-one", "id-two"],
                         )
                     },
                     "_subcommands": {
                         "my_subcommands": {},
-                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my_int"),
+                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my int"),
                         "name": Tag(val="my-console", description="", annotation=str, label="name"),
                         "rrr": Tag(val="RRR", description="", annotation=str, label="rrr"),
                     },
@@ -537,19 +539,19 @@ class TestNested(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Message", "Console"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
                     )
                 },
-                {"Choose": Console},
+                {"": Console},
             ),
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
                     )
                 },
-                {"Choose": Subc1},
+                {"": Subc1},
             ),
             (
                 {
@@ -558,13 +560,13 @@ class TestNested(TestAbstract):
                             val=MISSING,
                             description="Choose a value",
                             annotation=None,
-                            label="bot_id",
+                            label="bot id",
                             options=["id-one", "id-two"],
                         )
                     },
                     "_subcommands": {
                         "my_subcommands": {},
-                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my_int"),
+                        "my_int": Tag(val=MISSING, description="", annotation=int, label="my int"),
                         "name": Tag(val="my-console", description="", annotation=str, label="name"),
                         "rrr": Tag(val="RRR", description="", annotation=str, label="rrr"),
                     },
@@ -585,11 +587,11 @@ class TestNested(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
                     )
                 },
-                {"Choose": Subc1},
+                {"": Subc1},
             ),
             end=True,
         ):
@@ -599,11 +601,11 @@ class TestNested(TestAbstract):
         with self.assertForms(
             (
                 {
-                    "Choose": SelectTag(
-                        val=None, description="", annotation=None, label="Choose", options=["Subc1", "Subc2"]
+                    "": SelectTag(
+                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
                     )
                 },
-                {"Choose": Subc2},
+                {"": Subc2},
             ),
             ({"": {"bar": Tag(val="BAR", description="", annotation=str, label="bar")}}, {"": {"bar": "A"}}),
         ):
@@ -616,3 +618,16 @@ class TestNested(TestAbstract):
             ({"": {"s": Tag(val=MISSING, description="", annotation=str, label="s")}}, {"": {"s": "s"}})
         ):
             runm([Cl1, Cl2], ["cl2"])
+
+
+class TestCommand(TestAbstract):
+
+    def test_missing_tag(self):
+        v = MissingTagValue()
+        self.assertFalse(v)
+
+    def test_missing_init(self):
+        with self.assertForms(
+            {"": {"date_": DatetimeTag(val=date(2025, 9, 4), description="", annotation=date, label="date")}}
+        ):
+            runm(CommandWithInitedMissing)

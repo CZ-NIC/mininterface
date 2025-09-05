@@ -18,8 +18,8 @@ try:
     from ._lib.start import Start
     from .cli import Command, SubcommandPlaceholder
     from ._lib.argparse_support import parser_to_dataclass
-    from ._lib.cli_parser import assure_args, parse_cli, to_kebab_case
-    from ._lib.dataclass_creation import choose_subcommand
+    from ._lib.cli_parser import assure_args, parse_cli
+    from ._lib.dataclass_creation import choose_subcommand, to_kebab_case
     from ._lib.config_file import parse_config_file
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
@@ -203,14 +203,9 @@ def run(
     # Parse CLI arguments, possibly merged from a config file.
     # A) Superform – overview of the subcommands
     m = get_interface(interface, title, settings)
-    has_sub_placeholder = False
-    if isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list:
-        # TODO SubcommandPlaceholder cannot be removed, else it is not seen in the help text
-        # pop out the placeholder but without modifying to user implanted list
-        env_or_list = [cl for cl in env_or_list if cl is not SubcommandPlaceholder]
-        has_sub_placeholder = True
 
-    if ask_for_missing and has_sub_placeholder and args and args[0] == "subcommand":
+    # Resolve SubcommandPlaceholder
+    if ask_for_missing and args and args[0] == "subcommand" and "--help" not in args and isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list:
         args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)

@@ -173,25 +173,13 @@ class MissingTagValue:
 
     If we fail to fill a value (ex. in a CRON), the program ends.
     """
-    # NOTE in the future, we might use simple dataclasses.MISSING instead. When we are sure this is not needed,
-    # see: test_run_message_args comment.
-    # Update: No, in mininterface, the repr would be '<dataclasses._MISSING_TYPE object at 0x7610556c21e0>' instead of 'MISSING'
-
-    # def __init__(self, exception: BaseException, eavesdrop):
-    #     self.exception = exception
-    #     self.eavesdrop = eavesdrop
 
     def __repr__(self):
         return "MISSING"
 
-    # def fail(self):
-    #     print(self.eavesdrop)
-    #     raise self.exception
-
-    # TODO
-    # Command.init() method might access the class that has MissingTagValue still set.
-    # (Just before the wrong fields dialog.)
-    # So for the convenience, we add this method.
+    # Command.init() method can access the class that has MissingTagValue still set.
+    # (Just before the required missing wrong fields dialog.)
+    # So for the convenience, we add this method so that it can fill the value before the user must to.
     def __bool__(self):
         return False
 
@@ -380,6 +368,7 @@ class Tag(Generic[TagValue]):
     _attrs_field: AttrsFieldInfo = None
     _original_desc: Optional[str] = None
     _original_label: Optional[str] = None
+    """ See form_dict.dict_has_main for explanation of an empty string tag._original_label """
     _last_ui_val: TagValue = None
     """ This is the value as was in the current UI. Used by on_change_trigger
         to determine whether the UI value changed. """
@@ -419,9 +408,8 @@ class Tag(Generic[TagValue]):
 
         if not self.label:
             if self._src_key:
-                self.label = self._src_key
-                # TODO:
-                # self.label = self._src_key.replace("_", " ")
+                # CLI flag `--bot-id` -> key 'bot_id' -> label 'bot id'
+                self.label = self._src_key.replace("_", " ").strip()
             # It seems to be it is better to fetch the name from the dict or object key than to use the function name.
             # We are using get_name() instead.
             # if self._is_a_callable():
@@ -497,8 +485,7 @@ class Tag(Generic[TagValue]):
             self._src_obj_add(tag)
         if self.description == "":
             self.description = tag.description
-        if name and self.label is None:
-            # TODO name.replace("_", " ") CLI args have underscores. Implement and do a test.
+        if name and self.label is None:  # NOTE arg name seems not to be used
             self._original_label = self.label = name
         return self
 

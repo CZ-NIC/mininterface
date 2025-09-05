@@ -79,6 +79,9 @@ class FurtherEnv1:
 class NestedDefaultedEnv:
     further: FurtherEnv1
 
+@dataclass
+class NestedUnion:
+    further: FurtherEnv1|SimpleEnv
 
 @dataclass
 class FurtherEnv2:
@@ -273,6 +276,23 @@ class SharedArgs(Command):
 
     def run(self):
         pass
+
+@dataclass
+class CommandWithInitedMissing(Command):
+
+    date_: date
+
+    def init(self):
+        super().init()
+
+        # We fill the date to the GUI. But leave it empty in CLI
+        # so that omitting the argument would not cause setting
+        # the files to the current date.
+        if not self.date_:
+            self.date_ = date(2025,9,4)
+
+    def run(self):
+        ...
 
 
 @dataclass
