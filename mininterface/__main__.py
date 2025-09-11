@@ -12,7 +12,7 @@ except ImportError:
 
     raise DependencyRequired("basic").exit()
 
-from . import run
+from ._lib.run import run
 from .cli import Command
 from .tag.flag import File
 from .tag.path_tag import PathTag

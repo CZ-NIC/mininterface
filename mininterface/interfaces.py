@@ -1,10 +1,7 @@
 # Access to interfaces via this module assures lazy loading
-from code import interact
-from dataclasses import replace
-from importlib import import_module
-from os import isatty
+from importlib import import_module as _import_module
 import sys
-from typing import TYPE_CHECKING, Literal, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 from ._mininterface import EnvClass, Mininterface
 from .settings import MininterfaceSettings, InterfaceName
@@ -24,7 +21,7 @@ if TYPE_CHECKING:
 
 def _load(name, mod, attr):
     """Raises: InterfaceNotAvailable"""
-    globals()[name] = getattr(import_module(mod, __name__), attr)
+    globals()[name] = getattr(_import_module(mod, __name__), attr)
     return globals()[name]
 
 

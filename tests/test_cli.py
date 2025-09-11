@@ -1,8 +1,9 @@
 # NOTE should be split into separate files
 
 
-from mininterface import Mininterface, run
+from mininterface import Mininterface
 from configs import NestedDefaultedEnv, SimpleEnv
+from mininterface._lib.run import run
 from shared import TestAbstract
 
 

@@ -17,19 +17,18 @@ from dataclasses import MISSING, Field, dataclass, field, make_dataclass
 from functools import cached_property
 import re
 import sys
-from typing import Annotated, Callable, Literal, Optional
+from typing import Annotated, Callable, Optional
 from warnings import warn
 
 from tyro.conf import OmitSubcommandPrefixes
 
-from .. import Options
+from ..tag.alias import Options
 
 from .form_dict import DataClass
 
 
 try:
-    from tyro.constructors import PrimitiveConstructorSpec
-    from tyro.conf import Positional, arg
+    from tyro.conf import Positional
 except ImportError:
     from ..exceptions import DependencyRequired
 

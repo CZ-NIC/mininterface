@@ -7,9 +7,11 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from io import StringIO
 from unittest import TestCase
 from unittest.mock import patch
+from typing import Type
 
-from mininterface import EnvClass, Mininterface, Type, run
+from mininterface import Mininterface
 from mininterface._lib.auxiliary import dict_diff
+from mininterface._lib.form_dict import EnvClass
 from mininterface._lib.form_dict import (
     MissingTagValue,
     TagDict,
@@ -18,6 +20,7 @@ from mininterface._lib.form_dict import (
     tagdict_resolve,
     dict_added_main,
 )
+from mininterface._lib.run import run
 from mininterface._mininterface import MinAdaptor
 
 SYS_ARGV = None  # To be redirected

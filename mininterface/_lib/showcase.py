@@ -5,13 +5,15 @@ from typing import Annotated, Literal
 
 from tyro.conf import Positional
 
+from .run import run
+
 from ..tag.select_tag import SelectTag
 
 from ..exceptions import ValidationFail
 from ..cli import Command, SubcommandPlaceholder
 from ..tag.secret_tag import SecretTag
 
-from .. import run, Options
+from .. import Options
 from ..interfaces import InterfaceName
 from ..tag.alias import Validation
 from ..validators import not_empty

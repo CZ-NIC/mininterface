@@ -5,9 +5,10 @@ from typing import Literal, Optional
 from unittest import skipIf
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
-from mininterface import Tag, to_kebab_case
+from mininterface import Tag
 from mininterface._lib.auxiliary import get_description
 from mininterface._lib.form_dict import MissingTagValue
+from mininterface._lib.dataclass_creation import to_kebab_case
 from mininterface.cli import Command, SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
 from mininterface.tag import DatetimeTag, PathTag, SelectTag

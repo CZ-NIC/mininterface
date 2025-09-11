@@ -1,6 +1,7 @@
 from unittest import skipUnless
-from mininterface import Mininterface, run
+from mininterface import Mininterface
 from mininterface._lib.config_file import _merge_settings
+from mininterface._lib.run import run
 from mininterface.settings import UiSettings
 from mininterface.tag import PathTag, Tag
 from attrs_configs import AttrsNested

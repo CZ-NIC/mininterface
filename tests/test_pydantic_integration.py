@@ -1,5 +1,6 @@
-from mininterface import Mininterface, run
+from mininterface import Mininterface
 from mininterface._lib.form_dict import dataclass_to_tagdict
+from mininterface._lib.run import run
 from mininterface.tag import Tag
 from pydantic_configs import PydModel, PydNested, PydNestedRestraint
 from shared import TestAbstract

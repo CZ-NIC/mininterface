@@ -173,7 +173,12 @@ class SelectTag(Tag[TagValue]):
         if not self.options:
             if get_origin(self.annotation) is Literal:
                 self.options = get_args(self.annotation)
-            else:
+            elif self.annotation is not Enum:
+                # We take whatever is in the annotation, hoping there are some values.
+                # However, the symbol Enum itself (injected in Tag.__post_init__) will not bring us any benefit.
+                # (I know Tag.__post_init__ happens after this statement but look at 'test_select_enum' inheritance,
+                # it might be called before.)
+                #
                 # @dataclass
                 # class dc:
                 #   field: Color -> Tag(annotation=enum.Color)

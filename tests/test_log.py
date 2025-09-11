@@ -1,6 +1,7 @@
-from mininterface import Mininterface, run
+from mininterface import Mininterface
 from configs import ConflictingEnv, SimpleEnv
 from mininterface._lib.cli_flags import CliFlags
+from mininterface._lib.run import run
 from shared import TestAbstract
 
 
@@ -36,19 +37,19 @@ class TestLog(TestAbstract):
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s")
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True)
 
     @patch("logging.basicConfig")
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s")
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True)
 
     @patch("logging.basicConfig")
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s")
+        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s", force=True)
 
     @patch("logging.basicConfig")
     def test_custom_verbosity(self, mock_basicConfig):

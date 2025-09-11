@@ -1,5 +1,6 @@
-from mininterface import Mininterface, Tag, run
+from mininterface import Mininterface, Tag
 from mininterface._lib.form_dict import TagDict, dataclass_to_tagdict
+from mininterface._lib.run import run
 from mininterface.tag import PathTag
 from configs import (
     AnnotatedClass,

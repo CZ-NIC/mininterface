@@ -1,4 +1,4 @@
-from mininterface import run
+from mininterface._lib.run import run
 from mininterface._lib.form_dict import dataclass_to_tagdict
 from mininterface.tag import SelectTag, Tag
 from mininterface.tag.tag_factory import tag_assure_type

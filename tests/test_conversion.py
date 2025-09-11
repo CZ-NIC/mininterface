@@ -1,6 +1,7 @@
-from mininterface import Mininterface, run
+from mininterface import Mininterface
 from mininterface._lib.auxiliary import flatten
 from mininterface._lib.form_dict import TagDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
+from mininterface._lib.run import run
 from mininterface.tag import Tag
 from configs import ConstrainedEnv, OptionalFlagEnv
 from shared import TestAbstract

@@ -352,10 +352,11 @@ def custom_parse_known_args(cf:CliFlags):
     def _(self: TyroArgumentParser, args=None, namespace=None):
         namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
         # NOTE We may check that the Env does not have its own `verbose``
+        # NOTE I do not like much tests need force=True here as they are run in paralel.
         if cf.add_verbose and hasattr(namespace, "verbose"):
             if namespace.verbose > 0:
-                logging.basicConfig(level=cf.get_log_level(namespace.verbose), format="%(message)s")
-            else:  # NOTE I do not like tests need force=True here.
+                logging.basicConfig(level=cf.get_log_level(namespace.verbose), format="%(message)s", force=True)
+            else:
                 logging.basicConfig(level=cf.default_verbosity, format="%(message)s", force=True)
             delattr(namespace, "verbose")
 
@@ -366,7 +367,7 @@ def custom_parse_known_args(cf:CliFlags):
             delattr(namespace, "version")
 
         if cf.add_quiet and hasattr(namespace, "quiet"):
-            if namespace.quiet:  # NOTE I do not like tests need force=True here.
+            if namespace.quiet:
                 logging.basicConfig(level=cf.get_log_level(-1), format="%(message)s", force=True)
             delattr(namespace, "quiet")
         return namespace, args

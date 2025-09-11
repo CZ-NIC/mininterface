@@ -1,12 +1,11 @@
 # Might be changed by a 'mininterface' section in a config file.
-from dataclasses import dataclass, field
+from dataclasses import dataclass as _dataclass, field as _field
 from typing import Literal, Optional
 
 # We do not use InterfaceType as a type in run because we want the documentation to show full alias.
 InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["text"]
 
-
-@dataclass
+@_dataclass
 class UiSettings:
     toggle_widget: str = "f4"
     """ Shortcut to toggle widgets like secret fields, file picker, and datetime dialog.
@@ -34,7 +33,7 @@ class UiSettings:
     """ If True, the field label is not underlined to mark the mnemonic. """
 
 
-@dataclass
+@_dataclass
 class GuiSettings(UiSettings):
     # If multiple Gui interfaces exist, this had to be TkSettings instead.
 
@@ -46,15 +45,15 @@ class GuiSettings(UiSettings):
     """ Select the radio button on focus. Ex. when navigating by arrows. """
 
 
-@dataclass
+@_dataclass
 class TuiSettings(UiSettings): ...
 
 
-@dataclass
+@_dataclass
 class TextualSettings(TuiSettings): ...
 
 
-@dataclass
+@_dataclass
 class TextSettings(TuiSettings):
     mnemonic_over_number: Optional[bool] = None
     """ Even when mnemonic can be determined, use rather number as a shortcut.
@@ -109,19 +108,19 @@ class TextSettings(TuiSettings):
     """
 
 
-@dataclass
+@_dataclass
 class WebSettings(TextualSettings):
     # This is ready and working and waiting for the demand.
     ...
 
 
-@dataclass
+@_dataclass
 class MininterfaceSettings:
-    ui: UiSettings = field(default_factory=UiSettings)
-    gui: GuiSettings = field(default_factory=GuiSettings)
-    tui: TuiSettings = field(default_factory=TuiSettings)
-    textual: TextualSettings = field(default_factory=TextualSettings)
-    text: TextSettings = field(default_factory=TextSettings)
-    web: WebSettings = field(default_factory=WebSettings)
+    ui: UiSettings = _field(default_factory=UiSettings)
+    gui: GuiSettings = _field(default_factory=GuiSettings)
+    tui: TuiSettings = _field(default_factory=TuiSettings)
+    textual: TextualSettings = _field(default_factory=TextualSettings)
+    text: TextSettings = _field(default_factory=TextSettings)
+    web: WebSettings = _field(default_factory=WebSettings)
     interface: Optional[InterfaceName] = None
     """ Enforce an interface. By default, we choose automatically. """

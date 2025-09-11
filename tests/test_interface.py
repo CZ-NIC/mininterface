@@ -1,4 +1,5 @@
-from mininterface import Mininterface, run
+from mininterface import Mininterface
+from mininterface._lib.run import run
 from mininterface.exceptions import Cancelled
 from mininterface.interfaces import TextInterface
 from mininterface.tag import CallbackTag, DatetimeTag, SelectTag, Tag

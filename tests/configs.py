@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Callable, Optional
+from typing import Annotated, Callable, Literal
 
 from annotated_types import Gt, Le, Len, Lt
 from tyro.conf import Positional, arg
 
-from mininterface import Literal, Tag
+from mininterface import Tag
 from mininterface.cli import Command
 from mininterface.tag.callback_tag import CallbackTag
 from mininterface.tag.path_tag import PathTag

@@ -27,12 +27,12 @@ class AttrsModel:
 ```
 """
 
-from typing import overload
+from typing import overload as _overload
 
-from .tag import Tag, SelectTag
+from .tag import Tag as _Tag, SelectTag as _SelectTag
 
 
-def not_empty(tag: Tag):
+def not_empty(tag: _Tag):
     """Ensures that the user has entered a value and did not leave the field empty.
 
     ```python
@@ -71,7 +71,7 @@ def not_empty(tag: Tag):
         # Complex object are considered empty when the val is the same as their default value.
         # We might to design the other way. Look, a DatetimeTag makes default value current time,
         # hence passing `time() -> 00:00` would pass (if it's not midnight).
-        if v == tag._make_default_value() and not isinstance(tag, SelectTag):
+        if v == tag._make_default_value() and not isinstance(tag, _SelectTag):
             # Comparing SelectTag here is not nice.
             # However I don't know to handle this better, without importing and involving SelectTag.
             # It takes the first value, the default value is not wrong here.
@@ -81,11 +81,11 @@ def not_empty(tag: Tag):
     return True
 
 
-@overload
+@_overload
 def limit(maximum: int, lt: float | None = None, gt: float | None = None, transform=False): ...
 
 
-@overload
+@_overload
 def limit(minimum: int, maximum: int, lt: float | None = None, gt: float | None = None, transform=False): ...
 
 
@@ -148,7 +148,7 @@ def limit(
         else:
             return msg
 
-    def limiter(tag: Tag) -> bool | str | tuple[str, int]:
+    def limiter(tag: _Tag) -> bool | str | tuple[str, int]:
         """Limit value to the numerical range (or string length) with optional error message and transformation."""
         if isinstance(tag.val, str):
             value = len(tag.val)
