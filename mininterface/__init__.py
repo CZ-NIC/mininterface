@@ -1,15 +1,16 @@
 from argparse import ArgumentParser
-from  os import environ
+from os import environ
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
 
+
 from .exceptions import Cancelled, DependencyRequired, ValidationFail
 from ._lib.form_dict import DataClass, EnvClass
 from .interfaces import get_interface
-from ._mininterface import EnvClass, Mininterface
+from ._mininterface import Mininterface
 from .settings import MininterfaceSettings
 from .tag import Tag
 from .tag.alias import Options, Validation
@@ -21,29 +22,36 @@ try:
     from ._lib.cli_parser import assure_args, parse_cli
     from ._lib.dataclass_creation import choose_subcommand, to_kebab_case
     from ._lib.config_file import parse_config_file
+    from ._lib.cli_flags import CliFlags as _CliFlags
 except DependencyRequired as e:
     assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
     Start, SubcommandPlaceholder = (e,) * 2
-    to_kebab_case, choose_subcommand= (e,) * 2
+    to_kebab_case, choose_subcommand, _CliFlags = (e,) * 3
 
 
 @dataclass
 class _Empty:
     pass
 
+# TODO move to _lib due to erroneous imports
 
 def run(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None,
     ask_on_empty_cli: bool = False,
     title: str = "",
     config_file: Path | str | bool = True,
-    add_verbose: bool = True,
+    *,
+    add_help: bool = True,
+    add_verbose: bool|int|Sequence[int] = True,
+    add_version: Optional[str] = None,
+    add_version_package: Optional[str] = None,
+    add_quiet: bool = False,
     ask_for_missing: bool = True,
     # We do not use InterfaceType as a type here because we want the documentation to show full alias:
     interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
     args: Optional[Sequence[str]] = None,
     settings: Optional[MininterfaceSettings] = None,
-    **kwargs
+    **kwargs,
 ) -> Mininterface[EnvClass]:
     """The main access, start here.
     Wrap your configuration dataclass into `run` to access the interface. An interface is chosen automatically,
@@ -85,22 +93,95 @@ def run(
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
             See the [Config file](Config-file.md) section.
-        add_verbose: Adds the verbose flag that automatically sets the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+        add_help: Adds the help flag.
+        add_verbose: The default base Python verbosity logging level is `logging.WARNING`. Here you can add the verbose flag that automatically increases the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+            Either, the value is `True` (the default) which means the base logging level stays at `logging.WARNING` and the flag is added. `False` means no flag is added.
+            Also, it can be `int` to determine the default logging state (i.g. some programs prefer to show INFO by default) or a sequnce of `int`s for even finer control.
 
+            The `add_vebose=True` example:
+
+            ```python
+            import logging
+            from mininterface import run
+            logger = logging.getLogger(__name__)
+
+            m = run(add_verbose=True)
+            logger.info("Info shown") # needs `-v` or `--verbose`
+            logger.debug("Debug shown")  # needs `-vv`
+            ```
+
+            ```bash
+            $ program.py
+            # no output
+
+            $ program.py --verbose
+            Info shown
+
+            $ program.py -vv
+            Info shown
+            Debug shown
+            ```
+
+            Apart from `True`, it can also be an `int`, claiming the base logging level. By default, in Python this is `logging.WARNING`. Here, we change it to `logging.INFO`.
+
+            ```python
+            m = run(add_verbose=logging.INFO)
+            ```
+
+            ```bash
+            $ program.py
+            Info shown
+
+            $ program.py -v
+            Info shown
+            Debug shown
+            ```
+
+            Finally, it can be a sequence of `int`s, first of them is the base logging level, the others being successing levels.
+
+            ```python
+            m = run(add_verbose=(logging.WARNING, 25, logging.INFO, 15, logging.DEBUG))
+            logger.warning("Warning shown") # default
+            logger.log(25, "Subwarning shown") # needs `-v`
+            logger.info("INFO shown")  # needs `-vv`
+            logger.log(15, "Subinfo shown") # needs `-vvv`
+            ```
+
+            When user writes more `-v` than defined, the level sets to `logging.NOTSET`.
+
+        add_version: Your program version. Adds the version flag.
+            ```python
+            run(add_version="1.2.5")
+            ```
+
+            ```bash
+            $ program.py --help
+            usage: _debug.py [-h] [--version]
+
+            ╭─ options ───────────────────────────────────────────────────────────╮
+            │ -h, --help           show this help message and exit                │
+            │ --version            show program's version number (1.2.5) and exit │
+            ╰─────────────────────────────────────────────────────────────────────╯
+            ```
+
+        add_quiet: Decrease verbosity, only print warnings and errors.
             ```python
             import logging
             logger = logging.getLogger(__name__)
 
-            m = run(Env, add_verbose=True)
-            logger.info("Info shown") # needs `-v` or `--verbose`
-            logger.debug("Debug not shown")  # needs `-vv`
-            # $ program.py --verbose
-            # Info shown
+            m = run(add_quiet=True)
+            logger.error("Error shown") # needs `-v` or `--verbose`
+            logger.warning("Warning shown") # strip with `-q` or `--quiet`
+            logger.info("Info shown")
             ```
 
             ```bash
-            $ program.py --verbose
-            Info shown
+            $ program.py
+            Error shown
+            Warning shown
+
+            $ program.py --quiet
+            Error shown
             ```
 
         ask_for_missing: If some required fields are missing at startup, we ask for them in a UI instead of program exit.
@@ -160,6 +241,10 @@ def run(
     # Undocumented experimental: `default` keyword argument for tyro may serve for default values instead of a config file.
     # NOTE add add_integrate flag
 
+    # Argparse argument, processed by tyro
+    if not add_help:
+        kwargs["add_help"] = False
+
     # Prepare the config file
     if config_file is True and not kwargs.get("default"):
         # Undocumented feature. User put a namespace into kwargs["default"]
@@ -198,45 +283,57 @@ def run(
 
     # Convert argparse
     if isinstance(env_or_list, ArgumentParser):
-        env_or_list = parser_to_dataclass(env_or_list)
+        env_or_list, add_version = parser_to_dataclass(env_or_list)
 
     # Parse CLI arguments, possibly merged from a config file.
     # A) Superform – overview of the subcommands
     m = get_interface(interface, title, settings)
 
     # Resolve SubcommandPlaceholder
-    if ask_for_missing and args and args[0] == "subcommand" and "--help" not in args and isinstance(env_or_list, list) and SubcommandPlaceholder in env_or_list:
+    if (
+        ask_for_missing
+        and args
+        and args[0] == "subcommand"
+        and "--help" not in args
+        and isinstance(env_or_list, list)
+        and SubcommandPlaceholder in env_or_list
+    ):
         args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
     # B) A single Env object, or a list of such objects (with one is being selected via args)
     # C) No Env object
 
     kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
+    cf = _CliFlags(add_verbose, add_version, add_version_package, add_quiet)
     if env_or_list:
         # B) single Env object
         # Load configuration from CLI and a config file
         try:
-            parse_cli(env_or_list, kwargs, m, add_verbose, ask_for_missing, args, ask_on_empty_cli)
+            parse_cli(
+                env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli
+            )
         except Exception as e:
             # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
             from ast import literal_eval
+
             if literal_eval(environ.get("MININTERFACE_DEBUG", "0")):
                 import traceback
                 import ipdb
+
                 traceback.print_exception(e)
                 ipdb.post_mortem()
             else:
                 raise
-
 
         # Command run
         _ensure_command_run(m)
     else:
         # C) No Env object
         # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-        parse_cli(_Empty, {}, m, add_verbose, ask_for_missing, args)
+        parse_cli(_Empty, {}, m, cf, ask_for_missing, args)
 
     return m
+
 
 def _ensure_command_run(m: "Miniterface"):
     env = m.env

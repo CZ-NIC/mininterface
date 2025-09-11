@@ -10,7 +10,6 @@ from pathlib import Path
 class TestArgparse(TestAbstract):
 
     def test_argparse(self):
-        self.maxDiff = None
         parser = ArgumentParser(description="Test parser for dataclass generation.")
         # positional
         subparsers = parser.add_subparsers(dest="command", required=True)
@@ -104,7 +103,7 @@ class TestArgparse(TestAbstract):
             )
         ):
             runm(parser, args=["build"])
-        return
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             env = runm(parser, args=["build", "/tmp/file", "/tmp"]).form()
@@ -257,13 +256,28 @@ class TestArgparse(TestAbstract):
         env = runm(parser, args=["--n", "2"]).env
         self.assertEqual(env.n, 2)
 
+    def test_version(self):
+        parser = ArgumentParser(description="Test parser for dataclass generation.")
+        v_ = "v1.5.3"
+        parser.add_argument('--version', '-v', action='version', version=v_)
+
+        with self.assertOutputs(v_), self.assertRaises(SystemExit):
+            runm(parser, args=["--version"])
+
+        # version flag do not block other flags
+        with self.assertForms():
+            env = runm(parser).form()
+        self.assertEqual("Args", env.__class__.__name__)
+
     # NOTE this is not supported now
     # def test_official_example(self):
     #     parser = ArgumentParser()
+    #     Range not supported
     #     parser.add_argument( 'integers', metavar='int', type=int, choices=range(10), nargs='+', help='an integer in the range 0..9')
+    #     Another dest for store_const not supported
     #     parser.add_argument( '--sum', dest='accumulate', action='store_const', const=sum, default=max, help='sum the integers (default: find the max)')
 
     #     env = runm(parser, args=['1', '2', '3', '4']).env
-    #     # parser.parse_args(['1', '2', '3', '4'])
-    #     # Namespace(accumulate=<built-in function max>, integers=[1, 2, 3, 4])
-    #     # parser.parse_args(['1', '2', '3', '4', '--sum'])
+    #     parser.parse_args(['1', '2', '3', '4'])
+    #     Namespace(accumulate=<built-in function max>, integers=[1, 2, 3, 4])
+    #     parser.parse_args(['1', '2', '3', '4', '--sum'])

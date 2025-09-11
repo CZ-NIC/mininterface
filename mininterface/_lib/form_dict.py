@@ -2,6 +2,7 @@
 FormDict is not a real class, just a normal dict. But we need to put somewhere functions related to it.
 """
 
+from enum import Enum
 import logging
 from warnings import warn
 from dataclasses import fields, is_dataclass
@@ -233,7 +234,7 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
         raise ValueError(f"We got a namespace instead of class, CLI probably failed: {env}")
 
     for param, val in iterate_attributes(env):
-        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType, MissingTagValue)):  # nested config hierarchy
+        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType, MissingTagValue, Enum)):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
             subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)

@@ -80,11 +80,16 @@ class ArgparseField:
         return self.action.dest in self.properties
 
 
-def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass | list[DataClass]:
+def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> tuple[DataClass | list[DataClass], Optional[str]]:
     """
     Note: Ex. parser.add_argument("--time", type=time) -> does work at all in argparse, here it works.
+
+    Returns:
+        DataClass | list[DataClass]
+        Optional[str]: add_version flag
     """
     subparsers: list[_SubParsersAction] = []
+    add_version = None
 
     normal_actions: list[Action] = []
     has_positionals = False
@@ -98,6 +103,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
                         "This CLI parser have a subcommand placed after positional arguments. The order of arguments changes, see --help."
                     )
                 subparsers.append(action)
+            case _VersionAction():
+                # We do not want the version to be part of the dataclass (and appear in `m.form()`).
+                add_version = action.version
             case _:
                 if not action.option_strings:
                     has_positionals = True
@@ -113,9 +121,9 @@ def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> DataClass
             )
             for subparser in subparsers
             for subname, subactions, help_ in _loop_SubParsersAction(subparser)
-        ]
+        ], add_version
     else:
-        return _make_dataclass_from_actions(normal_actions, name, None, parser.description)
+        return _make_dataclass_from_actions(normal_actions, name, None, parser.description), add_version
 
 
 def _loop_SubParsersAction(subparser: _SubParsersAction):
@@ -144,22 +152,6 @@ def _make_dataclass_from_actions(
         match action:
             case _HelpAction():
                 continue
-            case _VersionAction():
-                # NOTE Should be probably implemented in tyro. Here that way:
-                # run(add_version="1.2.3")
-                # run(add_version_package="intelmq") -> get pip version
-                arg_type = Annotated[
-                    None,
-                    PrimitiveConstructorSpec(
-                        nargs="*",
-                        metavar="",
-                        instance_from_str=lambda _, v=action.version: print(v) or sys.exit(0),
-                        is_instance=lambda _: True,
-                        # NOTE tyro might not diplay anything here,
-                        # but it displays `(default: )`
-                        str_from_instance=(lambda _, v=action.version: [str(v)]),
-                    ),
-                ]
             case _SubParsersAction():
                 # Note that there is only one _SubParsersAction in argparse
                 # but to be sure, we allow multiple of them

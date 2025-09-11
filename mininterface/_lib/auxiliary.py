@@ -1,13 +1,16 @@
-from functools import lru_cache
-from typing import Any, get_args, get_origin, Union, get_type_hints
-from dataclasses import fields, is_dataclass
+import logging
 import os
 import re
 from argparse import ArgumentParser
+from dataclasses import fields, is_dataclass
+from functools import lru_cache
 from types import UnionType
-from typing import Callable, Iterable, Optional, TypeVar, Union, get_args, get_origin
+from typing import (Any, Callable, Iterable, Optional, TypeVar, Union,
+                    get_args, get_origin, get_type_hints)
 
-from annotated_types import Gt, Ge, Lt, Le, MultipleOf, Len
+from annotated_types import Ge, Gt, Le, Len, Lt, MultipleOf
+
+logger = logging.getLogger(__name__)
 
 try:
     from tyro.extras import get_parser
@@ -72,7 +75,7 @@ def get_descriptions(parser: ArgumentParser) -> dict:
     """Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form."""
     # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
     return {
-        action.dest.replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
+        re.sub(r"\s\(positional\)$", "", action.dest).replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
         for action in parser._actions
     }
 
@@ -85,11 +88,16 @@ def _get_parser(obj):
 
 def get_description(obj, param: str) -> str:
     if p := _get_parser(obj):
-        d = get_descriptions(p)[param].strip()
-        if d.replace("-", "_") == param:
-            # field `bot_id` is reported as `bot-id` in tyro
+        try:
+            d = get_descriptions(p)[param].strip()
+        except KeyError:
+            logger.warning("Cannot fetch description for '%s'", param)
             return ""
-        return d
+        else:
+            if d.replace("-", "_") == param:
+                # field `bot_id` is reported as `bot-id` in tyro
+                return ""
+            return d
     else:
         # We are missing mininterface[basic] requirement. Tyro is missing.
         # Without tyro, we are not able to evaluate the class: m.form(Env),
@@ -336,7 +344,7 @@ def allows_none(annotation) -> bool:
     return False
 
 
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=1024*10)
 def _get_origin(tp: Any):
     """
     Cached version of typing.get_origin.

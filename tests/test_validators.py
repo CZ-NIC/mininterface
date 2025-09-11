@@ -6,7 +6,7 @@ from configs import AnnotatedTypes, AnnotatedTypesCombined
 from shared import TestAbstract, runm
 
 
-from annotated_types import Gt, Lt
+from annotated_types import Ge, Gt, Len, Lt
 
 
 from datetime import time
@@ -126,6 +126,20 @@ class TestValidators(TestAbstract):
         self.assertTrue(d["combined3"].update(i), i)
         self.assertFalse(d["combined4"].update(i), i)
 
+    def test_annotated_types_collections(self):
+        t = Tag(validation=Gt(10))
+        self.assertFalse(t.update(1))
+        self.assertTrue(t.update(11))
+        self.assertTrue(t.update([11, 20]))
+        self.assertTrue(t.update((11, 20)))
+        self.assertFalse(t.update((11, 9)))
+        self.assertFalse(t.update("string"))
+
+        t = Tag(validation=[Ge(18), Len(5)])
+        self.assertFalse(t.update((18, 18)))
+        self.assertFalse(t.update((18, 18, 17, 18, 100)))
+        self.assertTrue(t.update((18, 18, 500, 18, 100, 100)))
+
     def test_subsequent_validation(self):
         """CLI parser will not validate certain things.
         However, subsequent validation works.
@@ -149,7 +163,7 @@ class TestValidators(TestAbstract):
                         ),
                         "percent_fl": Tag(
                             val=5,
-                            description='Type must be float! ',
+                            description="Type must be float! ",
                             annotation=float,
                             label="* percent fl",
                         ),

@@ -1,23 +1,20 @@
-from dataclasses import dataclass
 import logging
-from dataclasses import is_dataclass
+from dataclasses import dataclass, is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Optional, Type, TypeVar, overload, Iterable
+from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal,
+                    Optional, Type, TypeVar, overload)
 
-from ..tag.tag_factory import assure_tag
-
-from ..tag.select_tag import OptionsType, SelectTag
-
-from .adaptor import BackendAdaptor, MinAdaptor
-
-from ..settings import UiSettings
-
+from .._lib.form_dict import (DataClass, EnvClass, FormDict,
+                              dataclass_to_tagdict, dict_to_tagdict,
+                              tagdict_resolve)
 from ..exceptions import DependencyRequired
-
 from ..facet import Facet
-from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
+from ..settings import UiSettings
+from ..tag.select_tag import OptionsType, SelectTag
 from ..tag.tag import Tag, TagValue, ValidationCallback
+from ..tag.tag_factory import assure_tag
+from .adaptor import BackendAdaptor, MinAdaptor
 
 try:
     from .._lib.cli_parser import parse_cli
@@ -548,7 +545,7 @@ class Mininterface(Generic[EnvClass]):
                 adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True
             )
         if isinstance(_form, type):  # form is a class, not an instance
-            _form, dialog_raised = parse_cli(_form, {}, self, False, True, args=[])
+            _form, dialog_raised = parse_cli(_form, {}, self, args=[])
             if dialog_raised:  # form has already been raised due to dataclass validation, do not re-raise
                 return _form
         if is_dataclass(_form):  # -> dataclass or its instance (now it's an instance)

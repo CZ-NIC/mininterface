@@ -52,6 +52,10 @@ class SimpleEnv:
     important_number: int = 4
     """This number is very important"""
 
+@dataclass
+class EnumedEnv:
+    e1: ColorEnum
+    e2: ColorEnum = ColorEnum.RED
 
 @dataclass
 class ComplexEnv:

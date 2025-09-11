@@ -170,8 +170,14 @@ class SelectTag(Tag[TagValue]):
             self.multiple = False
 
         # Determine options from annotation
-        if not self.options and get_origin(self.annotation) is Literal:
-            self.options = get_args(self.annotation)
+        if not self.options:
+            if get_origin(self.annotation) is Literal:
+                self.options = get_args(self.annotation)
+            else:
+                # @dataclass
+                # class dc:
+                #   field: Color -> Tag(annotation=enum.Color)
+                self.options = self.annotation
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
         self.annotation = type(self)

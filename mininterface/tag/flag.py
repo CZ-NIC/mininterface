@@ -1,8 +1,18 @@
 from pathlib import Path
-from typing import Annotated, TypeVar, Any
-from tyro.constructors import PrimitiveConstructorSpec
+from types import NoneType, UnionType
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeVar, Union, get_args
 
+
+from .._lib.auxiliary import _get_origin
 from .path_tag import PathTag
+
+try:
+    from tyro.constructors import ConstructorRegistry, PrimitiveConstructorSpec, PrimitiveTypeInfo
+    from tyro.conf._markers import _Marker
+except ImportError:
+    from ..exceptions import DependencyRequired
+
+    raise DependencyRequired("basic")
 
 File = Annotated[Path, PathTag(is_file=True)]
 """ An existing file.
@@ -65,7 +75,7 @@ def _assure_blank_or_bool(args):
 BlankTrue = Annotated[
     list[str] | bool | None,
     PrimitiveConstructorSpec(
-        nargs="*",
+        nargs="*",  # NOTE should be probably = (0,1)
         metavar="blank=True|BOOL",
         instance_from_str=_assure_blank_or_bool,
         is_instance=lambda instance: True,  # NOTE not sure
@@ -93,52 +103,184 @@ Raises:
 
 T = TypeVar("T")
 
+_custom_registry = ConstructorRegistry()
 
-class Blank:
+Blank = Annotated[T | None, None]
+"""
+This marker specifies:
+
+1. The default value can also be None (for the case the flag is omitted).
+2. A different behavior when the flag is provided without a value.
+
+If the flag is left blank, it evaluates to `True` (or to the value specified by a `Literal`).
+If the flag is omitted entirely from the CLI, it returns the default value.
+
+
+```python
+from dataclasses import dataclass
+from mininterface import run
+from mininterface.tag.flag import Blank
+
+@dataclass
+class Env:
+    test: Blank[int] = None
+
+print(run(Env).env.test)
+```
+
+Let's try:
+
+```bash
+$ program.py --help
+usage: program.py [-h] [-v] [--test BLANK|int]
+
+╭─ options ───────────────────────────────────────────────────────────────────────╮
+│ -h, --help              show this help message and exit                         │
+│ -v, --verbose           verbosity level, can be used multiple times to increase │
+│ --test BLANK|int        (default: 'None / or if left blank: True')              │
+╰─────────────────────────────────────────────────────────────────────────────────╯
+```
+
+```bash
+$ program.py           # None
+$ program.py  --test   # True
+$ program.py  --test 5 # 5
+```
+
+The default blank value might be specified by a `Literal` in the `Annotated` statement.
+
+```python
+@dataclass
+class Env
+    test: Annotated[Blank[int], Literal[2]] = None
+
+print(run(Env).env.test)
+```
+
+Let's try:
+
+```bash
+$ program.py           # None
+$ program.py  --test   # 2
+$ program.py  --test 5 # 5
+```
+
+You can use multiple types together:
+
+```python
+@dataclass
+class Env:
+    test: Blank[int|bool] = 0
+
+print(run(Env).env.test)
+```
+
+Note that you can not use 'True' or 'False' for values, as the parameter becomes a bool.
+
+Let's try:
+
+```bash
+$ program.py               # 0
+$ program.py  --test       # True
+$ program.py  --test False # False
+```
+
+
+
+!!! Warning
+    Experimental.
+
+    ??? Discussion
+        The design is working but syntax `Annotated[str, Blank(True)]` might be a cleaner design. Do you have an opinion? Let us know.
     """
-    When left blank, this flag produces True.
-        Return boolean for True|False.
-        Return None if the flag is omitted.
-        Else returns T created from the input value.
 
-    Note that you can not use 'True' or 'False' for values, as the parameter becomes a bool.
+# NOTE untested
+# NOTE Should we move rather to mininterface.cli?
 
-    !!! Warning
-        Experimental.
+# NOTE Python 3.13 would allow
+# type Blank[T, U = None] = Optional[T]
+# so maybe
+# `Blank[int, Literal[2]]` will become an alternative
+# for `Annotated[Blank4[int], Literal[fn()]]` for static literal values
 
-    """
 
-    # NOTE untested
-    # NOTE Works bad with static type checking. Because `Blank[str]` pylance never matches with 'my text'.
-    # We had to have Blank=Annotated instead, which would prevent instantianting str_from_instance and dynamic metavar.
 
-    def __class_getitem__(cls, item_type: type[T]) -> Any:
-        def instance_from_str(args: list[str]) -> T | bool:
+
+if not TYPE_CHECKING:
+    # In runtime, flag must not be an Annotated but a full class.
+    # When type checking, flag must not be a full class otherwise
+    # the value would needed to be instance of Blank (instead of ex. a str)
+
+    class _Blank(_Marker):
+        def __getitem__(self, key):
+            return Annotated[(key | None, self)]
+
+        def __init__(self, description: str):
+            self.description = description
+            self.default_val = None
+
+        def __repr__(self):
+            return self.description
+
+    globals().update({"Blank": _Blank("Blank")})
+
+
+@_custom_registry.primitive_rule
+def _(
+    type_info: PrimitiveTypeInfo,
+) -> PrimitiveConstructorSpec | None:
+    if Blank in type_info.markers:
+        default_val = True
+        import inspect
+
+        frame = inspect.currentframe()
+        try:
+            try:
+                annotation = frame.f_back.f_back.f_locals["type"]
+            except:
+                annotation = frame.f_back.f_back.f_locals["arg"].field.type
+        except:
+            raise ValueError("Cannot determine the default blank value.")
+
+        type_, *metadata = get_args(annotation)
+        for m in metadata:
+            if _get_origin(m) is Literal:
+                default_val, *_ = get_args(m)
+
+        type_ = type_info.type
+        if type_info.type_origin is Union or type_info.type_origin is UnionType:
+            types = get_args(type_info.type)
+            type_ = types[0]
+        else:
+            types = (type_,)
+
+        if len(types) == 1:
+            metavar = getattr(type_, "__name__", repr(type_))
+        else:
+            metavar = "|".join(getattr(s, "__name__", repr(s)) for s in types if s is not NoneType)
+
+        def instance_from_str(args):
             if not args:
-                return True
-            if len(args) > 1:
-                raise NotImplemented("Describe your use case in an issue please.")
-            match args:
-                case ("True",):
+                return default_val
+            val = args[0]
+            if bool in types:
+                if val == "True":
                     return True
-                case ("False",):
+                elif val == "False":
                     return False
-                case _:
-                    return item_type(*args)
+            e = None
+            for t in types:
+                if t is not bool:
+                    try:
+                        return t(val)
+                    except Exception:
+                        continue
+            raise ValueError("Don't know how to make an instance")
 
-        def is_instance(_: object) -> bool:
-            return True
-
-        def str_from_instance(val: T | bool) -> list[str]:
-            return [str(val)]
-
-        return Annotated[
-            str | None,  # the base type is not used, we parse arbitrary
-            PrimitiveConstructorSpec(
-                nargs="*",
-                metavar=f"blank=True|BOOL|{item_type.__name__.upper()}",
-                instance_from_str=instance_from_str,
-                is_instance=is_instance,
-                str_from_instance=str_from_instance,
-            ),
-        ]
+        return PrimitiveConstructorSpec(
+            nargs=(0, 1),
+            metavar=f"[{metavar}]",
+            instance_from_str=lambda args: instance_from_str(args),
+            is_instance=lambda ins: ins is None or isinstance(ins, types),
+            str_from_instance=lambda ins: [str(ins) + f" / or if left blank: {default_val}"],
+        )

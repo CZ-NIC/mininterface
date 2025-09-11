@@ -5,7 +5,8 @@ from typing import Literal, Optional
 from unittest import skipIf
 
 from tyro.conf import OmitSubcommandPrefixes, Positional
-from mininterface import Tag
+from mininterface import Tag, to_kebab_case
+from mininterface._lib.auxiliary import get_description
 from mininterface._lib.form_dict import MissingTagValue
 from mininterface.cli import Command, SubcommandPlaceholder
 from mininterface.exceptions import Cancelled
@@ -109,6 +110,11 @@ class Cl2(Cl1):
     def run(self):
         pass
 
+@dataclass
+class Cl0:
+    subcommand: Optional[Cl1| Cl2] = None
+    """ Ignored text"""
+
 
 @skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestSubcommands(TestAbstract):
@@ -145,7 +151,8 @@ class TestSubcommands(TestAbstract):
         # Even though we failed on "foo: Type must be int!" in the second form, the tyro's message from the first is displayed.
         # This is due to the testing case environment while we inject the first form response as if it is not a Minadaptor.
         # Normally, the user using the Minadaptor won't make it to the second form.
-        self.assertEqual("the following arguments are required: {subcommand1,subcommand2,subcommand}", cm.exception.code)
+        subc = ",".join(to_kebab_case(s.__name__) for s in subcommands)  # ex. 'subcommand1,subcommand2,subcommand'
+        self.assertEqual("the following arguments are required: {" + f"{subc}" + "}", cm.exception.code)
 
         # missing subcommand params (inherited --foo and proper --b)
         with self.assertForms(
@@ -356,11 +363,7 @@ class TestNested(TestAbstract):
     def test_run_arg(self):
         with self.assertForms(
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
                 {"": Message},
             ),
             (
@@ -489,27 +492,15 @@ class TestNested(TestAbstract):
     def test_choose__run_console_subc1(self):
         with self.assertForms(
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["List", "Run"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["List", "Run"])},
                 {"": Run},
             ),
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
                 {"": Console},
             ),
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"])},
                 {"": Subc1},
             ),
             (
@@ -538,19 +529,11 @@ class TestNested(TestAbstract):
     def test_run__choose_console_subc1(self):
         with self.assertForms(
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Message", "Console"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
                 {"": Console},
             ),
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"])},
                 {"": Subc1},
             ),
             (
@@ -586,11 +569,7 @@ class TestNested(TestAbstract):
         """No surplus form created, because Subc1 is empty"""
         with self.assertForms(
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"])},
                 {"": Subc1},
             ),
             end=True,
@@ -600,11 +579,7 @@ class TestNested(TestAbstract):
     def test_choose_subc2(self):
         with self.assertForms(
             (
-                {
-                    "": SelectTag(
-                        val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"]
-                    )
-                },
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Subc1", "Subc2"])},
                 {"": Subc2},
             ),
             ({"": {"bar": Tag(val="BAR", description="", annotation=str, label="bar")}}, {"": {"bar": "A"}}),
@@ -618,6 +593,14 @@ class TestNested(TestAbstract):
             ({"": {"s": Tag(val=MISSING, description="", annotation=str, label="s")}}, {"": {"s": "s"}})
         ):
             runm([Cl1, Cl2], ["cl2"])
+
+    def test_optional_subcommands(self):
+        with self.assertForms():
+            runm(Cl0)
+
+        # The docstring is not seen by tyro
+        # but at least it won't fail on the positional state of the attribute
+        self.assertEqual(get_description(Cl0, "subcommand"), "")
 
 
 class TestCommand(TestAbstract):

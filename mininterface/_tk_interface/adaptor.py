@@ -1,6 +1,9 @@
+from types import FunctionType
 import sys
 from tkinter import LEFT, Button, Frame, Label, StringVar, TclError, Text, Tk, Widget
 from typing import TYPE_CHECKING, Any, Callable
+
+from textual.widgets import Checkbox
 
 try:
     from tkscrollableframe import ScrolledFrame
@@ -201,7 +204,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         self.frame.pack_forget()
         for widget in self.frame.winfo_children():
             widget: Widget
-            if widget not in [self.text_widget, self.label]:
+            if widget not in [self.text_widget, self.label_frame, self.label]:
                 widget.destroy()
         for key in self._event_bindings:
             self.unbind(key)
@@ -212,9 +215,13 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     def _destroy(self):
         self.destroy()
 
-    def bind_shortcut(self, shortcut: str, widget: Widget):
+    def bind_shortcut(self, shortcut: str, widget: Widget|Callable[[], Widget]):
         def _(event=None):
-            widget.focus_set()
+            nonlocal widget
+            if isinstance(widget, FunctionType):
+                widget().focus_set()
+            else:
+                widget.focus_set()
             return "break"
 
         self.bind(shortcut, _)

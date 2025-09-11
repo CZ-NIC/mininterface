@@ -1,9 +1,14 @@
 # Changelog
 
-## 1.1.0
+## 1.1.0 (2025-09-11)
+* CHANGED – some [`run`][mininterface.run] arguments are no longer positional and can only be passed as keyword arguments
 * feat: interactive CLI (nested configuration missing fields dialogs)
+* feat: [`run`][mininterface.run] add_version, add_version_package, add_quiet flags
 * feat: add utility for generating unit tests
+* feat: [annotated types][mininterface.tag.tag.ValidationCallback] for collections
+* feat: [`Blank`][mininterface.tag.flag.Blank] flag marker default value
 * fix: SelectTag preset value
+* fix: ArgumentParser parameters (like allow_abbrev)
 * enh: custom validation is done at dataclass built, not later on the form call
 
 ## 1.0.4 (2025-08-18)

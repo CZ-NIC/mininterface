@@ -154,8 +154,8 @@ class AnnotatedTypes:
 run(AnnotatedTypes).env.age  # guaranteed to be >= 18
 ```
 
-!!! info
-    The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.
+!!! Order
+    The annotated-types from the `Annotated` are prepended to the `Tag(validation=)` iterable.
 
     ```python
     @dataclass
@@ -164,9 +164,33 @@ run(AnnotatedTypes).env.age  # guaranteed to be >= 18
 
     # -> age: Annotated[int, Tag(validation=[Ge(18), custom])]
     ```
+
+
+If the value is tuple or list, `Gt, Ge, Lt, Le` are applied to its elements.
+
+```python
+from dataclasses import dataclass
+from annotated_types import Ge
+from mininterface import run
+
+@dataclass
+class AnnotatedTypes:
+    ages: Annotated[list[int], Ge(18), Len(5)]
+
+run(AnnotatedTypes).env.ages  # guaranteed to be all >= 18 and their count 5+
+```
+
+Let's test this:
+
+```bash
+$ program.py --ages 18 18
+ages: Length 2 must be at least 5
+$ program.py --ages 18 18 17 18 100
+ages: Value 17 must be ≥ 18
+$ program.py --ages 18 18 500 18 100
+# passes
+```
 """
-
-
 class MissingTagValue:
     """The dataclass field has not received a value from the CLI, and this value is required.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
@@ -693,6 +717,8 @@ class Tag(Generic[TagValue]):
         return self.label
 
     def _repr_annotation(self):
+        if self.annotation is None:
+            return "Any"
         if isinstance(self.annotation, UnionType) or get_origin(self.annotation):
             # ex: `list[str]`
             return repr(self.annotation)
@@ -779,12 +805,15 @@ class Tag(Generic[TagValue]):
             for vald in validation:
                 if isinstance(vald, (BaseMetadata, GroupedMetadata)):
                     try:
-                        res = validate_annotated_type(vald, out_value)
+                        if isinstance(vald, BaseMetadata) and isinstance(out_value, (tuple, list)):
+                            res = all(validate_annotated_type(vald, out_v) for out_v in out_value)
+                        else:
+                            res = validate_annotated_type(vald, out_value)
                     except TypeError:
                         # Ex. putting "2.0" into an int.
                         # It would generate type problem later here in the method,
                         # but even now comparison failed Ex. TypeError("2.0" > 0)
-                        raise ValueError(f"Type must be {self._repr_annotation()}!")
+                        raise ValueError(f"Type must be {self._repr_annotation()} and {vald}!")
                 else:
                     res = vald(self)
                     if isinstance(res, tuple):

@@ -1,24 +1,8 @@
-from mininterface import Mininterface, run
-from mininterface._lib.cli_parser import parse_cli
-from mininterface._lib.config_file import _merge_settings, parse_config_file
-from mininterface.settings import UiSettings
-from mininterface.tag import PathTag, Tag
-from attrs_configs import AttrsNested
-from configs import AnnotatedClass, FurtherEnv2, MissingCombined, MissingNonscalar, MissingPositional, MissingPositionalScalar, MissingUnderscore, SimpleEnv
-from dumb_settings import GuiSettings, MininterfaceSettings, TextSettings, TextualSettings, TuiSettings, UiSettings as UiDumb, WebSettings
-from pydantic_configs import PydNested
-from shared import MISSING, TestAbstract, runm
+from shared import TestAbstract
 
 
 import os
-import sys
-import warnings
-from argparse import ArgumentParser
-from io import StringIO
-from pathlib import Path
-from unittest.mock import patch
 from subprocess import run as srun
-from tyro.conf import FlagConversionOff, OmitArgPrefixes
 
 # When testing on a machine with display, a GUI would be used and stuck.
 os.environ["MININTERFACE_INTERFACE"] = "min"

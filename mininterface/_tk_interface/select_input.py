@@ -136,6 +136,7 @@ class SelectInputWrapper:
         adaptor = self.adaptor
         nested_frame = self.frame
         buttons = []
+        taken = False
 
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
             is_selected = choice_val == tag.val
@@ -148,6 +149,7 @@ class SelectInputWrapper:
                 takefocus=is_selected,
             )
             if is_selected:
+                taken = True
                 self.taking_focus = rb
             if adaptor.settings.radio_select_on_focus:
                 rb.bind(
@@ -177,6 +179,9 @@ class SelectInputWrapper:
             # allow Tab entry (that we disabled on button creation) even if no radio in group is checked
             buttons[0].configure(takefocus=1)
 
+        if not taken:
+            self.taking_focus = buttons[0]
+
     def set_default_label(self):
         if k := self.tag._get_selected_key():
             self.variable_wrapper.set(k)
@@ -191,6 +196,7 @@ class SelectInputWrapper:
         widget.bind("<Return>", lambda _: "break")  # override default enter that submits the form
 
         self.set_default_label()
+        self.taking_focus = widget
         return widget
 
     def end_init_phase(self):

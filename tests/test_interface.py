@@ -4,7 +4,9 @@ from mininterface.interfaces import TextInterface
 from mininterface.tag import CallbackTag, DatetimeTag, SelectTag, Tag
 from mininterface.tag.datetime_tag import date
 from configs import (
+    ColorEnum,
     ColorEnumSingle,
+    EnumedEnv,
     FurtherEnv1,
     NestedDefaultedEnv,
     NestedUnion,
@@ -13,7 +15,7 @@ from configs import (
     callback_tag,
     callback_tag2,
 )
-from shared import TestAbstract, runm, mock_interactive_terminal
+from shared import TestAbstract, runm, mock_interactive_terminal, MISSING
 
 
 from datetime import date, datetime
@@ -107,6 +109,25 @@ class TestInterface(TestAbstract):
 
         # putting a dataclass instance
         self.assertIsInstance(m.form(SimpleEnv()), SimpleEnv)
+
+    def test_form_enum(self):
+        with self.assertForms( (
+                {
+                    "": {
+                        "e1": SelectTag(
+                            val=MISSING, description="", annotation=None, label="e1", options=ColorEnum
+                        ),
+                        "e2": SelectTag(
+                            val=ColorEnum.RED, description="", annotation=None, label="e2", options=ColorEnum
+                        ),
+                    }
+                } ,
+                {"": {"e1": ColorEnum.GREEN, "e2": ColorEnum.BLUE}},
+            )):
+            out = runm().form(EnumedEnv)
+            self.assertEqual(ColorEnum.GREEN, out.e1)
+            self.assertEqual(ColorEnum.BLUE, out.e2)
+
 
     def test_select_single(self):
         m = run(interface=Mininterface)

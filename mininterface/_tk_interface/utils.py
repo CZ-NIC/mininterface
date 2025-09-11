@@ -185,6 +185,10 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
             # Only bind the Enter key, not Tab key
             widget.bind("<Return>", prevent_submit, add="+")
 
+        if isinstance(widget, Checkbutton):
+            # toggle the Checkbutton by invoking its shortcut
+            taking_focus = lambda v=variable, w=widget: v.set(not v.get()) or w
+
         # We implement some of the types the tkinter_form don't know how to handle
         match tag:
             case SelectTag():
@@ -201,7 +205,6 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
                 taking_focus = wrapper.taking_focus
                 if tag.multiple:
                     process_change_handler = False
-
 
             case PathTag():
                 grid_info = widget.grid_info()

@@ -1,10 +1,10 @@
 from unittest import skipUnless
 from mininterface import Mininterface, run
-from mininterface._lib.cli_parser import parse_cli
-from mininterface._lib.config_file import _merge_settings, parse_config_file
+from mininterface._lib.config_file import _merge_settings
 from mininterface.settings import UiSettings
 from mininterface.tag import PathTag, Tag
 from attrs_configs import AttrsNested
+from importlib.metadata import version
 from configs import (
     AnnotatedClass,
     ComplexEnv,
@@ -113,7 +113,6 @@ class TestRun(TestAbstract):
             )
         ):
             runm(AnnotatedClass)
-
 
         # NOTE yield_defaults instead of yield_annotations should be probably used in pydantic and attr
         # too to support default_factory,
@@ -295,3 +294,39 @@ class TestRun(TestAbstract):
         m = run(settings=opt1, interface=Mininterface)
         self.assertIsInstance(m, Mininterface)
         self.assertIsInstance(m._adaptor.settings, UiSettings)
+
+    def test_add_version(self):
+        with self.assertOutputs("v1.2.3"), self.assertRaises(SystemExit):
+            runm(SimpleEnv, ["--version"], add_version="v1.2.3")
+
+        # version flag does not appear in the program further
+        with self.assertForms(
+            (
+                {
+                    "": {
+                        "test": Tag(val=False, description="My testing flag", annotation=bool, label="test"),
+                        "important_number": Tag(
+                            val=4,
+                            description="This number is very important",
+                            annotation=int,
+                            label="important number",
+                        ),
+                    }
+                },
+                {"": {"important_number": 77}},
+            )
+        ):
+            runm(SimpleEnv, add_version="v1.2.3").form()
+
+    def test_add_version_package(self):
+        version_ = version("mininterface")
+        self.assertRegex(version_, r"^(\d+\.\d+\.\d+(?:-(?:rc|alpha|beta)\.?\d+)?)$")
+        with self.assertOutputs(version_), self.assertRaises(SystemExit):
+            runm(SimpleEnv, ["--version"], add_version_package="mininterface")
+
+    def test_argparse_arguments(self):
+        with self.assertRaises(SystemExit):
+            run(SimpleEnv, args=["--im", "6"])
+
+        # allow abbrev works
+        self.assertEqual(6, run(SimpleEnv, args=["--im", "6"], allow_abbrev=True).env.important_number)

@@ -8,6 +8,9 @@ from contextlib import ExitStack
 from typing import Optional, Sequence, Type, Union
 from unittest.mock import patch
 
+
+from .cli_flags import CliFlags
+
 from ..cli import Command
 
 from ..exceptions import Cancelled
@@ -21,13 +24,13 @@ from .dataclass_creation import (
     _unwrap_annotated,
     choose_subcommand,
     create_with_missing,
-    to_kebab_case
+    to_kebab_case,
 )
 from .form_dict import EnvClass, TagDict, dataclass_to_tagdict, MissingTagValue, dict_added_main
 
 try:
     from tyro import cli
-    from tyro._argparse import _SubParsersAction
+    from tyro._argparse import _SubParsersAction, ArgumentParser
     from tyro._argparse_formatter import TyroArgumentParser
     from tyro._singleton import MISSING_NONPROP
 
@@ -39,6 +42,7 @@ try:
         failed_fields,
         patched_parse_known_args,
         subparser_call,
+        argparse_init,
     )
 except ImportError:
     from ..exceptions import DependencyRequired
@@ -67,7 +71,7 @@ def parse_cli(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     kwargs: dict,
     m: "Mininterface",
-    add_verbose: bool = True,
+    cf: Optional[CliFlags] = None,
     ask_for_missing: bool = True,
     args: Optional[Sequence[str]] = None,
     ask_on_empty_cli: Optional[bool] = None,
@@ -101,7 +105,7 @@ def parse_cli(
         env_classes[i] = _unwrap_annotated(candidate)
 
     # Mock parser, inject special options into
-    patches = _apply_patches(add_verbose, ask_for_missing, env_classes)
+    patches = _apply_patches(cf, ask_for_missing, env_classes, kwargs)
 
     # Run the parser, with the mocks
     failed_fields.set([])
@@ -111,15 +115,21 @@ def parse_cli(
     See the `_crawled` creation comment to know how to simulate nested parse_cli calls.
     """
 
+    # Special CLI parsing
+    if sys.modules.get("mininterface.tag.flag") is not None:
+        from ..tag.flag import _custom_registry
+    else: # run only if the user imported the flags. (Untested) performance reasons.
+        _custom_registry = None
+
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
             try:
-                env = cli(type_form, args=args, **kwargs)
+                env = cli(type_form, args=args, registry=_custom_registry, **kwargs)
             except BaseException:
                 # Why this exception handling? Try putting this out and test_strange_error_mitigation fails.
                 if len(env_classes) > 1 and kwargs.get("default"):
-                    env = cli(kwargs["default"].__class__, args=args[1:], **kwargs)
+                    env = cli(kwargs["default"].__class__, args=args[1:], registry=_custom_registry, **kwargs)
                 else:
                     raise
             # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
@@ -134,7 +144,7 @@ def parse_cli(
             m.env = env
     except BaseException as exception:
         if ask_for_missing and getattr(exception, "code", None) == 2 and failed_fields.get():
-            env = _dialog_missing(env_classes, kwargs, m, add_verbose, ask_for_missing, args, _crawled, _req_fields)
+            env = _dialog_missing(env_classes, kwargs, m, cf, ask_for_missing, args, _crawled, _req_fields)
 
             if final_call:
                 # Ask for the wrong fields
@@ -188,27 +198,37 @@ def parse_cli(
         return env, dialog_raised
 
 
-def _apply_patches(add_verbose, ask_for_missing, env_classes):
+def _apply_patches(cf: Optional[CliFlags], ask_for_missing, env_classes, kwargs):
     patches = []
 
     patches.append(patch.object(_SubParsersAction, "__call__", subparser_call))
     patches.append(patch.object(TyroArgumentParser, "_parse_known_args", patched_parse_known_args))
 
+    kw = {
+        k: v for k, v in kwargs.items() if k != "default"
+    }  # NOTE I might separate kwargs['default'] and do not do this filtering
+    if kw:
+        patches.append(patch.object(ArgumentParser, "__init__", argparse_init(kw)))
+
     if ask_for_missing:  # Get the missing flags from the parser
         patches.append(patch.object(TyroArgumentParser, "error", custom_error))
-    if add_verbose:  # Mock parser to add verbosity
-        # The verbose flag is added only if neither the env_class nor any of the subcommands have the verbose flag already
-        if all("verbose" not in cl.__annotations__ for cl in env_classes):
-            patches.extend(
-                (
-                    patch.object(TyroArgumentParser, "__init__", custom_init),
-                    patch.object(
-                        TyroArgumentParser,
-                        "parse_known_args",
-                        custom_parse_known_args,
-                    ),
-                )
+    if cf and cf.should_add(env_classes):
+        # Mock parser to add some flags
+        # Flags are added only if neither the env_class nor any of the subcommands have the same-name flag already
+        patches.extend(
+            (
+                patch.object(
+                    TyroArgumentParser,
+                    "__init__",
+                    custom_init(cf),
+                ),
+                patch.object(
+                    TyroArgumentParser,
+                    "parse_known_args",
+                    custom_parse_known_args(cf),
+                ),
             )
+        )
 
     return patches
 
@@ -217,7 +237,7 @@ def _dialog_missing(
     env_classes,
     kwargs: dict,
     m: "Mininterface",
-    add_verbose: bool,
+    cf: Optional[CliFlags],
     ask_for_missing: bool,
     args: Optional[Sequence[str]],
     crawled,
@@ -281,7 +301,7 @@ def _dialog_missing(
     # We have just put a default values for missing fields so that tyro will not fail.
     # If we succeeded (no exotic case), this will pass through.
     # Then, we impose the user to fill the missing values.
-    env, _ = parse_cli(env_classes, kwargs, m, add_verbose, ask_for_missing, args, None, crawled, req_fields)
+    env, _ = parse_cli(env_classes, kwargs, m, cf, ask_for_missing, args, None, crawled, req_fields)
     td = dataclass_to_tagdict(env, m)
     # Remove teporary defaults to be correctly displayed in the dialog form
     # so that user must fill them.
@@ -319,7 +339,7 @@ def _fetch_currently_failed(requireds) -> TagDict:
         fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
 
         if isinstance(field, _SubParsersAction):
-            # The function _create_with_missing don't makes every encountered field a wrong field
+            # The function create_with_missing don't makes every encountered field a wrong field
             # (with the exception of the config fields, defined in the kwargs["default"] earlier).
             # The CLI options are unknown to it.
             # Here, we pick the field unknown to the CLI parser too.
@@ -344,7 +364,7 @@ def _fetch_currently_failed(requireds) -> TagDict:
                 requireds, fname, True
             )[fname_raw]
 
-    # We might have added a subsection with no fields in _create_with_missing,
+    # We might have added a subsection with no fields in create_with_missing,
     # remove them so that no empty subgroup is displayed
     remove_empty_dicts(missing_req)
 
