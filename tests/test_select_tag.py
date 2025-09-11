@@ -2,8 +2,8 @@ from mininterface._lib.run import run
 from mininterface._lib.form_dict import dataclass_to_tagdict
 from mininterface.tag import SelectTag, Tag
 from mininterface.tag.tag_factory import tag_assure_type
-from configs import ColorEnum, ConstrainedEnv
-from shared import TestAbstract
+from configs import ColorEnum, ComplexSelectTag, ConstrainedEnv
+from shared import TestAbstract, runm
 
 
 from contextlib import redirect_stderr
@@ -29,6 +29,32 @@ class TestSelectTag(TestAbstract):
         self.assertFalse(d[""]["liter1"].update("two"))
         self.assertEqual(d[""]["liter2"].val, "two")
         self.assertTrue(d[""]["liter2"].update("one"))
+        self.assertEqual(d[""]["liter3"].val, "three")
+        self.assertTrue(d[""]["liter3"].update("one"))
+        self.assertEqual(d[""]["liter4"].val, "two")
+        self.assertTrue(d[""]["liter4"].update("one"))
+        self.assertFalse(d[""]["liter4"].update("three"))
+
+        # None allowed in Literals
+        self.assertTrue(d[""]["liter3"].update(None))
+        self.assertTrue(d[""]["liter4"].update(None))
+        self.assertIsNone(d[""]["liter3"].val)
+        self.assertFalse(d[""]["liter2"].update(None))
+        self.assertIsNone(d[""]["liter6"].val)
+        self.assertIsNone(d[""]["liter7"].val)
+        self.assertEqual("two", d[""]["liter5"].val)
+        self.assertTrue(d[""]["liter5"].update(None))
+        self.assertIsNone(d[""]["liter5"].val)
+        self.assertFalse(d[""]["liter2"].update(None))
+
+        # None allowed as an enum alternative
+        self.assertIsNone(d[""]["enum"].val)
+        self.assertTrue(d[""]["enum"].update(ColorEnum.RED))
+        self.assertTrue(d[""]["enum"].update(None))
+
+        # None is not added twice
+        self.assertEqual(("one", None, "two"), d[""]["liter8"].options)
+        self.assertEqual({"one": "one", "None": None, "two": "two"}, d[""]["liter8"]._build_options())
 
         # dict is the input
         t = SelectTag(1, options={"one": 1, "two": 2})
@@ -87,50 +113,73 @@ class TestSelectTag(TestAbstract):
 
     def test_tips(self):
         t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum)
-        self.assertListEqual([
-            ('1', ColorEnum.RED, False, ('1', )),
-            ('2', ColorEnum.GREEN, False, ('2', )),
-            ('3', ColorEnum.BLUE, False, ('3', )),
-        ], t1._get_options())
+        self.assertListEqual(
+            [
+                ("1", ColorEnum.RED, False, ("1",)),
+                ("2", ColorEnum.GREEN, False, ("2",)),
+                ("3", ColorEnum.BLUE, False, ("3",)),
+            ],
+            t1._get_options(),
+        )
 
         t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum, tips=[ColorEnum.BLUE])
-        self.assertListEqual([
-            ('3', ColorEnum.BLUE, True, ('3', )),
-            ('1', ColorEnum.RED, False, ('1', )),
-            ('2', ColorEnum.GREEN, False, ('2', )),
-        ], t1._get_options())
+        self.assertListEqual(
+            [
+                ("3", ColorEnum.BLUE, True, ("3",)),
+                ("1", ColorEnum.RED, False, ("1",)),
+                ("2", ColorEnum.GREEN, False, ("2",)),
+            ],
+            t1._get_options(),
+        )
 
     def test_tupled_label(self):
         t1 = SelectTag(options={("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33})
-        self.assertListEqual([
-            ('one    - half', 11, False, ('one', 'half')),
-            ('second - half', 22, False, ('second', 'half')),
-            ('third  - half', 33, False, ('third', 'half')),
-        ], t1._get_options())
+        self.assertListEqual(
+            [
+                ("one    - half", 11, False, ("one", "half")),
+                ("second - half", 22, False, ("second", "half")),
+                ("third  - half", 33, False, ("third", "half")),
+            ],
+            t1._get_options(),
+        )
 
     def test_stripped_tupled_label(self):
         t1 = SelectTag(options={("one", "half "): 11, (" second ", "half"): 22, ("third ", "half "): 33})
-        self.assertListEqual([
-            ('one    - half', 11, False, ('one', 'half')),
-            ('second - half', 22, False, ('second', 'half')),
-            ('third  - half', 33, False, ('third', 'half')),
-        ], t1._get_options())
+        self.assertListEqual(
+            [
+                ("one    - half", 11, False, ("one", "half")),
+                ("second - half", 22, False, ("second", "half")),
+                ("third  - half", 33, False, ("third", "half")),
+            ],
+            t1._get_options(),
+        )
 
     def test_stripped_out_tupled_label(self):
         t1 = SelectTag(options={("one", ""): 11, ("second", ""): 22})
-        self.assertListEqual([
-            ('one', 11, False, ('one', )),
-            ('second', 22, False, ('second', )),
-        ], t1._get_options())
+        self.assertListEqual(
+            [
+                ("one", 11, False, ("one",)),
+                ("second", 22, False, ("second",)),
+            ],
+            t1._get_options(),
+        )
 
     def test_label_resilience(self):
-        """ Convert the labels to str. """
+        """Convert the labels to str."""
         # In this test, we are using a type as label.
         t1 = SelectTag(options={("one", ColorEnum): 11, ("second", "half"): 22, ("third", "half", "another"): 33})
-        self.assertListEqual([("one - <enum 'ColorEnum'>", 11, False, ('one', "<enum 'ColorEnum'>")),
-                              ('second - half', 22, False, ('second', 'half')),
-                              ('third - half - another', 33, False, ('third', 'half', 'another'))],
-                             t1._get_options())
+        self.assertListEqual(
+            [
+                ("one - <enum 'ColorEnum'>", 11, False, ("one", "<enum 'ColorEnum'>")),
+                ("second - half", 22, False, ("second", "half")),
+                ("third - half - another", 33, False, ("third", "half", "another")),
+            ],
+            t1._get_options(),
+        )
+
+    def test_shuffled_tupled_label(self):
+        t = SelectTag("one", options={("one", "two"): 1, ("A", "B"): 2, "alfa": 3})
+        self.assertDictEqual({("one", "two"): 1, ("A", "B"): 2, ("alfa",): 3}, t._build_options())
 
     def test_multiple(self):
         options = {("one", "half"): 11, ("second", "half"): 22, ("third", "half"): 33}
@@ -156,7 +205,7 @@ class TestSelectTag(TestAbstract):
 
     def test_build_options(self):
         t = SelectTag()
-        self.assertDictEqual({}, t._build_options())
+        self.assertDictEqual({"∅": None}, t._build_options())
 
         t.options = {"one": 1}
         self.assertDictEqual({"one": 1}, t._build_options())
@@ -170,5 +219,5 @@ class TestSelectTag(TestAbstract):
         t.options = {("one", "col2"): Tag(1, label="one"), ("three", "column3"): 3}
         self.assertDictEqual({("one", "col2"): 1, ("three", "column3"): 3}, t._build_options())
 
-        t.options = [Tag(1, label='A')]
+        t.options = [Tag(1, label="A")]
         self.assertDictEqual({"A": 1}, t._build_options())

@@ -7,9 +7,10 @@
 * feat: add utility for generating unit tests
 * feat: [annotated types][mininterface.tag.tag.ValidationCallback] for collections
 * feat: [`Blank`][mininterface.tag.flag.Blank] flag marker default value
+* feat: None value in [SelectTag][mininterface.tag.SelectTag]
+* enh: custom validation is done at dataclass built, not later on the form call
 * fix: SelectTag preset value
 * fix: ArgumentParser parameters (like allow_abbrev)
-* enh: custom validation is done at dataclass built, not later on the form call
 
 ## 1.0.4 (2025-08-18)
 * enh: better argparse support (const support, store_false matching, subcommands)

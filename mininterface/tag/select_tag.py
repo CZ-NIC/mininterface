@@ -3,12 +3,15 @@ from enum import Enum
 from typing import Iterable, Literal, Optional, Type, get_args, get_origin
 from warnings import warn
 
+
+from .._lib.auxiliary import allows_none, strip_none
+
 from .tag import Tag, TagValue
 
 OptionsReturnType = list[tuple[str, TagValue, bool, tuple[str]]]
 """ label, choice value, is-tip, tupled-label """
 OptionLabel = str
-RichOptionLabel = OptionLabel | tuple[OptionLabel]
+RichOptionLabel = OptionLabel | tuple[OptionLabel, ...]
 OptionsType = (
     list[TagValue]
     | tuple[TagValue, ...]
@@ -171,8 +174,9 @@ class SelectTag(Tag[TagValue]):
 
         # Determine options from annotation
         if not self.options:
-            if get_origin(self.annotation) is Literal:
-                self.options = get_args(self.annotation)
+            pt = self._get_possible_types()
+            if len(pt) == 1 and pt[0][0] is Literal:
+                self.options = pt[0][1]
             elif self.annotation is not Enum:
                 # We take whatever is in the annotation, hoping there are some values.
                 # However, the symbol Enum itself (injected in Tag.__post_init__) will not bring us any benefit.
@@ -181,10 +185,14 @@ class SelectTag(Tag[TagValue]):
                 #
                 # @dataclass
                 # class dc:
-                #   field: Color -> Tag(annotation=enum.Color)
-                self.options = self.annotation
+                #   field: Color | None -> Tag(annotation=enum.Color)
+                #
+                # Why strip_none? The `| None` type will be readded later, we now clean it to pure Enum
+                # for detection purposes.
+                self.options = strip_none(self.annotation)
 
         # Disabling annotation is not a nice workaround, but it is needed for the `super().update` to be processed
+        orig_ann = self.annotation
         self.annotation = type(self)
         reset_name = not self.label
         super().__post_init__()
@@ -206,6 +214,24 @@ class SelectTag(Tag[TagValue]):
             elif isinstance(candidate, type) and issubclass(candidate, Enum):  # Enum type, ex: val=ColorEnum
                 self.options = self.val
                 self.val = None
+
+        if (self.options and orig_ann is not None and allows_none(orig_ann)) or (
+            not self.options and orig_ann is None
+        ):
+            # None is among the options, like
+            # * `Options("one", None, "two")`
+            # * `Optional[Literal["one", "two"]]`
+            # * `SelectTag()`
+            # But ignore the case when the annotation is whole None with some options: `SelectTag(options=...)`.
+            opt = self._build_options()
+            if None not in opt.values():
+                for char in ("∅", "-", "None"):
+                    if char not in opt:
+                        # Put the None option to the first place
+                        self.options = {char: None, **{k: v for k, v in opt.items()}}
+                        break
+                else:
+                    raise ValueError("Cannot demark a None option.")
 
     def __hash__(self):  # every Tag child must have its own hash method to be used in Annotated
         return super().__hash__()
@@ -231,7 +257,7 @@ class SelectTag(Tag[TagValue]):
         return [k for k, val, *_ in self._get_options() if val in self.val]
 
     @classmethod
-    def _repr_val(cls, v):
+    def _repr_val(cls, v) -> str:
         if cls._is_a_callable_val(v):
             return v.__name__
         if isinstance(v, Tag):
@@ -240,23 +266,28 @@ class SelectTag(Tag[TagValue]):
             return str(v.value)
         return str(v)
 
-    def _build_options(self) -> dict[OptionLabel, TagValue]:
-        """Whereas self.options might have different format, this returns a canonic dict."""
+    def _build_options(self) -> dict[RichOptionLabel, TagValue]:
+        """Whereas self.options might have different format,
+        this returns a canonic dict.
+        The keys are all strs or all tuples.
+        """
 
         if self.options is None:
             return {}
         if isinstance(self.options, dict):
-            # assure the key is a str or their tuple
-            return {
-                (tuple(str(k) for k in key) if isinstance(key, tuple) else str(key)): self._get_tag_val(v)
-                for key, v in self.options.items()
-            }
+            # assure the keys are either strs or tuple of strs
+            keys = self.options.keys()
+            if any(isinstance(k, tuple) for k in keys):
+                keys = ((tuple(str(k) for k in key) if isinstance(key, tuple) else (str(key),)) for key in keys)
+            else:
+                keys = (str(key) for key in keys)
+            return {key: self._get_tag_val(v) for key, v in zip(keys, self.options.values())}
         if isinstance(self.options, Iterable):
             return {self._repr_val(v): self._get_tag_val(v) for v in self.options}
         if isinstance(self.options, type) and issubclass(self.options, Enum):  # Enum type, ex: options=ColorEnum
             return {str(v.value): self._get_tag_val(v) for v in list(self.options)}
 
-        warn(f"Not implemented options: {self.options}")
+        raise ValueError(f"Not implemented options: {self.options}")
 
     def _get_options(self, delim=" - ") -> OptionsReturnType:
         """Return a list of tuples (label, choice value, is tip, tupled-label).
@@ -281,10 +312,12 @@ class SelectTag(Tag[TagValue]):
         options = self._build_options()
 
         keys = options.keys()
-        labels: Iterable[tuple[str, tuple[str]]]
+        labels: Iterable[tuple[str, tuple[str, ...]]]
         """ First is the str-label, second is guaranteed to be a tupled label"""
 
         if len(options) and isinstance(next(iter(options)), tuple):
+            # As options come from the _build_options, we are sure that if the first is a tuple,
+            # the others are tuples too.
             labels = self._span_to_lengths(keys, delim)
         else:
             labels = ((key, (key,)) for key in keys)

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Union
 
-from mininterface._lib.auxiliary import allows_none, matches_annotation, subclass_matches_annotation
+from mininterface._lib.auxiliary import allows_none, matches_annotation, strip_none, subclass_matches_annotation
 from mininterface.tag import Tag
 from shared import TestAbstract
 
@@ -46,3 +46,14 @@ class TestAuxiliary(TestAbstract):
         for annotation, expected in cases:
             with self.subTest(annotation=annotation):
                 self.assertEqual(allows_none(annotation), expected)
+
+    def test_strip_none(self):
+        cases = [
+            ((str | None), str),
+            ((str | bool | None), str | bool),
+            (Optional[str | bool], str | bool),
+            (Optional[tuple[int] | bool], tuple[int] | bool),
+        ]
+        for annotation, expected in cases:
+            with self.subTest(annotation=annotation):
+                self.assertEqual(strip_none(annotation), expected)

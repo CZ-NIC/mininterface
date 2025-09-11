@@ -10,7 +10,6 @@ from mininterface._lib.auxiliary import get_description
 from mininterface._lib.form_dict import MissingTagValue
 from mininterface._lib.dataclass_creation import to_kebab_case
 from mininterface.cli import Command, SubcommandPlaceholder
-from mininterface.exceptions import Cancelled
 from mininterface.tag import DatetimeTag, PathTag, SelectTag
 from configs import CommandWithInitedMissing, ParametrizedGeneric, Subcommand1, Subcommand2
 from shared import MISSING, TestAbstract, runm
@@ -101,6 +100,17 @@ class List:
 
 
 @dataclass
+class UpperCommand2:
+    command: Run | List
+
+
+# NOTE Currently, it seems it works only with OmitSubcommandPrefixes
+@dataclass
+class UpperCommand1:
+    command: OmitSubcommandPrefixes[UpperCommand2 | List]
+
+
+@dataclass
 class Cl1(Command):
     s: str
 
@@ -111,9 +121,10 @@ class Cl2(Cl1):
     def run(self):
         pass
 
+
 @dataclass
 class Cl0:
-    subcommand: Optional[Cl1| Cl2] = None
+    subcommand: Optional[Cl1 | Cl2] = None
     """ Ignored text"""
 
 
@@ -358,6 +369,49 @@ class TestNested(TestAbstract):
             env = runm([List, Run], args=[]).env
             self.assertEqual(
                 f"""List(kind='bots')""",
+                repr(env),
+            )
+
+    def test_upper_command(self):
+        with self.assertForms(
+            (
+                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
+                {"": Message},
+            ),
+            (
+                {
+                    "": {},
+                    "command": {
+                        "command": {
+                            "bot_id": SelectTag(
+                                val=MISSING,
+                                description="Choose a value",
+                                annotation=None,
+                                label="bot id",
+                                options=["id-one", "id-two"],
+                            ),
+                            "_subcommands": {
+                                "kind": SelectTag(
+                                    val=MISSING,
+                                    description="This is my help text",
+                                    annotation=None,
+                                    label="kind",
+                                    options=["get", "pop", "send"],
+                                ),
+                                "msg": Tag(
+                                    val=MISSING, description="My message", annotation=Optional[str], label="msg"
+                                ),
+                                "foo": Tag(val="hello", description="", annotation=str, label="foo"),
+                            },
+                        }
+                    },
+                },
+                {"command": {"command": {"bot_id": "id-two", "_subcommands": {"kind": "pop", "msg": None}}}},
+            ),
+        ):
+            env = runm(UpperCommand1, args=["upper-command2", "run"]).env
+            self.assertEqual(
+                """UpperCommand1(command=UpperCommand2(command=Run(bot_id='id-two', _subcommands=Message(kind='pop', msg=None, foo='hello'))))""",
                 repr(env),
             )
 

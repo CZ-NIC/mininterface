@@ -329,11 +329,13 @@ def custom_init(cf:CliFlags):
         if cf.add_version:
             self.add_argument(
                 default_prefix * 2 + "version",
-                # I would use this native version, but it insert a blank line
-                # action="version",
-                # version=add_version,
-                action="store_const",
-                const=cf.version,
+                # NOTE We use the native version, but it inserts a blank line
+                action="version",
+                version=cf.version,
+                # Our custom version works bad with subcommands, we have to first resolve subcommands,
+                # than it comes to the version
+                # action="store_const",
+                # const=cf.version,
                 help=f"show program's version number ({cf.version}) and exit",
             )
 
@@ -360,11 +362,12 @@ def custom_parse_known_args(cf:CliFlags):
                 logging.basicConfig(level=cf.default_verbosity, format="%(message)s", force=True)
             delattr(namespace, "verbose")
 
-        if cf.add_verbose and hasattr(namespace, "version"):
-            if namespace.version:
-                print(namespace.version)
-                raise SystemExit(0)
-            delattr(namespace, "version")
+        # This code is now not used, see `custom_init`
+        # if cf.add_verbose and hasattr(namespace, "version"):
+        #     if namespace.version:
+        #         print(namespace.version)
+        #         raise SystemExit(0)
+        #     delattr(namespace, "version")
 
         if cf.add_quiet and hasattr(namespace, "quiet"):
             if namespace.quiet:

@@ -1,34 +1,20 @@
-from argparse import (
-    SUPPRESS,
-    _AppendAction,
-    _AppendConstAction,
-    _CountAction,
-    _HelpAction,
-    _StoreConstAction,
-    _StoreFalseAction,
-    _StoreTrueAction,
-    _SubParsersAction,
-    _VersionAction,
-    Action,
-    ArgumentParser,
-)
+import re
+import sys
+from argparse import (SUPPRESS, Action, ArgumentParser, _AppendAction,
+                      _AppendConstAction, _CountAction, _HelpAction,
+                      _StoreConstAction, _StoreFalseAction, _StoreTrueAction,
+                      _SubParsersAction, _VersionAction)
 from collections import defaultdict
 from dataclasses import MISSING, Field, dataclass, field, make_dataclass
 from functools import cached_property
-import re
-import sys
 from typing import Annotated, Callable, Optional
 from warnings import warn
 
-from tyro.conf import OmitSubcommandPrefixes
-
 from ..tag.alias import Options
-
 from .form_dict import DataClass
 
-
 try:
-    from tyro.conf import Positional
+    from tyro.conf import DisallowNone, OmitSubcommandPrefixes, Positional
 except ImportError:
     from ..exceptions import DependencyRequired
 
@@ -277,4 +263,4 @@ def _make_dataclass_from_actions(
         separator = ": " if needs_colon else ("\n" if trimmed else "")
         dc.__doc__ = trimmed + separator + (description or "")
 
-    return dc
+    return DisallowNone[dc]

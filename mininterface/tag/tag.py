@@ -641,6 +641,9 @@ class Tag(Generic[TagValue]):
                     return True
             elif subclass_matches_annotation(class_type, subtype):  # tuple
                 return True
+            elif origin is None and subclass_matches_annotation(subtype, class_type):
+                # ex. `ColorEnum | None` _is_subclass(Enum)
+                return True
         return False
 
     def _get_possible_types(self) -> list[tuple[type | None, type | list[type]]]:
@@ -666,11 +669,8 @@ class Tag(Generic[TagValue]):
                     return [_(subt) for subt in subtype]
                 if origin is tuple:
                     return origin, list(subtype)
-                # elif origin is Literal:
-                #     ss=set(type(t) for t in subtype)
-                #     if len(ss) == 1:
-                #         return origin, ss.pop()
-                #     warn(f"This parametrized Literal generic not implemented: {annot}")
+                elif origin is Literal:
+                    return origin, subtype
                 elif len(subtype) == 1:
                     return origin, subtype[0]
                 else:

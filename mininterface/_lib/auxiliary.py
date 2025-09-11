@@ -343,6 +343,17 @@ def allows_none(annotation) -> bool:
         return any(arg is type(None) for arg in args)
     return False
 
+def strip_none(annotation):
+    """Return the same annotation but without NoneType inside a Union/Optional."""
+    origin = get_origin(annotation)
+
+    if origin is Union or origin is UnionType:
+        args = tuple(arg for arg in get_args(annotation) if arg is not type(None))
+        if len(args) == 1:
+            return args[0]
+        return Union[args]  # nebo origin[args], aby se zachoval typ
+
+    return annotation
 
 @lru_cache(maxsize=1024*10)
 def _get_origin(tp: Any):

@@ -1,7 +1,7 @@
 """ Its name is not test_minimal.py because it fails when at least [basic] bundle is installed. """
 
 from dataclasses import dataclass
-from mininterface import DependencyRequired
+from mininterface.exceptions import DependencyRequired
 from .shared import TestAbstract, runm
 
 

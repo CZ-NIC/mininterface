@@ -32,7 +32,8 @@ def _get_tag_type(tag: Tag) -> Type[Tag]:
     """Return the most specific Tag child that a tag value can be expressed with.
     Ex. Return PathTag for a Tag having a Path as a value.
     """
-    if get_origin(tag.annotation) is Literal:
+    pt = tag._get_possible_types()
+    if len(pt) == 1 and pt[0][0] is Literal:
         return SelectTag
     if tag._is_subclass(Path):
         return PathTag

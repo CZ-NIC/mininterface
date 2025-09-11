@@ -345,7 +345,7 @@ def _fetch_currently_failed(requireds) -> TagDict:
             # Here, we pick the field unknown to the CLI parser too.
             # As whole subparser was unknown here, we safely consider all its fields wrong fields.
             if fname:
-                missing_req[fname_raw] = get_or_create_parent_dict(requireds, fname)
+                get_or_create_parent_dict(missing_req, fname, True)[fname_raw] = get_or_create_parent_dict(requireds, fname)
             else:
                 # This is the default subparser, without a field name:
                 # ex. `run([List, Run])`

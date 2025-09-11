@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Callable, Literal
+from typing import Annotated, Callable, Literal, Optional
 
 from annotated_types import Gt, Le, Len, Lt
 from tyro.conf import Positional, arg
@@ -52,10 +52,12 @@ class SimpleEnv:
     important_number: int = 4
     """This number is very important"""
 
+
 @dataclass
 class EnumedEnv:
     e1: ColorEnum
     e2: ColorEnum = ColorEnum.RED
+
 
 @dataclass
 class ComplexEnv:
@@ -83,9 +85,11 @@ class FurtherEnv1:
 class NestedDefaultedEnv:
     further: FurtherEnv1
 
+
 @dataclass
 class NestedUnion:
-    further: FurtherEnv1|SimpleEnv
+    further: FurtherEnv1 | SimpleEnv
+
 
 @dataclass
 class FurtherEnv2:
@@ -163,6 +167,9 @@ class OptionalFlagEnv:
 class ConstrainedEnv:
     """Set of options."""
 
+    enum: ColorEnum | None = None
+
+
     test: Annotated[str, Tag(validation=not_empty, label="Better name")] = "hello"
     """My testing flag"""
 
@@ -172,6 +179,19 @@ class ConstrainedEnv:
 
     liter1: Literal["one"] = "one"
     liter2: Literal["one", "two"] = "two"
+    liter3: Optional[Literal["one", "two", "three"]] = "three"
+    liter4: Literal["one", "two"] | None = "two"
+    liter5: Literal["one", None, "two"] = "two"
+    liter6: Literal["one", None, "two"] = None
+    liter7: Optional[Literal["one", "two"]] = None
+    liter8: Literal["one", None, "two"] | None = "two"
+
+    enum: ColorEnum | None = None
+
+
+@dataclass
+class ComplexSelectTag:
+    options: Annotated[int | None, SelectTag(annotation=int|None, options={("one", "two"): 1, ("A", "B"): 2, "alfa": 3})] = 1
 
 
 @dataclass
@@ -194,9 +214,7 @@ class PathTagClass:
     files: Positional[list[Path]] = field(default_factory=list)
 
     # This becomes PathTag(multiple=True)
-    files2: Annotated[list[Path], Tag(label="Custom name")] = field(
-        default_factory=list
-    )
+    files2: Annotated[list[Path], Tag(label="Custom name")] = field(default_factory=list)
 
     # NOTE this should become PathTag(multiple=True)
     # files3: Annotated[list, PathTag(name="Custom name")] = field(default_factory=list)
@@ -207,9 +225,7 @@ class DatetimeTagClass:
     p1: datetime = datetime.fromisoformat("2024-09-10 17:35:39.922044")
     p2: time = time.fromisoformat("17:35:39.922044")
     p3: date = date.fromisoformat("2024-09-10")
-    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat(
-        "2024-09-10 17:35:39.922044"
-    )
+    pAnnot: Annotated[date, Tag(label="hello")] = datetime.fromisoformat("2024-09-10 17:35:39.922044")
 
 
 @dataclass
@@ -253,6 +269,7 @@ class AnnotatedClassInner:
     files5: Annotated[list[Path], None] = field(default_factory=list)
     files6: Annotated[list[Path], Tag(annotation=list)] = field(default_factory=list)
 
+
 @dataclass
 class AnnotatedClass4:
     bad: Annotated[list[Path], Tag(annotation=str)] = field(default_factory=list)
@@ -281,6 +298,7 @@ class SharedArgs(Command):
     def run(self):
         pass
 
+
 @dataclass
 class CommandWithInitedMissing(Command):
 
@@ -293,10 +311,9 @@ class CommandWithInitedMissing(Command):
         # so that omitting the argument would not cause setting
         # the files to the current date.
         if not self.date_:
-            self.date_ = date(2025,9,4)
+            self.date_ = date(2025, 9, 4)
 
-    def run(self):
-        ...
+    def run(self): ...
 
 
 @dataclass
@@ -356,9 +373,7 @@ def validation1(tag: Tag):
 class AnnotatedTypes:
     age: Annotated[int, Gt(18)] = 20  # Valid: 19, 20, ...
     # Invalid: 17, 18, "19", 19.0, ...
-    my_list: Annotated[list[int], Len(0, 10)] = field(
-        default_factory=lambda: []
-    )  # Valid: [], [10, 20, 30, 40, 50]
+    my_list: Annotated[list[int], Len(0, 10)] = field(default_factory=lambda: [])  # Valid: [], [10, 20, 30, 40, 50]
     # Invalid: (1, 2), ["abc"], [0] * 20
     percent: Annotated[int, Gt(0), Le(100)] = 5
 
