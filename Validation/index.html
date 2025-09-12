@@ -484,7 +484,7 @@ they are prompted to edit the value.</p>
 <code class="highlight language-python"><span class="n">not_empty</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span></code>
 </h4>
 <div class="doc doc-contents">
-<p>Assures that Tag the user has written a value and did not let the field empty.</p>
+<p>Ensures that the user has entered a value and did not leave the field empty.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">validators</span><span class="p">,</span> <span class="n">run</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
@@ -496,7 +496,7 @@ they are prompted to edit the value.</p>
 <p>Note that for Path, an empty string is converted to an empty Path('.'),
 hence '.' too is considered as an empty input and the user
 is not able to set '.' as a value.
-This does not seem to me as a bad behaviour as in CLI you clearly see the CWD,
+We do not consider this a bad behaviour as in CLI you clearly see the CWD,
 whereas in a UI the CWD is not evident.</p>
 <p><span class="doc-section-title">Parameters:</span></p>
 <table>

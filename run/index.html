@@ -405,7 +405,7 @@
 <h1>Run</h1>
 <div class="doc doc-object doc-function">
 <h3 class="doc doc-heading" id="mininterface.run">
-<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">env_or_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ask_on_empty_cli</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ask_for_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">env_or_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ask_on_empty_cli</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">add_help</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_version_package</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ask_for_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>The main access, start here.
@@ -429,7 +429,7 @@ with the program name ending on <em>.yaml</em>, ex: <code>program.py</code> will
 <tr class="doc-section-item">
 <td><code>env_or_list</code></td>
 <td>
-<code><span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="mininterface._mininterface.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>] | list[<span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="mininterface._mininterface.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>]] | <span title="argparse.ArgumentParser">ArgumentParser</span> | None</code>
+<code><span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="mininterface._lib.form_dict.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>] | list[<span title="typing.Type">Type</span>[<a class="autorefs autorefs-internal" title="mininterface._lib.form_dict.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>]] | <span title="argparse.ArgumentParser">ArgumentParser</span> | None</code>
 </td>
 <td>
 <div class="doc-md-description">
@@ -506,29 +506,123 @@ See the <a href="../Config-file/">Config file</a> section.</p>
 </td>
 </tr>
 <tr class="doc-section-item">
-<td><code>add_verbose</code></td>
+<td><code>add_help</code></td>
 <td>
 <code>bool</code>
 </td>
 <td>
 <div class="doc-md-description">
-<p>Adds the verbose flag that automatically sets the level to <code>logging.INFO</code> (<em>-v</em>) or <code>logging.DEBUG</code> (<em>-vv</em>).</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">logging</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Info shown"</span><span class="p">)</span> <span class="c1"># needs `-v` or `--verbose`</span>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Debug not shown"</span><span class="p">)</span>  <span class="c1"># needs `-vv`</span>
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="c1"># $ program.py --verbose</span>
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="c1"># Info shown</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--verbose
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>Info<span class="w"> </span>shown
-</code></pre></div>
+<p>Adds the help flag.</p>
 </div>
 </td>
 <td>
 <code>True</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>add_verbose</code></td>
+<td>
+<code>bool | int | <span title="typing.Sequence">Sequence</span>[int]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>The default base Python verbosity logging level is <code>logging.WARNING</code>. Here you can add the verbose flag that automatically increases the level to <code>logging.INFO</code> (<em>-v</em>) or <code>logging.DEBUG</code> (<em>-vv</em>).
+Either, the value is <code>True</code> (the default) which means the base logging level stays at <code>logging.WARNING</code> and the flag is added. <code>False</code> means no flag is added.
+Also, it can be <code>int</code> to determine the default logging state (i.g. some programs prefer to show INFO by default) or a sequnce of <code>int</code>s for even finer control.</p>
+<p>The <code>add_vebose=True</code> example:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">logging</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Info shown"</span><span class="p">)</span> <span class="c1"># needs `-v` or `--verbose`</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Debug shown"</span><span class="p">)</span>  <span class="c1"># needs `-vv`</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="c1"># no output</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>$<span class="w"> </span>program.py<span class="w"> </span>--verbose
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>Info<span class="w"> </span>shown
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>$<span class="w"> </span>program.py<span class="w"> </span>-vv
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>Info<span class="w"> </span>shown
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>Debug<span class="w"> </span>shown
+</code></pre></div>
+<p>Apart from <code>True</code>, it can also be an <code>int</code>, claiming the base logging level. By default, in Python this is <code>logging.WARNING</code>. Here, we change it to <code>logging.INFO</code>.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">add_verbose</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span>program.py
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>Info<span class="w"> </span>shown
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>$<span class="w"> </span>program.py<span class="w"> </span>-v
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a>Info<span class="w"> </span>shown
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a>Debug<span class="w"> </span>shown
+</code></pre></div>
+<p>Finally, it can be a sequence of <code>int</code>s, first of them is the base logging level, the others being successing levels.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">add_verbose</span><span class="o">=</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">))</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Warning shown"</span><span class="p">)</span> <span class="c1"># default</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="s2">"Subwarning shown"</span><span class="p">)</span> <span class="c1"># needs `-v`</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"INFO shown"</span><span class="p">)</span>  <span class="c1"># needs `-vv`</span>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">"Subinfo shown"</span><span class="p">)</span> <span class="c1"># needs `-vvv`</span>
+</code></pre></div>
+<p>When user writes more <code>-v</code> than defined, the level sets to <code>logging.NOTSET</code>.</p>
+</div>
+</td>
+<td>
+<code>True</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>add_version</code></td>
+<td>
+<code><span title="typing.Optional">Optional</span>[str]</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Your program version. Adds the version flag.
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="n">run</span><span class="p">(</span><span class="n">add_version</span><span class="o">=</span><span class="s2">"1.2.5"</span><span class="p">)</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>usage:<span class="w"> </span>_debug.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--version<span class="o">]</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>╭─<span class="w"> </span>options<span class="w"> </span>───────────────────────────────────────────────────────────╮
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">           </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                </span>│
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>│<span class="w"> </span>--version<span class="w">            </span>show<span class="w"> </span>program<span class="err">'</span>s<span class="w"> </span>version<span class="w"> </span>number<span class="w"> </span><span class="o">(</span><span class="m">1</span>.2.5<span class="o">)</span><span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w"> </span>│
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>╰─────────────────────────────────────────────────────────────────────╯
+</code></pre></div>
+</div>
+</td>
+<td>
+<code>None</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>add_quiet</code></td>
+<td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Decrease verbosity, only print warnings and errors.
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">logging</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">add_quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Error shown"</span><span class="p">)</span> <span class="c1"># needs `-v` or `--verbose`</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Warning shown"</span><span class="p">)</span> <span class="c1"># strip with `-q` or `--quiet`</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Info shown"</span><span class="p">)</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>Error<span class="w"> </span>shown
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>Warning<span class="w"> </span>shown
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>$<span class="w"> </span>program.py<span class="w"> </span>--quiet
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>Error<span class="w"> </span>shown
+</code></pre></div>
+</div>
+</td>
+<td>
+<code>False</code>
 </td>
 </tr>
 <tr class="doc-section-item">
@@ -613,7 +707,7 @@ If not set, we look also for an environment variable <a href="../Interfaces/#env
 <tbody>
 <tr class="doc-section-item">
 <td>
-<code><a class="autorefs autorefs-internal" title="mininterface._mininterface.Mininterface" href="../Mininterface/#mininterface.Mininterface">Mininterface</a>[<a class="autorefs autorefs-internal" title="mininterface._mininterface.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>]</code>
+<code><a class="autorefs autorefs-internal" title="mininterface._mininterface.Mininterface" href="../Mininterface/#mininterface.Mininterface">Mininterface</a>[<a class="autorefs autorefs-internal" title="mininterface._lib.form_dict.EnvClass" href="../Helper-types/#mininterface._lib.form_dict.EnvClass">EnvClass</a>]</code>
 </td>
 <td>
 <div class="doc-md-description">

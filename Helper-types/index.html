@@ -741,9 +741,9 @@
 <a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>
 <a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="n">run</span><span class="p">(</span><span class="n">AnnotatedTypes</span><span class="p">)</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">age</span>  <span class="c1"># guaranteed to be &gt;= 18</span>
 </code></pre></div>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>The annotated-types from the Annotated are prepended to the Tag(validation=) iterable.</p>
+<div class="admonition order">
+<p class="admonition-title">Order</p>
+<p>The annotated-types from the <code>Annotated</code> are prepended to the <code>Tag(validation=)</code> iterable.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nd">@dataclass</span>
 <a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="k">class</span> <span class="nc">AnnotatedTypes</span><span class="p">:</span>
 <a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">age</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="n">validation</span><span class="o">=</span><span class="n">custom</span><span class="p">)]</span>
@@ -751,6 +751,25 @@
 <a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="c1"># -&gt; age: Annotated[int, Tag(validation=[Ge(18), custom])]</span>
 </code></pre></div>
 </div>
+<p>If the value is tuple or list, <code>Gt, Ge, Lt, Le</code> are applied to its elements.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="kn">from</span> <span class="nn">annotated_types</span> <span class="kn">import</span> <span class="n">Ge</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="k">class</span> <span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a>    <span class="n">ages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">),</span> <span class="n">Len</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+<a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a>
+<a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="n">run</span><span class="p">(</span><span class="n">AnnotatedTypes</span><span class="p">)</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">ages</span>  <span class="c1"># guaranteed to be all &gt;= 18 and their count 5+</span>
+</code></pre></div>
+<p>Let's test this:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>ages:<span class="w"> </span>Length<span class="w"> </span><span class="m">2</span><span class="w"> </span>must<span class="w"> </span>be<span class="w"> </span>at<span class="w"> </span>least<span class="w"> </span><span class="m">5</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">17</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">100</span>
+<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>ages:<span class="w"> </span>Value<span class="w"> </span><span class="m">17</span><span class="w"> </span>must<span class="w"> </span>be<span class="w"> </span>≥<span class="w"> </span><span class="m">18</span>
+<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">100</span>
+<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="c1"># passes</span>
+</code></pre></div>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">

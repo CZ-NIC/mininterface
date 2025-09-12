@@ -619,7 +619,11 @@
 </tbody>
 </table>
 <h3 id="ordering">Ordering</h3>
-<p>We try to obtain the best interface available. By preference, it is <strong>gui</strong> , then <strong>&gt; tui</strong> (textual or at least <strong>&gt; text</strong>), then the original non-interactive <strong>&gt; Mininterface</strong> is used. The ensures the program to still work in cron jobs etc.</p>
+<p>We try to obtain the best interface available. By preference, it is <strong>gui</strong> , then <strong>&gt; tui</strong> (textual or at least <strong>&gt; text</strong>), then the original non-interactive <strong>&gt; min</strong> is used. The ensures the program to still work in cron jobs etc. (<strong>Web</strong> is never chosen automatically.)</p>
+<pre class="mermaid"><code>graph LR
+gui --&gt; tk{ tk } --&gt; tui --&gt; textual{ textual } --&gt; text{ text } --&gt; min
+web
+</code></pre>
 <h3 id="getting-one">Getting one</h3>
 <p>Normally, you get an interface through <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a>
 but if you do not wish to parse CLI and config file, you can invoke one directly through <code>from mininterface.interfaces import *</code>. You may as well use the <a class="autorefs autorefs-internal" href="#mininterface.interfaces.get_interface"><code>get_interface</code></a> function to ensure the interface is available or invoke the program with <a href="#environment-variable-mininterface_interface"><code>MININTERFACE_INTERFACE</code></a> environment variable.</p>
@@ -720,43 +724,95 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <p><code>$ MININTERFACE_INTERFACE=web program.py</code></p>
 <h1 id="mininterface"><code>Mininterface</code></h1>
 <p>The base interface.</p>
+<p>Not interactive, behaves as if the user confirmed everyting. It is being used in ex. cron scripts.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>min<span class="w"> </span>./program.py
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>Asking<span class="w"> </span>the<span class="w"> </span>form<span class="w"> </span>Env<span class="o">(</span><span class="nv">my_flag</span><span class="o">=</span>False,<span class="w"> </span><span class="nv">my_number</span><span class="o">=</span><span class="m">4</span><span class="o">)</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="m">4</span>
+</code></pre></div>
+<details class="code">
+<summary>Code</summary>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="w">    </span><span class="sd">""" This calculates something. """</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>
+<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="w">    </span><span class="sd">""" This switches the functionality """</span>
+<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a>
+<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="w">    </span><span class="sd">""" This number is very important """</span>
+<a href="#__codelineno-2-13" id="__codelineno-2-13" name="__codelineno-2-13"></a>
+<a href="#__codelineno-2-14" id="__codelineno-2-14" name="__codelineno-2-14"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a href="#__codelineno-2-15" id="__codelineno-2-15" name="__codelineno-2-15"></a>    <span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My application"</span><span class="p">)</span>
+<a href="#__codelineno-2-16" id="__codelineno-2-16" name="__codelineno-2-16"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+<a href="#__codelineno-2-17" id="__codelineno-2-17" name="__codelineno-2-17"></a>    <span class="c1"># Attributes are suggested by the IDE</span>
+<a href="#__codelineno-2-18" id="__codelineno-2-18" name="__codelineno-2-18"></a>    <span class="c1"># along with the hint text 'This number is very important'.</span>
+<a href="#__codelineno-2-19" id="__codelineno-2-19" name="__codelineno-2-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
+</code></pre></div>
+</details>
+<p>If not possible, the program ends with a warning.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>gui<span class="w"> </span>./program.py
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>Asking<span class="w"> </span>the<span class="w"> </span>form<span class="w"> </span>Env<span class="o">(</span><span class="nv">my_flag</span><span class="o">=</span>MISSING,<span class="w"> </span><span class="nv">my_number</span><span class="o">=</span><span class="m">4</span><span class="o">)</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>the<span class="w"> </span>following<span class="w"> </span>arguments<span class="w"> </span>are<span class="w"> </span>required:<span class="w"> </span>--my-flag
+</code></pre></div>
+<details class="code">
+<summary>Code</summary>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="w">    </span><span class="sd">""" This calculates something. """</span>
+<a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a>
+<a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a>    <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="c1"># no default value here</span>
+<a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="w">    </span><span class="sd">""" This switches the functionality """</span>
+<a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a>
+<a href="#__codelineno-4-11" id="__codelineno-4-11" name="__codelineno-4-11"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<a href="#__codelineno-4-12" id="__codelineno-4-12" name="__codelineno-4-12"></a><span class="w">    </span><span class="sd">""" This number is very important """</span>
+<a href="#__codelineno-4-13" id="__codelineno-4-13" name="__codelineno-4-13"></a>
+<a href="#__codelineno-4-14" id="__codelineno-4-14" name="__codelineno-4-14"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a href="#__codelineno-4-15" id="__codelineno-4-15" name="__codelineno-4-15"></a>    <span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My application"</span><span class="p">)</span>
+<a href="#__codelineno-4-16" id="__codelineno-4-16" name="__codelineno-4-16"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+</code></pre></div>
+</details>
 <h1 id="guiinterface-or-tkinterface-or-gui"><code>GuiInterface</code> or <code>TkInterface</code> or 'gui'</h1>
 <p>A tkinter window. It inherits from <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.GuiSettings"><code>GuiSettings</code></a>.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>gui<span class="w"> </span>./program.py
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>gui<span class="w"> </span>./program.py
 </code></pre></div>
-<p><img alt="Hello world example: GUI window" src="../asset/hello-gui.avif" title="A minimal use case – GUI"/>
-<br/><em>The code for generating screenshots is taken from the <a href="../">Introduction</a>.</em></p>
+<p><img alt="Hello world example: GUI window" src="../asset/hello-gui.avif" title="A minimal use case – GUI"/></p>
 <h1 id="tuiinterface-or-tui"><code>TuiInterface</code> or 'tui'</h1>
 <p>An interactive terminal. Will try to get <code>TextualInterface</code> and <code>TextInterface</code> as a fallback.</p>
 <h2 id="textualinterface"><code>TextualInterface</code></h2>
 <p>If <a href="https://github.com/Textualize/textual">textual</a> installed, rich and mouse clickable interface is used.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>tui<span class="w"> </span>./program.py
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>tui<span class="w"> </span>./program.py
 </code></pre></div>
 <p><img alt="Hello world example: TUI fallback" src="../asset/hello-tui.avif" title="A minimal use case – TUI fallback"/></p>
 <h2 id="textinterface"><code>TextInterface</code></h2>
 <p>Plain text only interface with no dependency as a fallback. The non-interactive session becomes interactive if possible but there is no mouse support. Does not clear whole screen as TextualInterface if it suits better your program flow.</p>
-<p><div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>text<span class="w"> </span>./program.py
+<p><div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>text<span class="w"> </span>./program.py
 </code></pre></div>
 <img alt="Hello world example: text fallback" src="../asset/hello-text.avif" title="A minimal use case – text fallback"/></p>
 <h1 id="webinterface-or-web"><code>WebInterface</code> or 'web'</h1>
 <p>Exposed to a web.</p>
 <p>You can expose any script to the web by invoking it through the bundled <code>mininterface</code> program.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>web<span class="w"> </span>./program.py<span class="w"> </span>--port<span class="w"> </span><span class="m">9997</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>web<span class="w"> </span>./program.py<span class="w"> </span>--port<span class="w"> </span><span class="m">9997</span>
 </code></pre></div>
 <p>But still, you have the possibility to invoke the web by preference in the <code>run</code> or <code>get_interface</code> method, direct invocation through importing <code>WebInterface</code> from <code>mininterface.interfaces</code>, or through the environment variable.</p>
-<p><div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>web<span class="w"> </span>./program.py
-<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>Serving<span class="w"> </span><span class="s1">'./program.py'</span><span class="w"> </span>on<span class="w"> </span>http://localhost:64646
-<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>
-<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>Press<span class="w"> </span>Ctrl+C<span class="w"> </span>to<span class="w"> </span>quit
+<p><div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>web<span class="w"> </span>./program.py
+<a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>Serving<span class="w"> </span><span class="s1">'./program.py'</span><span class="w"> </span>on<span class="w"> </span>http://localhost:64646
+<a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a>
+<a href="#__codelineno-9-4" id="__codelineno-9-4" name="__codelineno-9-4"></a>Press<span class="w"> </span>Ctrl+C<span class="w"> </span>to<span class="w"> </span>quit
 </code></pre></div>
 <img alt="Hello world example: web" src="../asset/hello-web.avif" title="A minimal use case – web"/></p>
 <div class="admonition caveat">
 <p class="admonition-title">Caveat</p>
 <p>Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="n">hello</span> <span class="o">=</span> <span class="s2">"world"</span>  <span class="c1"># This line would run thrice!</span>
-<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="s2">"web"</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"one"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
-<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"two"</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="n">hello</span> <span class="o">=</span> <span class="s2">"world"</span>  <span class="c1"># This line would run thrice!</span>
+<a href="#__codelineno-10-2" id="__codelineno-10-2" name="__codelineno-10-2"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="s2">"web"</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a href="#__codelineno-10-3" id="__codelineno-10-3" name="__codelineno-10-3"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"one"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<a href="#__codelineno-10-4" id="__codelineno-10-4" name="__codelineno-10-4"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"two"</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
 </code></pre></div>
 </div>
 <div class="admonition warning">
@@ -791,5 +847,7 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <script id="__config" type="application/json">{"base": "..", "features": ["navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
 <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-</body>
+<script>window.mermaidConfig = {default: {
+    startOnLoad: false
+}};</script></body>
 </html>
