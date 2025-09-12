@@ -204,8 +204,6 @@ $ program.py  --test False # False
 # for `Annotated[Blank4[int], Literal[fn()]]` for static literal values
 
 
-
-
 if not TYPE_CHECKING:
     # In runtime, flag must not be an Annotated but a full class.
     # When type checking, flag must not be a full class otherwise

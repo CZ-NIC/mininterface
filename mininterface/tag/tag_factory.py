@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, Literal, Type, get_origin, get_type_hints
 
-from annotated_types import BaseMetadata, GroupedMetadata
+from annotated_types import BaseMetadata, GroupedMetadata, Len
 
 from . import DatetimeTag, SelectTag, Tag
 from .callback_tag import CallbackTag
@@ -105,7 +105,8 @@ def tag_factory(
                                     new.annotation = annotation or field_type.__origin__
                                 # Annotated[date, Tag(name="hello")] = datetime.fromisoformat(...) -> DatetimeTag(date=True)
                                 tag = tag_assure_type(new._fetch_from(Tag(*args, **kwargs), include_ref=True))
-                            elif isinstance(metadata, (BaseMetadata, GroupedMetadata)):
+                            elif isinstance(metadata, (BaseMetadata, Len)):
+                                # Why not checking `GroupedMetadata` instead of `Len`? See below. You won't believe.
                                 validators.append(metadata)
     if not tag:
         tag = tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
@@ -113,3 +114,39 @@ def tag_factory(
     if validators:  # we prepend annotated_types validators to the current validator
         tag._add_validation(validators)
     return tag
+
+# NOTE I'd like to check `GroupedMetadata` instead of the `Len` (the only currently supported GroupedMetadata).
+# However, that's not possible because a mere checking of some things from the typing module,
+# like `isinstance(Literal[2], GroupedMetadata)`, will add a trailing __annotations__ to some objects in the typing module.
+#
+# Once upon a day, I thought I debug a pretty obscure case from tyro, concerning global imports of a primitive specs registry
+# when doing tests in paralel. The bug appeared reliably but only on the server, never on the localhost, and for Python3.12+
+# only (which I am running to on localhost). I find out a test fails when another specific test is there. But it was not the end,
+# the problem lied not in tyro but deeper, some chances are there is a bug in the Python itself. It turned out
+# a mere presence of a Literal in an Annotated statement cause a bug in an independent test.
+#
+# The dark magic happens in typing._proto_hook at line
+# `getattr(base, '__annotations__', {})`
+# while `base = _LiteralSpecialForm)`
+#
+# This utterly obscure case will make tyro cycle when handling unions,
+# Union must not have trailing __annotations__
+# `runm([Subc1, Subc2])` # will cycle
+# So the code breaks up a different time on another place. Tremendous.
+#
+# https://github.com/annotated-types/annotated-types/issues/94
+#
+# ```python
+# from typing import Literal, Optional, Union
+# from annotated_types import GroupedMetadata, Len
+# print(hasattr(Union[1, 2],"__annotations__")) # False
+# print(hasattr(Optional,"__annotations__")) # False
+# print(hasattr(Literal,"__annotations__")) # False
+#
+# isinstance(Literal, GroupedMetadata)
+#
+# print(Union[1, 2].__annotations__) # {}
+# print(Optional.__annotations__) # {}
+# print(Literal.__annotations__) # {}
+# ````
+#

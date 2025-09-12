@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (2025-09-11)
+## 1.1.0 (2025-09-12)
 * CHANGED – some [`run`][mininterface.run] arguments are no longer positional and can only be passed as keyword arguments
 * feat: interactive CLI (nested configuration missing fields dialogs)
 * feat: [`run`][mininterface.run] add_version, add_version_package, add_quiet flags
