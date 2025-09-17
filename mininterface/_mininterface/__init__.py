@@ -240,6 +240,7 @@ class Mininterface(Generic[EnvClass]):
         # So that we can have `ask("My number", int, Gt(0))`
         # NOTE Missing tests.
         # NOTE Missing default= param. (Should be same as passing `ask("My number", Tag(5))`)
+        # NOTE add annotation=Tag, ex. `m.ask('Repo password', SecretTag)`
 
         if annotation is int:
             print("Asking number:", text)

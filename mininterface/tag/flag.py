@@ -73,9 +73,9 @@ def _assure_blank_or_bool(args):
 
 
 BlankTrue = Annotated[
-    list[str] | bool | None,
+    bool | None,
     PrimitiveConstructorSpec(
-        nargs="*",  # NOTE should be probably = (0,1)
+        nargs=(0,1),  # TODO test should be probably = (0,1)
         metavar="blank=True|BOOL",
         instance_from_str=_assure_blank_or_bool,
         is_instance=lambda instance: True,  # NOTE not sure
@@ -238,7 +238,8 @@ def _(
             except:
                 annotation = frame.f_back.f_back.f_locals["arg"].field.type
         except:
-            raise ValueError("Cannot determine the default blank value.")
+            # ex. `threads: Blank[int] | Literal["auto"] = "auto"
+            raise ValueError("Cannot determine the default blank value. Check the mininterface.tag.flag.Blank annotation or raise a project issue please.")
 
         type_, *metadata = get_args(annotation)
         for m in metadata:

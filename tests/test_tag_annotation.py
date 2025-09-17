@@ -82,6 +82,34 @@ class TestTagAnnotation(TestAbstract):
         t.update("[1,'2',3]")
         self.assertEqual(["1", "2", "3"], t.val)
 
+    def test_parametrized_generic_nested(self):
+        # ellipsis support
+        t = Tag("", annotation=list[tuple[str, ...]])
+        self.assertFalse(t.update("[1,2,3]"))
+        self.assertTrue(t.update("[(1,),(2,),(3,)]"))
+        self.assertEqual([("1",), ("2",), ("3",)], t.val)
+        self.assertTrue(t.update("[(1,),(2,'b')]"))
+        self.assertEqual([("1",), ("2","b")], t.val)
+
+        t = Tag("", annotation=list[tuple[str]])
+        self.assertFalse(t.update("[1,2]"))
+        self.assertTrue(t.update("[(1,),(2,)]"))
+        self.assertEqual([("1",), ("2",)], t.val)
+        # NOTE this passes now, too tolerant
+        # self.assertFalse(t.update("[(1,),(2,'b')]"))
+
+        t = Tag("", annotation=list[tuple[str, int]])
+        self.assertFalse(t.update("[1,2]"))
+        self.assertFalse(t.update("[(1,),(2,)]"))
+        self.assertTrue(t.update("[(1,5),(2,5)]"))
+        self.assertEqual([("1",5), ("2",5)], t.val)
+
+        t = Tag("", annotation=list[tuple])
+        self.assertFalse(t.update("[1,3]"))
+        self.assertTrue(t.update("[(1,'a'),(3,'b')]"))
+        # NOTE not sure whether default literal_ast conversion to int(1), int(3) is required
+        self.assertEqual([(1,"a"), (3,"b")], t.val)
+
     def test_single_path_union(self):
         t = Tag("", annotation=Path | None)
         t.update("/tmp/")

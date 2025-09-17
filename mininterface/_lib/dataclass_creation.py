@@ -2,7 +2,7 @@ import re
 import warnings
 from dataclasses import MISSING, dataclass, fields, is_dataclass
 from types import UnionType
-from typing import Annotated, Optional, Type, Union, get_args, get_origin
+from typing import Annotated, Optional, Type, Union, get_args, get_origin, TypeVar
 
 try:
     from tyro._singleton import MISSING_NONPROP
@@ -33,6 +33,7 @@ try:  # Attrs is not a dependency but integration
 except ImportError:
     attr = None
 
+T = TypeVar("T")
 
 @dataclass(slots=True)
 class ChosenSubcommand:
@@ -104,7 +105,7 @@ def _unwrap_annotated(tp):
     return tp
 
 
-def create_with_missing(env, disk: dict, wf: Optional[dict] = None, mint: Optional["Mininterface"] = None):
+def create_with_missing(env: T, disk: dict, wf: Optional[dict] = None, mint: Optional["Mininterface"] = None)->T:
     """
     Create a default instance of an Env object. This is due to provent tyro to spawn warnings about missing fields.
     Nested dataclasses have to be properly initialized. YAML gave them as dicts only.

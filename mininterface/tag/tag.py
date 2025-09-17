@@ -911,6 +911,13 @@ class Tag(Generic[TagValue]):
                                     candidate = origin(
                                         cast_to_(v) for cast_to_, v in zip(cast_to, literal_eval(ui_value))
                                     )
+                                elif get_origin(cast_to) is tuple:
+                                    cast_to = get_args(cast_to)
+                                    if len(cast_to) == 2 and cast_to[1] is Ellipsis:
+                                        cast_to = cast_to[0]
+                                        candidate = origin(tuple(cast_to(v) for v in tuple_) for tuple_ in literal_eval(ui_value))
+                                    else:
+                                        candidate = origin(tuple(cast_to_(v) for v, cast_to_ in zip(tuple_, cast_to)) for tuple_ in literal_eval(ui_value))
                                 else:
                                     candidate = origin(cast_to(v) for v in literal_eval(ui_value))
                             else:

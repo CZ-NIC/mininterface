@@ -200,6 +200,8 @@ def matches_annotation(value, annotation) -> bool:
         if origin is list:
             return all(matches_annotation(item, subtypes[0]) for item in value)
         elif origin is tuple:
+            if len(subtypes) == 2 and subtypes[1] is Ellipsis: # ex. tuple[int, ...]
+                return all(matches_annotation(v, subtypes[0]) for v in value)
             if len(subtypes) != len(value):
                 return False
             return all(matches_annotation(v, t) for v, t in zip(value, subtypes))

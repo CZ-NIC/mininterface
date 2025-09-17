@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.1
+* enh: `list[tuple]` support (along with `list[tuple[int]]` and `list[tuple[int, ...]]`)
+
 ## 1.1.0 (2025-09-12)
 * CHANGED – some [`run`][mininterface.run] arguments are no longer positional and can only be passed as keyword arguments
 * feat: interactive CLI (nested configuration missing fields dialogs)
