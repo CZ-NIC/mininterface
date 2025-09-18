@@ -448,7 +448,7 @@
 <p>CLI flags have no effect in the UI. Great for CLI so that the user writes less.</p>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.flag.Blank">
-<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">Blank</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span></code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">Blank</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">T</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>This marker specifies:</p>
@@ -482,7 +482,7 @@ If the flag is omitted entirely from the CLI, it returns the default value.</p>
 <a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>$<span class="w"> </span>program.py<span class="w">  </span>--test<span class="w">   </span><span class="c1"># True</span>
 <a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>$<span class="w"> </span>program.py<span class="w">  </span>--test<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="c1"># 5</span>
 </code></pre></div>
-<p>The default blank value might be specified by a <code>Literal</code> in the <code>Annotated</code> statement.</p>
+<p>The default blank value might be specified by a <code>Literal</code> present in the <code>Annotated</code> statement.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nd">@dataclass</span>
 <a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="k">class</span> <span class="nc">Env</span>
 <a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>    <span class="n">test</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Blank</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -509,7 +509,7 @@ If the flag is omitted entirely from the CLI, it returns the default value.</p>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Experimental.</p>
+<p>Experimental. It adds <code>bool</code> as a valid type too.</p>
 <details class="discussion">
 <summary>Discussion</summary>
 <p>The design is working but syntax <code>Annotated[str, Blank(True)]</code> might be a cleaner design. Do you have an opinion? Let us know.</p>
@@ -519,7 +519,7 @@ If the flag is omitted entirely from the CLI, it returns the default value.</p>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.flag.BlankTrue">
-<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">BlankTrue</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PrimitiveConstructorSpec</span><span class="p">(</span><span class="n">nargs</span><span class="o">=</span><span class="s1">'*'</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">'blank=True|BOOL'</span><span class="p">,</span> <span class="n">instance_from_str</span><span class="o">=</span><span class="n">_assure_blank_or_bool</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">str_from_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="p">[</span><span class="n">instance</span><span class="p">])]</span></code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">BlankTrue</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PrimitiveConstructorSpec</span><span class="p">(</span><span class="n">nargs</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">'blank=True|BOOL'</span><span class="p">,</span> <span class="n">instance_from_str</span><span class="o">=</span><span class="n">_assure_blank_or_bool</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">str_from_instance</span><span class="o">=</span><span class="k">lambda</span> <span class="n">instance</span><span class="p">:</span> <span class="p">[</span><span class="n">instance</span><span class="p">])]</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>When left blank, this flag produces True.</p>
