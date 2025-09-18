@@ -74,7 +74,10 @@ def coerce_type_to_annotation(value, annotation):
         }
 
     # For nested dataclass or BaseModel etc.
-    return value
+    try:  # ex. `Path(value)`
+        return annotation(value)
+    except Exception:
+        return value
 
 
 def _get_wrong_field(

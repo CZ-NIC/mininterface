@@ -1,3 +1,4 @@
+from tempfile import NamedTemporaryFile
 from unittest import skipUnless
 from mininterface import Mininterface
 from mininterface._lib.config_file import _merge_settings
@@ -15,6 +16,7 @@ from configs import (
     MissingPositional,
     MissingPositionalScalar,
     MissingUnderscore,
+    ParametrizedGeneric,
     SimpleEnv,
 )
 from dumb_settings import (
@@ -219,6 +221,17 @@ class TestRun(TestAbstract):
             a7=[("j", 10.0), ("k", 11), ("l", 12)],
         )
         self.assertEqual(pattern, runm(ComplexEnv, config_file="tests/complex.yaml").env)
+
+    def test_object_config(self):
+        with NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as tmp:
+            tmp.write("""paths:
+        - /tmp
+        - /var/log/syslog
+        """)
+            tmp.flush()
+            env = runm(ParametrizedGeneric, config_file=tmp.name).env
+            self.assertEqual(ParametrizedGeneric(paths=[Path('/tmp'), Path('/var/log/syslog')]), env)
+
 
     def test_run_annotated(self):
         m = run(FlagConversionOff[OmitArgPrefixes[SimpleEnv]])

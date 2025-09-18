@@ -105,7 +105,7 @@ T = TypeVar("T")
 
 _custom_registry = ConstructorRegistry()
 
-Blank = Annotated[T | None, None]
+Blank = Annotated[T | bool | None, None]
 """
 This marker specifies:
 
@@ -147,7 +147,7 @@ $ program.py  --test   # True
 $ program.py  --test 5 # 5
 ```
 
-The default blank value might be specified by a `Literal` in the `Annotated` statement.
+The default blank value might be specified by a `Literal` present in the `Annotated` statement.
 
 ```python
 @dataclass
@@ -188,7 +188,7 @@ $ program.py  --test False # False
 
 
 !!! Warning
-    Experimental.
+    Experimental. It adds `bool` as a valid type too.
 
     ??? Discussion
         The design is working but syntax `Annotated[str, Blank(True)]` might be a cleaner design. Do you have an opinion? Let us know.
@@ -196,6 +196,7 @@ $ program.py  --test False # False
 
 # NOTE untested
 # NOTE Should we move rather to mininterface.cli?
+# NOTE Now it adds `bool` too. Otherwise we could not set the value to True.
 
 # NOTE Python 3.13 would allow
 # type Blank[T, U = None] = Optional[T]
@@ -211,7 +212,7 @@ if not TYPE_CHECKING:
 
     class _Blank(_Marker):
         def __getitem__(self, key):
-            return Annotated[(key | None, self)]
+            return Annotated[(key | bool | None, self)]
 
         def __init__(self, description: str):
             self.description = description
@@ -256,12 +257,14 @@ def _(
         if len(types) == 1:
             metavar = getattr(type_, "__name__", repr(type_))
         else:
-            metavar = "|".join(getattr(s, "__name__", repr(s)) for s in types if s is not NoneType)
+            # NOTE we now suppress bool even if user `Blank[str|bool]` explicitely set it
+            metavar = "|".join(getattr(s, "__name__", repr(s)) for s in types if s not in (NoneType, bool))
 
         def instance_from_str(args):
             if not args:
                 return default_val
             val = args[0]
+            # NOTE bool is now always in types
             if bool in types:
                 if val == "True":
                     return True

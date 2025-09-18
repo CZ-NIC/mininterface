@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from types import UnionType
-from typing import (Any, Callable, Iterable, Optional, TypeVar, Union,
+from typing import (Any, Callable, Iterable, Optional, TypeVar, Union, Literal,
                     get_args, get_origin, get_type_hints)
 
 from annotated_types import Ge, Gt, Le, Len, Lt, MultipleOf
@@ -90,8 +90,7 @@ def get_description(obj, param: str) -> str:
     if p := _get_parser(obj):
         try:
             d = get_descriptions(p)[param].strip()
-        except KeyError:
-            logger.warning("Cannot fetch description for '%s'", param)
+        except KeyError:  # either fetching failed or user added no description
             return ""
         else:
             if d.replace("-", "_") == param:
@@ -192,6 +191,8 @@ def matches_annotation(value, annotation) -> bool:
 
     # generics, ex. list, tuple
     origin = get_origin(annotation)
+    if origin is Literal:
+        return value in get_args(annotation)
     if origin:
         if not isinstance(value, origin):
             return False
