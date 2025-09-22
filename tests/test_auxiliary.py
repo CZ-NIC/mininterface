@@ -18,6 +18,7 @@ class TestAuxiliary(TestAbstract):
         self.assertTrue(matches_annotation((42, "world"), annotation))
         self.assertFalse(matches_annotation(42, annotation))
         self.assertTrue(matches_annotation([(1, "a"), (2, "b")], list[tuple[int, str]]))
+        self.assertFalse(matches_annotation([(1, "a", "c"), (2, "b")], list[tuple[int, str]]))
         self.assertFalse(matches_annotation([(1, 2)], list[tuple[int, str]]))
 
     def test_subclass_matches_annotation(self):

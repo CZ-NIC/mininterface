@@ -695,7 +695,7 @@ class Tag(Generic[TagValue]):
     def set_error_text(self, s=""):
         """ Mark the field as required and possibly adds an error text to the description. """
         if s:
-            self.description = f"{s} {self._original_desc}"
+            self.description = f"{s} {self._original_desc}".strip()
         if n := self._original_label:
             # Why checking self._original_label?
             # If for any reason (I do not know the use case) is not set, we would end up with '* None'
@@ -914,10 +914,23 @@ class Tag(Generic[TagValue]):
                                 elif get_origin(cast_to) is tuple:
                                     cast_to = get_args(cast_to)
                                     if len(cast_to) == 2 and cast_to[1] is Ellipsis:
+                                        # ex. `list[tuple[int, ...]]`
                                         cast_to = cast_to[0]
                                         candidate = origin(tuple(cast_to(v) for v in tuple_) for tuple_ in literal_eval(ui_value))
-                                    else:
-                                        candidate = origin(tuple(cast_to_(v) for v, cast_to_ in zip(tuple_, cast_to)) for tuple_ in literal_eval(ui_value))
+                                    else: # ex. `list[tuple[int, Path, str]]`
+                                        tuples = []
+                                        for str_tuple in literal_eval(ui_value):
+                                            try:
+                                                typed_tuple = tuple(
+                                                    cast_to_(v) for v, cast_to_ in zip(str_tuple, cast_to, strict=True)
+                                                )
+                                            except ValueError as e:
+                                                # this was the right way, there is no reason to attempt further
+                                                self.set_error_text(f"Bad tuple length for {str_tuple!r}")
+                                                return False
+                                            tuples.append(typed_tuple)
+
+                                        candidate = origin(tuples)
                                 else:
                                     candidate = origin(cast_to(v) for v in literal_eval(ui_value))
                             else:

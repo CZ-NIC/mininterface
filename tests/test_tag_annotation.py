@@ -11,7 +11,8 @@ from typing import Callable
 
 
 class TestTagAnnotation(TestAbstract):
-    """ Tests tag annotation. """
+    """Tests tag annotation."""
+
     # The class name could not be 'TestAnnotation', nor 'TestAnnotation2'. If so, another test on github failed with
     # StopIteration / During handling of the above exception, another exception occurred:
     # File "/opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/result.py", line 226, in _clean_tracebacks
@@ -89,7 +90,7 @@ class TestTagAnnotation(TestAbstract):
         self.assertTrue(t.update("[(1,),(2,),(3,)]"))
         self.assertEqual([("1",), ("2",), ("3",)], t.val)
         self.assertTrue(t.update("[(1,),(2,'b')]"))
-        self.assertEqual([("1",), ("2","b")], t.val)
+        self.assertEqual([("1",), ("2", "b")], t.val)
 
         t = Tag("", annotation=list[tuple[str]])
         self.assertFalse(t.update("[1,2]"))
@@ -102,13 +103,17 @@ class TestTagAnnotation(TestAbstract):
         self.assertFalse(t.update("[1,2]"))
         self.assertFalse(t.update("[(1,),(2,)]"))
         self.assertTrue(t.update("[(1,5),(2,5)]"))
-        self.assertEqual([("1",5), ("2",5)], t.val)
+        self.assertEqual([("1", 5), ("2", 5)], t.val)
+
+        # too much values
+        self.assertFalse(t.update("[(1,5,3),(2,5,3)]"))
+        self.assertEqual("Bad tuple length for (1, 5, 3)", t.description)
 
         t = Tag("", annotation=list[tuple])
         self.assertFalse(t.update("[1,3]"))
         self.assertTrue(t.update("[(1,'a'),(3,'b')]"))
         # NOTE not sure whether default literal_ast conversion to int(1), int(3) is required
-        self.assertEqual([(1,"a"), (3,"b")], t.val)
+        self.assertEqual([(1, "a"), (3, "b")], t.val)
 
     def test_single_path_union(self):
         t = Tag("", annotation=Path | None)
@@ -150,10 +155,10 @@ class TestTagAnnotation(TestAbstract):
         m = run(ParametrizedGeneric, interface=Mininterface)
         f = dataclass_to_tagdict(m.env)[""]["paths"]
         self.assertEqual([Path("/usr"), Path("/tmp")], f.val)
-        self.assertEqual(['/usr', '/tmp'], f._get_ui_val())
+        self.assertEqual(["/usr", "/tmp"], f._get_ui_val())
         self.assertTrue(f.update("['/var']"))
         self.assertEqual([Path("/var")], f.val)
-        self.assertEqual(['/var'], f._get_ui_val())
+        self.assertEqual(["/var"], f._get_ui_val())
 
     def test_select_method(self):
         m = run(interface=Mininterface)
@@ -177,7 +182,7 @@ class TestTagAnnotation(TestAbstract):
         self.assertEqual(ColorEnum.RED, m.select(ColorEnum.RED))
 
     def test_dynamic_description(self):
-        """ This is an undocumented feature.
+        """This is an undocumented feature.
         When you need a dynamic text, you may use tyro's arg to set it.
         """
         m = run(DynamicDescription, interface=Mininterface)

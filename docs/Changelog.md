@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.1.1
+## 1.1.2 (unreleased)
+* enh: `list[tuple]` supperfluous arguments check
+
+## 1.1.1 (2025-09-18)
 * enh: `list[tuple]` support (along with `list[tuple[int]]` and `list[tuple[int, ...]]`)
 * fix: objects in config files
 
@@ -71,7 +74,7 @@
 
 ## 0.7.4 (2025-01-27)
 * Python 3.13 compatible
-* emits a warning when for config file fields, unknown to the model
+* emits a warning for config file fields that are unknown to the model
 
 ## 0.7.3 (2025-01-09)
 * fix: put GUI descriptions back to the bottom

@@ -72,7 +72,7 @@ class TestAnnotated(TestAbstract):
                         "foo1": Tag(val=1, description="", annotation=int, label="foo1"),
                         "foo2": PathTag(val=[], description="", annotation=list[Path], label="foo2"),
                         "foo3": PathTag(
-                            val=[], description="Fill in some value ", annotation=list[Path], label="* foo3"
+                            val=[], description="Fill in some value", annotation=list[Path], label="* foo3"
                         ),
                         "foo4": Tag(val=[], description="raises error", annotation=list[bool], label="foo4"),
                     }

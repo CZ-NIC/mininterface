@@ -163,7 +163,7 @@ class TestValidators(TestAbstract):
                         ),
                         "percent_fl": Tag(
                             val=5,
-                            description="Type must be float! ",
+                            description="Type must be float!",
                             annotation=float,
                             label="* percent fl",
                         ),
