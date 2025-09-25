@@ -140,3 +140,18 @@ class MinAdaptor(BackendAdaptor):
             raise SystemExit(validation_fails)
 
         return form
+
+class Timeout(ABC):
+    """ Auto-submit dialogs """
+
+    def __init__(self, timeout: int, adaptor: "BackendAdaptor"):
+        self.timeout = timeout
+        self.adaptor = adaptor
+
+    @abstractmethod
+    def countdown(self):
+        ...
+
+    @abstractmethod
+    def cancel(self):
+        ...

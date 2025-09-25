@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.1.2 (unreleased)
+* feat: timeout parameter for alert & confirm
 * enh: `list[tuple]` supperfluous arguments check
 
 ## 1.1.1 (2025-09-18)

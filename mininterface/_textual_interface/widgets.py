@@ -117,9 +117,17 @@ class MyButton(TagWidget, Button):
 
     def __init__(self, tag, *args, **kwargs):
         super().__init__(tag, tag.label, *args, **kwargs)
+        self.blur_callback = None
 
     def on_button_pressed(self, event):
         self.tag._facet.submit(_post_submit=self.tag._run_callable)
+
+    def on_blur(self):
+        if clb:=self.blur_callback:
+            clb()
+
+    def set_blur_callback(self, clb):
+        self.blur_callback = clb
 
     def get_ui_value(self):
         return self.tag.val

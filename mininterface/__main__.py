@@ -33,6 +33,7 @@ Showcase_Type = Literal[1, 2]
 # @dataclass
 # class SharedLabel(Command):
 #     text: Positional[str]
+# NOTE implement `timeout`
 
 
 @dataclass

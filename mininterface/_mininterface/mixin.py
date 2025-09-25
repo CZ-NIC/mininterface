@@ -13,12 +13,12 @@ from . import Mininterface
 class RichUiMixin(Mininterface):
     _adaptor: "RichUiAdaptor"
 
-    def alert(self, text: str) -> None:
+    def alert(self, text: str, *, timeout: int = 0) -> None:
         """Display the OK dialog with text."""
-        self._adaptor.buttons(text, [("Ok", None)])
+        self._adaptor.buttons(text, [("Ok", None)], timeout=timeout)
 
-    def confirm(self, text, default: bool = True) -> bool:
-        return self._adaptor.yes_no(text, not default)
+    def confirm(self, text, default: bool = True, *, timeout: int = 0) -> bool:
+        return self._adaptor.yes_no(text, not default, timeout=timeout)
 
     def ask(
         self,
@@ -36,7 +36,7 @@ class RichUiMixin(Mininterface):
 
 class RichUiAdaptor(ABC):
     @abstractmethod
-    def yes_no(self, text: str, focus_no=True): ...
+    def yes_no(self, text: str, focus_no=True, *, timeout: int = 0)->bool: ...
 
     @abstractmethod
-    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1): ...
+    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0): ...

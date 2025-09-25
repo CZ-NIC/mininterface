@@ -164,8 +164,13 @@ class Mininterface(Generic[EnvClass]):
     def __exit__(self, *_):
         pass
 
-    def alert(self, text: str) -> None:
-        """Prompt the user to confirm the text."""
+    def alert(self, text: str, *, timeout: int = 0) -> None:
+        """Prompt the user to confirm the text.
+
+        Args:
+            text: Displayed text
+            timeout: Auto-confirm after N seconds.
+        """
         print("Alert text", text)
         return
 
@@ -255,7 +260,7 @@ class Mininterface(Generic[EnvClass]):
         # Output:
         return assure_tag(annotation, validation)._make_default_value()
 
-    def confirm(self, text: str, default: bool = True) -> bool:
+    def confirm(self, text: str, default: bool = True, *, timeout: int = 0) -> bool:
         """Display confirm box and returns bool.
 
         ```python
@@ -265,9 +270,19 @@ class Mininterface(Generic[EnvClass]):
 
         ![Is yes window](asset/is_yes.avif "A prompted dialog")
 
+        Automatically submit after 10 seconds with the `timeout` parameter.
+
+        ```python
+        m = run()
+        print(m.confirm("Is that alright?"), timeout=10)  # True/False
+        ```
+
+        ![Is yes window](asset/confirm_countdown.avif "A prompted dialog with timeout")
+
         Args:
             text: Displayed text.
             default: Focus the button with this value.
+            timeout: Auto-confirm after N seconds.
 
         Returns:
             bool: Whether the user has chosen the Yes button.

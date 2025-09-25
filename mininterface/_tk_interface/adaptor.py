@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from textual.widgets import Checkbox
 
+
 try:
     from tkscrollableframe import ScrolledFrame
     from tktooltip import ToolTip
@@ -22,6 +23,7 @@ from ..settings import GuiSettings
 from ..tag import Tag
 from .facet import TkFacet
 from .utils import recursive_set_focus, replace_widgets
+from .timeout import TkTimeout
 
 
 class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
@@ -139,20 +141,27 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
             return self.run_dialog(form, title, submit)
         return form
 
-    def yes_no(self, text: str, focus_no=True):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1)
+    def yes_no(self, text: str, focus_no=True, *, timeout: int = 0):
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)
 
-    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1):
+    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
         label = Label(self.frame, text=text)
         label.pack(pady=10)
+        b_focused = None
 
         for i, (text, value) in enumerate(buttons):
             button = Button(self.frame, text=text, command=lambda v=value: self._ok(v))
             button.pack(side=LEFT, padx=10)
             if i == focused - 1:
                 button.focus_set()
-                b = button
-                button.bind("<Return>", lambda _: b.invoke())
+                b_focused = button
+                button.bind("<Return>", lambda _, b=b_focused: b.invoke())
+
+        if timeout:
+            if not b_focused:
+                raise ValueError("Don't know what to timeout")
+            TkTimeout(timeout, self, b_focused)
+
         return self.mainloop()
 
     def _bind_event(self, event, handler):
@@ -215,7 +224,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     def _destroy(self):
         self.destroy()
 
-    def bind_shortcut(self, shortcut: str, widget: Widget|Callable[[], Widget]):
+    def bind_shortcut(self, shortcut: str, widget: Widget | Callable[[], Widget]):
         def _(event=None):
             nonlocal widget
             if isinstance(widget, FunctionType):

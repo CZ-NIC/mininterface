@@ -100,12 +100,13 @@ class TextualAdaptor(BackendAdaptor):
         else:
             return []
 
-    def yes_no(self, text: str, focus_no=True):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1)
+    def yes_no(self, text: str, focus_no=True, *, timeout: int = 0):
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)
 
-    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1):
+    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
         self._build_buttons(text, buttons, focused)
-        self.app = app = TextualApp(self, False)
+        self.app = app = TextualApp(self, False, timeout=timeout)
+
         if not app.run():
             raise Cancelled
         return self._get_buttons_val()

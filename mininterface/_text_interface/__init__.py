@@ -2,12 +2,14 @@ import sys
 from pprint import pprint
 from typing import TYPE_CHECKING, Iterable, Type, TypeVar
 
+
 from ..tag.tag_factory import assure_tag
 
 from ..exceptions import Cancelled, InterfaceNotAvailable
 from .._lib.form_dict import DataClass, EnvClass, FormDict, tag_assure_type
 from .._mininterface import Mininterface
 from ..tag.tag import Tag, TagValue, ValidationCallback
+from .timeout import input_timeout
 from .adaptor import TextAdaptor
 
 if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
@@ -75,23 +77,25 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
 
     _adaptor: TextAdaptor
 
-    def alert(self, text: str):
+    def alert(self, text: str, *, timeout: int = 0):
         """Display text and let the user hit any key."""
         with StdinTTYWrapper():
-            input(text + " Hit any key.")
+            input_timeout(text + " Hit any key.", timeout, True)
 
     def ask(
         self,
         text: str,
         annotation: Type[TagValue] | Tag = str,
         validation: Iterable[ValidationCallback] | ValidationCallback | None = None,
+        *,
+        _timeout: int = 0
     ) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
                 return super().ask(text, annotation=annotation, validation=validation)
             while True:
                 try:
-                    txt = input(text + ": ") if text else input()
+                    txt = input_timeout(text + ":" if text else "", _timeout)
                 except EOFError:
                     raise Cancelled(".. cancelled")
                 t = assure_tag(annotation, validation)
@@ -133,20 +137,20 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
                 pdb.set_trace()
             return form
 
-    def confirm(self, text: str, default: bool = True):
+    def confirm(self, text: str, default: bool = True, *, timeout: int = 0):
         with StdinTTYWrapper():
             if default:
                 t = text + " [y]/n"
             else:
                 t = text + " y/[n]"
-            val = self.ask(text=t).lower()
+            val = self.ask(text=t, _timeout=timeout).lower()
             if not val:
                 return bool(default)
             if val in ("y", "yes", ""):
                 return True
             if val in ("n", "no", ""):
                 return False
-            return self.confirm(text, default)
+            return self.confirm(text, default, timeout=timeout)
 
 
 class ReplInterface(TextInterface):

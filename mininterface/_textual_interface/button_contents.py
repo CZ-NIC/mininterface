@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 from textual import events
-from textual.app import App, ComposeResult
+from textual.app import ComposeResult
 from textual.containers import Center, Container
-from textual.widgets import Footer, Label, Static, Button
+from textual.widgets import Footer, Label
 
 
 from .widgets import MySubmitButton

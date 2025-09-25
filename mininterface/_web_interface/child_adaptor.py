@@ -71,7 +71,12 @@ class SerializedChildAdaptor(TextualAdaptor):
         self._original_stdout.buffer.flush()
         return self.receive()
 
-    def buttons(self, text: str, buttons: ButtonAppType, focused: int = 1):
+    def buttons(self, text: str, buttons: ButtonAppType, focused: int = 1, *, timeout: int = 0):
+        if timeout:
+            # NOTE timeout not implemented
+            import warnings
+            warnings.warn("Timeout not implemented for web interface")
+            print("Warning: Timeout not implemented for web interface")
         return self.send(SerCommand.BUTTONS, text, buttons, focused)
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:

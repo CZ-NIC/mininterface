@@ -1,17 +1,14 @@
 import asyncio
 from typing import TYPE_CHECKING
-from textual import events
+
 from textual.app import App
 from textual.containers import Container
 from textual.widget import Widget
 
-from .form_contents import FormContents
-
 from .button_contents import ButtonContents
-
-
+from .form_contents import FormContents
+from .timeout import TextualTimeout
 from .widgets import TagWidget
-
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
@@ -28,12 +25,13 @@ class TextualApp(App[bool | None]):
     # We need to jump out of dir to allow children inherits (WebInterface)
     CSS_PATH = "../_textual_interface/style.tcss"
 
-    def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True):
+    def __init__(self, adaptor: "TextualAdaptor", submit: str | bool = True, timeout=None):
         super().__init__()
         self.widgets: WidgetList = []
         self.focusable_: WidgetList = []
         self.adaptor = adaptor
         self.submit = submit
+        self.timeout = timeout
 
         # Form confirmation
         if submit:
@@ -50,15 +48,20 @@ class TextualApp(App[bool | None]):
         self.contents = Container()
         yield self.contents
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         self.has_been_confirmed = False
-        # def on_mount(self, event: events.Mount) -> None:
         self.contents.remove_children()
         if self.adaptor.button_app:
             c = ButtonContents(self.adaptor, self.adaptor.button_app)
         else:
             c = FormContents(self.adaptor, self.widgets, self.focusable_)
-        self.contents.mount(c)
+        await self.contents.mount(c)
+
+        # timeout
+        if self.adaptor.button_app and self.timeout:
+            if not c.to_focus:
+                raise ValueError("Don't know what to timeout")
+            TextualTimeout(timeout=self.timeout, adaptor=self.adaptor, button=c.to_focus)
 
     def action_confirm(self):
         # next time, start on the same widget
