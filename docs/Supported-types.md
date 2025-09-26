@@ -9,6 +9,8 @@ Various types are supported:
 * iterables (like `list[Path]`)
 * custom classes (somewhat)
 * union types (like `int | None`)
+* nested dataclasses
+* union of nested dataclasses for subcommands
 
 ## Basic usage
 
@@ -127,9 +129,114 @@ with run(Env) as m:
 !!! Warning
     When used in a form like this `m.form({'My callback': my_callback)`, the value is left intact. It still points to the function. This behaviour might reconsidered and changed. (It might make more sense to change it to the return value instead.)
 
-### Enums
+### Constraining
 
-To constraint a value, either pass an enum object or use handy additional type [SelectTag][mininterface.tag.SelectTag] that might speed you up a bit.
+To constraint a value, either pass an enum object, `typing.Literal`, or use handy additional type [SelectTag][mininterface.tag.SelectTag] that might speed you up a bit.
+
+See the [OptionsType][mininterface.tag.select_tag.OptionsType] help for all the possibilities, here is just a quick hint:
+
+#### Enums
+
+CLI shows keys, UI shows values. Static values. The program:
+
+```python
+class Color(Enum):
+    RED = "red"
+    GREEN = "green"
+
+@dataclass
+class Env:
+    val: Color
+
+m = run(Env)
+```
+
+CLI shown keys.
+
+```bash
+$ ./program.py --help
+usage: program.py [-h] [-v] --val {RED,GREEN}
+
+╭─ options ───────────────────────────────────────────────────────────────────────╮
+│ -h, --help              show this help message and exit                         │
+│ -v, --verbose           verbosity level, can be used multiple times to increase │
+│ --val {RED,GREEN}       (required)                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯
+```
+
+(Note: You may mark it with [a special flag](https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.EnumChoicesFromValues) to show the values in the CLI.)
+
+UI shows values:
+
+![Enum vals](asset/enum_vals.avif "UI shows enum values")
+
+As both keys and values are displayed, should you need to bear an additional information, not displayed in CLI nor UI, you can tackle the Enum class.
+
+```python
+class Color(Enum):
+    RED = "#ff0000"
+    GREEN = "#00ff00"
+
+    def __init__(self, payload):
+        # mark '#ff0000' as payload, rather than the `.value`
+        self.payload = payload
+
+    @property
+    def value(self):  # `.value` is seen from UI
+        return self.name.lower()
+
+@dataclass
+class Env:
+    val: Color
+
+m = run(Env)
+print(m.env.val.payload)  # ex. '#ff0000'
+```
+
+#### Literal
+
+Built-in `Literal` is supported. Allows you to do a one-liner.
+
+```python
+from typing import Literal
+
+@dataclass
+class Env:
+    val: Literal["one", "two"]
+
+m = run(Env)
+print(m.env.val)  # ex. 'one'
+```
+
+Should you need dynamic values, wrap it under `Annotated`:
+
+```python
+from typing import Annotated, Literal
+
+variable = "one", "two"
+
+@dataclass
+class Env:
+    val: Annotated[str, Literal[variable]] = "one"
+
+m = run(Env)
+print(m.env.val)  # ex. 'one'
+```
+
+#### [SelectTag][mininterface.tag.SelectTag]
+
+Advanced adjustments, multiple choice, dynamic values, etc.
+
+```python
+@dataclass
+class Env:
+    val: Annotated[str, SelectTag(options=["one", "two"], multiple=True)] = "one"
+```
+
+### Nested dataclasses or their unions (subcommands)
+
+TODO
+
 
 ### Well-known objects
 

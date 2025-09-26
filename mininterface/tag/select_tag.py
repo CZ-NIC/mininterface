@@ -100,6 +100,14 @@ m.select([Color.GREEN, Color.BLUE])
 
 ![Options from enum list](asset/choice_enum_list.avif)
 
+!!! Note
+    Enum keys are seen from the CLI (unless modified). Enum values are seen from the UI. Should you need to bear an additional information, not displayed in CLI nor UI, tackle the Enum class.
+    For the examples, see [Supported types / Enum](Supported-types.md/#enums).
+
+## Literal
+
+`typing.Literal` allows you to do a one-liner. Their values are seen from the CLI. See the [Supported types / Literal](Supported-types.md/#literal) examples.
+
 ## Further examples
 
 See [mininterface.select][mininterface.Mininterface.select] or [`SelectTag.options`][mininterface.tag.SelectTag.options] for further usage.
