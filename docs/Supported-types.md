@@ -230,7 +230,7 @@ Advanced adjustments, multiple choice, dynamic values, etc.
 ```python
 @dataclass
 class Env:
-    val: Annotated[str, SelectTag(options=["one", "two"], multiple=True)] = "one"
+    val: Annotated[list[str], SelectTag(options=["one", "two"], multiple=True)]
 ```
 
 ### Nested dataclasses or their unions (subcommands)
@@ -264,9 +264,9 @@ class ConsoleRich:
 
 @dataclass
 class Console:
-    style: ConsolePlain | ConsoleRich 
+    style: ConsolePlain | ConsoleRich
     bot_id: Literal["id-one", "id-two"]
-    
+
 @dataclass
 class Message:
     text: str
@@ -274,7 +274,7 @@ class Message:
 @dataclass
 class Env:
     val: Message | Console
-    
+
 m = run(Env)
 ```
 

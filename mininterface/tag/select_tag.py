@@ -262,7 +262,7 @@ class SelectTag(Tag[TagValue]):
     def _get_selected_keys(self):
         if not self.multiple:
             raise AttributeError
-        return [k for k, val, *_ in self._get_options() if val in self.val]
+        return [k for k, val, *_ in self._get_options() if val in self._get_ui_val()]
 
     @classmethod
     def _repr_val(cls, v) -> str:
@@ -365,6 +365,8 @@ class SelectTag(Tag[TagValue]):
             return [(delim.join(key), key) for key in keys]
 
     def _make_default_value(self):
+        if self.multiple:
+            return []
         if d := self._build_options():
             return next(iter(d.values()))
 

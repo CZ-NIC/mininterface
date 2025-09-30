@@ -57,7 +57,7 @@ class TextualAdaptor(BackendAdaptor):
             # NOTE: DatetimeTag not implemented
             case SelectTag():
                 if tag.multiple:
-                    selected = set(tag.val)
+                    selected = set(tag._get_ui_val())
                     o = MySelectionList(tag, *((label, val, val in selected) for label, val, *_ in tag._get_options()))
                 else:
                     radio_buttons = [

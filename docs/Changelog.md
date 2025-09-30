@@ -4,6 +4,8 @@
 * feat: timeout parameter for alert & confirm
 * enh: `list[tuple]` supperfluous arguments check
 * enh: dict in a dataclass support
+* fix: config file with str-attribute missing clash
+* fix: SelectTag multiple choice without default value resilience
 
 ## 1.1.1 (2025-09-18)
 * enh: `list[tuple]` support (along with `list[tuple[int]]` and `list[tuple[int, ...]]`)

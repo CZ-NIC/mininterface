@@ -104,7 +104,7 @@ class SelectInputWrapper:
         taken = False
 
         for i, (choice_label, choice_val, tip, tupled_key) in enumerate(options):
-            var = BooleanVar(value=choice_val in tag.val)
+            var = BooleanVar(value=choice_val in tag._get_ui_val())
 
             def on_toggle(val=choice_val, var=var):
                 if var.get():
