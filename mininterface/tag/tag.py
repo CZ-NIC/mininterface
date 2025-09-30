@@ -669,6 +669,8 @@ class Tag(Generic[TagValue]):
                     return [_(subt) for subt in subtype]
                 if origin is tuple:
                     return origin, list(subtype)
+                elif origin is dict:
+                    return origin, subtype
                 elif origin is Literal:
                     return origin, subtype
                 elif len(subtype) == 1:
@@ -931,8 +933,13 @@ class Tag(Generic[TagValue]):
                                             tuples.append(typed_tuple)
 
                                         candidate = origin(tuples)
+                                elif origin is dict:   # ex. `dict[str, str]`
+                                    # we ignore cast_to as `[str, str]` part will be checked later
+                                    candidate = literal_eval(ui_value)
                                 else:
                                     candidate = origin(cast_to(v) for v in literal_eval(ui_value))
+                            elif cast_to is dict: # `annotation=dict`
+                                candidate = literal_eval(ui_value)  #
                             else:
                                 candidate = cast_to(ui_value)
                         except (TypeError, ValueError, SyntaxError):

@@ -7,7 +7,7 @@ from shared import TestAbstract
 
 
 from pathlib import Path, PosixPath
-from typing import Callable
+from typing import Callable, Optional
 
 
 class TestTagAnnotation(TestAbstract):
@@ -32,6 +32,8 @@ class TestTagAnnotation(TestAbstract):
         _(list[PosixPath], [PosixPath("/tmp")])
         _(list, [PosixPath("/tmp"), 2])
         _(set[PosixPath], set((PosixPath("/tmp"),)))
+        _(dict, {})
+        _(dict, {"a": 1})
 
     def test_type_discovery(self):
         def _(compared, annotation):
@@ -114,6 +116,41 @@ class TestTagAnnotation(TestAbstract):
         self.assertTrue(t.update("[(1,'a'),(3,'b')]"))
         # NOTE not sure whether default literal_ast conversion to int(1), int(3) is required
         self.assertEqual([(1, "a"), (3, "b")], t.val)
+
+    def test_dict(self):
+        t = Tag("", annotation=dict)
+        t.update("{}")
+        self.assertEqual({}, t.val)
+        t.update("{1:2}")
+        self.assertEqual({1: 2}, t.val)
+
+        t = Tag("", annotation=dict[str, str])
+        t.update("{}")
+        self.assertEqual({}, t.val)
+        self.assertFalse(t.update("{1:2}"))
+        self.assertTrue(t.update("{'1':'2'}"))
+        self.assertEqual({"1": "2"}, t.val)
+
+        t = Tag("", annotation=dict[str, int])
+        self.assertFalse(t.update("{'1':'2'}"))
+        self.assertTrue(t.update("{'1':2}"))
+        self.assertEqual({"1": 2}, t.val)
+
+        t = Tag("", annotation=dict[str, dict])
+        self.assertFalse(t.update("{'1':''}"))
+        self.assertTrue(t.update("{'1': {'11': 22}}"))
+        self.assertEqual({'1': {'11': 22}}, t.val)
+
+        t = Tag("", annotation=dict[str, dict[int, str]])
+        self.assertFalse(t.update("{'1': {'11': 22}}"))
+        self.assertTrue(t.update("{'1': {11: '22'}}"))
+        self.assertEqual({'1': {11: '22'}}, t.val)
+
+        t = Tag("", annotation=Optional[dict[str, dict[int, str]]])
+        self.assertTrue(t.update("{'1': {11: '22'}}"))
+        self.assertEqual({'1': {11: '22'}}, t.val)
+        self.assertTrue(t.update(""))
+        self.assertIsNone(t.val)
 
     def test_single_path_union(self):
         t = Tag("", annotation=Path | None)

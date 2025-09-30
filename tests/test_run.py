@@ -182,7 +182,12 @@ class TestRun(TestAbstract):
                 {"": {"file": Path("."), "foo": ""}},
             )
         ):
-            runm(MissingCombined)
+            # Why including empty.yaml here? A str-attribute without default value prevented dataclass missing fields dialog if a config file parsing was present.
+            #
+            # @dataclass
+            # class MissingCombined:
+            #     foo: str  # caused error if config file present, due to mixing MISSING_NONPROP and MISSING values
+            runm(MissingCombined, config_file="tests/empty.yaml")
 
     def test_run_config_file(self):
         os.chdir("tests")

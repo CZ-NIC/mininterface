@@ -174,7 +174,7 @@ def _process_pydantic(env, disk, wf: Optional[dict], m: Optional["Mininterface"]
         elif f.default is not None:
             v = f.default
         else:
-            v = _process_field(name, f.annotation, MISSING, wf, m, default_value=MISSING)
+            v = _process_field(name, f.annotation, MISSING_NONPROP, wf, m, default_value=MISSING)
         yield name, v
 
 
@@ -187,7 +187,7 @@ def _process_attr(env, disk, wf: Optional[dict], m: Optional["Mininterface"] = N
         elif has_default:
             v = f.default
         else:
-            v = _process_field(f.name, f.type, MISSING, wf, m, default_val)
+            v = _process_field(f.name, f.type, MISSING_NONPROP, wf, m, default_val)
         yield f.name, v
 
 
@@ -243,7 +243,7 @@ def _process_field(fname, ftype, disk_value, wf, m, default_value=MISSING):
         else:
             raise ValueError(f"Type {disk_value} not found in {ftype}")
 
-    if disk_value is not MISSING:
+    if disk_value is not MISSING_NONPROP:
         if _is_struct_type(ftype):
             return _init_struct_value(ftype, disk_value, wf, fname, m)
         return coerce_type_to_annotation(disk_value, ftype)
@@ -271,7 +271,7 @@ def _process_dataclass(env, disk, wf: Optional[dict], m: Optional["Mininterface"
         elif f.default is not MISSING:
             v = f.default
         else:
-            v = _process_field(f.name, f.type, MISSING, wf, m)
+            v = _process_field(f.name, f.type, MISSING_NONPROP, wf, m)
         yield f.name, v
 
 

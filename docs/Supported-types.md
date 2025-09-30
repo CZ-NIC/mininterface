@@ -237,6 +237,51 @@ class Env:
 
 TODO
 
+You can nest the classes to create a subgroup:
+
+```python
+@dataclass
+class Message:
+    text: str
+
+@dataclass
+class Env:
+    val: Message
+```
+
+You can union the classes to create subcommands:
+
+```python
+from typing import Literal
+
+@dataclass
+class ConsolePlain:
+    pass
+
+@dataclass
+class ConsoleRich:
+    color: Literal["red", "green"]
+
+@dataclass
+class Console:
+    style: ConsolePlain | ConsoleRich 
+    bot_id: Literal["id-one", "id-two"]
+    
+@dataclass
+class Message:
+    text: str
+
+@dataclass
+class Env:
+    val: Message | Console
+    
+m = run(Env)
+```
+
+!!! Tip
+    Use
+    # TODO cli.Command to automatically
+
 
 ### Well-known objects
 
