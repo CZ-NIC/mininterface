@@ -163,6 +163,7 @@ class OptionalFlagEnv:
     """ Another example message """
 
 
+variable = 2,3,4
 @dataclass
 class ConstrainedEnv:
     """Set of options."""
@@ -185,7 +186,7 @@ class ConstrainedEnv:
     liter6: Literal["one", None, "two"] = None
     liter7: Optional[Literal["one", "two"]] = None
     liter8: Literal["one", None, "two"] | None = "two"
-    liter9: Annotated[int, Literal[*(2,3,4)]] = 3
+    liter9: Annotated[int, Literal[variable]] = 3
 
     enum: ColorEnum | None = None
 

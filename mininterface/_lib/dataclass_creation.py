@@ -108,7 +108,7 @@ def _unwrap_annotated(tp):
     return tp
 
 
-def create_with_missing(env: T, disk: dict, wf: Optional[dict] = None, mint: Optional["Mininterface"] = None)->T:
+def create_with_missing(env: T, disk: dict, wf: Optional[dict] = None, m: Optional["Mininterface"] = None)->T:
     """
     Create a default instance of an Env object. This is due to provent tyro to spawn warnings about missing fields.
     Nested dataclasses have to be properly initialized. YAML gave them as dicts only.
@@ -116,6 +116,8 @@ def create_with_missing(env: T, disk: dict, wf: Optional[dict] = None, mint: Opt
     The result contains MISSING_NONPROP on the places the original Env object must have a value.
 
     And such fields are put into the wf (wrong_fields) dict.
+
+    Having the `m` defined means we build the dataclass. None means we are still in the config file parsing context.
     """
     # NOTE a test is missing
     # @dataclass
@@ -146,7 +148,7 @@ def create_with_missing(env: T, disk: dict, wf: Optional[dict] = None, mint: Opt
     # as the default value takes the precedence over the hard coded one, even if missing.
     out = {}
     missings: list[Tag] = []
-    for name, v in proc_method(env, disk, wf, mint):
+    for name, v in proc_method(env, disk, wf, m):
         out[name] = v
         if v == MISSING_NONPROP and wf is not None:
             # For building config file, the MISSING_NONPROP is alright as we expect tyro to fail
@@ -246,13 +248,24 @@ def _process_field(fname, ftype, disk_value, wf, m, default_value=MISSING):
     if disk_value is not MISSING_NONPROP:
         if _is_struct_type(ftype):
             return _init_struct_value(ftype, disk_value, wf, fname, m)
+        # NOTE for handling subcommands in config file, I'll need something like this,
+        # combined with a structure like ChosenSubcommand, possibly inheriting from MISSING_NONPROP
+        # to be ignored by tyro, yet fetchable by cli_parser
+        # elif _is_subcommands:
+        #     return {cl.__name__: _init_struct_value(cl, {}, wf, fname, m) for cl in get_args(ftype)}
         return coerce_type_to_annotation(disk_value, ftype)
+
+    if _is_struct_type(ftype):
+        # Ex. `foo: Subcommand`
+        return _init_struct_value(ftype, {}, wf, fname, m)
 
     # We must handle the case when there are multiple subcommands possible.
     # The user decides now which way to go (choose a subcommand).
-    if (origin is Union or origin is UnionType) and all(_is_struct_type(cl) for cl in get_args(ftype)):
-        if not m:  # we should not come here
-            raise RuntimeError("Missing interface, report the issue please.")
+    # Ex. `foo: Subcommand1 | Subcommand2`
+    _is_subcommands = (origin is Union or origin is UnionType) and all(_is_struct_type(cl) for cl in get_args(ftype))
+    if _is_subcommands:
+        if not m:  # we are parsing the config file. The fields are not defined in the config file
+            return MISSING_NONPROP
         ftype = choose_subcommand(get_args(ftype), m)
         return _init_struct_value(ftype, {}, wf, fname, m)
 

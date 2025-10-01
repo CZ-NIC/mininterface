@@ -190,30 +190,34 @@ class TestRun(TestAbstract):
             runm(MissingCombined, config_file="tests/empty.yaml")
 
     def test_run_config_file(self):
-        os.chdir("tests")
-        sys.argv = ["SimpleEnv.py"]
-        self.assertEqual(
-            10,
-            run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number,
-        )
-        self.assertEqual(
-            4,
-            run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number,
-        )
-        self.assertEqual(
-            20,
-            run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number,
-        )
-        self.assertEqual(
-            20,
-            run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"), interface=Mininterface).env.important_number,
-        )
-        self.assertEqual(
-            4,
-            run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number,
-        )
-        with self.assertRaises(FileNotFoundError):
-            run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
+        old_cwd = os.getcwd()
+        try:
+            os.chdir("tests")
+            sys.argv = ["SimpleEnv.py"]
+            self.assertEqual(
+                10,
+                run(SimpleEnv, config_file=True, interface=Mininterface).env.important_number,
+            )
+            self.assertEqual(
+                4,
+                run(SimpleEnv, config_file=False, interface=Mininterface).env.important_number,
+            )
+            self.assertEqual(
+                20,
+                run(SimpleEnv, config_file="SimpleEnv2.yaml", interface=Mininterface).env.important_number,
+            )
+            self.assertEqual(
+                20,
+                run(SimpleEnv, config_file=Path("SimpleEnv2.yaml"), interface=Mininterface).env.important_number,
+            )
+            self.assertEqual(
+                4,
+                run(SimpleEnv, config_file=Path("empty.yaml"), interface=Mininterface).env.important_number,
+            )
+            with self.assertRaises(FileNotFoundError):
+                run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
+        finally:
+            os.chdir(old_cwd)
 
     def test_complex_config(self):
         pattern = ComplexEnv(

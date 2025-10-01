@@ -128,6 +128,31 @@ class Cl0:
     """ Ignored text"""
 
 
+@dataclass
+class Message1:
+    text: str
+
+
+@dataclass
+class Message2:
+    text: str = "2"
+
+
+@dataclass
+class MessageA:
+    msg: Message1 | Message2
+
+
+@dataclass
+class MessageB:
+    msg: Message1
+
+
+@dataclass
+class MessageC:
+    msg: MessageB | Message2
+
+
 @skipIf(sys.version_info[:2] < (3, 11), "Ignored on Python 3.10 due to exc.add_note")
 class TestSubcommands(TestAbstract):
 
@@ -656,6 +681,64 @@ class TestNested(TestAbstract):
         # The docstring is not seen by tyro
         # but at least it won't fail on the positional state of the attribute
         self.assertEqual(get_description(Cl0, "subcommand"), "")
+
+    def test_nested_config_exists(self):
+        """ The nested classes have the same behaviour
+        whether or not there is a config file.
+        """
+        for cf in (None, "tests/empty.yaml"):
+            with self.assertForms(
+                (
+                    {
+                        "": SelectTag(
+                            val=None, description="", annotation=None, label=None, options=["Message b", "Message2"]
+                        )
+                    },
+                    {"": Message2},
+                ),
+                ({"": {}, "msg": {"text": Tag(val="2", description="", annotation=str, label="text")}}, {}),
+            ):
+                runm(MessageC, config_file=cf)
+
+            with self.assertForms(
+                (
+                    {
+                        "": SelectTag(
+                            val=None, description="", annotation=None, label=None, options=["Message b", "Message2"]
+                        )
+                    },
+                    {"": MessageB},
+                ),
+                (
+                    {"": {}, "msg": {"msg": {"text": Tag(val=MISSING, description="", annotation=str, label="text")}}},
+                    {"msg": {"msg": {"text": "8"}}},
+                ),
+            ):
+                runm(MessageC, config_file=cf)
+
+            with self.assertForms(
+                (
+                    {"": {}, "msg": {"text": Tag(val=MISSING, description="", annotation=str, label="text")}},
+                    {"msg": {"text": ""}},
+                )
+            ):
+                runm(MessageB, config_file=cf)
+
+            with self.assertForms(
+                (
+                    {
+                        "": SelectTag(
+                            val=None, description="", annotation=None, label=None, options=["Message1", "Message2"]
+                        )
+                    },
+                    {"": Message1},
+                ),
+                (
+                    {"": {}, "msg": {"text": Tag(val=MISSING, description="", annotation=str, label="text")}},
+                    {"msg": {"text": ""}},
+                ),
+            ):
+                runm(MessageA, config_file=cf)
 
 
 class TestCommand(TestAbstract):

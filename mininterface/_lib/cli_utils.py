@@ -150,3 +150,22 @@ class SubcommandPlaceholder(Command):
 
 
 SubcommandPlaceholder.__name__ = "subcommand"  # show just the shortcut in the CLI
+
+# NOTE I'd like the method run to actually run here
+# @dataclass
+# class Console(Command):
+#     foo: str = "bar"
+#     def run(self):
+#         raise ValueError("DVA")
+#         self.interface.alert("Console!")
+# @dataclass
+# class Message(Command):
+#     text: str
+#     def run(self):
+#         raise ValueError("RAZ")
+# @dataclass
+# class Env:
+#     val: Message | Console
+# m = run(Env) # here
+# m = run([Message, Console]) # and here too
+# Then, add is as a tip to Supported-types.md.

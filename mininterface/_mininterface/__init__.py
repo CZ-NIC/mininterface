@@ -169,7 +169,7 @@ class Mininterface(Generic[EnvClass]):
 
         Args:
             text: Displayed text
-            timeout: Auto-confirm after N seconds.
+            timeout: Auto-confirm after N seconds (0 = disabled).
         """
         print("Alert text", text)
         return
@@ -282,7 +282,7 @@ class Mininterface(Generic[EnvClass]):
         Args:
             text: Displayed text.
             default: Focus the button with this value.
-            timeout: Auto-confirm after N seconds.
+            timeout: Auto-confirm after N seconds (0 = disabled).
 
         Returns:
             bool: Whether the user has chosen the Yes button.

@@ -1,10 +1,10 @@
 # Changelog
 
-## 1.1.2 (unreleased)
+## 1.1.2 (2025-10-01)
 * feat: timeout parameter for alert & confirm
 * enh: `list[tuple]` supperfluous arguments check
 * enh: dict in a dataclass support
-* fix: config file with str-attribute missing clash
+* fix: config file resilience (subcommands union and str-attribute missing clash)
 * fix: SelectTag multiple choice without default value resilience
 * fix: dynamic Literal in Annotated
 

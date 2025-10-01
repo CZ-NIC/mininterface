@@ -103,6 +103,8 @@ class Env:
 run(Env).form()
 ```
 
+![Scalars](asset/scalars.avif)
+
 ### Functions
 
 Will appear as buttons.
@@ -118,6 +120,8 @@ class Env:
 run(Env).form()
 ```
 
+![Function](asset/examples-function.avif)
+
 Or use the `with` statement to redirect the stdout into the mininterface.
 
 ```python
@@ -125,6 +129,8 @@ with run(Env) as m:
     m.form()
     m.alert("The text 'I'm here' is displayed in the window.")
 ```
+
+![Function](asset/examples-function-with.avif)
 
 !!! Warning
     When used in a form like this `m.form({'My callback': my_callback)`, the value is left intact. It still points to the function. This behaviour might reconsidered and changed. (It might make more sense to change it to the return value instead.)
@@ -151,7 +157,7 @@ class Env:
 m = run(Env)
 ```
 
-CLI shown keys.
+CLI shows keys.
 
 ```bash
 $ ./program.py --help
@@ -231,11 +237,13 @@ Advanced adjustments, multiple choice, dynamic values, etc.
 @dataclass
 class Env:
     val: Annotated[list[str], SelectTag(options=["one", "two"], multiple=True)]
+
+run(Env)
 ```
 
-### Nested dataclasses or their unions (subcommands)
+![SelectTag multiple](asset/selecttag-multiple.avif)
 
-TODO
+### Nested dataclasses or their unions (subcommands)
 
 You can nest the classes to create a subgroup:
 
@@ -247,12 +255,17 @@ class Message:
 @dataclass
 class Env:
     val: Message
+
+run(Env)
 ```
+
+![Nested dataclass](asset/nested-dataclass.avif)
 
 You can union the classes to create subcommands:
 
 ```python
 from typing import Literal
+from tyro.conf import OmitSubcommandPrefixes
 
 @dataclass
 class ConsolePlain:
@@ -275,13 +288,53 @@ class Message:
 class Env:
     val: Message | Console
 
-m = run(Env)
+m = run(OmitSubcommandPrefixes[Env])
 ```
 
-!!! Tip
-    Use
-    # TODO cli.Command to automatically
+First, we've chosen `Console`, then `Console rich`.
 
+![Nested subcommands](asset/nested-subcommands-1.avif)
+![Choosing Console rich](asset/nested-subcommands-2.avif)
+![Fields from both Console and ConsoleRich](asset/nested-subcommands-3.avif)
+
+??? Grouping
+    Note fields from outer `Console` and inner `ConsoleRich` are displayed together in step 3. Why? You might start at arbitrary position.
+
+    Starting at step 1:
+
+    ```bash
+    $ ./program.py --help
+    usage: program.py [-h] [-v] {message,console}
+    $ ./program.py
+    ```
+
+    ![Nested subcommands](asset/nested-subcommands-1.avif)
+
+    Starting at step 2:
+
+    ```bash
+    $ ./program.py console --help
+    usage: program.py console [-h] [-v] --bot-id {id-one,id-two} {console-plain,console-rich}
+    $ ./program.py console
+    ```
+
+    ![Choosing Console rich](asset/nested-subcommands-2.avif)
+
+    That way, you may start anywhere from CLI, yet be sure all the missing fields, if possible, are grouped in a single form dialog.
+
+??? OmitSubcommandPrefixes
+    Why using `OmitSubcommandPrefixes`? This will rend the inscription shorter.
+
+    ```bash
+    $ ./program.py --help
+    usage: program.py [-h] [-v] {message,console}
+    ```
+
+    Without:
+    ```bash
+    $ ./program.py --help
+    usage: program.py [-h] [-v] {val:message,val:console}
+    ```
 
 ### Well-known objects
 
