@@ -80,6 +80,11 @@ class TestSelectTag(TestAbstract):
         self.assertEqual(t1.val, t.val)
         self.assertFalse(t.multiple)
 
+        # dynamic Literal
+        self.assertIsInstance(d[""]["liter9"], SelectTag)
+        self.assertTrue(d[""]["liter9"].update(3))
+        self.assertFalse(d[""]["liter9"].update("3"))
+
     def test_select_enum(self):
         # Enum type supported
         t1 = SelectTag(ColorEnum.GREEN, options=ColorEnum)

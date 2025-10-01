@@ -185,6 +185,7 @@ class ConstrainedEnv:
     liter6: Literal["one", None, "two"] = None
     liter7: Optional[Literal["one", "two"]] = None
     liter8: Literal["one", None, "two"] | None = "two"
+    liter9: Annotated[int, Literal[*(2,3,4)]] = 3
 
     enum: ColorEnum | None = None
 

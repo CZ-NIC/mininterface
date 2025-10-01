@@ -2,7 +2,7 @@ from copy import copy
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, Literal, Type, get_origin, get_type_hints
+from typing import Any, Iterable, Literal, Type, get_args, get_origin, get_type_hints
 
 from annotated_types import BaseMetadata, GroupedMetadata, Len
 
@@ -108,6 +108,14 @@ def tag_factory(
                             elif isinstance(metadata, (BaseMetadata, Len)):
                                 # Why not checking `GroupedMetadata` instead of `Len`? See below. You won't believe.
                                 validators.append(metadata)
+                            elif get_origin(metadata) is Literal:
+                                if "<class 'mininterface.tag.flag._Blank'>" in (repr(type(f)) for f in field_type.__metadata__):
+                                    # a special case, this is a default CLI value and will be processed by flag.Blank
+                                    # `foo: Annotated[Blank[int], Literal[2]] = None`
+                                    # Using repr and not importing due to (vague) performance reasons.
+                                    continue
+                                # `variable = 2, 3; foo: Annotated[int, Literal[variable]] = None`
+                                annotation = metadata
     if not tag:
         tag = tag_assure_type(Tag(val, description, annotation, *args, **kwargs))
 
