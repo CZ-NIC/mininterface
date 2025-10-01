@@ -200,9 +200,41 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#constraining">
+<span class="md-ellipsis">
+      Constraining
+    </span>
+</a>
+<nav aria-label="Constraining" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
 <a class="md-nav__link" href="#enums">
 <span class="md-ellipsis">
       Enums
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#literal">
+<span class="md-ellipsis">
+      Literal
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#selecttag">
+<span class="md-ellipsis">
+      SelectTag
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nested-dataclasses-or-their-unions-subcommands">
+<span class="md-ellipsis">
+      Nested dataclasses or their unions (subcommands)
     </span>
 </a>
 </li>
@@ -514,9 +546,41 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#constraining">
+<span class="md-ellipsis">
+      Constraining
+    </span>
+</a>
+<nav aria-label="Constraining" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
 <a class="md-nav__link" href="#enums">
 <span class="md-ellipsis">
       Enums
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#literal">
+<span class="md-ellipsis">
+      Literal
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#selecttag">
+<span class="md-ellipsis">
+      SelectTag
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#nested-dataclasses-or-their-unions-subcommands">
+<span class="md-ellipsis">
+      Nested dataclasses or their unions (subcommands)
     </span>
 </a>
 </li>
@@ -568,6 +632,8 @@
 <li>iterables (like <code>list[Path]</code>)</li>
 <li>custom classes (somewhat)</li>
 <li>union types (like <code>int | None</code>)</li>
+<li>nested dataclasses</li>
+<li>union of nested dataclasses for subcommands</li>
 </ul>
 <h2 id="basic-usage">Basic usage</h2>
 <h3 id="usage-in-a-dataclass">Usage in a dataclass</h3>
@@ -641,6 +707,7 @@
 <a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a>
 <a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
+<p><img alt="Scalars" src="../asset/scalars.avif"/></p>
 <h3 id="functions">Functions</h3>
 <p>Will appear as buttons.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">def</span> <span class="nf">my_callback</span><span class="p">():</span>
@@ -652,34 +719,186 @@
 <a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a>
 <a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
+<p><img alt="Function" src="../asset/examples-function.avif"/></p>
 <p>Or use the <code>with</code> statement to redirect the stdout into the mininterface.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
 <a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 <a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>    <span class="n">m</span><span class="o">.</span><span class="n">alert</span><span class="p">(</span><span class="s2">"The text 'I'm here' is displayed in the window."</span><span class="p">)</span>
 </code></pre></div>
+<p><img alt="Function" src="../asset/examples-function-with.avif"/></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>When used in a form like this <code>m.form({'My callback': my_callback)</code>, the value is left intact. It still points to the function. This behaviour might reconsidered and changed. (It might make more sense to change it to the return value instead.)</p>
 </div>
-<h3 id="enums">Enums</h3>
-<p>To constraint a value, either pass an enum object or use handy additional type <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">SelectTag</a> that might speed you up a bit.</p>
+<h3 id="constraining">Constraining</h3>
+<p>To constraint a value, either pass an enum object, <code>typing.Literal</code>, or use handy additional type <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">SelectTag</a> that might speed you up a bit.</p>
+<p>See the <a class="autorefs autorefs-internal" href="../Helper-types/#mininterface.tag.select_tag.OptionsType">OptionsType</a> help for all the possibilities, here is just a quick hint:</p>
+<h4 id="enums">Enums</h4>
+<p>CLI shows keys, UI shows values. Static values. The program:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
+<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>
+<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Color</span>
+<a href="#__codelineno-6-8" id="__codelineno-6-8" name="__codelineno-6-8"></a>
+<a href="#__codelineno-6-9" id="__codelineno-6-9" name="__codelineno-6-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<p>CLI shows keys.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--val<span class="w"> </span><span class="o">{</span>RED,GREEN<span class="o">}</span>
+<a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a>
+<a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a>╭─<span class="w"> </span>options<span class="w"> </span>───────────────────────────────────────────────────────────────────────╮
+<a href="#__codelineno-7-5" id="__codelineno-7-5" name="__codelineno-7-5"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">              </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                         </span>│
+<a href="#__codelineno-7-6" id="__codelineno-7-6" name="__codelineno-7-6"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">           </span>verbosity<span class="w"> </span>level,<span class="w"> </span>can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>multiple<span class="w"> </span><span class="nb">times</span><span class="w"> </span>to<span class="w"> </span>increase<span class="w"> </span>│
+<a href="#__codelineno-7-7" id="__codelineno-7-7" name="__codelineno-7-7"></a>│<span class="w"> </span>--val<span class="w"> </span><span class="o">{</span>RED,GREEN<span class="o">}</span><span class="w">       </span><span class="o">(</span>required<span class="o">)</span><span class="w">                                              </span>│
+<a href="#__codelineno-7-8" id="__codelineno-7-8" name="__codelineno-7-8"></a>╰─────────────────────────────────────────────────────────────────────────────────╯
+</code></pre></div>
+<p>(Note: You may mark it with <a href="https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.EnumChoicesFromValues">a special flag</a> to show the values in the CLI.)</p>
+<p>UI shows values:</p>
+<p><img alt="Enum vals" src="../asset/enum_vals.avif" title="UI shows enum values"/></p>
+<p>As both keys and values are displayed, should you need to bear an additional information, not displayed in CLI nor UI, you can tackle the Enum class.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"#ff0000"</span>
+<a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"#00ff00"</span>
+<a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a>
+<a href="#__codelineno-8-5" id="__codelineno-8-5" name="__codelineno-8-5"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
+<a href="#__codelineno-8-6" id="__codelineno-8-6" name="__codelineno-8-6"></a>        <span class="c1"># mark '#ff0000' as payload, rather than the `.value`</span>
+<a href="#__codelineno-8-7" id="__codelineno-8-7" name="__codelineno-8-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span>
+<a href="#__codelineno-8-8" id="__codelineno-8-8" name="__codelineno-8-8"></a>
+<a href="#__codelineno-8-9" id="__codelineno-8-9" name="__codelineno-8-9"></a>    <span class="nd">@property</span>
+<a href="#__codelineno-8-10" id="__codelineno-8-10" name="__codelineno-8-10"></a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># `.value` is seen from UI</span>
+<a href="#__codelineno-8-11" id="__codelineno-8-11" name="__codelineno-8-11"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<a href="#__codelineno-8-12" id="__codelineno-8-12" name="__codelineno-8-12"></a>
+<a href="#__codelineno-8-13" id="__codelineno-8-13" name="__codelineno-8-13"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-8-14" id="__codelineno-8-14" name="__codelineno-8-14"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-8-15" id="__codelineno-8-15" name="__codelineno-8-15"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Color</span>
+<a href="#__codelineno-8-16" id="__codelineno-8-16" name="__codelineno-8-16"></a>
+<a href="#__codelineno-8-17" id="__codelineno-8-17" name="__codelineno-8-17"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-8-18" id="__codelineno-8-18" name="__codelineno-8-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>  <span class="c1"># ex. '#ff0000'</span>
+</code></pre></div>
+<h4 id="literal">Literal</h4>
+<p>Built-in <code>Literal</code> is supported. Allows you to do a one-liner.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>
+<a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-9-4" id="__codelineno-9-4" name="__codelineno-9-4"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-9-5" id="__codelineno-9-5" name="__codelineno-9-5"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">]</span>
+<a href="#__codelineno-9-6" id="__codelineno-9-6" name="__codelineno-9-6"></a>
+<a href="#__codelineno-9-7" id="__codelineno-9-7" name="__codelineno-9-7"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-9-8" id="__codelineno-9-8" name="__codelineno-9-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># ex. 'one'</span>
+</code></pre></div>
+<p>Should you need dynamic values, wrap it under <code>Annotated</code>:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Literal</span>
+<a href="#__codelineno-10-2" id="__codelineno-10-2" name="__codelineno-10-2"></a>
+<a href="#__codelineno-10-3" id="__codelineno-10-3" name="__codelineno-10-3"></a><span class="n">variable</span> <span class="o">=</span> <span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span>
+<a href="#__codelineno-10-4" id="__codelineno-10-4" name="__codelineno-10-4"></a>
+<a href="#__codelineno-10-5" id="__codelineno-10-5" name="__codelineno-10-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-10-6" id="__codelineno-10-6" name="__codelineno-10-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-10-7" id="__codelineno-10-7" name="__codelineno-10-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="n">variable</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">"one"</span>
+<a href="#__codelineno-10-8" id="__codelineno-10-8" name="__codelineno-10-8"></a>
+<a href="#__codelineno-10-9" id="__codelineno-10-9" name="__codelineno-10-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-10-10" id="__codelineno-10-10" name="__codelineno-10-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># ex. 'one'</span>
+</code></pre></div>
+<h4 id="selecttag"><a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">SelectTag</a></h4>
+<p>Advanced adjustments, multiple choice, dynamic values, etc.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-11-1" id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-11-2" id="__codelineno-11-2" name="__codelineno-11-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-11-3" id="__codelineno-11-3" name="__codelineno-11-3"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">SelectTag</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">],</span> <span class="n">multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+<a href="#__codelineno-11-4" id="__codelineno-11-4" name="__codelineno-11-4"></a>
+<a href="#__codelineno-11-5" id="__codelineno-11-5" name="__codelineno-11-5"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="SelectTag multiple" src="../asset/selecttag-multiple.avif"/></p>
+<h3 id="nested-dataclasses-or-their-unions-subcommands">Nested dataclasses or their unions (subcommands)</h3>
+<p>You can nest the classes to create a subgroup:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-12-1" id="__codelineno-12-1" name="__codelineno-12-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-12-2" id="__codelineno-12-2" name="__codelineno-12-2"></a><span class="k">class</span> <span class="nc">Message</span><span class="p">:</span>
+<a href="#__codelineno-12-3" id="__codelineno-12-3" name="__codelineno-12-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-12-4" id="__codelineno-12-4" name="__codelineno-12-4"></a>
+<a href="#__codelineno-12-5" id="__codelineno-12-5" name="__codelineno-12-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-12-6" id="__codelineno-12-6" name="__codelineno-12-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-12-7" id="__codelineno-12-7" name="__codelineno-12-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Message</span>
+<a href="#__codelineno-12-8" id="__codelineno-12-8" name="__codelineno-12-8"></a>
+<a href="#__codelineno-12-9" id="__codelineno-12-9" name="__codelineno-12-9"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="Nested dataclass" src="../asset/nested-dataclass.avif"/></p>
+<p>You can union the classes to create subcommands:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-13-1" id="__codelineno-13-1" name="__codelineno-13-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<a href="#__codelineno-13-2" id="__codelineno-13-2" name="__codelineno-13-2"></a><span class="kn">from</span> <span class="nn">tyro.conf</span> <span class="kn">import</span> <span class="n">OmitSubcommandPrefixes</span>
+<a href="#__codelineno-13-3" id="__codelineno-13-3" name="__codelineno-13-3"></a>
+<a href="#__codelineno-13-4" id="__codelineno-13-4" name="__codelineno-13-4"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-13-5" id="__codelineno-13-5" name="__codelineno-13-5"></a><span class="k">class</span> <span class="nc">ConsolePlain</span><span class="p">:</span>
+<a href="#__codelineno-13-6" id="__codelineno-13-6" name="__codelineno-13-6"></a>    <span class="k">pass</span>
+<a href="#__codelineno-13-7" id="__codelineno-13-7" name="__codelineno-13-7"></a>
+<a href="#__codelineno-13-8" id="__codelineno-13-8" name="__codelineno-13-8"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-13-9" id="__codelineno-13-9" name="__codelineno-13-9"></a><span class="k">class</span> <span class="nc">ConsoleRich</span><span class="p">:</span>
+<a href="#__codelineno-13-10" id="__codelineno-13-10" name="__codelineno-13-10"></a>    <span class="n">color</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"red"</span><span class="p">,</span> <span class="s2">"green"</span><span class="p">]</span>
+<a href="#__codelineno-13-11" id="__codelineno-13-11" name="__codelineno-13-11"></a>
+<a href="#__codelineno-13-12" id="__codelineno-13-12" name="__codelineno-13-12"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-13-13" id="__codelineno-13-13" name="__codelineno-13-13"></a><span class="k">class</span> <span class="nc">Console</span><span class="p">:</span>
+<a href="#__codelineno-13-14" id="__codelineno-13-14" name="__codelineno-13-14"></a>    <span class="n">style</span><span class="p">:</span> <span class="n">ConsolePlain</span> <span class="o">|</span> <span class="n">ConsoleRich</span>
+<a href="#__codelineno-13-15" id="__codelineno-13-15" name="__codelineno-13-15"></a>    <span class="n">bot_id</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"id-one"</span><span class="p">,</span> <span class="s2">"id-two"</span><span class="p">]</span>
+<a href="#__codelineno-13-16" id="__codelineno-13-16" name="__codelineno-13-16"></a>
+<a href="#__codelineno-13-17" id="__codelineno-13-17" name="__codelineno-13-17"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-13-18" id="__codelineno-13-18" name="__codelineno-13-18"></a><span class="k">class</span> <span class="nc">Message</span><span class="p">:</span>
+<a href="#__codelineno-13-19" id="__codelineno-13-19" name="__codelineno-13-19"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-13-20" id="__codelineno-13-20" name="__codelineno-13-20"></a>
+<a href="#__codelineno-13-21" id="__codelineno-13-21" name="__codelineno-13-21"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-13-22" id="__codelineno-13-22" name="__codelineno-13-22"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-13-23" id="__codelineno-13-23" name="__codelineno-13-23"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Message</span> <span class="o">|</span> <span class="n">Console</span>
+<a href="#__codelineno-13-24" id="__codelineno-13-24" name="__codelineno-13-24"></a>
+<a href="#__codelineno-13-25" id="__codelineno-13-25" name="__codelineno-13-25"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">OmitSubcommandPrefixes</span><span class="p">[</span><span class="n">Env</span><span class="p">])</span>
+</code></pre></div>
+<p>First, we've chosen <code>Console</code>, then <code>Console rich</code>.</p>
+<p><img alt="Nested subcommands" src="../asset/nested-subcommands-1.avif"/>
+<img alt="Choosing Console rich" src="../asset/nested-subcommands-2.avif"/>
+<img alt="Fields from both Console and ConsoleRich" src="../asset/nested-subcommands-3.avif"/></p>
+<details class="grouping">
+<summary>Grouping</summary>
+<p>Note fields from outer <code>Console</code> and inner <code>ConsoleRich</code> are displayed together in step 3. Why? You might start at arbitrary position.</p>
+<p>Starting at step 1:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-14-1" id="__codelineno-14-1" name="__codelineno-14-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-14-2" id="__codelineno-14-2" name="__codelineno-14-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>message,console<span class="o">}</span>
+<a href="#__codelineno-14-3" id="__codelineno-14-3" name="__codelineno-14-3"></a>$<span class="w"> </span>./program.py
+</code></pre></div>
+<p><img alt="Nested subcommands" src="../asset/nested-subcommands-1.avif"/></p>
+<p>Starting at step 2:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-15-1" id="__codelineno-15-1" name="__codelineno-15-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>console<span class="w"> </span>--help
+<a href="#__codelineno-15-2" id="__codelineno-15-2" name="__codelineno-15-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span>console<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--bot-id<span class="w"> </span><span class="o">{</span>id-one,id-two<span class="o">}</span><span class="w"> </span><span class="o">{</span>console-plain,console-rich<span class="o">}</span>
+<a href="#__codelineno-15-3" id="__codelineno-15-3" name="__codelineno-15-3"></a>$<span class="w"> </span>./program.py<span class="w"> </span>console
+</code></pre></div>
+<p><img alt="Choosing Console rich" src="../asset/nested-subcommands-2.avif"/></p>
+<p>That way, you may start anywhere from CLI, yet be sure all the missing fields, if possible, are grouped in a single form dialog.</p>
+</details>
+<details class="omitsubcommandprefixes">
+<summary>Omitsubcommandprefixes</summary>
+<p>Why using <code>OmitSubcommandPrefixes</code>? This will rend the inscription shorter.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-16-1" id="__codelineno-16-1" name="__codelineno-16-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-16-2" id="__codelineno-16-2" name="__codelineno-16-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>message,console<span class="o">}</span>
+</code></pre></div>
+<p>Without:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-17-1" id="__codelineno-17-1" name="__codelineno-17-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-17-2" id="__codelineno-17-2" name="__codelineno-17-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>val:message,val:console<span class="o">}</span>
+</code></pre></div></p>
+</details>
 <h3 id="well-known-objects">Well-known objects</h3>
 <p>We've added extra functions for known objects like <code>Path</code> or <code>datetime</code> (file exists check etc.), see <code>Tag</code> subclasses in Custom types section (<a class="autorefs autorefs-internal" href="../PathTag/#mininterface.tag.PathTag">PathTag</a>, <a class="autorefs autorefs-internal" href="../DatetimeTag/#mininterface.tag.DatetimeTag">DatetimeTag</a>, ...).</p>
 <h3 id="iterables">Iterables</h3>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>
-<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a>    <span class="n">my_file</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-<a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-18-1" id="__codelineno-18-1" name="__codelineno-18-1"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<a href="#__codelineno-18-2" id="__codelineno-18-2" name="__codelineno-18-2"></a>
+<a href="#__codelineno-18-3" id="__codelineno-18-3" name="__codelineno-18-3"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-18-4" id="__codelineno-18-4" name="__codelineno-18-4"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-18-5" id="__codelineno-18-5" name="__codelineno-18-5"></a>    <span class="n">my_file</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<a href="#__codelineno-18-6" id="__codelineno-18-6" name="__codelineno-18-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+<a href="#__codelineno-18-7" id="__codelineno-18-7" name="__codelineno-18-7"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="union-types">Union types</h3>
 <p>An enormously useful feature is to let the user not set a variable.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a>    <span class="n">my_var</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a><span class="w">    </span><span class="sd">""" Left empty for None """</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-19-1" id="__codelineno-19-1" name="__codelineno-19-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-19-2" id="__codelineno-19-2" name="__codelineno-19-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-19-3" id="__codelineno-19-3" name="__codelineno-19-3"></a>    <span class="n">my_var</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a href="#__codelineno-19-4" id="__codelineno-19-4" name="__codelineno-19-4"></a><span class="w">    </span><span class="sd">""" Left empty for None """</span>
 </code></pre></div>
 <h3 id="additional">Additional</h3>
 <p>We've added some other useful custom types that can be imported mostly from <code>mininterface.tag</code>.</p>

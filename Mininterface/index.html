@@ -679,10 +679,51 @@ In that case, plain Mininterface is used.</p>
 </div>
 <div class="doc doc-object doc-function">
 <h4 class="doc doc-heading" id="mininterface.Mininterface.alert">
-<code class="highlight language-python"><span class="n">alert</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">alert</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Prompt the user to confirm the text.</p>
+<p><span class="doc-section-title">Parameters:</span></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="doc-section-item">
+<td><code>text</code></td>
+<td>
+<code>str</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Displayed text</p>
+</div>
+</td>
+<td>
+<em>required</em>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>timeout</code></td>
+<td>
+<code>int</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Auto-confirm after N seconds (0 = disabled).</p>
+</div>
+</td>
+<td>
+<code>0</code>
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="doc doc-object doc-function">
@@ -806,7 +847,7 @@ In that case, plain Mininterface is used.</p>
 </div>
 <div class="doc doc-object doc-function">
 <h4 class="doc doc-heading" id="mininterface.Mininterface.confirm">
-<code class="highlight language-python"><span class="n">confirm</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">confirm</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Display confirm box and returns bool.</p>
@@ -814,6 +855,11 @@ In that case, plain Mininterface is used.</p>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Is that alright?"</span><span class="p">))</span>  <span class="c1"># True/False</span>
 </code></pre></div>
 <p><img alt="Is yes window" src="../asset/is_yes.avif" title="A prompted dialog"/></p>
+<p>Automatically submit after 10 seconds with the <code>timeout</code> parameter.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Is that alright?"</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># True/False</span>
+</code></pre></div>
+<p><img alt="Is yes window" src="../asset/confirm_countdown.avif" title="A prompted dialog with timeout"/></p>
 <p><span class="doc-section-title">Parameters:</span></p>
 <table>
 <thead>
@@ -851,6 +897,20 @@ In that case, plain Mininterface is used.</p>
 </td>
 <td>
 <code>True</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>timeout</code></td>
+<td>
+<code>int</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Auto-confirm after N seconds (0 = disabled).</p>
+</div>
+</td>
+<td>
+<code>0</code>
 </td>
 </tr>
 </tbody>

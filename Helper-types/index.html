@@ -437,6 +437,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--literal">
+<span class="md-ellipsis">
+      Literal
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--further-examples">
 <span class="md-ellipsis">
       Further examples
@@ -622,6 +629,13 @@
 <a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--enums">
 <span class="md-ellipsis">
       Enums
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.tag.select_tag.OptionsType--literal">
+<span class="md-ellipsis">
+      Literal
     </span>
 </a>
 </li>
@@ -867,6 +881,13 @@ Values might be Tags as well. Let's take a detailed look. We will use the <a cla
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">Color</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">])</span>
 </code></pre></div>
 <p><img alt="Options from enum list" src="../asset/choice_enum_list.avif"/></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Enum keys are seen from the CLI (unless modified). Enum values are seen from the UI. Should you need to bear an additional information, not displayed in CLI nor UI, tackle the Enum class.
+For the examples, see <a href="../Supported-types/#enums">Supported types / Enum</a>.</p>
+</div>
+<h5 id="mininterface.tag.select_tag.OptionsType--literal">Literal</h5>
+<p><code>typing.Literal</code> allows you to do a one-liner. Their values are seen from the CLI. See the <a href="../Supported-types/#literal">Supported types / Literal</a> examples.</p>
 <h5 id="mininterface.tag.select_tag.OptionsType--further-examples">Further examples</h5>
 <p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select">mininterface.select</a> or <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag.options"><code>SelectTag.options</code></a> for further usage.</p>
 </div>
