@@ -1,8 +1,9 @@
 # Changelog
 
-## unreleased
+## 1.1.3 (unreleased)
 * enh (TextInterface): Esc raises Cancelled in countdown
 * enh (run): settings accepts subclasses (-> shorter notation)
+* enh: [CliSettings][mininterface.settings.CliSettings]
 * fix: Countdown won't stop on Alt+Tab.
 
 ## 1.1.2 (2025-10-01)

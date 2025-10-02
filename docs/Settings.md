@@ -126,3 +126,7 @@ For the different interfaces, the value varies this way:
 ::: mininterface.settings.TextSettings
     options:
         show_root_full_path: false
+
+::: mininterface.settings.CliSettings
+    options:
+        show_root_full_path: false

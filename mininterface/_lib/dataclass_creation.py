@@ -237,8 +237,11 @@ def _process_field(fname, ftype, disk_value, wf, m, default_value=MISSING):
 
     # the subcommand has been already chosen by CLI parser
     if isinstance(disk_value, ChosenSubcommand):  # `(class Message | class Console)`
+        # there might be a subcommand prefix, ex. 'val:message' -> 'message'
+        name = disk_value.name.partition(":")[2] or disk_value.name
+
         for _subcomm in get_args(_unwrap_annotated(ftype)):
-            if disk_value.name == to_kebab_case(_subcomm.__name__):
+            if name == to_kebab_case(_subcomm.__name__):
                 ftype = _subcomm  # `class Message` only
                 disk_value = disk_value.subdict
                 break

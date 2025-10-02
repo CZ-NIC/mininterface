@@ -18,7 +18,7 @@ from ..tag.internal import CallbackButtonWidget, FacetButtonWidget, SubmitButton
 
 
 from .._lib.auxiliary import flatten
-from .._lib.form_dict import TagDict
+from .._lib.form_dict import TagDict, dict_removed_main
 
 from ..tag import Tag
 from ..tag.secret_tag import SecretTag
@@ -193,7 +193,8 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         match tag:
             case SelectTag():
                 grid_info = widget.grid_info()
-                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor, len(form) == 1)
+                single = len(dict_removed_main(form)) == 1
+                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor, single)
                 select_tag = True
                 variable = wrapper.variable_wrapper
                 # since tkinter variables do not allow objects,

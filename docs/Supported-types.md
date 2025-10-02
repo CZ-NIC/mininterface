@@ -265,7 +265,6 @@ You can union the classes to create subcommands:
 
 ```python
 from typing import Literal
-from tyro.conf import OmitSubcommandPrefixes
 
 @dataclass
 class ConsolePlain:
@@ -288,7 +287,7 @@ class Message:
 class Env:
     val: Message | Console
 
-m = run(OmitSubcommandPrefixes[Env])
+m = run(Env)
 ```
 
 First, we've chosen `Console`, then `Console rich`.
@@ -322,8 +321,23 @@ First, we've chosen `Console`, then `Console rich`.
 
     That way, you may start anywhere from CLI, yet be sure all the missing fields, if possible, are grouped in a single form dialog.
 
-??? OmitSubcommandPrefixes
-    Why using `OmitSubcommandPrefixes`? This will rend the inscription shorter.
+??? "Shorter CLI notation"
+
+    Instead of plain `Env`, we can annotate it
+
+    ```python
+    from mininterface.settings import CliSettings
+    m = run(Env, settings=CliSettings(omit_subcommand_prefixes=True))
+    ```
+
+    In the background, it does the same thing as applying an annotation from the underlying CLI library `tyro`.
+
+    ```python
+    from tyro.conf import OmitSubcommandPrefixes
+    m = run(OmitSubcommandPrefixes[Env])
+    ```
+
+    Take a look! Using that annotation will make the inscription shorter.
 
     ```bash
     $ ./program.py --help

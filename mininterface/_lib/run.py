@@ -279,7 +279,6 @@ def run(
     # Parse config file
     kwargs, settings_conf = parse_config_file(env_or_list or _Empty, config_file, **kwargs)
 
-
     # Ensure settings inheritance
     if isinstance(settings, CliSettings):
         settings = MininterfaceSettings(cli=settings)
@@ -290,6 +289,7 @@ def run(
     if settings or settings_conf:
         # previous settings are used to complement the 'mininterface' config file section
         settings = ensure_settings_inheritance(settings, settings_conf or {})
+    cliset = settings.cli if settings else CliSettings()
 
     # Choose an interface
     m = get_interface(interface, title, settings)
@@ -312,7 +312,7 @@ def run(
         # Load configuration from CLI and a config file
         try:
             parse_cli(
-                env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli
+                env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli, cliset
             )
         except Exception as e:
             # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
@@ -333,7 +333,7 @@ def run(
     else:
         # C) No Env object
         # even though there is no configuration, yet we need to parse CLI for meta-commands like --help or --verbose
-        parse_cli(_Empty, {}, m, cf, ask_for_missing, args)
+        parse_cli(_Empty, {}, m, cf, ask_for_missing, args, None, cliset)
 
     return m
 

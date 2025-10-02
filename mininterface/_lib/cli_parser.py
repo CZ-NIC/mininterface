@@ -2,16 +2,17 @@
 # CLI and config file parsing.
 #
 from dataclasses import asdict
+from functools import reduce
 import sys
 from collections import deque
 from contextlib import ExitStack
-from typing import Optional, Sequence, Type, Union
+from typing import Annotated, Optional, Sequence, Type, Union
 from unittest.mock import patch
-
 
 from .cli_flags import CliFlags
 
 from ..cli import Command
+from ..settings import CliSettings
 
 from ..exceptions import Cancelled
 from .auxiliary import (
@@ -33,6 +34,7 @@ try:
     from tyro._argparse import _SubParsersAction, ArgumentParser
     from tyro._argparse_formatter import TyroArgumentParser
     from tyro._singleton import MISSING_NONPROP
+    from tyro.conf import OmitArgPrefixes, OmitSubcommandPrefixes, DisallowNone, FlagCreatePairsOff
 
     from .tyro_patches import (
         _crawling,
@@ -75,6 +77,7 @@ def parse_cli(
     ask_for_missing: bool = True,
     args: Optional[Sequence[str]] = None,
     ask_on_empty_cli: Optional[bool] = None,
+    cli_settings: Optional[CliSettings] = None,
     _crawled=None,
     _req_fields=None,
 ) -> tuple[EnvClass, bool]:
@@ -118,18 +121,43 @@ def parse_cli(
     # Special CLI parsing
     if sys.modules.get("mininterface.tag.flag") is not None:
         from ..tag.flag import _custom_registry
-    else: # run only if the user imported the flags. (Untested) performance reasons.
+    else:  # run only if the user imported the flags. (Untested) performance reasons.
         _custom_registry = None
+
+    annotations = None
+    if cli_settings:
+        annotations = [
+            cls
+            for cond, cls in (
+                (cli_settings.omit_arg_prefixes, OmitArgPrefixes),
+                (cli_settings.omit_subcommand_prefixes, OmitSubcommandPrefixes),
+                (cli_settings.disallow_none, DisallowNone),
+                (cli_settings.flag_create_pairs_off, FlagCreatePairsOff),
+            )
+            if cond
+        ]
+
+    def annot(type_form):
+        if annotations:
+            if sys.version_info >= (3, 11):
+                from .future_compatibility import spread_annotated
+
+                return spread_annotated(type_form, annotations)
+            else:
+                from warnings import warn
+
+                warn(f"Cannot apply {annotations} on Python <= 3.11.")
+        return type_form
 
     try:
         with ExitStack() as stack:
             [stack.enter_context(p) for p in patches]  # apply just the chosen mocks
             try:
-                env = cli(type_form, args=args, registry=_custom_registry, **kwargs)
+                env = cli(annot(type_form), args=args, registry=_custom_registry, **kwargs)
             except BaseException:
                 # Why this exception handling? Try putting this out and test_strange_error_mitigation fails.
                 if len(env_classes) > 1 and kwargs.get("default"):
-                    env = cli(kwargs["default"].__class__, args=args[1:], registry=_custom_registry, **kwargs)
+                    env = cli(annot(kwargs["default"].__class__), args=args[1:], registry=_custom_registry, **kwargs)
                 else:
                     raise
             # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
@@ -144,7 +172,9 @@ def parse_cli(
             m.env = env
     except BaseException as exception:
         if ask_for_missing and getattr(exception, "code", None) == 2 and failed_fields.get():
-            env = _dialog_missing(env_classes, kwargs, m, cf, ask_for_missing, args, _crawled, _req_fields)
+            env = _dialog_missing(
+                env_classes, kwargs, m, cf, ask_for_missing, args, cli_settings, _crawled, _req_fields
+            )
 
             if final_call:
                 # Ask for the wrong fields
@@ -240,6 +270,7 @@ def _dialog_missing(
     cf: Optional[CliFlags],
     ask_for_missing: bool,
     args: Optional[Sequence[str]],
+    cli_settings,
     crawled,
     req_fields: Optional[TagDict],
 ) -> EnvClass:
@@ -301,7 +332,7 @@ def _dialog_missing(
     # We have just put a default values for missing fields so that tyro will not fail.
     # If we succeeded (no exotic case), this will pass through.
     # Then, we impose the user to fill the missing values.
-    env, _ = parse_cli(env_classes, kwargs, m, cf, ask_for_missing, args, None, crawled, req_fields)
+    env, _ = parse_cli(env_classes, kwargs, m, cf, ask_for_missing, args, None, cli_settings, crawled, req_fields)
     td = dataclass_to_tagdict(env, m)
     # Remove teporary defaults to be correctly displayed in the dialog form
     # so that user must fill them.
@@ -345,7 +376,9 @@ def _fetch_currently_failed(requireds) -> TagDict:
             # Here, we pick the field unknown to the CLI parser too.
             # As whole subparser was unknown here, we safely consider all its fields wrong fields.
             if fname:
-                get_or_create_parent_dict(missing_req, fname, True)[fname_raw] = get_or_create_parent_dict(requireds, fname)
+                get_or_create_parent_dict(missing_req, fname, True)[fname_raw] = get_or_create_parent_dict(
+                    requireds, fname
+                )
             else:
                 # This is the default subparser, without a field name:
                 # ex. `run([List, Run])`

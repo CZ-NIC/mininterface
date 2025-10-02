@@ -1,23 +1,24 @@
+import sys
+from contextlib import redirect_stderr
 from dataclasses import dataclass
 from datetime import date
-import sys
+from io import StringIO
+from pathlib import Path
 from typing import Literal, Optional
 from unittest import skipIf
 
+from configs import (CommandWithInitedMissing, ParametrizedGeneric,
+                     Subcommand1, Subcommand2)
+from shared import MISSING, TestAbstract, runm
 from tyro.conf import OmitSubcommandPrefixes, Positional
+
 from mininterface import Tag
 from mininterface._lib.auxiliary import get_description
-from mininterface._lib.form_dict import MissingTagValue
 from mininterface._lib.dataclass_creation import to_kebab_case
+from mininterface._lib.form_dict import MissingTagValue
 from mininterface.cli import Command, SubcommandPlaceholder
+from mininterface.settings import CliSettings
 from mininterface.tag import DatetimeTag, PathTag, SelectTag
-from configs import CommandWithInitedMissing, ParametrizedGeneric, Subcommand1, Subcommand2
-from shared import MISSING, TestAbstract, runm
-
-
-from contextlib import redirect_stderr
-from io import StringIO
-from pathlib import Path
 
 
 @dataclass
@@ -104,10 +105,14 @@ class UpperCommand2:
     command: Run | List
 
 
-# NOTE Currently, it seems it works only with OmitSubcommandPrefixes
 @dataclass
 class UpperCommand1:
     command: OmitSubcommandPrefixes[UpperCommand2 | List]
+
+
+@dataclass
+class UpperCommandA:
+    command: UpperCommand2 | List
 
 
 @dataclass
@@ -398,47 +403,69 @@ class TestNested(TestAbstract):
             )
 
     def test_upper_command(self):
-        with self.assertForms(
-            (
-                {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
-                {"": Message},
-            ),
-            (
-                {
-                    "": {},
+        args = (
+            {"": SelectTag(val=None, description="", annotation=None, label=None, options=["Message", "Console"])},
+            {"": Message},
+        ), (
+            {
+                "": {},
+                "command": {
                     "command": {
-                        "command": {
-                            "bot_id": SelectTag(
+                        "bot_id": SelectTag(
+                            val=MISSING,
+                            description="Choose a value",
+                            annotation=None,
+                            label="bot id",
+                            options=["id-one", "id-two"],
+                        ),
+                        "_subcommands": {
+                            "kind": SelectTag(
                                 val=MISSING,
-                                description="Choose a value",
+                                description="This is my help text",
                                 annotation=None,
-                                label="bot id",
-                                options=["id-one", "id-two"],
+                                label="kind",
+                                options=["get", "pop", "send"],
                             ),
-                            "_subcommands": {
-                                "kind": SelectTag(
-                                    val=MISSING,
-                                    description="This is my help text",
-                                    annotation=None,
-                                    label="kind",
-                                    options=["get", "pop", "send"],
-                                ),
-                                "msg": Tag(
-                                    val=MISSING, description="My message", annotation=Optional[str], label="msg"
-                                ),
-                                "foo": Tag(val="hello", description="", annotation=str, label="foo"),
-                            },
-                        }
-                    },
+                            "msg": Tag(val=MISSING, description="My message", annotation=Optional[str], label="msg"),
+                            "foo": Tag(val="hello", description="", annotation=str, label="foo"),
+                        },
+                    }
                 },
-                {"command": {"command": {"bot_id": "id-two", "_subcommands": {"kind": "pop", "msg": None}}}},
-            ),
-        ):
+            },
+            {"command": {"command": {"bot_id": "id-two", "_subcommands": {"kind": "pop", "msg": None}}}},
+        )
+
+        with self.assertForms(*args):
             env = runm(UpperCommand1, args=["upper-command2", "run"]).env
             self.assertEqual(
                 """UpperCommand1(command=UpperCommand2(command=Run(bot_id='id-two', _subcommands=Message(kind='pop', msg=None, foo='hello'))))""",
                 repr(env),
             )
+
+        # working with subcommand prefixes works identically
+        with self.assertForms(*args):
+            env = runm(UpperCommandA, args=["command:upper-command2", "command.command:run"]).env
+            self.assertEqual(
+                """UpperCommandA(command=UpperCommand2(command=Run(bot_id='id-two', _subcommands=Message(kind='pop', msg=None, foo='hello'))))""",
+                repr(env),
+            )
+
+        # omitting the prefixes can be set via CLI
+        # This does not work in Python3.10
+        if sys.version_info[:2] >= (3, 11):
+            with self.assertForms(*args):
+                env = runm(UpperCommandA, args=["upper-command2", "run"], settings=CliSettings(omit_subcommand_prefixes=True)).env
+                self.assertEqual(
+                    """UpperCommandA(command=UpperCommand2(command=Run(bot_id='id-two', _subcommands=Message(kind='pop', msg=None, foo='hello'))))""",
+                    repr(env),
+                )
+        else:
+            with self.assertWarns(UserWarning) as cm:
+                with self.assertForms(*args):
+                    env = runm(UpperCommandA, args=["command:upper-command2", "command.command:run"], settings=CliSettings(omit_subcommand_prefixes=True)).env
+
+            # # cm je context manager, můžeš zkontrolovat zprávu
+            self.assertIn("Cannot apply", str(cm.warning))
 
     def test_run_arg(self):
         with self.assertForms(
@@ -683,7 +710,7 @@ class TestNested(TestAbstract):
         self.assertEqual(get_description(Cl0, "subcommand"), "")
 
     def test_nested_config_exists(self):
-        """ The nested classes have the same behaviour
+        """The nested classes have the same behaviour
         whether or not there is a config file.
         """
         for cf in (None, "tests/empty.yaml"):

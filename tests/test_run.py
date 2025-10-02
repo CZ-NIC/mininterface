@@ -233,14 +233,15 @@ class TestRun(TestAbstract):
 
     def test_object_config(self):
         with NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as tmp:
-            tmp.write("""paths:
+            tmp.write(
+                """paths:
         - /tmp
         - /var/log/syslog
-        """)
+        """
+            )
             tmp.flush()
             env = runm(ParametrizedGeneric, config_file=tmp.name).env
-            self.assertEqual(ParametrizedGeneric(paths=[Path('/tmp'), Path('/var/log/syslog')]), env)
-
+            self.assertEqual(ParametrizedGeneric(paths=[Path("/tmp"), Path("/var/log/syslog")]), env)
 
     def test_run_annotated(self):
         m = run(FlagConversionOff[OmitArgPrefixes[SimpleEnv]])
@@ -319,19 +320,27 @@ class TestRun(TestAbstract):
         self.assertIsInstance(m._adaptor.settings, UiSettings)
 
     def test_settings_run(self):
-        set = MSOrig(ui=UiSettings(toggle_widget="f5"))
-
         m = runm()
-        self.assertEqual("""UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings))
-
-        m = runm(settings=set, config_file=False)
-        self.assertEqual("""UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings))
-
-        m = runm(settings=set, config_file="tests/some-settings.yaml")
-        self.assertEqual("""UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings))
+        self.assertEqual(
+            """UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings)
+        )
 
         m = runm(config_file="tests/some-settings.yaml")
-        self.assertEqual("""UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings))
+        self.assertEqual(
+            """UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings)
+        )
+
+        # why the for cycle? It is no change whether we put whole MininterfaceSettings or its param
+        ui_set = UiSettings(toggle_widget="f5")
+        for u in (MSOrig(ui=ui_set), ui_set):
+            m = runm(settings=u, config_file=False)
+            self.assertEqual(
+                """UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings)
+            )
+            m = runm(settings=u, config_file="tests/some-settings.yaml")
+            self.assertEqual(
+                """UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings)
+            )
 
     def test_add_version(self):
         with self.assertOutputs("v1.2.3"), self.assertRaises(SystemExit):
