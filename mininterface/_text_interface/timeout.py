@@ -60,6 +60,8 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                         return "".join(inp)
                     elif char == '\x03':  # Ctrl+C
                         raise Cancelled
+                    elif char == '\x1b':  # Escape
+                        raise Cancelled
                     elif char == '\x08':  # Backspace
                         if inp:
                             inp.pop()
@@ -74,7 +76,6 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                         print()  # newline immediately
                         return "".join(inp)
 
-                # Stop if timeout exceeded and input not started
                 if timeout_running and (time.time() - start_time >= timeout) and not input_started.is_set():
                     input_started.set()
                     print()
@@ -93,7 +94,9 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                         if char == '\n':
                             print()  # newline at Enter
                             return "".join(inp)
-                        elif char == '\x03':
+                        elif char == '\x03':  # Ctrl+C
+                            raise Cancelled
+                        elif char == '\x1b':  # Escape
                             raise Cancelled
                         elif char == '\x7f':  # Backspace
                             if inp:
@@ -109,13 +112,13 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                             print()  # newline immediately
                             return "".join(inp)
 
-                    # Stop if timeout exceeded and input not started
                     if timeout_running and (time.time() - start_time >= timeout) and not input_started.is_set():
                         input_started.set()
                         print()
                         return ""
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
     except Exception:
         # Fallback to class input.
         # 'Press any key' will not work.

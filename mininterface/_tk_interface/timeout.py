@@ -18,7 +18,10 @@ class TkTimeout(Timeout):
 
         self.countdown(timeout)
 
-        self.button.bind("<FocusOut>", self.cancel)
+        # Cancel countdown on FocusOut
+        # Why checking .focus_get()? If we jump to another app with Alt+Tab, we do not want the countdown to stop
+        # (in such cases, .focus_get() is empty).
+        self.button.bind("<FocusOut>", lambda e: self.cancel() if e.widget.focus_get() else None)
 
     def countdown(self, count):
         try:

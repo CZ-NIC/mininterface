@@ -16,7 +16,11 @@ class TextualTimeout(Timeout):
         self.button = button
         self.orig = self.button.label
         self._task = asyncio.create_task(self.countdown(timeout))
-        self.button.set_blur_callback(lambda event=None: self.cancel())
+
+        # Cancel countdown on focusing out
+        # Why checking .focused? If we jump to another app with Alt+Tab, we do not want the countdown to stop
+        # (in such cases, .focused is empty).
+        self.button.set_blur_callback(lambda event=None: self.cancel() if adaptor.app.focused else None)
 
     async def countdown(self, count: int):
         self.button.label = f"{self.orig} ({count})"

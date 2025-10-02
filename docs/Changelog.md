@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+* enh (TextInterface): Esc raises Cancelled in countdown
+* fix: Countdown won't stop on Alt+Tab.
+
 ## 1.1.2 (2025-10-01)
 * feat: timeout parameter for alert & confirm
 * enh: `list[tuple]` supperfluous arguments check
