@@ -5,6 +5,7 @@ from os import environ
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Type
 
+
 from .._mininterface import Mininterface
 from ..exceptions import DependencyRequired, ValidationFail
 from ..interfaces import get_interface
@@ -16,11 +17,11 @@ try:
     from .argparse_support import parser_to_dataclass
     from .cli_flags import CliFlags as _CliFlags
     from .cli_parser import assure_args, parse_cli
-    from .config_file import parse_config_file
+    from .config_file import parse_config_file, ensure_settings_inheritance
     from .dataclass_creation import choose_subcommand, to_kebab_case
     from .start import Start
 except DependencyRequired as e:
-    assure_args, parse_cli, parse_config_file, parser_to_dataclass = (e,) * 4
+    assure_args, parse_cli, parse_config_file, ensure_settings_inheritance, parser_to_dataclass = (e,) * 5
     Start, SubcommandPlaceholder = (e,) * 2
     to_kebab_case, choose_subcommand, _CliFlags = (e,) * 3
 
@@ -275,8 +276,17 @@ def run(
     if isinstance(env_or_list, ArgumentParser):
         env_or_list, add_version = parser_to_dataclass(env_or_list)
 
-    # Parse CLI arguments, possibly merged from a config file.
-    # A) Superform – overview of the subcommands
+    # Parse config file
+    kwargs, settings_conf = parse_config_file(env_or_list or _Empty, config_file, **kwargs)
+
+
+    # Ensure settings inheritance
+    MininterfaceSettings
+    if settings or settings_conf:
+        # previous settings are used to complement the 'mininterface' config file section
+        settings = ensure_settings_inheritance(settings, settings_conf or {})
+
+    # Choose an interface
     m = get_interface(interface, title, settings)
 
     # Resolve SubcommandPlaceholder
@@ -290,13 +300,10 @@ def run(
     ):
         args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
-    # B) A single Env object, or a list of such objects (with one is being selected via args)
-    # C) No Env object
-
-    kwargs, settings = parse_config_file(env_or_list or _Empty, config_file, settings, **kwargs)
+    # Parse CLI arguments, possibly merged from a config file.
     cf = _CliFlags(add_verbose, add_version, add_version_package, add_quiet)
     if env_or_list:
-        # B) single Env object
+        # A single Env object, or a list of such objects (with one is not/being selected via args)
         # Load configuration from CLI and a config file
         try:
             parse_cli(

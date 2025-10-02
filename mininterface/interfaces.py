@@ -65,6 +65,11 @@ def _choose_settings(type_: Mininterface, settings: Optional[MininterfaceSetting
                 opt = settings.text
             case "WebInterface":
                 opt = settings.web
+            case "Mininterface":
+                # Even though this has not any sense to have some settings for Mininterface,
+                # they are not used, we test it in TestRun.test_settings_run.
+                # An according to MinAdaptor, it should have UiSettings.
+                opt = settings.ui
     return opt
 
 

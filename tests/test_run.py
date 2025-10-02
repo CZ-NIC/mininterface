@@ -1,9 +1,9 @@
 from tempfile import NamedTemporaryFile
 from unittest import skipUnless
 from mininterface import Mininterface
-from mininterface._lib.config_file import _merge_settings
+from mininterface._lib.config_file import ensure_settings_inheritance
 from mininterface._lib.run import run
-from mininterface.settings import UiSettings
+from mininterface.settings import UiSettings, MininterfaceSettings as MSOrig
 from mininterface.tag import PathTag, Tag
 from attrs_configs import AttrsNested
 from importlib.metadata import version
@@ -267,13 +267,13 @@ class TestRun(TestAbstract):
         opt2 = MininterfaceSettings(gui=GuiSettings(combobox_since=10))
         self.assertEqual(
             opt1,
-            _merge_settings(None, {"gui": {"combobox_since": 1}}, MininterfaceSettings),
+            ensure_settings_inheritance(None, {"gui": {"combobox_since": 1}}, MininterfaceSettings),
         )
 
         # config file settings are superior to the program-given settings
         self.assertEqual(
             opt1,
-            _merge_settings(opt2, {"gui": {"combobox_since": 1}}, MininterfaceSettings),
+            ensure_settings_inheritance(opt2, {"gui": {"combobox_since": 1}}, MininterfaceSettings),
         )
 
         opt3 = MininterfaceSettings(
@@ -293,7 +293,7 @@ class TestRun(TestAbstract):
                 "ui": {"foo": 3},
             }
 
-        self.assertEqual(opt3, _merge_settings(None, conf(), MininterfaceSettings))
+        self.assertEqual(opt3, ensure_settings_inheritance(None, conf(), MininterfaceSettings))
 
         opt4 = MininterfaceSettings(
             text=TextSettings(p_dynamic=200),
@@ -309,7 +309,7 @@ class TestRun(TestAbstract):
             web=WebSettings(foo=100, p_config=1, p_dynamic=100, foobar=74),
             interface=None,
         )
-        self.assertEqual(res4, _merge_settings(opt4, conf(), MininterfaceSettings))
+        self.assertEqual(res4, ensure_settings_inheritance(opt4, conf(), MininterfaceSettings))
 
     def test_settings_inheritance(self):
         """The interface gets the relevant settings section, not whole MininterfaceSettings"""
@@ -317,6 +317,21 @@ class TestRun(TestAbstract):
         m = run(settings=opt1, interface=Mininterface)
         self.assertIsInstance(m, Mininterface)
         self.assertIsInstance(m._adaptor.settings, UiSettings)
+
+    def test_settings_run(self):
+        set = MSOrig(ui=UiSettings(toggle_widget="f5"))
+
+        m = runm()
+        self.assertEqual("""UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings))
+
+        m = runm(settings=set, config_file=False)
+        self.assertEqual("""UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings))
+
+        m = runm(settings=set, config_file="tests/some-settings.yaml")
+        self.assertEqual("""UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings))
+
+        m = runm(config_file="tests/some-settings.yaml")
+        self.assertEqual("""UiSettings(toggle_widget='f4', mnemonic=True, mnemonic_hidden=True)""", repr(m._adaptor.settings))
 
     def test_add_version(self):
         with self.assertOutputs("v1.2.3"), self.assertRaises(SystemExit):

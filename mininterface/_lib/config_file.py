@@ -18,21 +18,19 @@ except ImportError:
 def parse_config_file(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     config_file: Path | None = None,
-    settings: Optional[MininterfaceSettings] = None,
     **kwargs,
-) -> tuple[dict, MininterfaceSettings | None]:
+) -> tuple[dict, dict | None]:
     """Fetches the config file into the program defaults kwargs["default"] and UI settings.
 
     Args:
         env_class: Class with the configuration.
         config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
-        settings: Used to complement the 'mininterface' config file section-
     Kwargs:
         The same as for argparse.ArgumentParser.
 
     Returns:
-        Tuple of kwargs and settings.
+        Tuple of kwargs and dict (section 'mininterface' in the config file).
     """
     if isinstance(env_or_list, list):
         subcommands, env = env_or_list, None
@@ -50,23 +48,21 @@ def parse_config_file(
             " Describe the developer your usecase so that they might implement this."
         )
 
+    confopt = None
     if "default" not in kwargs and not subcommands and config_file:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
         try:
-            if confopt := disk.pop("mininterface", None):
-                # Section 'mininterface' in the config file.
-                settings = _merge_settings(settings, confopt)
-
+            confopt = disk.pop("mininterface", None)
             kwargs["default"] = create_with_missing(env, disk)
         except TypeError:
             raise SyntaxError(f"Config file parsing failed for {config_file}")
 
-    return kwargs, settings
+    return kwargs, confopt
 
 
-def _merge_settings(
+def ensure_settings_inheritance(
     runopt: MininterfaceSettings | None, confopt: dict, _def_fact=MininterfaceSettings
 ) -> MininterfaceSettings:
     # Settings inheritance:

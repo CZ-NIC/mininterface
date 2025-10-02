@@ -1,0 +1,6 @@
+mininterface:
+  gui:
+    combobox_since: 20
+    mnemonic: true
+  ui:
+    mnemonic_hidden: true
