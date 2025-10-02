@@ -2,6 +2,7 @@
 
 ## unreleased
 * enh (TextInterface): Esc raises Cancelled in countdown
+* enh (run): settings accepts subclasses (-> shorter notation)
 * fix: Countdown won't stop on Alt+Tab.
 
 ## 1.1.2 (2025-10-01)

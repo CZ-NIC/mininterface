@@ -9,7 +9,7 @@ from typing import Literal, Optional, Sequence, Type
 from .._mininterface import Mininterface
 from ..exceptions import DependencyRequired, ValidationFail
 from ..interfaces import get_interface
-from ..settings import MininterfaceSettings
+from ..settings import CliSettings, MininterfaceSettings, UiSettings
 from .form_dict import EnvClass
 
 try:
@@ -41,7 +41,7 @@ def run(
     # We do not use InterfaceType as a type here because we want the documentation to show full alias:
     interface: Type[Mininterface] | Literal["gui"] | Literal["tui"] | Literal["text"] | Literal["web"] | None = None,
     args: Optional[Sequence[str]] = None,
-    settings: Optional[MininterfaceSettings] = None,
+    settings: Optional[MininterfaceSettings | UiSettings | CliSettings] = None,
     **kwargs,
 ) -> Mininterface[EnvClass]:
     """The main access, start here.
@@ -193,7 +193,7 @@ def run(
             see the full [list](Interfaces.md) of possible interfaces.
             If not set, we look also for an environment variable [`MININTERFACE_INTERFACE`](Interfaces.md#environment-variable-mininterface_interface) and in the config file.
         args: Parse arguments from a sequence instead of the command line.
-        settings: Default settings. These might be further modified by the 'mininterface' section in the config file.
+        settings: Default settings. These might be further modified by the 'mininterface' section in the config file. See the [Settings](Settings.md) section.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
 
@@ -281,7 +281,12 @@ def run(
 
 
     # Ensure settings inheritance
-    MininterfaceSettings
+    if isinstance(settings, CliSettings):
+        settings = MininterfaceSettings(cli=settings)
+    elif isinstance(settings, UiSettings):
+        # Ex. `settings=GuiSettings(...)` -> `settings=MininterfaceSettings(gui=GuiSettings(...)`
+        attr_name = settings.__class__.__name__.removesuffix("Settings").lower()
+        settings = MininterfaceSettings(**{attr_name: settings})
     if settings or settings_conf:
         # previous settings are used to complement the 'mininterface' config file section
         settings = ensure_settings_inheritance(settings, settings_conf or {})

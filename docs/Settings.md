@@ -11,13 +11,26 @@ opt = MininterfaceSettings()
 run(settings=opt)
 ```
 
-Specifying only the GuiSettings:
+Specifying only the `GuiSettings`:
 ```python
-from mininterface.settings import MininterfaceSettings, GuiSettings
+from mininterface.settings import GuiSettings
 
-opt = MininterfaceSettings(gui=GuiSettings(combobox_since=1))
+opt = GuiSettings(combobox_since=1)
 run(settings=opt)
 ```
+
+Specifying the `GuiSettings` + turning off the mnemonic for all UIs (not only gui, but also text, ...):
+```python
+from mininterface.settings import MininterfaceSettings, GuiSettings, UiSettings
+
+opt = MininterfaceSettings(
+    gui=GuiSettings(combobox_since=1),
+    ui=UiSettings(mnemonic=False)
+)
+run(settings=opt)
+```
+
+Specifying via dataclasses is very convenient as your ID suggests all the options available, including its hints.
 
 
 ### Config file special section
