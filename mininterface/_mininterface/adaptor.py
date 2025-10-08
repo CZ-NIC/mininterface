@@ -26,8 +26,8 @@ class BackendAdaptor(ABC):
 
     def __init__(self, interface: "Mininterface", settings: UiSettings | None):
         self.interface = interface
-        self.facet = interface.facet = self.__annotations__["facet"](self, interface.env)
-        self.settings = settings or self.__annotations__["settings"]()
+        self.facet = interface.facet = type(self).__annotations__["facet"](self, interface.env)
+        self.settings = settings or type(self).__annotations__["settings"]()
 
     @abstractmethod
     def widgetize(self, tag: Tag):
