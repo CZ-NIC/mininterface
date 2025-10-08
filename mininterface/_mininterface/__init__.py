@@ -90,7 +90,15 @@ class Mininterface(Generic[EnvClass]):
         # NOTE docs that
         # m = run([Env, Env2]) -> .env will be the chosen one.
 
-        self._adaptor = self.__annotations__["_adaptor"](self, settings)
+        # Why using `type(self)` instead of `self.__annotations__`?
+        # Always access annotations via the class, not the instance.
+        # Some mixins or Generic from typing may prevent instances from having __annotations__.
+        # Using type(self).__annotations__ ensures compatibility across Python versions and platforms.
+        #
+        # Example: on Alpine Python 3-alpine image, accessing self.__annotations__ raised AttributeError.
+        # Hypothesis: the combination of typing.Generic + musl libc build altered the metaclass behavior,
+        # causing __annotations__ to not be automatically set on the instance.
+        self._adaptor = type(self).__annotations__["_adaptor"](self, settings)
 
     def __enter__(self) -> "Self":
         """Usage within the with statement makes the program to attempt for the following benefits:

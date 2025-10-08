@@ -165,7 +165,8 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         # Only prevent form submission, don't affect Tab navigation
         return None  # Allow event propagation for other handlers
 
-    for tag, field_form in zip(flatten(form), flatten(nested_widgets)):
+    fform = list(flatten(form))
+    for tag, field_form in zip(fform, flatten(nested_widgets)):
         tag: Tag
         field_form: FieldForm
         label1: Widget = field_form.label
@@ -193,8 +194,7 @@ def replace_widgets(adaptor: "TkAdaptor", nested_widgets, form: TagDict):
         match tag:
             case SelectTag():
                 grid_info = widget.grid_info()
-                single = len(dict_removed_main(form)) == 1
-                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor, single)
+                wrapper = SelectInputWrapper(master, tag, grid_info, widget, adaptor, len(fform) == 1)
                 select_tag = True
                 variable = wrapper.variable_wrapper
                 # since tkinter variables do not allow objects,
