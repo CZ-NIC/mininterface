@@ -1,10 +1,11 @@
 # Changelog
 
-## 1.1.3 (unreleased)
+## 1.1.3 (2025-10-09)
 * enh (TextInterface): Esc raises Cancelled in countdown
 * enh (run): settings accepts subclasses (-> shorter notation)
 * enh: [CliSettings][mininterface.settings.CliSettings]
 * fix: Countdown won't stop on Alt+Tab.
+* fix: temporary prevent Python3.14
 
 ## 1.1.2 (2025-10-01)
 * feat: timeout parameter for alert & confirm

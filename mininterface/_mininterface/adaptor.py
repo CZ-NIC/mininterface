@@ -26,6 +26,7 @@ class BackendAdaptor(ABC):
 
     def __init__(self, interface: "Mininterface", settings: UiSettings | None):
         self.interface = interface
+        # NOTE self.__annotations__ will pose problem at Python3.14
         self.facet = interface.facet = self.__annotations__["facet"](self, interface.env)
         self.settings = settings or self.__annotations__["settings"]()
 
