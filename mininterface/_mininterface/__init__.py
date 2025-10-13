@@ -91,7 +91,7 @@ class Mininterface(Generic[EnvClass]):
         # m = run([Env, Env2]) -> .env will be the chosen one.
 
         # NOTE In Python3.14, type(self).__annotations__ will work.
-        self._adaptor = self.__annotations__["_adaptor"](self, settings)
+        self._adaptor = type(self).__annotations__["_adaptor"](self, settings)
 
     def __enter__(self) -> "Self":
         """Usage within the with statement makes the program to attempt for the following benefits:
