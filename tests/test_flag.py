@@ -25,7 +25,7 @@ class TestFlag(TestAbstract):
                         "t2": Tag(val=None, description="", annotation=int | bool | None, label="t2"),
                         "t3": Tag(val=None, description="", annotation=int | bool | None, label="t3"),
                         "t4": Tag(val=2, description="", annotation=int | bool | None, label="t4"),
-                        "t5": Tag(val=None, description="", annotation=int | bool | Literal["foo"] | None, label="t5"),
+                        "t5": Tag(val=None, description="", annotation=int | Literal["foo"] | bool | None, label="t5"),
                     }
                 },
                 {"": {"t1": None}},

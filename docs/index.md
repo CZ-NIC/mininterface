@@ -91,6 +91,8 @@ with run(Env) as m:
 
 Wrapper between various libraries that provide a user interface.
 
+It allows you to focus on writing the program's core logic without worrying about input/output. It generates CLI arguments, parses config file, and shows a UI. Depending on the endpoint, the dialogs automatically use either a GUI, a mouse-clickable TUI, a lightweight terminal text interface, or be available via HTTP — all while maintaining exactly the same functionality.
+
 Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. *Mininterface* is here to help.
 
 The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of [tyro](https://github.com/brentyi/tyro) does not require any overhead (as its `argparse` alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:

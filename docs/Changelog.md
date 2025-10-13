@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.4 (2025-10-13)
+* enh: Python 3.14 compatible
+
 ## 1.1.3 (2025-10-09)
 * enh (TextInterface): Esc raises Cancelled in countdown
 * enh (run): settings accepts subclasses (-> shorter notation)
