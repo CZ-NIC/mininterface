@@ -13,7 +13,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 # Minimal requirements (dialogs with partial .form support (m.form(dict) or m.form(dataclass_instance))
-python = ">=3.10,<3.14"
+python = ">=3.10,<3.15" # TODO
 # python = "^3.10" NOTE when tyro accepts Python3.14, get this line back
 simple_term_menu = "*"
 annotated-types = "*"
