@@ -27,7 +27,7 @@ class BackendAdaptor(ABC):
     def __init__(self, interface: "Mininterface", settings: UiSettings | None):
         self.interface = interface
 
-        # NOTE self.__annotations__ will pose problem at Python3.14
+        # Why looping mro? Since 3.14, ex. MockAdaptor does not inherit .facet annotation from MinAdaptor.
         for cl in type(self).__mro__:
             try:
                 self.facet = interface.facet = cl.__annotations__["facet"](self, interface.env)
