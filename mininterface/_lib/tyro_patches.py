@@ -347,6 +347,13 @@ def custom_init(cf:CliFlags):
                 help="suppress warnings, display only errors",
             )
 
+        if cf.add_config:
+            self.add_argument(
+                default_prefix * 2 + "config",
+                help=f"path to config file to fetch the defaults from",
+                metavar="PATH"
+            )
+
     return _
 
 
@@ -368,6 +375,11 @@ def custom_parse_known_args(cf:CliFlags):
         #         print(namespace.version)
         #         raise SystemExit(0)
         #     delattr(namespace, "version")
+
+        # Note that we do not parse --config here as it is parsed at `run.py`, before CLI parsing.
+        # Since config file serves as default fo CLI parsing.
+        if cf.add_config and hasattr(namespace, "config"):
+            delattr(namespace, "config")
 
         if cf.add_quiet and hasattr(namespace, "quiet"):
             if namespace.quiet:

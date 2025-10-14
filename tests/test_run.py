@@ -1,6 +1,7 @@
 from tempfile import NamedTemporaryFile
 from unittest import skipUnless
 from mininterface import Mininterface
+from mininterface._lib import config_file
 from mininterface._lib.config_file import ensure_settings_inheritance
 from mininterface._lib.run import run
 from mininterface.settings import UiSettings, MininterfaceSettings as MSOrig
@@ -257,6 +258,24 @@ class TestRun(TestAbstract):
             with warnings.catch_warnings(record=True) as w:
                 r(model)
                 self.assertIn("Unknown fields in the configuration file", str(w[0].message))
+
+    def test_add_config(self):
+        for add_config, config_file, expected, args, env_vars in [
+            (True, True, 4, [], {}),
+            (True, True, 10, ["--config", "tests/SimpleEnv.yaml"], {"MININTERFACE_CONFIG": "SimpleEnv.yaml"}),
+            (True, True, 20, ["--config", "tests/SimpleEnv2.yaml"], {"MININTERFACE_CONFIG": "SimpleEnv.yaml"}),
+            (True, True, 10, [], {"MININTERFACE_CONFIG": "tests/SimpleEnv.yaml"}),
+            (True, True, 20, [], {"MININTERFACE_CONFIG": "tests/SimpleEnv2.yaml"}),
+            (False, True, 20, [], {"MININTERFACE_CONFIG": "tests/SimpleEnv2.yaml"}),
+            (False, False, 20, [], {"MININTERFACE_CONFIG": "tests/SimpleEnv2.yaml"}),
+            (True, False, 20, ["--config", "tests/SimpleEnv2.yaml"], {}),
+        ]:
+            with self.subTest(args=args):
+                with patch.dict(os.environ, env_vars):
+                    self.assertEqual(
+                        expected,
+                        runm(SimpleEnv, args, add_config=add_config, config_file=config_file).env.important_number,
+                    )
 
     def test_settings(self):
         # NOTE

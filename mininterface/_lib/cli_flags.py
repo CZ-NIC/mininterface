@@ -15,14 +15,17 @@ class CliFlags:
     default_verbosity: int = logging.WARNING
     _verbosity_sequence: Optional[Sequence[int]] = None
 
+    config: bool = False
+
     def __init__(
         self,
         add_verbose: bool | int | Sequence[int] = False,
         add_version: Optional[str] = None,
         add_version_package: Optional[str] = None,
         add_quiet: bool = False,
+        add_config: bool = False,
     ):
-        self._enabled = {"verbose": True, "version": True, "quiet": True}
+        self._enabled = {"verbose": True, "version": True, "quiet": True, "config": True}
         # verbosity
         match add_verbose:
             case bool():
@@ -50,13 +53,17 @@ class CliFlags:
             except PackageNotFoundError:
                 self.version = f"package {add_version_package} not found"
 
+        # config
+        self.config = add_config
+
     def should_add(self, env_classes: list[EnvClass]) -> bool:
         # Flags are added only if neither the env_class nor any of the subcommands have the same-name flag already
         self._enabled["verbose"] = self._add_verbose and self._attr_not_present("verbose", env_classes)
         self._enabled["quiet"] = self._add_quiet and self._attr_not_present("quiet", env_classes)
         self._enabled["version"] = self.version and self._attr_not_present("version", env_classes)
+        self._enabled["config"] = self.config and self._attr_not_present("config", env_classes)
 
-        return self.add_verbose or self.add_version or self.add_quiet
+        return self.add_verbose or self.add_version or self.add_quiet or self.add_config
 
     def _attr_not_present(self, flag, env_classes):
         return all(flag not in cl.__annotations__ for cl in env_classes)
@@ -72,6 +79,10 @@ class CliFlags:
     @property
     def add_quiet(self):
         return self._add_quiet and self._enabled["quiet"]
+
+    @property
+    def add_config(self):
+        return self.config and self._enabled["config"]
 
     def get_log_level(self, count):
         """

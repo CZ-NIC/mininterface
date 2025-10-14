@@ -32,6 +32,7 @@ def run(
     title: str = "",
     config_file: Path | str | bool = True,
     *,
+    add_config: bool = False,
     add_help: bool = True,
     add_verbose: bool|int|Sequence[int] = True,
     add_version: Optional[str] = None,
@@ -83,9 +84,13 @@ def run(
             whose name stem is the same as the program's.
             Ex: `program.py` will search for `program.yaml`.
             If False, no config file is used.
+
+            Might be superseded by `add_config` or `MININTERFACE_CONFIG` environment variable.
+
             See the [Config file](Config-file.md) section.
-        add_help: Adds the help flag.
-        add_verbose: The default base Python verbosity logging level is `logging.WARNING`. Here you can add the verbose flag that automatically increases the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
+        add_config: Adds the `--config` flag to change the config file location.
+        add_help: Adds the `--help` flag.
+        add_verbose: Adds the `--verbose` flag. The default base Python verbosity logging level is `logging.WARNING`. Here you can add the verbose flag that automatically increases the level to `logging.INFO` (*-v*) or `logging.DEBUG` (*-vv*).
             Either, the value is `True` (the default) which means the base logging level stays at `logging.WARNING` and the flag is added. `False` means no flag is added.
             Also, it can be `int` to determine the default logging state (i.g. some programs prefer to show INFO by default) or a sequnce of `int`s for even finer control.
 
@@ -140,7 +145,7 @@ def run(
 
             When user writes more `-v` than defined, the level sets to `logging.NOTSET`.
 
-        add_version: Your program version. Adds the version flag.
+        add_version: Adds the `--version` flag to print out your program's version.
             ```python
             run(add_version="1.2.5")
             ```
@@ -155,7 +160,7 @@ def run(
             ╰─────────────────────────────────────────────────────────────────────╯
             ```
 
-        add_quiet: Decrease verbosity, only print warnings and errors.
+        add_quiet: Adds the `--quiet` flag to decrease the verbosity and only print warnings and errors.
             ```python
             import logging
             logger = logging.getLogger(__name__)
@@ -236,7 +241,27 @@ def run(
     if not add_help:
         kwargs["add_help"] = False
 
+    # Assure args
+    if isinstance(assure_args, DependencyRequired) and not env_or_list:
+        # Basic dependencies missing, we have no CLI capacities
+        # Since the user needs no CLI, we return a bare interface.
+        return get_interface(interface, title)
+    args = assure_args(args)
+
     # Prepare the config file
+    if cf:= environ.get("MININTERFACE_CONFIG"):
+        config_file = cf
+    if add_config and "--config" in args:
+        # Detect the `--config` and pop it.
+        # `--flag --config FILE --flag2` -> `--flag --flag2`
+        args = list(args)
+        idx = args.index("--config")
+        try:
+            config_file = args[idx + 1]
+        except IndexError:
+            raise ValueError("Missing value after --config")
+        else:
+            del args[idx:idx + 2]
     if config_file is True and not kwargs.get("default"):
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
@@ -259,12 +284,6 @@ def run(
         interface = environ.get("MININTERFACE_INTERFACE")
     if environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
-
-    if isinstance(assure_args, DependencyRequired) and not env_or_list:
-        # Basic dependencies missing, we have no CLI capacities
-        # Since the user needs no CLI, we return a bare interface.
-        return get_interface(interface, title)
-    args = assure_args(args)
 
     # Hidden meta-commands in args
     if environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
@@ -306,7 +325,7 @@ def run(
         args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
     # Parse CLI arguments, possibly merged from a config file.
-    cf = _CliFlags(add_verbose, add_version, add_version_package, add_quiet)
+    cf = _CliFlags(add_verbose, add_version, add_version_package, add_quiet, add_config)
     if env_or_list:
         # A single Env object, or a list of such objects (with one is not/being selected via args)
         # Load configuration from CLI and a config file

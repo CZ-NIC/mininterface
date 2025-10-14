@@ -1,10 +1,17 @@
 # Config file
 Any settings you see in the `--help` command can be modified via a YAML config file.
 
-By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the [run][mininterface.run] method.
+By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the [run][mininterface.run] method `config_file` or `add_config` parameters or via `MININTERFACE_CONFIG` environment variable.
 
 !!! Tip
     You do not have to re-define all the settings in the config file, you can choose a few.
+
+## Search order by highest priority
+
+* `$ program.py --config PATH` with `run(add_config=True)` will load `PATH`
+* `$ MININTERFACE_CONFIG=PATH program.py` will load `PATH`
+* `$ program.py` with `run(config_file=PATH)` will load `PATH`
+* `$ program.py` with `run(config_file=True)` will load `program.yaml`
 
 ## Basic example
 
