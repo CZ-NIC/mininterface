@@ -8,10 +8,10 @@ By default, we try to find one in the current working dir, whose name stem is th
 
 ## Search order by highest priority
 
-* `$ program.py --config PATH` with `run(add_config=True)` will load `PATH`
-* `$ MININTERFACE_CONFIG=PATH program.py` will load `PATH`
-* `$ program.py` with `run(config_file=PATH)` will load `PATH`
-* `$ program.py` with `run(config_file=True)` will load `program.yaml`
+*  will load `conf.yaml`: `$ program.py --config conf.yaml` with `run(add_config=True)`
+*  will load `conf.yaml`: `$ MININTERFACE_CONFIG=conf.yaml program.py`
+*  will load `conf.yaml`: `$ program.py` with `run(config_file=conf.yaml)`
+*  will load `program.yaml`: `$ program.py` with `run(config_file=True)`
 
 ## Basic example
 

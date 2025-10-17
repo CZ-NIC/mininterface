@@ -1,0 +1,15 @@
+level2-a:
+  betaA: level 2A config
+  command2:
+    level3-a:
+      gammaA: 9
+      command3:
+        command4:
+          level5-a:
+            epsilonA: level 5A config
+          level5-b:
+            epsilonB: level 5B config
+      command3grade:
+        command4:
+          level5-b:
+            epsilonB: grade 5B config

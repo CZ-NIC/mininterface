@@ -1,10 +1,12 @@
+from dataclasses import asdict
 import warnings
 from pathlib import Path
 from typing import Optional, Type
 
+
 from ..settings import MininterfaceSettings
 from .auxiliary import dataclass_asdict_no_defaults, merge_dicts
-from .dataclass_creation import create_with_missing
+from .dataclass_creation import create_with_missing, to_kebab_case
 from .form_dict import EnvClass
 
 try:
@@ -15,6 +17,7 @@ except ImportError:
 
     raise DependencyRequired("basic")
 
+
 def parse_config_file(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]],
     config_file: Path | None = None,
@@ -23,7 +26,7 @@ def parse_config_file(
     """Fetches the config file into the program defaults kwargs["default"] and UI settings.
 
     Args:
-        env_class: Class with the configuration.
+        env_or_list: Class(es) with the configuration.
         config_file: File to load YAML to be merged with the configuration.
             You do not have to re-define all the settings in the config file, you can choose a few.
     Kwargs:
@@ -32,30 +35,29 @@ def parse_config_file(
     Returns:
         Tuple of kwargs and dict (section 'mininterface' in the config file).
     """
-    if isinstance(env_or_list, list):
-        subcommands, env = env_or_list, None
-    else:
-        subcommands, env = None, env_or_list
-
-    # Load config file
-    if config_file and subcommands:
-        # Reading config files when using subcommands is not implemented.
-        # NOTE But might be now.
-        kwargs.pop("default", None)
-        warnings.warn(
-            f"Config file {config_file} is ignored because subcommands are used."
-            " It is not easy to set how this should work."
-            " Describe the developer your usecase so that they might implement this."
-        )
-
     confopt = None
-    if "default" not in kwargs and not subcommands and config_file:
+    if "default" not in kwargs and config_file:
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
         disk = yaml.safe_load(config_file.read_text()) or {}  # empty file is ok
         try:
             confopt = disk.pop("mininterface", None)
-            kwargs["default"] = create_with_missing(env, disk)
+            subc = {}
+
+            if isinstance(env_or_list, list):
+                kwargs["subcommands_default_union"] = {}
+                for cl in env_or_list:
+                    cl_name = to_kebab_case(cl.__name__)
+                    subc[cl_name] = {}
+                    ooo = create_with_missing(cl, disk.get(cl_name, {}), subc=subc[cl_name])
+                    kwargs["subcommands_default_union"][cl_name] = asdict(ooo)
+                    # `kwargs["default"]` remains empty for now as there is no bare default that tyro would support as everything is hidden under the subcommands
+
+            else:
+                kwargs["default"] = create_with_missing(env_or_list, disk, subc=subc)
+
+            if subc:
+                kwargs["subcommands_default"] = subc
         except TypeError:
             raise SyntaxError(f"Config file parsing failed for {config_file}")
 
