@@ -299,6 +299,13 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#search-order-by-highest-priority">
+<span class="md-ellipsis">
+      Search order by highest priority
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#basic-example">
 <span class="md-ellipsis">
       Basic example
@@ -396,6 +403,13 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#search-order-by-highest-priority">
+<span class="md-ellipsis">
+      Search order by highest priority
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#basic-example">
 <span class="md-ellipsis">
       Basic example
@@ -418,11 +432,18 @@
 <article class="md-content__inner md-typeset">
 <h1 id="config-file">Config file</h1>
 <p>Any settings you see in the <code>--help</code> command can be modified via a YAML config file.</p>
-<p>By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method.</p>
+<p>By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method <code>config_file</code> or <code>add_config</code> parameters or via <code>MININTERFACE_CONFIG</code> environment variable.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>You do not have to re-define all the settings in the config file, you can choose a few.</p>
 </div>
+<h2 id="search-order-by-highest-priority">Search order by highest priority</h2>
+<ul>
+<li>will load <code>conf.yaml</code>: <code>$ program.py --config conf.yaml</code> with <code>run(add_config=True)</code></li>
+<li>will load <code>conf.yaml</code>: <code>$ MININTERFACE_CONFIG=conf.yaml program.py</code></li>
+<li>will load <code>conf.yaml</code>: <code>$ program.py</code> with <code>run(config_file=conf.yaml)</code></li>
+<li>will load <code>program.yaml</code>: <code>$ program.py</code> with <code>run(config_file=True)</code></li>
+</ul>
 <h2 id="basic-example">Basic example</h2>
 <p>We have this nested structure:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="c1"># program.py</span>

@@ -405,7 +405,7 @@
 <h1>Run</h1>
 <div class="doc doc-object doc-function">
 <h3 class="doc doc-heading" id="mininterface.run">
-<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">env_or_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ask_on_empty_cli</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">add_help</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_version_package</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ask_for_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">env_or_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ask_on_empty_cli</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">''</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">add_config</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">add_help</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_version_package</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ask_for_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>The main access, start here.
@@ -497,12 +497,27 @@ You do not have to re-define all the settings in the config file, you can choose
 If set to True (default), we try to find one in the current working dir,
 whose name stem is the same as the program's.
 Ex: <code>program.py</code> will search for <code>program.yaml</code>.
-If False, no config file is used.
-See the <a href="../Config-file/">Config file</a> section.</p>
+If False, no config file is used.</p>
+<p>Might be superseded by <code>add_config</code> or <code>MININTERFACE_CONFIG</code> environment variable.</p>
+<p>See the <a href="../Config-file/">Config file</a> section.</p>
 </div>
 </td>
 <td>
 <code>True</code>
+</td>
+</tr>
+<tr class="doc-section-item">
+<td><code>add_config</code></td>
+<td>
+<code>bool</code>
+</td>
+<td>
+<div class="doc-md-description">
+<p>Adds the <code>--config</code> flag to change the config file location.</p>
+</div>
+</td>
+<td>
+<code>False</code>
 </td>
 </tr>
 <tr class="doc-section-item">
@@ -512,7 +527,7 @@ See the <a href="../Config-file/">Config file</a> section.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>Adds the help flag.</p>
+<p>Adds the <code>--help</code> flag.</p>
 </div>
 </td>
 <td>
@@ -526,7 +541,7 @@ See the <a href="../Config-file/">Config file</a> section.</p>
 </td>
 <td>
 <div class="doc-md-description">
-<p>The default base Python verbosity logging level is <code>logging.WARNING</code>. Here you can add the verbose flag that automatically increases the level to <code>logging.INFO</code> (<em>-v</em>) or <code>logging.DEBUG</code> (<em>-vv</em>).
+<p>Adds the <code>--verbose</code> flag. The default base Python verbosity logging level is <code>logging.WARNING</code>. Here you can add the verbose flag that automatically increases the level to <code>logging.INFO</code> (<em>-v</em>) or <code>logging.DEBUG</code> (<em>-vv</em>).
 Either, the value is <code>True</code> (the default) which means the base logging level stays at <code>logging.WARNING</code> and the flag is added. <code>False</code> means no flag is added.
 Also, it can be <code>int</code> to determine the default logging state (i.g. some programs prefer to show INFO by default) or a sequnce of <code>int</code>s for even finer control.</p>
 <p>The <code>add_vebose=True</code> example:</p>
@@ -579,7 +594,7 @@ Also, it can be <code>int</code> to determine the default logging state (i.g. so
 </td>
 <td>
 <div class="doc-md-description">
-<p>Your program version. Adds the version flag.
+<p>Adds the <code>--version</code> flag to print out your program's version.
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="n">run</span><span class="p">(</span><span class="n">add_version</span><span class="o">=</span><span class="s2">"1.2.5"</span><span class="p">)</span>
 </code></pre></div></p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
@@ -603,7 +618,7 @@ Also, it can be <code>int</code> to determine the default logging state (i.g. so
 </td>
 <td>
 <div class="doc-md-description">
-<p>Decrease verbosity, only print warnings and errors.
+<p>Adds the <code>--quiet</code> flag to decrease the verbosity and only print warnings and errors.
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">logging</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
