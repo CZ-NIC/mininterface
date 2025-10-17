@@ -2,6 +2,7 @@
 
 ## unreleased
 * feat: [`run`][mininterface.run] add_config flag
+* feat: [subcommands](Supported-types.md/#dataclasses-union-subcommand) allowed in the config file
 
 ## 1.1.4 (2025-10-13)
 * enh: Python 3.14 compatible

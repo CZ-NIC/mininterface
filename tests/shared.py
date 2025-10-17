@@ -1,13 +1,15 @@
 from argparse import ArgumentParser
 from ast import literal_eval
 import logging
+from math import exp
 from os import environ, replace
+import re
 import sys
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from contextlib import ExitStack, contextmanager, redirect_stderr, redirect_stdout
 from io import StringIO
 from unittest import TestCase
 from unittest.mock import patch
-from typing import Type
+from typing import Callable, Literal, Type
 
 from mininterface import Mininterface
 from mininterface._lib.auxiliary import dict_diff
@@ -70,6 +72,28 @@ def _repr_dict(data: dict):
     return _repr(data)
 
 
+def copy_text(text: str):
+    try:
+        import pyperclip
+
+        pyperclip.copy(text)
+        print("Copied into clipboard!")
+    except ImportError:
+        pass
+    print(text)
+
+
+def ensure_text(strip_white: bool) -> Callable[[str], str]:
+    """Conditionally replace white and graphic chars. This allows a nice testing while the ASCII graphic might be terminal-width-wise."""
+
+    def _(s: str):
+        if strip_white:
+            return re.sub(r"[\s─│]+", "", s)
+        return s
+
+    return _
+
+
 class TestAbstract(TestCase):
     def setUp(self):
         global SYS_ARGV
@@ -91,28 +115,57 @@ class TestAbstract(TestCase):
         expected_output=None,
         contains: str | list[str] = None,
         not_contains: str | list[str] = None,
+        strip_white=False,
+        raises=None,
+        wizzard=False,
     ):
         f = StringIO()
-        with redirect(f):
+        with ExitStack() as stack:
+            if raises is not None:
+                stack.enter_context(self.assertRaises(raises))
+            stack.enter_context(redirect(f))
             yield
+        t = ensure_text(strip_white)
         actual_output = f.getvalue().strip()
+        if wizzard:
+            copy_text(f' = """{actual_output}"""')
+            return
+        actual_output = t(actual_output)
         if expected_output is not None:
-            self.assertEqual(expected_output, actual_output)
+            self.assertEqual(t(expected_output), actual_output)
         if contains is not None:
             for comp in contains if isinstance(contains, list) else [contains]:
-                self.assertIn(comp, actual_output)
+                self.assertIn(t(comp), actual_output)
         if not_contains is not None:
             for comp in not_contains if isinstance(not_contains, list) else [not_contains]:
-                self.assertNotIn(comp, actual_output)
+                self.assertNotIn(t(comp), actual_output)
 
-    def assertOutputs(self, expected_output=None, contains: str | list[str] = None, not_contains=None):
-        return self._assertRedirect(redirect_stdout, expected_output, contains, not_contains)
+    def assertOutputs(
+        self,
+        expected_output=None,
+        contains: str | list[str] = None,
+        not_contains=None,
+        raises=None,
+        strip_white=False,
+        wizzard=False,
+    ):
+        return self._assertRedirect(
+            redirect_stdout,
+            expected_output,
+            contains,
+            not_contains,
+            raises=raises,
+            strip_white=strip_white,
+            wizzard=wizzard,
+        )
 
     def assertStderr(self, expected_output=None, contains=None, not_contains=None):
         return self._assertRedirect(redirect_stderr, expected_output, contains, not_contains)
 
     @contextmanager
-    def assertForms(self, *check: dict | None | tuple[dict | None, dict | None], end=True, wizzard=False):
+    def assertForms(
+        self, *check: dict | None | tuple[dict | None, dict | None], end=True, wizzard: bool | Literal["short"] = False
+    ):
         """Intercepts every form call, checks it and possibly modify it (simulating the user input).
 
         Connected to `runm` testing function.
@@ -216,23 +269,12 @@ class TestAbstract(TestCase):
             globals()["Mininterface"] = original_interface
 
             if wizzard:
-                # print("with self.assertForms(")
-                # rows = [(f"    (\n      {a},\n      {b}\n    )") for a,b in builder]
-                # print(",\n    ".join(rows))
-                # print("  ):")
-
-                s = "with self.assertForms(\n"
+                short = wizzard == "short"
+                s = "= (\n" if short else "with self.assertForms(\n"
                 rows = [f"    (\n      {a},\n      {b}\n    )" for a, b in builder]
                 s += ",\n    ".join(rows)
-                s += "\n  ):"
-                try:
-                    import pyperclip
-
-                    pyperclip.copy(s)
-                    print("Copied into clipboard!")
-                except ImportError:
-                    pass
-                print(s)
+                s += ",\n  )" if short else ",\n  ):"
+                copy_text(s)
             elif not had_exception:
                 try:
                     model, setter = next(check_)

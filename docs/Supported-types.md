@@ -243,7 +243,7 @@ run(Env)
 
 ![SelectTag multiple](asset/selecttag-multiple.avif)
 
-### Nested dataclasses or their unions (subcommands)
+### Dataclass (→ subgroup)
 
 You can nest the classes to create a subgroup:
 
@@ -260,6 +260,15 @@ run(Env)
 ```
 
 ![Nested dataclass](asset/nested-dataclass.avif)
+
+In the config file, it behaves like a dict:
+
+```yaml
+val:
+    text: text from a config file
+```
+
+### Dataclasses union (→ subcommand)
 
 You can union the classes to create subcommands:
 
@@ -323,14 +332,21 @@ First, we've chosen `Console`, then `Console rich`.
 
 ??? "Shorter CLI notation"
 
-    Instead of plain `Env`, we can annotate it
+    This is how in looks in CLI:
+
+    ```bash
+    $ ./program.py --help
+    usage: program.py [-h] [-v] {val:message,val:console}
+    ```
+
+    Is that too long for you? Instead of plain `Env`, use the settings:
 
     ```python
     from mininterface.settings import CliSettings
     m = run(Env, settings=CliSettings(omit_subcommand_prefixes=True))
     ```
 
-    In the background, it does the same thing as applying an annotation from the underlying CLI library `tyro`.
+    In the background, it does the same thing as applying an annotation marker from the underlying CLI library `tyro`.
 
     ```python
     from tyro.conf import OmitSubcommandPrefixes
@@ -344,11 +360,16 @@ First, we've chosen `Console`, then `Console rich`.
     usage: program.py [-h] [-v] {message,console}
     ```
 
-    Without:
-    ```bash
-    $ ./program.py --help
-    usage: program.py [-h] [-v] {val:message,val:console}
-    ```
+In the config file, put a dict where subcommands are in the kebab case. Here, we define some config defaults for `ConsoleRich`, leaving `Message` and `ConsolePlain` without config defaults.
+
+```yaml
+val:
+    console:
+        bot-id: id-two
+        style:
+            console-rich:
+                color:  green
+```
 
 ### Well-known objects
 

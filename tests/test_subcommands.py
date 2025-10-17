@@ -506,8 +506,6 @@ class TestNested(TestAbstract):
             )
 
     def test_run_message_args(self):
-        # NOTE I'd prefer calling 'run message' would create a single call,
-        # now, there is two steps while the bot-id is in the second.
         with self.assertForms(
             (
                 {
