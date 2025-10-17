@@ -85,7 +85,7 @@ class SelectInputWrapper:
             # NOTE I would prefer a button-like menu if single==True.
             self.variable_wrapper = VariableAnyWrapper(self.variable, {k: v for k, v, *_ in self.options})
             if not single and len(self.options) >= adaptor.settings.combobox_since and AutoCombobox:
-                if not tag.label.strip(): # ensure the label as combobox looks bad without it
+                if not tag.label.strip():  # ensure the label as combobox looks bad without it
                     tag.label = "Choose"
                 self.widget = self.combobox()
             else:

@@ -33,7 +33,7 @@ class CliFlags:
             case int():
                 self._add_verbose = True
                 self.default_verbosity = add_verbose
-                self._verbosity_sequence = list(range(add_verbose-10, -1, -10))
+                self._verbosity_sequence = list(range(add_verbose - 10, -1, -10))
             case list() | tuple():
                 self._add_verbose = True
                 self.default_verbosity = add_verbose[0]
@@ -106,7 +106,7 @@ class CliFlags:
         Returns:
             int: log level
         """
-        if count == -1: # quiet flag
+        if count == -1:  # quiet flag
             return logging.ERROR
         if not count:
             return self.default_verbosity

@@ -106,7 +106,7 @@ FormDictOrEnv = TypeVar("FormDictOrEnv", bound=FormDict | DataClass)
 
 
 def tagdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
-    """ Returns a new dict when all Tags are replaced with their values.
+    """Returns a new dict when all Tags are replaced with their values.
 
     Args:
         extract_main: UI need the main section act as nested.
@@ -125,8 +125,9 @@ def tagdict_resolve(d: FormDict, extract_main=False, _root=True) -> dict:
         return {**main, **out}
     return out
 
-def dict_added_main(data:dict):
-    """ Gets a dict modified to the same form as a TagDict (adds the main "" section) """
+
+def dict_added_main(data: dict):
+    """Gets a dict modified to the same form as a TagDict (adds the main "" section)"""
     out = {}
     out[""] = {}
     for key, val in data.items():
@@ -137,8 +138,9 @@ def dict_added_main(data:dict):
 
     return out
 
-def dict_removed_main(data:dict):
-    """ Expand the main "" section among other keys. """
+
+def dict_removed_main(data: dict):
+    """Expand the main "" section among other keys."""
     out = dict(data.get("", {}))
 
     for key, val in data.items():
@@ -149,11 +151,13 @@ def dict_removed_main(data:dict):
         out[key] = val
     return out
 
-def dict_has_main(data:dict):
+
+def dict_has_main(data: dict):
     """
     Calling `m.select(title="")` would raise `m.form({'': SelectTag(...)})`. The tag with the empty name != main section (which is dict).
     """
     return isinstance(data.get(""), dict)
+
 
 def dict_to_tagdict(data: dict, mininterface: Optional["Mininterface"] = None) -> TagDict:
     fd = {}
@@ -234,7 +238,9 @@ def dataclass_to_tagdict(env: EnvClass, mininterface: Optional["Mininterface"] =
         raise ValueError(f"We got a namespace instead of class, CLI probably failed: {env}")
 
     for param, val in iterate_attributes(env):
-        if hasattr(val, "__dict__") and not isinstance(val, (FunctionType, MethodType, MissingTagValue, Enum)):  # nested config hierarchy
+        if hasattr(val, "__dict__") and not isinstance(
+            val, (FunctionType, MethodType, MissingTagValue, Enum)
+        ):  # nested config hierarchy
             # nested config hierarchy
             # Why checking the isinstance? See Tag._is_a_callable.
             subdict[param] = dataclass_to_tagdict(val, mininterface, _nested=True)

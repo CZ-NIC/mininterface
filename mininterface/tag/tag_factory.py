@@ -109,7 +109,9 @@ def tag_factory(
                                 # Why not checking `GroupedMetadata` instead of `Len`? See below. You won't believe.
                                 validators.append(metadata)
                             elif get_origin(metadata) is Literal:
-                                if "<class 'mininterface.tag.flag._Blank'>" in (repr(type(f)) for f in field_type.__metadata__):
+                                if "<class 'mininterface.tag.flag._Blank'>" in (
+                                    repr(type(f)) for f in field_type.__metadata__
+                                ):
                                     # a special case, this is a default CLI value and will be processed by flag.Blank
                                     # `foo: Annotated[Blank[int], Literal[2]] = None`
                                     # Using repr and not importing due to (vague) performance reasons.
@@ -122,6 +124,7 @@ def tag_factory(
     if validators:  # we prepend annotated_types validators to the current validator
         tag._add_validation(validators)
     return tag
+
 
 # NOTE I'd like to check `GroupedMetadata` instead of the `Len` (the only currently supported GroupedMetadata).
 # However, that's not possible because a mere checking of some things from the typing module,

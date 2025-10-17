@@ -71,9 +71,11 @@ def assure_args(args: Optional[Sequence[str]] = None):
             args = []
     return args
 
+
 def _subcommands_default_appliable(kwargs, _crawling):
     if len(_crawling.get()):
-                return kwargs.get("subcommands_default")
+        return kwargs.get("subcommands_default")
+
 
 def parse_cli(
     env_or_list: Type[EnvClass] | list[Type[EnvClass]],
@@ -156,7 +158,6 @@ def parse_cli(
                 warn(f"Cannot apply {annotations} on Python <= 3.11.")
         return type_form
 
-
     #
     # --- Begin to launch tyro.cli ---
     # This will be divided into four sections.
@@ -189,7 +190,9 @@ def parse_cli(
                     except BaseException:
                         # Why this exception handling? Try putting this out and test_strange_error_mitigation fails.
                         if len(env_classes) > 1 and kwargs.get("default"):
-                            env = cli(annot(kwargs["default"].__class__), args=args[1:], registry=_custom_registry, **kwargs)
+                            env = cli(
+                                annot(kwargs["default"].__class__), args=args[1:], registry=_custom_registry, **kwargs
+                            )
                         else:
                             raise
             except SystemExit as exception:
@@ -199,13 +202,20 @@ def parse_cli(
                     # Help-text exception, continue here and try again with subcommands. As it raises SystemExit first,
                     # it will raise SystemExit in the second run too.
                     helponly = True
-                elif _crawled is None and _subcommands_default_appliable(kwargs, _crawling) and exception.code == 2 and failed_fields.get():
+                elif (
+                    _crawled is None
+                    and _subcommands_default_appliable(kwargs, _crawling)
+                    and exception.code == 2
+                    and failed_fields.get()
+                ):
                     # Some fields are missing, directly try again. If it raises again
                     # (some fields are really missing which cannot be filled from the subcommanded-config),
                     # it will immediately raise again and trigger the (C) dialog missing section.
                     # If it worked (and no fields are missing), we continue here without triggering the (C) dialog missing section.
                     _crawled = True
-                    env, enforce_dialog = _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_registry, annot,  _req_fields)
+                    env, enforce_dialog = _try_with_subcommands(
+                        kwargs, m, args, type_form, env_classes, _custom_registry, annot, _req_fields
+                    )
                 else:
                     # This is either a recurrent call from the (C) dialog missing section (and thus subcommand-config re-parsing was done),
                     # or there is no subcommand-config data and thus we continue as if this exception handling did not happen.
@@ -220,7 +230,9 @@ def parse_cli(
             if _crawled is None and _subcommands_default_appliable(kwargs, _crawling):
                 # Why not catching enforce_dialog here? As we are here, calling tyro.cli worked for the first time.
                 # For sure then, there were no choose_subcommand dialog, subcommands for sure are all written in the CLI.
-                env, _ = _try_with_subcommands(kwargs, None if helponly else m, args, type_form, env_classes, _custom_registry, annot,  _req_fields)
+                env, _ = _try_with_subcommands(
+                    kwargs, None if helponly else m, args, type_form, env_classes, _custom_registry, annot, _req_fields
+                )
 
             # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
             # 1. Getting the interface is a costly operation
@@ -291,8 +303,9 @@ def parse_cli(
 
         return env, dialog_raised
 
+
 def _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_registry, annot, _req_fields):
-    """ This awful method is here to re-parse the tyro.cli with the subcommand-config """
+    """This awful method is here to re-parse the tyro.cli with the subcommand-config"""
 
     failed_fields.set([])
     old_defs = kwargs.get("default", {})
@@ -306,7 +319,7 @@ def _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_regis
             if not old_defs:
                 old_defs = kwargs["subcommands_default_union"][cl_name]
             subc = kwargs["subcommands_default"].get(cl_name)
-        else: # we should never come here
+        else:  # we should never come here
             raise ValueError("Subcommands parsing failed")
     else:
         env = env_classes[0]
@@ -399,7 +412,14 @@ def _dialog_missing(
         else:
             disk = asdict(dc) if (dc := kwargs.get("default")) else {}
         crawled = True
-        kwargs["default"] = create_with_missing(env_cl, disk, req_fields, m, subc=kwargs.get("subcommands_default"), subc_passage=[cl_name for _, cl_name, _ in _crawling.get()])
+        kwargs["default"] = create_with_missing(
+            env_cl,
+            disk,
+            req_fields,
+            m,
+            subc=kwargs.get("subcommands_default"),
+            subc_passage=[cl_name for _, cl_name, _ in _crawling.get()],
+        )
 
     missing_req = _fetch_currently_failed(req_fields)
     """ Fields required and missing from CLI """

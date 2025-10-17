@@ -6,7 +6,6 @@ if TYPE_CHECKING:
     from . import TkAdaptor
 
 
-
 class TkTimeout(Timeout):
     adaptor: "TkAdaptor"
 
@@ -14,7 +13,7 @@ class TkTimeout(Timeout):
         super().__init__(timeout, adaptor)
         self.button = button
         self.after_id = None
-        self.orig:str = self.button.cget("text")
+        self.orig: str = self.button.cget("text")
 
         self.countdown(timeout)
 

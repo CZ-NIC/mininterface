@@ -4,7 +4,19 @@ from dataclasses import dataclass, fields
 from datetime import date, time
 from enum import Enum
 from types import FunctionType, MethodType, NoneType, UnionType
-from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal, Optional, TypeVar, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    Literal,
+    Optional,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 from warnings import warn
 
 from annotated_types import BaseMetadata, GroupedMetadata
@@ -191,6 +203,8 @@ $ program.py --ages 18 18 500 18 100
 # passes
 ```
 """
+
+
 class MissingTagValue:
     """The dataclass field has not received a value from the CLI, and this value is required.
     Before anything happens, run.ask_for_missing should re-ask for a real value instead of this placeholder.
@@ -695,7 +709,7 @@ class Tag(Generic[TagValue]):
         return self
 
     def set_error_text(self, s=""):
-        """ Mark the field as required and possibly adds an error text to the description. """
+        """Mark the field as required and possibly adds an error text to the description."""
         if s:
             self.description = f"{s} {self._original_desc}".strip()
         if n := self._original_label:
@@ -743,7 +757,7 @@ class Tag(Generic[TagValue]):
                     return tuple(subt() for subt in get_args(self.annotation))
             return self.annotation()
         except TypeError:  # Ex. annotation=Literal
-            return None # we failed, we do not know what to return
+            return None  # we failed, we do not know what to return
 
     def _add_validation(self, validators: Iterable[ValidationCallback] | ValidationCallback):
         """Prepend validators to the current validator."""
@@ -918,8 +932,10 @@ class Tag(Generic[TagValue]):
                                     if len(cast_to) == 2 and cast_to[1] is Ellipsis:
                                         # ex. `list[tuple[int, ...]]`
                                         cast_to = cast_to[0]
-                                        candidate = origin(tuple(cast_to(v) for v in tuple_) for tuple_ in literal_eval(ui_value))
-                                    else: # ex. `list[tuple[int, Path, str]]`
+                                        candidate = origin(
+                                            tuple(cast_to(v) for v in tuple_) for tuple_ in literal_eval(ui_value)
+                                        )
+                                    else:  # ex. `list[tuple[int, Path, str]]`
                                         tuples = []
                                         for str_tuple in literal_eval(ui_value):
                                             try:
@@ -933,12 +949,12 @@ class Tag(Generic[TagValue]):
                                             tuples.append(typed_tuple)
 
                                         candidate = origin(tuples)
-                                elif origin is dict:   # ex. `dict[str, str]`
+                                elif origin is dict:  # ex. `dict[str, str]`
                                     # we ignore cast_to as `[str, str]` part will be checked later
                                     candidate = literal_eval(ui_value)
                                 else:
                                     candidate = origin(cast_to(v) for v in literal_eval(ui_value))
-                            elif cast_to is dict: # `annotation=dict`
+                            elif cast_to is dict:  # `annotation=dict`
                                 candidate = literal_eval(ui_value)  #
                             else:
                                 candidate = cast_to(ui_value)

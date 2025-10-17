@@ -123,7 +123,7 @@ class MyButton(TagWidget, Button):
         self.tag._facet.submit(_post_submit=self.tag._run_callable)
 
     def on_blur(self):
-        if clb:=self.blur_callback:
+        if clb := self.blur_callback:
             clb()
 
     def set_blur_callback(self, clb):

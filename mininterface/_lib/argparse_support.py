@@ -1,9 +1,19 @@
 import re
 import sys
-from argparse import (SUPPRESS, Action, ArgumentParser, _AppendAction,
-                      _AppendConstAction, _CountAction, _HelpAction,
-                      _StoreConstAction, _StoreFalseAction, _StoreTrueAction,
-                      _SubParsersAction, _VersionAction)
+from argparse import (
+    SUPPRESS,
+    Action,
+    ArgumentParser,
+    _AppendAction,
+    _AppendConstAction,
+    _CountAction,
+    _HelpAction,
+    _StoreConstAction,
+    _StoreFalseAction,
+    _StoreTrueAction,
+    _SubParsersAction,
+    _VersionAction,
+)
 from collections import defaultdict
 from dataclasses import MISSING, Field, dataclass, field, make_dataclass
 from functools import cached_property
@@ -65,7 +75,9 @@ class ArgparseField:
         return self.action.dest in self.properties
 
 
-def parser_to_dataclass(parser: ArgumentParser, name: str = "Args") -> tuple[DataClass | list[DataClass], Optional[str]]:
+def parser_to_dataclass(
+    parser: ArgumentParser, name: str = "Args"
+) -> tuple[DataClass | list[DataClass], Optional[str]]:
     """
     Note: Ex. parser.add_argument("--time", type=time) -> does work at all in argparse, here it works.
 
@@ -197,8 +209,9 @@ def _make_dataclass_from_actions(
             if action.choices:
                 # With the drop of Python 3.10, use mere:
                 # arg_type = Literal[*action.choices]
-                if sys.version_info >= (3,11):
+                if sys.version_info >= (3, 11):
                     from .future_compatibility import literal
+
                     arg_type = literal(action.choices)
                 else:
                     # we do not prefer this option as tyro does not understand it

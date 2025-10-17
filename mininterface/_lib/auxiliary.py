@@ -5,8 +5,7 @@ from argparse import ArgumentParser
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from types import UnionType
-from typing import (Any, Callable, Iterable, Optional, TypeVar, Union, Literal,
-                    get_args, get_origin, get_type_hints)
+from typing import Any, Callable, Iterable, Optional, TypeVar, Union, Literal, get_args, get_origin, get_type_hints
 
 from annotated_types import Ge, Gt, Le, Len, Lt, MultipleOf
 
@@ -75,7 +74,9 @@ def get_descriptions(parser: ArgumentParser) -> dict:
     """Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form."""
     # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
     return {
-        re.sub(r"\s\(positional\)$", "", action.dest).replace("-", "_"): re.sub(r"\((default|fixed to|required).*\)", "", action.help or "")
+        re.sub(r"\s\(positional\)$", "", action.dest).replace("-", "_"): re.sub(
+            r"\((default|fixed to|required).*\)", "", action.help or ""
+        )
         for action in parser._actions
     }
 
@@ -201,7 +202,7 @@ def matches_annotation(value, annotation) -> bool:
         if origin is list:
             return all(matches_annotation(item, subtypes[0]) for item in value)
         elif origin is tuple:
-            if len(subtypes) == 2 and subtypes[1] is Ellipsis: # ex. tuple[int, ...]
+            if len(subtypes) == 2 and subtypes[1] is Ellipsis:  # ex. tuple[int, ...]
                 return all(matches_annotation(v, subtypes[0]) for v in value)
             if len(subtypes) != len(value):
                 return False
@@ -286,8 +287,9 @@ def merge_dicts(d1: dict, d2: dict):
             d1[key] = value
     return d1
 
+
 def dict_diff(a: dict, b: dict) -> dict:
-    """ Returns the B values where they differ. """
+    """Returns the B values where they differ."""
     result = {}
     for k in b:
         if isinstance(a.get(k), dict) and isinstance(b.get(k), dict):
@@ -297,6 +299,7 @@ def dict_diff(a: dict, b: dict) -> dict:
         elif a.get(k) != b.get(k):
             result[k] = b[k]
     return result
+
 
 def naturalsize(value: float | str, *args) -> str:
     """For a bare interface, humanize might not be installed."""
@@ -346,6 +349,7 @@ def allows_none(annotation) -> bool:
         return any(arg is type(None) for arg in args)
     return False
 
+
 def strip_none(annotation):
     """Return the same annotation but without NoneType inside a Union/Optional."""
     origin = get_origin(annotation)
@@ -358,7 +362,8 @@ def strip_none(annotation):
 
     return annotation
 
-@lru_cache(maxsize=1024*10)
+
+@lru_cache(maxsize=1024 * 10)
 def _get_origin(tp: Any):
     """
     Cached version of typing.get_origin.

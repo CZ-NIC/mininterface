@@ -313,7 +313,7 @@ def custom_error(self: TyroArgumentParser, message: str):
     raise exc  # will be catched
 
 
-def custom_init(cf:CliFlags):
+def custom_init(cf: CliFlags):
     def _(self: TyroArgumentParser, *args, **kwargs):
         super(TyroArgumentParser, self).__init__(*args, **kwargs)
         default_prefix = "-" if "-" in self.prefix_chars else self.prefix_chars[0]
@@ -349,15 +349,13 @@ def custom_init(cf:CliFlags):
 
         if cf.add_config:
             self.add_argument(
-                default_prefix * 2 + "config",
-                help=f"path to config file to fetch the defaults from",
-                metavar="PATH"
+                default_prefix * 2 + "config", help=f"path to config file to fetch the defaults from", metavar="PATH"
             )
 
     return _
 
 
-def custom_parse_known_args(cf:CliFlags):
+def custom_parse_known_args(cf: CliFlags):
     def _(self: TyroArgumentParser, args=None, namespace=None):
         namespace, args = super(TyroArgumentParser, self).parse_known_args(args, namespace)
         # NOTE We may check that the Env does not have its own `verbose``
@@ -400,13 +398,15 @@ def subparser_call(self, parser, namespace, values, option_string=None):
 
 
 def argparse_init(kw) -> None:
-    """ Restore ArgumentParser parameters that tyro considers useless
+    """Restore ArgumentParser parameters that tyro considers useless
     as we tend to have backwards compatibility with argparse
     to facilitate usage.
     """
+
     def _(self, *args, **kwargs):
         _orig_init(self, *args, **kwargs)
         for k, v in kw.items():
             # Ex. self.allow_abbrev = True
             setattr(self, k, v)
+
     return _

@@ -5,6 +5,7 @@ from typing import Literal, Optional
 # We do not use InterfaceType as a type in run because we want the documentation to show full alias.
 InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["text"]
 
+
 @_dataclass
 class CliSettings:
     omit_arg_prefixes: bool = False
@@ -113,7 +114,6 @@ class CliSettings:
 
     See: [https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.FlagCreatePairsOff]()
     """
-
 
 
 @_dataclass

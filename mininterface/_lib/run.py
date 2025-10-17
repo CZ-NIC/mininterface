@@ -34,7 +34,7 @@ def run(
     *,
     add_config: bool = False,
     add_help: bool = True,
-    add_verbose: bool|int|Sequence[int] = True,
+    add_verbose: bool | int | Sequence[int] = True,
     add_version: Optional[str] = None,
     add_version_package: Optional[str] = None,
     add_quiet: bool = False,
@@ -249,7 +249,7 @@ def run(
     args = assure_args(args)
 
     # Prepare the config file
-    if cf:= environ.get("MININTERFACE_CONFIG"):
+    if cf := environ.get("MININTERFACE_CONFIG"):
         config_file = cf
     if add_config and "--config" in args:
         # Detect the `--config` and pop it.
@@ -261,7 +261,7 @@ def run(
         except IndexError:
             raise ValueError("Missing value after --config")
         else:
-            del args[idx:idx + 2]
+            del args[idx : idx + 2]
     if config_file is True and not kwargs.get("default"):
         # Undocumented feature. User put a namespace into kwargs["default"]
         # that already serves for defaults. We do not fetch defaults yet from a config file.
@@ -330,9 +330,7 @@ def run(
         # A single Env object, or a list of such objects (with one is not/being selected via args)
         # Load configuration from CLI and a config file
         try:
-            parse_cli(
-                env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli, cliset
-            )
+            parse_cli(env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli, cliset)
         except Exception as e:
             # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
             from ast import literal_eval

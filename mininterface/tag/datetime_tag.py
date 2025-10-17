@@ -78,7 +78,7 @@ class DatetimeTag(Tag[Union[TagValue, date, time, datetime]]):
     after: date_ | None = None
     """ The minimum allowed date/datetime value. """
 
-    _caster: type[date_|time_|datetime] = date_
+    _caster: type[date_ | time_ | datetime] = date_
 
     # NOTE calling DatetimeTag("2025-02") should convert str to date?
     def __post_init__(self):

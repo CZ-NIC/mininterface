@@ -75,6 +75,7 @@ class SerializedChildAdaptor(TextualAdaptor):
         if timeout:
             # NOTE timeout not implemented
             import warnings
+
             warnings.warn("Timeout not implemented for web interface")
             print("Warning: Timeout not implemented for web interface")
         return self.send(SerCommand.BUTTONS, text, buttons, focused)

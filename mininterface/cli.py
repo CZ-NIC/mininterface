@@ -1,4 +1,5 @@
 """Useful objects meaningful for CLI handling only."""
+
 from ._lib.cli_utils import Command, SubcommandPlaceholder
 
 try:

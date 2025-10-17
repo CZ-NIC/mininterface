@@ -1,9 +1,3 @@
-    # if not timeout:
-    #     return input(prompt)
-
-    # print(f"{prompt} (countdown {int(timeout)} sec)", end='', flush=True)
-
-
 import sys
 import threading
 import time
@@ -16,6 +10,7 @@ else:
     import select
     import tty
     import termios
+
 
 def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False) -> str:
     """
@@ -37,15 +32,15 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                 break
             time.sleep(1)
             if not input_started.is_set():
-                print(".", end='', flush=True)
+                print(".", end="", flush=True)
 
     if timeout:
-        print(f"{prompt} (countdown {int(timeout)} sec)", end='', flush=True)
+        print(f"{prompt} (countdown {int(timeout)} sec)", end="", flush=True)
         t_dots = threading.Thread(target=dots_thread, daemon=True)
         t_dots.start()
         timeout_running = True
     else:
-        print(prompt + " ", end='', flush=True)
+        print(prompt + " ", end="", flush=True)
         timeout_running = False
 
     start_time = time.time()
@@ -55,21 +50,21 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
             while True:
                 if msvcrt.kbhit():
                     char = msvcrt.getwch()
-                    if char == '\r':
+                    if char == "\r":
                         print()  # newline at Enter
                         return "".join(inp)
-                    elif char == '\x03':  # Ctrl+C
+                    elif char == "\x03":  # Ctrl+C
                         raise Cancelled
-                    elif char == '\x1b':  # Escape
+                    elif char == "\x1b":  # Escape
                         raise Cancelled
-                    elif char == '\x08':  # Backspace
+                    elif char == "\x08":  # Backspace
                         if inp:
                             inp.pop()
-                            print("\b \b", end='', flush=True)
+                            print("\b \b", end="", flush=True)
                         continue
                     else:
                         inp.append(char)
-                        print(char, end='', flush=True)
+                        print(char, end="", flush=True)
 
                     input_started.set()
                     if exit_on_keypress:
@@ -91,21 +86,21 @@ def input_timeout(prompt: str, timeout: int = 0, exit_on_keypress: bool = False)
                     rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
                     if rlist:
                         char = sys.stdin.read(1)
-                        if char == '\n':
+                        if char == "\n":
                             print()  # newline at Enter
                             return "".join(inp)
-                        elif char == '\x03':  # Ctrl+C
+                        elif char == "\x03":  # Ctrl+C
                             raise Cancelled
-                        elif char == '\x1b':  # Escape
+                        elif char == "\x1b":  # Escape
                             raise Cancelled
-                        elif char == '\x7f':  # Backspace
+                        elif char == "\x7f":  # Backspace
                             if inp:
                                 inp.pop()
-                                print("\b \b", end='', flush=True)
+                                print("\b \b", end="", flush=True)
                             continue
                         else:
                             inp.append(char)
-                            print(char, end='', flush=True)
+                            print(char, end="", flush=True)
 
                         input_started.set()
                         if exit_on_keypress:

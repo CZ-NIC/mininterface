@@ -37,6 +37,7 @@ except ImportError:
 
 T = TypeVar("T")
 
+
 def coerce_type_to_annotation(value, annotation):
     """
     Coerce value (e.g. list) to expected type (e.g. tuple[int, int]).
@@ -262,9 +263,11 @@ def _init_struct_value(ftype, disk_value, wf, fname, m, subc, subc_passage, subs
         del wf[fname]
     return v
 
+
 def _is_subcommands(ftype):
     origin = _get_origin(ftype)
     return (origin is Union or origin is UnionType) and all(_is_struct_type(cl) for cl in get_args(ftype))
+
 
 def _process_field(
     fname,
@@ -357,18 +360,21 @@ def choose_subcommand(env_classes: list[Type[DataClass]], m: "Mininterface[EnvCl
     )
     return env
 
-def pop_from_passage(passage, env_classes: Sequence[T])-> tuple[T, str]:
+
+def pop_from_passage(passage, env_classes: Sequence[T]) -> tuple[T, str]:
     cl_name = passage.pop(0)
     # there might be a subcommand prefix, ex. 'val:message' -> 'message'
     cl_name = cl_name.partition(":")[2] or cl_name
     ftype = get_chosen(cl_name, env_classes)
     return ftype, cl_name
 
+
 def get_chosen(cl_name, env_classes):
     for cl in env_classes:
         if to_kebab_case(cl.__name__) == cl_name:
             return cl
     raise ValueError(f"Type {cl_name} not found in {env_classes}")
+
 
 def to_kebab_case(name: str) -> str:
     """MyClass -> my-class"""

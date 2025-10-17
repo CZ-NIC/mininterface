@@ -2,12 +2,9 @@ import logging
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 from types import SimpleNamespace
-from typing import (TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal,
-                    Optional, Type, TypeVar, overload)
+from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal, Optional, Type, TypeVar, overload
 
-from .._lib.form_dict import (DataClass, EnvClass, FormDict,
-                              dataclass_to_tagdict, dict_to_tagdict,
-                              tagdict_resolve)
+from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
 from ..exceptions import DependencyRequired
 from ..facet import Facet
 from ..settings import UiSettings

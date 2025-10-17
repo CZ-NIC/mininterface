@@ -88,7 +88,7 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
         annotation: Type[TagValue] | Tag = str,
         validation: Iterable[ValidationCallback] | ValidationCallback | None = None,
         *,
-        _timeout: int = 0
+        _timeout: int = 0,
     ) -> TagValue:
         with StdinTTYWrapper():
             if not self.interactive:
