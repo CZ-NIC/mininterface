@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1 (2025-10-24)
+* deps (tyro): ready for 0.10
+
 ## 1.2.0 (2025-10-17)
 * feat: [`run`][mininterface.run] add_config flag
 * feat: [subcommands](Supported-types.md/#dataclasses-union-subcommand) allowed in the config file

@@ -11,7 +11,6 @@ from contextlib import ExitStack, redirect_stderr, redirect_stdout
 from typing import Annotated, Optional, Sequence, Type, Union
 from unittest.mock import patch
 
-from .cli_flags import CliFlags
 
 from ..cli import Command
 from ..settings import CliSettings
@@ -33,10 +32,20 @@ from .dataclass_creation import (
 from .form_dict import EnvClass, TagDict, dataclass_to_tagdict, MissingTagValue, dict_added_main
 
 try:
+    from .cli_flags import CliFlags
     from tyro import cli
-    from tyro._argparse import _SubParsersAction, ArgumentParser
-    from tyro._argparse_formatter import TyroArgumentParser
-    from tyro._singleton import MISSING_NONPROP
+
+    try:  # tyro >= 0.10
+        from tyro import _experimental_options
+
+        _experimental_options["backend"] = "argparse"
+        from tyro._backends._argparse import _SubParsersAction, ArgumentParser
+        from tyro._backends._argparse_formatter import TyroArgumentParser
+    except ImportError:
+        from tyro._argparse import _SubParsersAction, ArgumentParser
+        from tyro._argparse_formatter import TyroArgumentParser
+    from tyro._parsers import ParserSpecification
+
     from tyro.conf import OmitArgPrefixes, OmitSubcommandPrefixes, DisallowNone, FlagCreatePairsOff
 
     from .tyro_patches import (
@@ -45,7 +54,8 @@ try:
         custom_init,
         custom_parse_known_args,
         failed_fields,
-        patched_parse_known_args,
+        patched__parse_known_args,
+        patched__format_help,
         subparser_call,
         argparse_init,
     )
@@ -183,6 +193,7 @@ def parse_cli(
             helponly = False
             try:
                 # Why redirect_stdout? Help-text shows the defaults, which also uses the subcommanded-config.
+                # TODO maybe new tyro 0.10 will not output to stdout, get rid of the buffer
                 with redirect_stdout(buffer):
                     try:
                         # Standard way.
@@ -234,16 +245,16 @@ def parse_cli(
                     kwargs, None if helponly else m, args, type_form, env_classes, _custom_registry, annot, _req_fields
                 )
 
-            # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
-            # 1. Getting the interface is a costly operation
-            # 2. There is this bug so that we need to use single interface:
-            #    TODO
-            #    As this works badly, lets make sure we use single interface now
-            #    and will not need the second one.
-            #    get_interface("gui")
-            #    m = get_interface("gui")
-            #    m.select([1,2,3])
-            m.env = env
+        # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
+        # 1. Getting the interface is a costly operation
+        # 2. There is this bug so that we need to use single interface:
+        #    TODO
+        #    As this works badly, lets make sure we use single interface now
+        #    and will not need the second one.
+        #    get_interface("gui")
+        #    m = get_interface("gui")
+        #    m.select([1,2,3])
+        m.env = env
     except SystemExit as exception:
         # --- (C) The dialog missing section ---
         # Some fields are needed to be filled up.
@@ -339,8 +350,7 @@ def _apply_patches(cf: Optional[CliFlags], ask_for_missing, env_classes, kwargs)
     patches = []
 
     patches.append(patch.object(_SubParsersAction, "__call__", subparser_call))
-    patches.append(patch.object(TyroArgumentParser, "_parse_known_args", patched_parse_known_args))
-
+    patches.append(patch.object(TyroArgumentParser, "_parse_known_args", patched__parse_known_args))
     kw = {
         k: v for k, v in kwargs.items() if k != "default"
     }  # NOTE I might separate kwargs['default'] and do not do this filtering
@@ -358,6 +368,11 @@ def _apply_patches(cf: Optional[CliFlags], ask_for_missing, env_classes, kwargs)
                     TyroArgumentParser,
                     "__init__",
                     custom_init(cf),
+                ),
+                patch.object(
+                    TyroArgumentParser,
+                    "format_help",
+                    patched__format_help(cf),
                 ),
                 patch.object(
                     TyroArgumentParser,
@@ -486,7 +501,12 @@ def _fetch_currently_failed(requireds) -> TagDict:
     missing_req = {}
     for field in failed_fields.get():
         # ex: `_subcommands._nested_subcommands (positional)`
-        fname = field.dest.replace(" (positional)", "").replace("-", "_")  # `_subcommands._nested_subcommands`
+        fname = (
+            field.dest.replace(" (positional)", "")
+            .replace("-", "_")
+            .replace("__tyro_dummy_inner__.", "")
+            .replace("__tyro_dummy_inner__", "")
+        )  # `_subcommands._nested_subcommands`
         fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
 
         if isinstance(field, _SubParsersAction):

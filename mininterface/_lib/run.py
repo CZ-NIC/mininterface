@@ -7,7 +7,7 @@ from typing import Literal, Optional, Sequence, Type
 
 
 from .._mininterface import Mininterface
-from ..exceptions import DependencyRequired, ValidationFail
+from ..exceptions import DependencyRequired, ValidationFail, _debug_wanted
 from ..interfaces import get_interface
 from ..settings import CliSettings, MininterfaceSettings, UiSettings
 from .form_dict import EnvClass
@@ -332,17 +332,7 @@ def run(
         try:
             parse_cli(env_or_list, kwargs, m, cf, ask_for_missing, args, ask_on_empty_cli, cliset)
         except Exception as e:
-            # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
-            from ast import literal_eval
-
-            if literal_eval(environ.get("MININTERFACE_DEBUG", "0")):
-                import traceback
-
-                import ipdb
-
-                traceback.print_exception(e)
-                ipdb.post_mortem()
-            else:
+            if not _debug_wanted(e):
                 raise
 
         # Command run

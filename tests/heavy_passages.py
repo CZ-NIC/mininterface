@@ -587,7 +587,9 @@ help1 = """usage: running-tests [-h] [-v] [--alfa STR]
 │                      increase                                              │
 │ --alfa STR           (default: 'level 1 config')                           │
 ╰────────────────────────────────────────────────────────────────────────────╯
-╭─ subcommands ──────────────────────────────────────────────────────────────╮
+╭─ command1 subcommands ─────────────────────────────────────────────────────╮
+│ (required)                                                                 │
+│ ───────────────────────────────────────────────────────────────────────────│
 │ {command1:level2-a,command1:level2-b}                                      │
 │     command1:level2-a                                                      │
 │     command1:level2-b                                                      │
@@ -605,7 +607,7 @@ mmand2:level3-b}
 ╭─ command1 options ─────────────────────────────────────────────────────────╮
 │ --command1.betaA STR    (default: 'level 2A config')                       │
 ╰────────────────────────────────────────────────────────────────────────────╯
-╭─ subcommands ──────────────────────────────────────────────────────────────╮
+╭─ command1.command2 subcommands (required) ──────────────────────────────────────────────────────────────╮
 │ {command1.command2:level3-a,command1.command2:level3-b}                    │
 │     command1.command2:level3-a                                             │
 │     command1.command2:level3-b                                             │

@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 def runm(
     env_class: Type[EnvClass] | list[Type[EnvClass]] | ArgumentParser | None = None, args=None, **kwargs
 ) -> Mininterface[EnvClass]:
-    logger.debug("Running %s with %s", env_class, args)
+    logger.debug("Running %s with args %s", env_class, args)
     return run(env_class, interface=Mininterface, args=args, **kwargs)
 
 
@@ -88,7 +88,8 @@ def ensure_text(strip_white: bool) -> Callable[[str], str]:
 
     def _(s: str):
         if strip_white:
-            return re.sub(r"[\s─│]+", "", s)
+            s = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", s)
+            return re.sub(r"[\s─│╰╯╭╮]+", "", s)
         return s
 
     return _
@@ -130,15 +131,18 @@ class TestAbstract(TestCase):
         if wizzard:
             copy_text(f' = """{actual_output}"""')
             return
-        actual_output = t(actual_output)
+        comp_output = t(actual_output)
+
+        msg = lambda exp, state="": f"\nOutput:\n{actual_output}\n\nExpected{state}:\n{exp}"
+
         if expected_output is not None:
-            self.assertEqual(t(expected_output), actual_output)
+            self.assertEqual(t(expected_output), comp_output, msg=msg(expected_output))
         if contains is not None:
             for comp in contains if isinstance(contains, list) else [contains]:
-                self.assertIn(t(comp), actual_output)
+                self.assertIn(t(comp), comp_output, msg=msg(comp, " in"))
         if not_contains is not None:
             for comp in not_contains if isinstance(not_contains, list) else [not_contains]:
-                self.assertNotIn(t(comp), actual_output)
+                self.assertNotIn(t(comp), comp_output, msg=msg(comp, " not in"))
 
     def assertOutputs(
         self,
@@ -159,8 +163,24 @@ class TestAbstract(TestCase):
             wizzard=wizzard,
         )
 
-    def assertStderr(self, expected_output=None, contains=None, not_contains=None):
-        return self._assertRedirect(redirect_stderr, expected_output, contains, not_contains)
+    def assertStderr(
+        self,
+        expected_output=None,
+        contains=None,
+        not_contains=None,
+        raises=None,
+        strip_white=False,
+        wizzard=False,
+    ):
+        return self._assertRedirect(
+            redirect_stderr,
+            expected_output,
+            contains,
+            not_contains,
+            raises=raises,
+            strip_white=strip_white,
+            wizzard=wizzard,
+        )
 
     @contextmanager
     def assertForms(
@@ -236,6 +256,7 @@ class TestAbstract(TestCase):
                             logger.debug("Form not checked %s", form)
                         if setter:
                             try:
+                                logger.debug("Setting options %s", setter)
                                 apply_setter(form, setter)
                             except KeyError:
                                 raise ValueError(f"Setter failed: {setter}")

@@ -6,7 +6,7 @@ from shared import TestAbstract
 
 
 import logging
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 
 class TestLog(TestAbstract):
@@ -30,26 +30,26 @@ class TestLog(TestAbstract):
     def test_run_verbosity1(self, mock_basicConfig):
         self.log()
         # NOTE I do not like tests need force=True here.
-        mock_basicConfig.assert_called_once_with(level=logging.WARNING, format="%(message)s", force=True)
+        mock_basicConfig.assert_called_once_with(level=logging.WARNING, format="%(message)s", force=True, stream=ANY)
         # mock_basicConfig.assert_not_called()
 
     @patch("logging.basicConfig")
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True)
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True, stream=ANY)
 
     @patch("logging.basicConfig")
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True)
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True, stream=ANY)
 
     @patch("logging.basicConfig")
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s", force=True)
+        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s", force=True, stream=ANY)
 
     @patch("logging.basicConfig")
     def test_custom_verbosity(self, mock_basicConfig):

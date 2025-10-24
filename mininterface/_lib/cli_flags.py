@@ -1,15 +1,22 @@
-from functools import lru_cache
+from argparse import ArgumentParser
 import logging
-from dataclasses import dataclass
+import sys
 from typing import Optional, Sequence
 
+from tyro.conf import FlagConversionOff
+
 from .form_dict import EnvClass
+
+from typing import List, Any, Optional
+
+from tyro._fields import FieldDefinition
+from tyro.conf._confstruct import _ArgConfig
 
 
 class CliFlags:
 
     _add_verbose: bool = False
-    version: bool | str = False
+    version: str = ""
     _add_quiet: bool = False
 
     default_verbosity: int = logging.WARNING
@@ -55,6 +62,17 @@ class CliFlags:
 
         # config
         self.config = add_config
+
+        self.orig_stream = (
+            sys.stderr
+        )  # NOTE might be removed now. Might be used if we redirect_stderr while setting basicConfig.
+
+        self.field_list: list[FieldDefinition] = []
+        """ List of FieldDefinitions corresponding to the arguments added via this helper"""
+
+        self.arguments_prepared: list[dict[str, Any]] = []
+        self.setup_done = False
+        """ Setup might be called multiple times – ex. parsing fails and we call tyro.cli in recursion. """
 
     def should_add(self, env_classes: list[EnvClass]) -> bool:
         # Flags are added only if neither the env_class nor any of the subcommands have the same-name flag already
@@ -116,3 +134,101 @@ class CliFlags:
             seq = self._verbosity_sequence
         log_level = {i + 1: level for i, level in enumerate(seq)}.get(count, logging.NOTSET)
         return log_level
+
+    def add_typed_argument(
+        self,
+        prefix: str,
+        *aliases: str,
+        action: Optional[str] = None,
+        default: Any = False,
+        helptext: Optional[str] = None,
+        metavar: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> FieldDefinition:
+        # Prepare FieldDefinition
+        name = aliases[0]
+        aliases_ = tuple((prefix * (1 if len(n) == 1 else 2) + n) for n in aliases) if aliases else None
+        typ_ = bool if action in ("store_true", "store_false") else int if action == "count" else str
+
+        field = FieldDefinition(
+            intern_name=name,
+            extern_name=name,
+            type=typ_,
+            type_stripped=typ_,
+            default=default,
+            helptext=helptext,
+            markers={FlagConversionOff},
+            custom_constructor=False,
+            argconf=_ArgConfig(
+                name=aliases_[0],
+                metavar="",
+                help=helptext,
+                help_behavior_hint="",
+                aliases=aliases_[1:] or None,
+                prefix_name=False,
+                constructor_factory=None,
+                default=default,
+            ),
+            mutex_group=None,
+            call_argname=name,
+        )
+
+        self.field_list.append(field)
+
+        # prepare argparse
+        self.arguments_prepared.append(
+            {
+                "field": field,
+                "names": aliases_,
+                "kwargs": {
+                    "action": action,
+                    "default": default,
+                    "help": helptext,
+                    "metavar": metavar,
+                    "version": version,
+                },
+            }
+        )
+
+        return field
+
+    def setup(self, parser: ArgumentParser):
+        if self.setup_done:
+            # tyro.cli might be called multiple times if some missing required fields
+            return
+        self.setup_done = True
+        prefix = "-" if "-" in parser.prefix_chars else parser.prefix_chars[0]
+        if self.add_verbose:
+            self.add_typed_argument(
+                prefix,
+                "verbose",
+                "v",
+                action="count",
+                default=0,
+                helptext="verbosity level, can be used multiple times to increase",
+            )
+
+        if self.add_version:
+            self.add_typed_argument(
+                prefix,
+                "version",
+                action="version",
+                version=self.version,
+                default="",
+                helptext=f"show program's version number ({self.version}) and exit",
+            )
+
+        if self.add_quiet:
+            self.add_typed_argument(
+                prefix, "quiet", "q", action="store_true", helptext="suppress warnings, display only errors"
+            )
+
+        if self.add_config:
+            self.add_typed_argument(
+                prefix, "config", helptext=f"path to config file to fetch the defaults from", metavar="PATH"
+            )
+
+    def apply_to_parser(self, parser):
+        for item in self.arguments_prepared:
+            kwargs = {k: v for k, v in item["kwargs"].items() if v is not None}
+            parser.add_argument(*item["names"], **kwargs)

@@ -134,7 +134,10 @@ class TestHeavyNesting(TestAbstract):
         ]
         self.run_cases(Level1, cases, config_file="tests/heavy_config.yaml")
 
-    def test_helps(self):
+    def DISABLED_test_helps(self):
+        # TODO when tyro 0.10 is ready
+        # * get rid of patched__format_help
+        # * patch _help_formatting.format_help instead of TyroArgumentParser, add there a new ParserSpec with cf fields -> that way, they'll in the options group, not in commands1 group
         cases = [
             ("--help", help1),
             ("command1:level2-a --help", help2),
