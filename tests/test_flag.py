@@ -39,7 +39,7 @@ class TestFlag(TestAbstract):
         self.assertDictEqual({"t1": 1, "t2": None, "t3": None, "t4": 2, "t5": None}, r("--t1", "1"))
         self.assertDictEqual({"t1": 1, "t2": 3, "t3": None, "t4": 2, "t5": None}, r("--t1", "1", "--t2", "3"))
         self.assertDictEqual(
-            {"t1": 1, "t2": True, "t3": 3, "t4": 3, "t5": True}, r("--t1", "1", "--t2", "--t3", "--t4" ,"--t5")
+            {"t1": 1, "t2": True, "t3": 3, "t4": 3, "t5": True}, r("--t1", "1", "--t2", "--t3", "--t4", "--t5")
         )
         self.assertDictEqual(
             {"t1": 10, "t2": None, "t3": None, "t4": False, "t5": None}, r("--t1", "10", "--t4", "False")
@@ -49,13 +49,12 @@ class TestFlag(TestAbstract):
         )
         self.assertDictEqual({"t1": 10, "t2": None, "t3": None, "t4": 44, "t5": None}, r("--t1", "10", "--t4", "44"))
 
-
         # NOTE this should work too, Literals now canot be constructed
         # self.assertDictEqual(
         #     {"t1": 10, "t2": None, "t3": None, "t4": False, "t5": "foo"}, r("--t1", "10", "--t4", "False", "--t5", "foo")
         # )
 
-        with self.assertStderr(contains="Error parsing --t5"), self.assertRaises(SystemExit):
+        with self.assertStderr(contains="Error parsing --t5", strip_white=True), self.assertRaises(SystemExit):
             # NOTE this might rather raise a wrong field dialog
             r("--t1", "10", "--t5", "invalid")
 
@@ -67,7 +66,8 @@ class TestFlag(TestAbstract):
                     "--t3 [int]              (default: 'None / or if left blank: 3')",
                     "--t4 [int]              (default: '2 / or if left blank: 3')",
                     "--t5 [int|Literal]      (default: 'None / or if left blank: True')",
-                ]
+                ],
+                strip_white=True,
             ),
             # NOTE t5 should display the mere Literal value
             self.assertRaises(SystemExit),

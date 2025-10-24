@@ -1,5 +1,7 @@
 """Exceptions that might make sense to be used outside the library."""
 
+from os import environ as _environ
+
 
 class Cancelled(SystemExit):
     """User has cancelled.
@@ -47,4 +49,18 @@ class DependencyRequired(InterfaceNotAvailable):
 
     def exit(self):
         """Wrap the exception in a SystemExit so that the program exits without a traceback."""
+        _debug_wanted(self)
         raise SystemExit(self)
+
+
+def _debug_wanted(e: Exception):
+    # Undocumented MININTERFACE_DEBUG flag. Note ipdb package requirement.
+    from ast import literal_eval
+
+    if literal_eval(_environ.get("MININTERFACE_DEBUG", "0")):
+        import traceback
+        import ipdb
+
+        traceback.print_exception(e)
+        ipdb.post_mortem(e)
+        return True
