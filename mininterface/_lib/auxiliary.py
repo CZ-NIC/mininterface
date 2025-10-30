@@ -358,7 +358,7 @@ def strip_none(annotation):
         args = tuple(arg for arg in get_args(annotation) if arg is not type(None))
         if len(args) == 1:
             return args[0]
-        return Union[args]  # nebo origin[args], aby se zachoval typ
+        return Union[args]
 
     return annotation
 

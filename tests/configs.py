@@ -285,6 +285,11 @@ class AnnotatedClass3:
     foo3: Annotated[list[Path], Validation(not_empty)]
     foo4: Positional[list[bool]] = field(default_factory=list)  # raises error
 
+@dataclass
+class ConfigUnion:
+    foo1: list[Path]
+    foo2: list[Path] | None = None
+    foo3: int | None = 2
 
 @dataclass
 class InheritedAnnotatedClass(AnnotatedClassInner):

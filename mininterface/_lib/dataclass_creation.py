@@ -49,6 +49,15 @@ def coerce_type_to_annotation(value, annotation):
     annotation = _unwrap_annotated(annotation)  # NOTE might be superfluous, called before
     origin = get_origin(annotation)
 
+    # Handle Union (e.g. int | None)
+    if origin in (Union, UnionType):
+        for arg in get_args(annotation):
+            try:
+                return coerce_type_to_annotation(value, arg)
+            except Exception:
+                pass
+        return value
+
     # Handle tuple[...] conversion
     if origin is tuple and isinstance(value, list):
         args = get_args(annotation)

@@ -1,0 +1,7 @@
+foo1:
+    - /usr
+    - /tmp
+foo2:
+    - /usr
+    - /tmp
+foo3:

@@ -1,5 +1,8 @@
 # Changelog
 
+## unreleased
+* enh: config file union support
+
 ## 1.2.1 (2025-10-24)
 * deps (tyro): ready for 0.10
 

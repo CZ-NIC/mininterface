@@ -11,6 +11,7 @@ from importlib.metadata import version
 from configs import (
     AnnotatedClass,
     ComplexEnv,
+    ConfigUnion,
     FurtherEnv2,
     MissingCombined,
     MissingNonscalar,
@@ -219,6 +220,15 @@ class TestRun(TestAbstract):
                 run(SimpleEnv, config_file=Path("not-exists.yaml"), interface=Mininterface)
         finally:
             os.chdir(old_cwd)
+
+    def test_config_union(self):
+        env = runm(ConfigUnion, config_file=Path("tests/config_union.yaml")).env
+
+        self.assertEqual(env.foo1, [Path("/usr"), Path("/tmp")])
+        self.assertEqual(env.foo2, [Path("/usr"), Path("/tmp")])
+        self.assertIsNone(env.foo3)
+
+
 
     def test_complex_config(self):
         pattern = ComplexEnv(
