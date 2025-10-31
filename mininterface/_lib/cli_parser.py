@@ -245,15 +245,7 @@ def parse_cli(
                     kwargs, None if helponly else m, args, type_form, env_classes, _custom_registry, annot, _req_fields
                 )
 
-        # Why setting m.env instead of putting into into a constructor of a new get_interface() call?
-        # 1. Getting the interface is a costly operation
-        # 2. There is this bug so that we need to use single interface:
-        #    TODO
-        #    As this works badly, lets make sure we use single interface now
-        #    and will not need the second one.
-        #    get_interface("gui")
-        #    m = get_interface("gui")
-        #    m.select([1,2,3])
+        # Make the interface ready for the user
         m.env = env
     except SystemExit as exception:
         # --- (C) The dialog missing section ---

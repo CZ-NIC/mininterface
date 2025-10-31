@@ -32,7 +32,27 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     facet: TkFacet
     settings: GuiSettings
 
+    _instance = None
+    """ singleton """
+
+    def __new__(cls, *args, **kwargs):
+        # Singleton.
+        # Why enforcing singleton?
+        # Invoking second tk would mean a strange second window
+        # and non-responding tkinter variables in the second invocation.
+        #    get_interface("gui")
+        #    m = get_interface("gui")
+        #    m.select([1,2,3])  # cannot choose the value
+        if cls._instance is None:
+            return Tk.__new__(cls)
+        return cls._instance
+
     def __init__(self, *args):
+        if self._instance:
+            return
+        else:
+            self.__class__._instance = self
+
         BackendAdaptor.__init__(self, *args)
 
         try:
@@ -40,6 +60,7 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         except TclError:
             # even when installed the libraries are installed, display might not be available, hence tkinter fails
             raise InterfaceNotAvailable
+        self._initialized = True
 
         self.params = None
         self._result = None
