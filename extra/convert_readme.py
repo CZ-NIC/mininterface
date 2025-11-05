@@ -13,7 +13,7 @@ def generate_readme(index_path="docs/index.md", readme_path = Path("README.md"))
     # Nur lesen, nicht verändern!
     text = index_file.read_text(encoding="utf-8")
 
-    base_url = "https://cz-nic.github.io/mininterface/"
+    base_url = "https://cz-nic.github.io/mininterface"
 
     def replace_ref(match):
         link_text = match.group(1).strip()

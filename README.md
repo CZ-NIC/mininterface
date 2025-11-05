@@ -151,8 +151,8 @@ These projects have the code base reduced thanks to the mininterface:
 Take a look at the following example.
 
 1. We define any Env class.
-2. Then, we initialize mininterface with [`run(Env)`](https://cz-nic.github.io/mininterface//run/) – the missing fields will be prompted for
-3. Then, we use various dialog methods, like [`confirm`](https://cz-nic.github.io/mininterface//Mininterface/#mininterface.Mininterface.confirm), [`select`](https://cz-nic.github.io/mininterface//Mininterface/#mininterface.Mininterface.select) or [`form`](https://cz-nic.github.io/mininterface//Mininterface/#mininterface.Mininterface.form).
+2. Then, we initialize mininterface with [`run(Env)`](https://cz-nic.github.io/mininterface/run/) – the missing fields will be prompted for
+3. Then, we use various dialog methods, like [`confirm`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.confirm), [`select`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.select) or [`form`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form).
 
 Below, you find the screenshots how the program looks in various environments ([graphic](Interfaces.md#guiinterface-or-tkinterface-or-gui) interface, [web](Interfaces.md#webinterface-or-web) interface...).
 
@@ -233,7 +233,7 @@ usage: program.py [-h] [OPTIONS]
 
 You want to try out the Mininterface with your current [`ArgumentParser`](https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser)?
 
-You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the [`run`](https://cz-nic.github.io/mininterface//run/) method.
+You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the [`run`](https://cz-nic.github.io/mininterface/run/) method.
 
 ```python
 #!/usr/bin/env python3
@@ -290,7 +290,7 @@ Then, a `.form()` call will create a dialog with all the fields.
 
 ![Whole form](asset/argparse_form.avif)
 
-You will access the arguments through [`m.env`](https://cz-nic.github.io/mininterface//Mininterface/#mininterface.Mininterface.env)
+You will access the arguments through [`m.env`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.env)
 
 ```python
 print(m.env.time)  # -> 14:21
