@@ -8,7 +8,7 @@ validate:
 	@echo "Validating pyproject extras..."
 	@extra/validate_dependencies.py || (echo "Validation failed. Aborting." && exit 1)
 
-release: validate
+release: validate readme
 	@echo "Tagging release $(TAG)"
 	git tag $(TAG)
 	git push origin $(TAG)
@@ -23,5 +23,4 @@ pre-check:
 
 readme:
 	@echo "Generating README.md from docs/index.md..."
-	python3 extra/convert_readme.py
-	@echo "README.md successfully generated!"
+	@python3 extra/convert_readme.py || (echo "README generation failed. Aborting." && exit 1)
