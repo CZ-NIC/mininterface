@@ -10,7 +10,6 @@ def generate_readme(index_path="docs/index.md", readme_path = Path("README.md"))
         print(f"❌ Error: {index_path} not found.")
         return False
 
-    # Nur lesen, nicht verändern!
     text = index_file.read_text(encoding="utf-8")
 
     base_url = "https://cz-nic.github.io/mininterface"
@@ -20,25 +19,23 @@ def generate_readme(index_path="docs/index.md", readme_path = Path("README.md"))
         ref = match.group(2).strip()
         parts = ref.split(".")
 
-        # Fall 1: mininterface.run → base/run/
+        # Case 1: mininterface.run → base/run/
         if len(parts) == 2:
             url = f"{base_url}/{parts[1]}/"
 
-        # Fall 2: mininterface.Mininterface.confirm → base/Mininterface/#mininterface.Mininterface.confirm
+        # Case 2: mininterface.Mininterface.confirm → base/Mininterface/#mininterface.Mininterface.confirm
         elif len(parts) == 3:
             url = f"{base_url}/{parts[1]}/#{ref}"
 
-        # Fallback für ungewöhnliche Fälle
+        # Fallback
         else:
             url = f"{base_url}/#{ref}"
 
         return f"[{link_text}]({url})"
 
 
-    # nur in der Kopie (text) ersetzen
     new_text = re.sub(r"\[([^\[\]]+)\]\[([^\[\]]+)\]", replace_ref, text)
 
-    # neue Datei schreiben, NICHT index.md überschreiben
     Path(readme_path).write_text(new_text, encoding="utf-8")
 
     print(f"✅ README.md generated successfully from {index_path}")
