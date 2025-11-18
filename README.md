@@ -1,1 +1,1 @@
-docs/index.md
+asset/readme-readonly.md
