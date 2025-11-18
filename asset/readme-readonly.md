@@ -35,7 +35,35 @@ if __name__ == "__main__":
 - [You got CLI](#you-got-cli)
 - [You got config file management](#you-got-config-file-management)
 - [You got dialogs](#you-got-dialogs)
-- [Background](#b
+- [Background](#background)
+- [Installation](#installation)
+- [Docs](#docs)
+- [Gallery](#gallery)
+- [Examples](#examples)
+    * [Hello world](#hello-world)
+    * [Goodbye argparse world](#goodbye-argparse-world)
+
+## You got CLI
+It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI/web, you receive powerful YAML-configurable CLI parsing.
+
+
+```bash
+$ ./program.py --help
+usage: program.py [-h] [-v] [--my-flag | --no-my-flag] [--my-number INT]
+
+This calculates something.
+
+╭─ options ───────────────────────────────────────────────────────────────╮
+│ -h, --help             show this help message and exit                  │
+│ -v, --verbose          Verbosity level. Can be used twice to increase.  │
+│ --my-flag, --no-my-flag                                                 │
+│                        This switches the functionality (default: False) │
+│ --my-number INT        This number is very important (default: 4)       │
+╰─────────────────────────────────────────────────────────────────────────╯
+```
+
+## You got config file management
+Loading config file is a piece of cake. Alongside `program.py`, write some of its arguments to `program.yaml`. They are seamlessly taken as defaults.
 
 ```yaml
 my_number: 555
