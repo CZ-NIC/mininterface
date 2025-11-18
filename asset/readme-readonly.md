@@ -299,4 +299,4 @@ print(m.env.time)  # -> 14:21
 If you're sure enough to start using *Mininterface*, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.
 
 !!! warning
-    The argparse support is considered mostly for your evaluation as there are some [`differences`](Argparse-caveats.md) for advanced argparse CLI interfaces
+    The argparse support is considered mostly for your evaluation as there are some [`differences`](Argparse-caveats.md) for advanced argparse CLI interfaces.
