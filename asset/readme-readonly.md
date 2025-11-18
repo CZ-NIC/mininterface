@@ -159,7 +159,7 @@ Below, you find the screenshots how the program looks in various environments ([
 ```python
 from dataclasses import dataclass
 from pathlib import Path
-from mininterface import ru
+from mininterface import run
 
 @dataclass
 class Env:
