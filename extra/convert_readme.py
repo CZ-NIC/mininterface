@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 
-def generate_readme(index_path="docs/index.md", readme_path = Path("README.md")):
+def generate_readme(index_path="docs/index.md", readme_path = Path("asset/readme-readonly.md")):
     index_file = Path(index_path)
     if not index_file.exists():
         print(f"❌ Error: {index_path} not found.")
