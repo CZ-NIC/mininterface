@@ -25,6 +25,7 @@ class SecretEntryWrapper:
         """Handle toggle key event"""
         self.toggle_show()
         return "break"  # Prevent event propagation
+    
 
     def toggle_show(self):
         if self.tag.toggle_visibility():

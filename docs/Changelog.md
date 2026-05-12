@@ -55,6 +55,7 @@
 * enh: Tk better file dialog
 * feat: [Tag.mnemonic][mininterface.Tag.mnemonic]
 * feat: config file tuple annotation support
+* fix (GUI): combobox Enter key submits form after selection
 
 ## 1.0.2 (2025-05-10)
 * fix: mute TextInterface on Win
