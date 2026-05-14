@@ -10,6 +10,17 @@ from unittest.mock import ANY, patch
 
 
 class TestLog(TestAbstract):
+    def setUp(self):
+        # pytest adds various logger handler; we simulate there exist none so that mininterface creates its own logger
+        root = logging.getLogger()
+        self.patcher = patch.object(root, "handlers", [])
+        self.patcher.start()
+        super().setUp()
+
+    def tearDown(self):
+        self.patcher.stop()
+        super().tearDown()
+
     @staticmethod
     def log(object=SimpleEnv, add_verbose=True, add_quiet=False, args=None):
         run(object, add_verbose=add_verbose, add_quiet=add_quiet, args=args, interface=Mininterface)
@@ -29,27 +40,25 @@ class TestLog(TestAbstract):
     @patch("logging.basicConfig")
     def test_run_verbosity1(self, mock_basicConfig):
         self.log()
-        # NOTE I do not like tests need force=True here.
-        mock_basicConfig.assert_called_once_with(level=logging.WARNING, format="%(message)s", force=True, stream=ANY)
-        # mock_basicConfig.assert_not_called()
+        mock_basicConfig.assert_called_once_with(level=logging.WARNING, format="%(message)s", stream=ANY)
 
     @patch("logging.basicConfig")
     def test_run_verbosity2(self, mock_basicConfig):
         self.sys("-v")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True, stream=ANY)
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", stream=ANY)
 
     @patch("logging.basicConfig")
     def test_run_verbosity2b(self, mock_basicConfig):
         self.sys("--verbose")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", force=True, stream=ANY)
+        mock_basicConfig.assert_called_once_with(level=logging.INFO, format="%(message)s", stream=ANY)
 
     @patch("logging.basicConfig")
     def test_run_verbosity3(self, mock_basicConfig):
         self.sys("-vv")
         self.log()
-        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s", force=True, stream=ANY)
+        mock_basicConfig.assert_called_once_with(level=logging.DEBUG, format="%(message)s", stream=ANY)
 
     @patch("logging.basicConfig")
     def test_custom_verbosity(self, mock_basicConfig):
@@ -65,13 +74,15 @@ class TestLog(TestAbstract):
             self.log(ConflictingEnv)
         mock_basicConfig.assert_not_called()
 
-    def test_quiet(self):
+    def test_quiet_0(self):
         with self.assertStderr("warning level\nerror level"):
             self.log()
 
+    def test_quiet_true(self):
         with self.assertStderr("warning level\nerror level"):
             self.log(add_quiet=True)
 
+    def test_quiet_true_q(self):
         with self.assertStderr("error level"):
             self.log(add_quiet=True, args=["-q"])
 

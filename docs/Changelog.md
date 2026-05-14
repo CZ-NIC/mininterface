@@ -3,6 +3,7 @@
 ## unreleased
 * enh: config file union support
 * fix: invoking gui interface twice
+* fix (logging): verbose vs existing handlers
 
 ## 1.2.1 (2025-10-24)
 * deps (tyro): ready for 0.10

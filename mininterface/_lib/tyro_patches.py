@@ -339,16 +339,23 @@ def custom_parse_known_args(cf: CliFlags):
     def _(self: TyroArgumentParser, args=None, namespace=None):
         namespace, args = orig(self, args, namespace)
         # NOTE We may check that the Env does not have its own `verbose``
-        # NOTE I do not like much tests need force=True here as they are run in paralel.
         if cf.add_verbose and hasattr(namespace, "verbose"):
-            if namespace.verbose > 0:
-                logging.basicConfig(
-                    level=cf.get_log_level(namespace.verbose), format="%(message)s", force=True, stream=cf.orig_stream
+            root = logging.getLogger()
+            if not root.handlers:
+                level = (
+                    cf.get_log_level(namespace.verbose)
+                    if namespace.verbose > 0
+                    else cf.default_verbosity
                 )
-            else:
                 logging.basicConfig(
-                    level=cf.default_verbosity, format="%(message)s", force=True, stream=cf.orig_stream
+                    level=level, format="%(message)s", stream=cf.orig_stream
                 )
+            elif namespace.verbose > 0:
+                level = cf.get_log_level(namespace.verbose)
+                root.setLevel(level)
+                for handler in root.handlers:
+                    if handler.level > level:  # increase verbosity for strict handlers
+                        handler.setLevel(level)
             delattr(namespace, "verbose")
 
         if cf.add_version and hasattr(namespace, "version"):
@@ -365,9 +372,15 @@ def custom_parse_known_args(cf: CliFlags):
 
         if cf.add_quiet and hasattr(namespace, "quiet"):
             if namespace.quiet:
-                logging.basicConfig(
-                    level=cf.get_log_level(-1), format="%(message)s", force=True, stream=cf.orig_stream
-                )
+                new_level = cf.get_log_level(-1)
+                root = logging.getLogger()
+                if not root.handlers:
+                    logging.basicConfig(level=new_level, format="%(message)s", stream=cf.orig_stream)
+                else:
+                    root.setLevel(new_level)
+                    for handler in root.handlers:
+                        if handler.level < new_level:  # edit just benevolent handlers
+                            handler.setLevel(new_level)
             delattr(namespace, "quiet")
         return namespace, args
 
