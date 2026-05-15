@@ -703,9 +703,9 @@ class TestNested(TestAbstract):
         with self.assertForms():
             runm(Cl0)
 
-        # The docstring is not seen by tyro
-        # but at least it won't fail on the positional state of the attribute
-        self.assertEqual(get_description(Cl0, "subcommand"), "")
+        # This docstring is not seen by tyro. We've added the text to check it won't fail on the positional state of the attribute at least.
+        # Now, when having left tyro docstring parsing, we see it.
+        self.assertEqual(get_description(Cl0, "subcommand"), "Ignored text")
 
     def test_nested_config_exists(self):
         """The nested classes have the same behaviour

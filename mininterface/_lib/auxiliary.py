@@ -1,20 +1,36 @@
 import logging
 import os
-import re
-from argparse import ArgumentParser
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from types import UnionType
-from typing import Any, Callable, Iterable, Optional, TypeVar, Union, Literal, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    Annotated,
+    Callable,
+    Iterable,
+    Optional,
+    TypeVar,
+    Union,
+    Literal,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from annotated_types import Ge, Gt, Le, Len, Lt, MultipleOf
 
 logger = logging.getLogger(__name__)
 
 try:
-    from tyro.extras import get_parser
+    import tyro
+    from tyro._docstrings import get_field_docstring as _tyro_get_field_docstring
+    from tyro._docstrings import get_callable_description as _tyro_get_callable_description
+
+    _tyro_docstrings_available = True
 except ImportError:
-    get_parser = None
+    tyro = None
+    _tyro_docstrings_available = False
+    _tyro_get_callable_description = None
 
 try:
     from humanize import naturalsize as naturalsize_
@@ -70,40 +86,70 @@ def get_terminal_size():
         return 0, 0
 
 
-def get_descriptions(parser: ArgumentParser) -> dict:
-    """Load descriptions from the parser. Strip argparse info about the default value as it will be editable in the form."""
-    # clean-up tyro stuff that may have a meaning in the CLI, but not in the UI
-    return {
-        re.sub(r"\s\(positional\)$", "", action.dest).replace("-", "_"): re.sub(
-            r"\((default|fixed to|required).*\)", "", action.help or ""
-        )
-        for action in parser._actions
-    }
-
+def get_class_description(obj) -> str:
+    if _tyro_get_callable_description:
+        return _tyro_get_callable_description(obj)
+    return ""
 
 @lru_cache
-def _get_parser(obj):
-    if get_parser:
-        return get_parser(obj)
+def _get_descriptions_from_docstring(obj) -> dict[str, str]:
+    """Extract field descriptions for all fields of a class.
+
+    Uses tyro's internal helptext extraction (tyro._docstrings.get_field_docstring),
+    which supports the same sources and precedence as tyro's own CLI generation:
+      1. tyro.conf.arg(help=...)
+      2. PEP 727 Doc
+      3. Docstrings (attribute docstrings or class docstring params)
+      4. Comments (inline or preceding)
+
+    We used to rely on tyro.extras.get_parser(), but that was marked deprecated,
+    so we call tyro's internal API directly instead.
+    """
+    if not _tyro_docstrings_available:
+        return {}
+
+    result = {}
+
+    # Highest priority: tyro.conf.arg(help=...) in Annotated metadata.
+    try:
+        hints = get_type_hints(obj, include_extras=True)
+        ArgConfig = tyro.conf._confstruct._ArgConfig
+        for field_name, hint in hints.items():
+            if get_origin(hint) is Annotated:
+                for meta in hint.__metadata__:
+                    if isinstance(meta, ArgConfig) and meta.help:
+                        result[field_name] = meta.help
+    except Exception:
+        hints = {}
+
+    # Mid priority: docstrings and comments via tyro's own extraction.
+    for field_name in hints:
+        doc = _tyro_get_field_docstring(obj, field_name, ())
+        if doc:
+            result.setdefault(field_name, doc)
+
+    # Lowest priority: field.metadata["help"] from dynamically generated
+    # dataclasses (e.g. built from ArgumentParser via make_dataclass).
+    try:
+        for f in fields(obj):  # type: ignore
+            if help_text := f.metadata.get("help"):
+                result.setdefault(f.name, help_text)
+    except TypeError:
+        pass
+
+    return result
 
 
 def get_description(obj, param: str) -> str:
-    if p := _get_parser(obj):
-        try:
-            d = get_descriptions(p)[param].strip()
-        except KeyError:  # either fetching failed or user added no description
-            return ""
-        else:
-            if d.replace("-", "_") == param:
-                # field `bot_id` is reported as `bot-id` in tyro
-                return ""
-            return d
-    else:
-        # We are missing mininterface[basic] requirement. Tyro is missing.
-        # Without tyro, we are not able to evaluate the class: m.form(Env),
-        # we can still evaluate its instance: m.form(Env()).
-        # However, without descriptions.
-        return ""
+    desc = _get_descriptions_from_docstring(obj).get(param, "")
+    if desc and desc.replace("-", "_") != param:
+        return desc
+
+    # We are missing mininterface[basic] requirement. Tyro is missing.
+    # Without tyro, we are not able to evaluate the class: m.form(Env),
+    # we can still evaluate its instance: m.form(Env()).
+    # However, without descriptions.
+    return ""
 
 
 def yield_annotations(dataclass):

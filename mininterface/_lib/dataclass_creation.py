@@ -1,13 +1,11 @@
 import re
 import warnings
-from dataclasses import MISSING, asdict, dataclass, fields, is_dataclass
+from dataclasses import MISSING, fields, is_dataclass
 from types import UnionType
 from typing import Annotated, Optional, Sequence, Type, Union, get_args, get_origin, TypeVar
 
-
 try:
     from tyro._singleton import MISSING_NONPROP
-    from tyro.extras import subcommand_type_from_defaults
 
     from ..cli import SubcommandPlaceholder
 except ImportError:
@@ -19,7 +17,7 @@ except ImportError:
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
 from ..validators import not_empty
-from .auxiliary import _get_origin, _get_parser, get_description
+from .auxiliary import _get_origin, get_class_description, get_description
 from .form_dict import DataClass, EnvClass, MissingTagValue
 
 # Pydantic is not a project dependency, that is just an optional integration
@@ -362,7 +360,7 @@ def choose_subcommand(env_classes: list[Type[DataClass]], m: "Mininterface[EnvCl
     # NOTE make select display buttons if there is a little amount of options.
     env = m.select(
         {
-            (to_kebab_case(cl.__name__).replace("-", " ").capitalize(), _get_parser(cl).description): cl
+            (to_kebab_case(cl.__name__).replace("-", " ").capitalize(), get_class_description(cl)): cl
             for cl in env_classes
             if cl is not SubcommandPlaceholder
         }

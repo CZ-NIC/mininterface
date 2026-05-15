@@ -1,9 +1,10 @@
 # Changelog
 
-## unreleased
+## 1.2.2 (2026-05-15)
 * enh: config file union support
 * fix: invoking gui interface twice
 * fix (logging): verbose vs existing handlers
+* fix: replace deprecated tyro.extras.get_parser
 
 ## 1.2.1 (2025-10-24)
 * deps (tyro): ready for 0.10

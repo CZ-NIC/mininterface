@@ -84,6 +84,8 @@ class TestRun(TestAbstract):
             self.assertEqual("", stdout.getvalue().strip())
 
     def test_wrong_fields(self):
+        # Here, files3 and files5 have fetched longer description that tyro could.
+        # Tyro fetches just: `files4: Positional[list[Path]] = field`
         with self.assertForms(
             (
                 {
@@ -102,13 +104,13 @@ class TestRun(TestAbstract):
                         ),
                         "files3": PathTag(
                             val=[],
-                            description="files4: Positional[list[Path]] = field",
+                            description="files4: Positional[list[Path]] = field(default_factory=list)  # raises error files7: Annotated[list[Path], None] files8: Annotated[list[Path], Tag(annotation=str)]",
                             annotation=list[Path],
                             label="files3",
                         ),
                         "files5": PathTag(
                             val=[],
-                            description="files4: Positional[list[Path]] = field",
+                            description="files4: Positional[list[Path]] = field(default_factory=list)  # raises error files7: Annotated[list[Path], None] files8: Annotated[list[Path], Tag(annotation=str)]",
                             annotation=list[Path],
                             label="files5",
                         ),
