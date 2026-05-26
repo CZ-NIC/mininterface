@@ -10,6 +10,7 @@ validate:
 	@extra/validate_dependencies.py || (echo "Validation failed. Aborting." && exit 1)
 
 release: readme-with-commit validate
+	@[ "$$(git rev-parse --abbrev-ref HEAD)" = "main" ] || { echo "Not on main branch"; exit 1; }
 	@echo "Tagging release $(TAG)"
 	git tag $(TAG)
 	git push origin $(TAG)

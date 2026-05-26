@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from warnings import warn
+
 from pathlib import Path
 
 from textual.widgets import Label
@@ -25,11 +25,8 @@ class TextualFacet(Facet):
     # NOTE: multiline title will not show up
     def set_title(self, title: str):
         self._title = title
-        try:
+        if self.adaptor.app is not None:
             self.adaptor.app.title = title
-        except:
-            # NOTE: When you receive Facet in Command.init, the app does not exist yet
-            warn("Setting textual title not implemented well.")
 
     def _layout(self, elements: list[LayoutElement]):
         append = self.adaptor.layout_elements.append
@@ -58,8 +55,6 @@ class TextualFacet(Facet):
 
     def submit(self, *args, **kwargs):
         super().submit(*args, **kwargs)
-        try:
+        # When you receive Facet in Command.init, the app does not exist yet
+        if self.adaptor.app is not None:
             self.adaptor.app.action_confirm()
-        except:
-            # NOTE: When you receive Facet in Command.init, the app does not exist yet
-            warn("Setting textual title not implemented well.")

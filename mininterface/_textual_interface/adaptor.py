@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from textual.widget import Widget
 from textual.widgets import Label, Rule
 
@@ -101,15 +101,7 @@ class TextualAdaptor(BackendAdaptor):
             return []
 
     def yes_no(self, text: str, focus_no=True, *, timeout: int = 0):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)
-
-    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
-        self._build_buttons(text, buttons, focused)
-        self.app = app = TextualApp(self, False, timeout=timeout)
-
-        if not app.run():
-            raise Cancelled
-        return self._get_buttons_val()
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)  # type: ignore[attr-defined]
 
     def _build_buttons(self, text, buttons, focused):
         self.button_app = (
@@ -127,25 +119,7 @@ class TextualAdaptor(BackendAdaptor):
         raise Cancelled
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        self.button_app: ButtonAppType = False
-        super().run_dialog(form, title, submit)
-        # Unfortunately, there seems to be no way to reuse the app.
-        # Which blocks using multiple form external .form() calls from the web interface.
-        # Textual cannot run in a thread, it seems it cannot run in another process, self.suspend() is of no use.
-        self.app = app = TextualApp(self, submit)
-        if title:
-            app.title = title
-
-        if not app.run():
-            raise Cancelled
-
-        # validate and store the UI value → Tag value → original value
-        vals = self._serialize_vals(app)
-
-        if not self._try_submit(vals):
-            return self.run_dialog(form, title, submit)
-
-        return form
+        raise NotImplementedError
 
     def _serialize_vals(self, app: TextualApp) -> ValsType:
         return ((field.tag, field.get_ui_value()) for field in app.widgets if isinstance(field, TagWidget))

@@ -272,7 +272,7 @@ class Mininterface(Generic[EnvClass]):
 
         ```python
         m = run()
-        print(m.confirm("Is that alright?"), timeout=10)  # True/False
+        print(m.confirm("Is that alright?", timeout=10))  # True/False
         ```
 
         ![Is yes window](asset/confirm_countdown.avif "A prompted dialog with timeout")

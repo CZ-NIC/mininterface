@@ -323,7 +323,7 @@ class Tag(Generic[TagValue]):
 
     ```python
     from mininterface import run
-    from mininterface.tag import SelectTag
+    from mininterface.tag import Tag, SelectTag
 
     def callback(tag: Tag):
         tag.facet.set_title(f"Value changed to {tag.val}")

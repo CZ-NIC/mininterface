@@ -1,7 +1,6 @@
 """Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive."""
 
 import sys
-from typing import Optional, Type
 
 from .._mininterface.mixin import RichUiMixin
 
@@ -16,11 +15,12 @@ from ..exceptions import InterfaceNotAvailable
 from .._lib.redirectable import Redirectable
 from .._mininterface import Mininterface
 from .adaptor import TextualAdaptor
+from .subprocess_adaptor import TextualSubprocessAdaptor
 
 
 class TextualInterface(RichUiMixin, Redirectable, Mininterface):
 
-    _adaptor: TextualAdaptor
+    _adaptor: TextualSubprocessAdaptor
 
     def __init__(self, *args, need_atty=True, **kwargs):
         if need_atty and not sys.stdin.isatty():
