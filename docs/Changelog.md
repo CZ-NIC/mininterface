@@ -2,6 +2,7 @@
 
 ## 1.3.0
 * feat: textual separate process
+* enh (textual): prints in a box
 
 ## 1.2.2 (2026-05-15)
 * enh: config file union support

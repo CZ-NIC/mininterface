@@ -25,7 +25,6 @@ class FormContents(Static):
         """ A subset of self.widgets"""
         self.focused_i: int = 0
         self.adaptor = adaptor
-        self.output = Static("")
 
     def compose(self) -> ComposeResult:
         # prepare widgets
@@ -46,11 +45,8 @@ class FormContents(Static):
         # start yielding widgets
         if self.title:
             yield Header()
-        yield self.output  # NOTE not used
         yield Footer()
 
-        if text := self.adaptor.interface._redirected.join():
-            yield Label(text, id="buffered_text")
         with VerticalScroll():
             yield from self.adaptor.layout_elements
             for i, fieldt in enumerate(self.widgets):

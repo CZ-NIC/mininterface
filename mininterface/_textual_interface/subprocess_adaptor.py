@@ -83,6 +83,28 @@ class TextualSubprocessAdaptor(TextualAdaptor):
         self._write_fd = cmd_w
         self._read_fd = res_r
 
+        # Drain any prints that happened before the child was spawned
+        try:
+            pre_spawn = self.interface._redirected.join()
+            if pre_spawn:
+                self._send(TuiCommand.OUTPUT, pre_spawn)
+        except AttributeError:
+            pass
+
+        # Wire up live streaming: future print()s go directly via OUTPUT
+        try:
+            self.interface._redirected.output_callback = self._send_output
+        except AttributeError:
+            pass
+
+    def _send_output(self, text: str) -> None:
+        """Send a live OUTPUT message to the child. Called from print() via output_callback."""
+        if self._write_fd is not None:
+            try:
+                self._send(TuiCommand.OUTPUT, text)
+            except OSError:
+                pass
+
     def _read_exactly(self, n: int) -> bytes | None:
         assert self._read_fd is not None
         data = b""
@@ -156,11 +178,8 @@ class TextualSubprocessAdaptor(TextualAdaptor):
         return form_copy
 
     def _get_redirected(self) -> str:
-        """Drain the parent's stdout buffer to show in the child's form."""
-        try:
-            return self.interface._redirected.join()
-        except AttributeError:
-            return ""
+        """No-op: output now streams live via TuiCommand.OUTPUT / output_callback."""
+        return ""
 
     def _handle_callback(self, callback_type: str, tag_pos: int, *extra) -> str:
         """Process a CALLBACK message from the child. Returns 'continue', 'done', or 'retry'."""
@@ -233,6 +252,10 @@ class TextualSubprocessAdaptor(TextualAdaptor):
 
     def _destroy(self):
         """Terminate the child subprocess and close pipe FDs."""
+        try:
+            self.interface._redirected.output_callback = None
+        except AttributeError:
+            pass
         if self._process and self._process.poll() is None:
             try:
                 self._send(TuiCommand.SHUTDOWN)

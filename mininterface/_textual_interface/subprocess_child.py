@@ -9,19 +9,19 @@ Callback channel
 on_change callbacks: _OnChangeProxy replaces tag.on_change.  When fired
 (synchronously in Textual's event loop), it does a blocking send+receive with
 the parent — brief, but acceptable since the handlers are not `async def`.
+If an OUTPUT message arrives while waiting for FORM_UPDATE, it is routed to
+the RichLog and the read loop continues until FORM_UPDATE is found.
 
 button callbacks: MyButton.on_button_pressed → facet.submit(_post_submit=callable)
-sets adaptor.post_submit_action before app.exit().  After app.run() returns we
+sets adaptor.post_submit_action before action_confirm().  After _submitted is set we
 detect this, send CALLBACK("button"), and wait for the parent's decision.
 
-WebChildApp (web mode)
-----------------------
-When TEXTUAL_DRIVER is set, one persistent WebChildApp handles all forms for the
-session.  The WebSocket stays open across multiple .form() calls.  An IPC worker
-thread reads commands and updates the Textual UI reactively (no app.exit between
-forms).  _OnChangeProxy still works: it fires on the main thread, sends CALLBACK
-and waits for FORM_UPDATE — safe because the worker is blocked on _submitted at
-that point, not reading from read_fd.
+PersistentChildApp
+------------------
+One app handles all forms for the entire session (tty and web modes).
+An IPC worker thread reads pipe commands and updates the Textual UI reactively
+via call_from_thread / _submitted threading.Event — no app.exit between forms.
+A RichLog widget streams live print() output sent via TuiCommand.OUTPUT.
 """
 import asyncio
 import os
@@ -35,7 +35,7 @@ from .tui_command import TuiCommand
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
 
-# Set once in run_child_loop; read by _OnChangeProxy instances
+# Set once in run_child_main; read by _OnChangeProxy instances
 _CHILD_WRITE_FD: int | None = None
 _CHILD_READ_FD: int | None = None
 
@@ -82,7 +82,8 @@ class _OnChangeProxy:
 
     When fired (synchronously in Textual's event loop) it does a brief
     blocking exchange with the parent, which runs the real callback and
-    returns updated tag values.
+    returns updated tag values.  Any OUTPUT messages that arrive while
+    waiting are routed to the RichLog and the loop continues.
     """
 
     def __init__(self, tag_pos: int):
@@ -92,11 +93,19 @@ class _OnChangeProxy:
         assert _CHILD_WRITE_FD is not None
         assert _CHILD_READ_FD is not None
         _send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "on_change", self.tag_pos, tag.val))
-        response = _read_msg(_CHILD_READ_FD)
-        if response:
+        while True:
+            response = _read_msg(_CHILD_READ_FD)
+            if not response:
+                return
             command, *args = response
             if command == TuiCommand.FORM_UPDATE:
                 _apply_form_update(args[0], args[1] if len(args) > 1 else "", tag._facet.adaptor)
+                return
+            elif command == TuiCommand.OUTPUT:
+                # OUTPUT can arrive here if print() was called inside on_change callback
+                app = tag._facet.adaptor.app
+                if app is not None:
+                    app._append_output(args[0])
 
 
 def _apply_form_update(updates: list, title: str, adaptor: "TextualAdaptor") -> None:
@@ -128,110 +137,18 @@ def _apply_form_update(updates: list, title: str, adaptor: "TextualAdaptor") -> 
 
 
 # ---------------------------------------------------------------------------
-# Main child loop
+# Persistent app (tty and web modes)
 # ---------------------------------------------------------------------------
 
-def run_child_loop(adaptor: "TextualAdaptor", read_fd: int, write_fd: int) -> None:
-    """Persistent loop: receive commands, run Textual dialogs, send results."""
-    global _CHILD_WRITE_FD, _CHILD_READ_FD
-    _CHILD_WRITE_FD = write_fd
-    _CHILD_READ_FD = read_fd
-
-    from .._lib.auxiliary import flatten
-    from ..exceptions import Cancelled
-    from .textual_app import TextualApp
-    from .widgets import TagWidget
-
-    while True:
-        msg = _read_msg(read_fd)
-        if msg is None:
-            break
-
-        command, *args = msg
-
-        if command == TuiCommand.SHUTDOWN:
-            break
-
-        try:
-            if command == TuiCommand.FORM:
-                form, title, submit, redirected_text, raw_layout = args
-                for t in flatten(form):  # type: ignore[arg-type]
-                    t._facet = adaptor.facet
-                adaptor.button_app = False
-                adaptor.facet._fetch_from_adaptor(form)
-                adaptor.facet._title = title
-                if adaptor.settings.mnemonic is not False:
-                    adaptor._determine_mnemonic(form, adaptor.settings.mnemonic is True)
-
-                if redirected_text:
-                    adaptor.interface._redirected.write(redirected_text)  # type: ignore[attr-defined]
-                adaptor.layout_elements.clear()
-                if raw_layout:
-                    adaptor.facet._layout(raw_layout)
-
-                adaptor.app = app = TextualApp(adaptor, submit)
-                if title:
-                    app.title = title
-
-                confirmed = app.run()
-                adaptor.layout_elements.clear()
-
-                if not confirmed:
-                    _send_msg(write_fd, (TuiCommand.CANCEL,))
-                    continue
-
-                # Button callback: post_submit_action is set before app.exit()
-                if adaptor.post_submit_action is not None:
-                    pending = adaptor.post_submit_action
-                    adaptor.post_submit_action = None
-                    tags = list(flatten(form))  # type: ignore[arg-type]
-                    tag_pos = next(
-                        (i for i, t in enumerate(tags) if t._run_callable == pending),
-                        -1,
-                    )
-                    _send_msg(write_fd, (TuiCommand.CALLBACK, "button", tag_pos))
-                    continue  # outer loop waits for next FORM / BUTTONS command
-
-                ui_vals = [
-                    field.get_ui_value()
-                    for field in app.widgets
-                    if isinstance(field, TagWidget)
-                ]
-                _send_msg(write_fd, (TuiCommand.RESULT, ui_vals))
-
-            elif command == TuiCommand.BUTTONS:
-                text, buttons_list, focused, timeout, redirected_text = args
-                if redirected_text:
-                    adaptor.interface._redirected.write(redirected_text)  # type: ignore[attr-defined]
-                adaptor._build_buttons(text, buttons_list, focused)
-                adaptor.app = app = TextualApp(adaptor, False, timeout=timeout)
-
-                if not app.run():
-                    _send_msg(write_fd, (TuiCommand.CANCEL,))
-                    continue
-
-                try:
-                    val = adaptor._get_buttons_val()
-                    _send_msg(write_fd, (TuiCommand.RESULT, val))
-                except Cancelled:
-                    _send_msg(write_fd, (TuiCommand.CANCEL,))
-
-        except Exception:
-            _send_msg(write_fd, (TuiCommand.CANCEL,))
+class PersistentChildApp:
+    """Placeholder — real class built by _make_persistent_child_app_class()."""
 
 
-# ---------------------------------------------------------------------------
-# Persistent web app (used when TEXTUAL_DRIVER is set)
-# ---------------------------------------------------------------------------
-
-class WebChildApp:
-    """Placeholder — real class injected below after textual imports are available."""
-
-
-def _make_web_child_app_class():
-    """Return the WebChildApp class (deferred to avoid importing Textual at module level)."""
+def _make_persistent_child_app_class():
+    """Return PersistentChildApp (deferred import to avoid loading Textual at module level)."""
     from textual.app import App
     from textual.containers import Container
+    from textual.widgets import RichLog
 
     from .._lib.auxiliary import flatten
     from ..exceptions import Cancelled
@@ -240,12 +157,13 @@ def _make_web_child_app_class():
     from .timeout import TextualTimeout
     from .widgets import TagWidget
 
-    class _WebChildApp(App[None]):
-        """Single persistent Textual app that serves all forms in one web session.
+    class _PersistentChildApp(App[None]):
+        """Single persistent Textual app for the whole session (tty and web).
 
-        Never calls self.exit() between forms — keeps the WebSocket open.
-        An IPC worker thread reads pipe commands and signals the main thread
-        via threading.Event.
+        Never calls self.exit() between forms — keeps the UI alive.
+        An IPC worker thread reads pipe commands and signals the Textual
+        main thread via threading.Event.
+        A RichLog streams live print() output from the parent.
         """
 
         CSS_PATH = "../_textual_interface/style.tcss"
@@ -256,19 +174,29 @@ def _make_web_child_app_class():
             self.adaptor = adaptor
             self.read_fd = read_fd
             self.write_fd = write_fd
-            # submit is read by FormContents.on_key (self.app.submit)
             self.submit: bool | str = True
-            # widgets / focusable_ mirror TextualApp naming used by _apply_form_update
             self.widgets = []
             self.focusable_ = []
             self._submitted = threading.Event()
             self._result: tuple = (TuiCommand.CANCEL,)
 
         def compose(self):
-            yield Container()
+            yield RichLog(id="output-log", auto_scroll=True, markup=False, highlight=False)
+            yield Container(id="form-container")
 
         async def on_mount(self):
             self.run_worker(self._ipc_worker, thread=True, exclusive=True)
+
+        # ------------------------------------------------------------------ output
+
+        def _append_output(self, text: str) -> None:
+            """Append text to the RichLog (one log.write per line). Safe to call from main thread."""
+            try:
+                log = self.query_one("#output-log", RichLog)
+                for line in text.splitlines() or [text]:
+                    log.write(line)
+            except Exception:
+                pass
 
         # ------------------------------------------------------------------ IPC
 
@@ -295,10 +223,14 @@ def _make_web_child_app_class():
                     self._safe_exit()
                     return
 
+                if command == TuiCommand.OUTPUT:
+                    self.call_from_thread(self._append_output, args[0])
+                    continue
+
                 try:
                     if command == TuiCommand.FORM:
                         form, title, submit_flag, redirected_text, raw_layout = args
-                        self._setup_form(form, title, submit_flag, redirected_text, raw_layout)
+                        self._setup_form(form, title, submit_flag, raw_layout)
                         self._submitted.clear()
                         self.call_from_thread(self._refresh)
                         self._submitted.wait()
@@ -306,11 +238,10 @@ def _make_web_child_app_class():
                         if self._result[0] == TuiCommand.CANCEL:
                             self._safe_exit()
                             return
+                        self.call_from_thread(self._clear_form)
 
                     elif command == TuiCommand.BUTTONS:
                         text, buttons_list, focused, timeout, redirected_text = args
-                        if redirected_text:
-                            self.adaptor.interface._redirected.write(redirected_text)
                         self.adaptor._build_buttons(text, buttons_list, focused)
                         self.submit = False
                         self._submitted.clear()
@@ -320,11 +251,12 @@ def _make_web_child_app_class():
                         if self._result[0] == TuiCommand.CANCEL:
                             self._safe_exit()
                             return
+                        self.call_from_thread(self._clear_form)
 
                 except Exception:
                     _send_msg(self.write_fd, (TuiCommand.CANCEL,))
 
-        def _setup_form(self, form, title, submit_flag, redirected_text, raw_layout):
+        def _setup_form(self, form, title, submit_flag, raw_layout):
             for t in flatten(form):
                 t._facet = self.adaptor.facet
             self.adaptor.button_app = False
@@ -332,15 +264,25 @@ def _make_web_child_app_class():
             self.adaptor.facet._title = title
             if self.adaptor.settings.mnemonic is not False:
                 self.adaptor._determine_mnemonic(form, self.adaptor.settings.mnemonic is True)
-            if redirected_text:
-                self.adaptor.interface._redirected.write(redirected_text)
             self.adaptor.layout_elements.clear()
             if raw_layout:
                 self.adaptor.facet._layout(raw_layout)
             self.submit = submit_flag
 
+        def _clear_form(self):
+            """Remove stale form/button UI between dialogs."""
+            try:
+                asyncio.ensure_future(self._async_clear_form())
+            except RuntimeError:
+                pass
+
+        async def _async_clear_form(self):
+            container = self.query_one("#form-container", Container)
+            await container.remove_children()
+            self.widgets.clear()
+            self.focusable_.clear()
+
         def _refresh(self, timeout=None):
-            """Called from worker via call_from_thread; schedules async UI update."""
             try:
                 asyncio.ensure_future(self._async_refresh(timeout))
             except RuntimeError:
@@ -348,7 +290,7 @@ def _make_web_child_app_class():
 
         async def _async_refresh(self, timeout=None):
             self.adaptor.app = self
-            container = self.query_one(Container)
+            container = self.query_one("#form-container", Container)
             await container.remove_children()
             self.widgets.clear()
             self.focusable_.clear()
@@ -391,19 +333,19 @@ def _make_web_child_app_class():
             self._result = (TuiCommand.CANCEL,)
             self._submitted.set()
 
-    return _WebChildApp
+    return _PersistentChildApp
 
 
 # ---------------------------------------------------------------------------
-# Main child loop (tty mode)
+# Entry point
 # ---------------------------------------------------------------------------
-
 
 def run_child_main(read_fd: int, write_fd: int) -> None:
     """Entry point called by the subprocess via `python -c`.
 
-    Creates a minimal interface + TextualAdaptor, then enters the dialog loop.
-    No user code is re-executed.
+    Creates a minimal interface + TextualAdaptor, then runs the persistent app.
+    No user code is re-executed.  Textual automatically uses the web driver when
+    TEXTUAL_DRIVER is set (web mode), or the terminal driver otherwise (tty mode).
     """
     from mininterface._lib.redirectable import Redirectable
     from mininterface._mininterface import Mininterface
@@ -414,8 +356,4 @@ def run_child_main(read_fd: int, write_fd: int) -> None:
 
     interface = _ChildInterface()
     adaptor = TextualAdaptor(interface, None)
-
-    if os.environ.get("TEXTUAL_DRIVER"):
-        _make_web_child_app_class()(adaptor, read_fd, write_fd).run()
-    else:
-        run_child_loop(adaptor, read_fd, write_fd)
+    _make_persistent_child_app_class()(adaptor, read_fd, write_fd).run()

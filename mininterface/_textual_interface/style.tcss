@@ -4,6 +4,12 @@ ImageViewer {
     height: 20;
 }
 
+#output-log {
+    height: auto;
+    min-height: 0;
+    max-height: 10;
+}
+
 
 FilePickerInput {
     layout: horizontal;
@@ -37,10 +43,6 @@ FilePickerInput Button {
             width: 100%;
             }
         }
-
-    #buffered_text {
-        width: 100%;
-    }
 
     #question {
         width: 100%;

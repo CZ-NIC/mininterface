@@ -13,9 +13,17 @@ class RedirectText:
     def __init__(self) -> None:
         self.max_lines = 1000
         self.pending_buffer = []
+        self.output_callback = None
+        self._line_buffer = ""
 
     def write(self, text):
-        self.pending_buffer.append(text)
+        if self.output_callback:
+            self._line_buffer += text
+            while "\n" in self._line_buffer:
+                line, self._line_buffer = self._line_buffer.split("\n", 1)
+                self.output_callback(line)
+        else:
+            self.pending_buffer.append(text)
 
     def flush(self):
         pass  # required by sys.stdout
@@ -37,12 +45,6 @@ class Redirectable:
 
     # NOTE When used in the with statement, the TUI window should not vanish between dialogs.
     # The same way the GUI does not vanish.
-    # NOTE: Current implementation will show only after a dialog submit, not continuously.
-    # # with run(Env) as m:
-    #     print("First")
-    #     sleep(1)
-    #     print("Second")
-    #     m.confirm("Was it shown continuously?")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

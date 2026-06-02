@@ -31,8 +31,6 @@ class ButtonContents(Center):
 
     def compose(self) -> ComposeResult:
         yield Footer()
-        if text := self.adaptor.interface._redirected.join():
-            yield Label(text, id="buffered_text")
         yield from self.adaptor.layout_elements
         yield (Label(self.text, id="question"))
         with Container(id="button-container"):
