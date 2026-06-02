@@ -174,7 +174,7 @@ Press Ctrl+C to quit
     Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!
 
     ```python
-    hello = "world"  # This line would run thrice!
+    hello = "world"  # This line would run for every browser client!
     with run(interface="web") as m:
         m.form({"one": 1})
         m.form({"two": 2})

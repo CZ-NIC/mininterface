@@ -1,92 +1,90 @@
-"""Raises InterfaceNotAvailable at module import time if textual not installed or session is non-interactive."""
+"""WebInterface: browser-based Textual UI via textual-serve.
 
+Architecture
+------------
+Each browser connection spawns a fresh run of the user script.
+Code before run() executes once per session (per tab).
+
+Main process (launcher)
+  → detects no TEXTUAL_DRIVER env var
+  → starts textual-serve with [sys.executable] + sys.argv as command
+  → opens browser, waits until textual-serve exits, then sys.exit(0)
+
+Child process (per browser connection, spawned by textual-serve)
+  → has TEXTUAL_DRIVER=textual.drivers.web_driver:WebDriver in env
+  → WebInterface detects this and uses TextualSubprocessAdaptor
+  → TextualSubprocessAdaptor spawns a grandchild subprocess
+  → grandchild inherits TEXTUAL_DRIVER and runs TextualApp with WebDriver
+  → WebSocket is established via the grandchild; multiple .form() calls
+    are served over the same connection via IPC pipes
+"""
 import os
-from pathlib import Path
+import subprocess
 import sys
-from types import SimpleNamespace
-from typing import Optional
-
-from .._mininterface.adaptor import MinAdaptor
-
-from .._lib.form_dict import EnvClass
-
-from ..settings import UiSettings
+import time
+import webbrowser
 
 from .._textual_interface import TextualInterface
-from .child_adaptor import SerializedChildAdaptor
-from .parent_adaptor import WebParentAdaptor
+from .._textual_interface.subprocess_adaptor import TextualSubprocessAdaptor
 
-try:
-    from textual.app import App as _ImportCheck
-except ImportError:
-    from ..exceptions import InterfaceNotAvailable
-
-    raise InterfaceNotAvailable
-
-from ..exceptions import DependencyRequired, InterfaceNotAvailable
-from .app import WebParentApp
+_DEFAULT_PORT = 64646
 
 
 class WebInterface(TextualInterface):
+    """Browser-based interface. Each tab gets its own independent session."""
 
-    _adaptor: MinAdaptor
+    _adaptor: TextualSubprocessAdaptor
 
-    def __init__(
-        self,
-        title: str = "",
-        settings: Optional[UiSettings] = None,
-        _env: EnvClass | SimpleNamespace | None = None,
-        cmd: Optional[Path] = None,
-        port=64646,
-        **kwargs,
-    ):
-        # NOTE missing
-        # * lambda, print, on_change, layout, SubmitTrue support
-        # * Docs image.
-        # * Port should be set from a config file too.
-        # * DONE Yes/no/alert support (ButtonApp).
-        # * DONE ex. validation does not work
+    def __init__(self, *args, cmd=None, port=_DEFAULT_PORT, **kwargs):
+        if not os.environ.get("TEXTUAL_DRIVER"):
+            # Launcher mode: start textual-serve, open browser, block.
+            _launch_web_server(cmd=cmd, port=port)
+            sys.exit(0)
+        # Child mode: running inside a textual-serve subprocess.
+        super().__init__(*args, need_atty=False, **kwargs)
 
-        # This is a nifty solution.
-        # Common use of textual application is that everything is wrapped inside, the textual library is used
-        # as a framework. That way, it would be impossible to easily switch to another interface. Instead,
-        # we invoke another textual app per form.
-        # However, textual-serve uses only the first textual application. So we cannot use bare textual app
-        # as it would end after the first form submit.
-        #   with run(interface=WebInterface) as m:
-        #     m.form({"hello": 1})  # the app ends here
-        #     m.form({"hello": 2})  # we never get here
-        # We handle it this way: The textual-serve re-runs the program to get the textual app
-        # in an underlying process '_web-parent'.
-        # From there, we re-run the program once more. The textual app fetches the commands from there.
-        # Running the program thrice was the only solution I came up with.
-        #
-        # Why not doing that for every TextualApp? If invoking the interface would not be the first thing
-        # the program does, lines before get launched multiple times.
-        #
-        #   hello = "world"  # This line would run twice for TextualInterface
-        #   with run(interface=TextualInterface) as m:
-        #     m.form({"hello": 1})  # the app ends here
-        #     m.form({"hello": 2})  # we never get here
 
-        super().__init__(title, settings, _env, need_atty=False, **kwargs)
-        match os.environ.get("MININTERFACE_ENFORCED_WEB"):
-            case "_web-child-serialized":
-                self._adaptor = SerializedChildAdaptor(self, settings)
-                return
-            case "_web-parent":
-                envir = os.environ.copy()
-                envir["MININTERFACE_ENFORCED_WEB"] = "_web-child-serialized"
-                self._adaptor = WebParentAdaptor(self, settings, environ=envir)
-                self._adaptor.disconnect()
-                quit()
-            case _:
-                try:
-                    from textual_serve.server import Server
-                except ImportError:
-                    raise DependencyRequired("web")
-                os.environ["MININTERFACE_ENFORCED_WEB"] = "_web-parent"
+def _launch_web_server(cmd=None, port=_DEFAULT_PORT) -> None:
+    """Start textual-serve with the user script as command, open browser, block."""
+    import shlex
 
-                server = Server(str(cmd.absolute()) if cmd else " ".join(sys.argv), port=port)
-                server.serve()
-                quit()
+    try:
+        from textual_serve.server import Server  # noqa: F401 – check availability
+    except ImportError:
+        from ..exceptions import DependencyRequired
+        raise DependencyRequired("web")
+
+    if cmd is not None:
+        # Launched via `mininterface web script.py` — run the given script directly.
+        command = shlex.join([sys.executable, str(cmd)])
+    else:
+        # Launched via MININTERFACE_INTERFACE=web python3 script.py — re-run as-is.
+        command = shlex.join([sys.executable] + sys.argv)
+    # Suppress the "RuntimeError: Event loop is closed" noise that asyncio emits
+    # during shutdown when GC collects BaseSubprocessTransport after the loop closes.
+    # This is a known asyncio/Python issue in the textual-serve process.
+    serve_code = "\n".join([
+        "import sys",
+        "_orig_hook = sys.unraisablehook",
+        "def _hook(u):",
+        "    if isinstance(getattr(u, 'exc_value', None), RuntimeError) and 'Event loop is closed' in str(u.exc_value):",
+        "        return",
+        "    _orig_hook(u)",
+        "sys.unraisablehook = _hook",
+        f"from textual_serve.server import Server",
+        f"Server({command!r}, port={port}, title='mininterface').serve()",
+    ])
+    env = os.environ.copy()
+    env["MININTERFACE_ENFORCED_WEB"] = "1"
+    serve_process = subprocess.Popen([sys.executable, "-c", serve_code], env=env)
+
+    time.sleep(0.5)
+    url = f"http://localhost:{port}"
+    print(f"Web interface: {url}", flush=True)
+    webbrowser.open(url)
+
+    try:
+        serve_process.wait()
+    except KeyboardInterrupt:
+        serve_process.terminate()
+        serve_process.wait()

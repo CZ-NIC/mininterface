@@ -87,7 +87,10 @@ class TextualSubprocessAdaptor(TextualAdaptor):
         assert self._read_fd is not None
         data = b""
         while len(data) < n:
-            chunk = os.read(self._read_fd, n - len(data))
+            try:
+                chunk = os.read(self._read_fd, n - len(data))
+            except (OSError, KeyboardInterrupt):
+                return None
             if not chunk:
                 return None
             data += chunk
@@ -224,7 +227,6 @@ class TextualSubprocessAdaptor(TextualAdaptor):
         redirected = self._get_redirected()
         self._send(TuiCommand.BUTTONS, text, buttons, focused, timeout, redirected)
         command, args = self._receive()
-
         if command != TuiCommand.RESULT:
             raise Cancelled
         return args[0]

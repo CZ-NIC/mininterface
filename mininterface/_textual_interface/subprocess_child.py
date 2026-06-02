@@ -13,10 +13,21 @@ the parent — brief, but acceptable since the handlers are not `async def`.
 button callbacks: MyButton.on_button_pressed → facet.submit(_post_submit=callable)
 sets adaptor.post_submit_action before app.exit().  After app.run() returns we
 detect this, send CALLBACK("button"), and wait for the parent's decision.
+
+WebChildApp (web mode)
+----------------------
+When TEXTUAL_DRIVER is set, one persistent WebChildApp handles all forms for the
+session.  The WebSocket stays open across multiple .form() calls.  An IPC worker
+thread reads commands and updates the Textual UI reactively (no app.exit between
+forms).  _OnChangeProxy still works: it fires on the main thread, sends CALLBACK
+and waits for FORM_UPDATE — safe because the worker is blocked on _submitted at
+that point, not reading from read_fd.
 """
+import asyncio
 import os
 import pickle
 import struct
+import threading
 from typing import TYPE_CHECKING
 
 from .tui_command import TuiCommand
@@ -209,6 +220,185 @@ def run_child_loop(adaptor: "TextualAdaptor", read_fd: int, write_fd: int) -> No
             _send_msg(write_fd, (TuiCommand.CANCEL,))
 
 
+# ---------------------------------------------------------------------------
+# Persistent web app (used when TEXTUAL_DRIVER is set)
+# ---------------------------------------------------------------------------
+
+class WebChildApp:
+    """Placeholder — real class injected below after textual imports are available."""
+
+
+def _make_web_child_app_class():
+    """Return the WebChildApp class (deferred to avoid importing Textual at module level)."""
+    from textual.app import App
+    from textual.containers import Container
+
+    from .._lib.auxiliary import flatten
+    from ..exceptions import Cancelled
+    from .button_contents import ButtonContents
+    from .form_contents import FormContents
+    from .timeout import TextualTimeout
+    from .widgets import TagWidget
+
+    class _WebChildApp(App[None]):
+        """Single persistent Textual app that serves all forms in one web session.
+
+        Never calls self.exit() between forms — keeps the WebSocket open.
+        An IPC worker thread reads pipe commands and signals the main thread
+        via threading.Event.
+        """
+
+        CSS_PATH = "../_textual_interface/style.tcss"
+        BINDINGS = [("escape", "exit_app", "Cancel")]
+
+        def __init__(self, adaptor, read_fd: int, write_fd: int):
+            super().__init__()
+            self.adaptor = adaptor
+            self.read_fd = read_fd
+            self.write_fd = write_fd
+            # submit is read by FormContents.on_key (self.app.submit)
+            self.submit: bool | str = True
+            # widgets / focusable_ mirror TextualApp naming used by _apply_form_update
+            self.widgets = []
+            self.focusable_ = []
+            self._submitted = threading.Event()
+            self._result: tuple = (TuiCommand.CANCEL,)
+
+        def compose(self):
+            yield Container()
+
+        async def on_mount(self):
+            self.run_worker(self._ipc_worker, thread=True, exclusive=True)
+
+        # ------------------------------------------------------------------ IPC
+
+        def _safe_exit(self):
+            try:
+                self.call_from_thread(self.exit)
+            except RuntimeError:
+                pass
+
+        def _ipc_worker(self):
+            global _CHILD_WRITE_FD, _CHILD_READ_FD
+            _CHILD_WRITE_FD = self.write_fd
+            _CHILD_READ_FD = self.read_fd
+
+            while True:
+                msg = _read_msg(self.read_fd)
+                if msg is None:
+                    self._safe_exit()
+                    return
+
+                command, *args = msg
+
+                if command == TuiCommand.SHUTDOWN:
+                    self._safe_exit()
+                    return
+
+                try:
+                    if command == TuiCommand.FORM:
+                        form, title, submit_flag, redirected_text, raw_layout = args
+                        self._setup_form(form, title, submit_flag, redirected_text, raw_layout)
+                        self._submitted.clear()
+                        self.call_from_thread(self._refresh)
+                        self._submitted.wait()
+                        _send_msg(self.write_fd, self._result)
+                        if self._result[0] == TuiCommand.CANCEL:
+                            self._safe_exit()
+                            return
+
+                    elif command == TuiCommand.BUTTONS:
+                        text, buttons_list, focused, timeout, redirected_text = args
+                        if redirected_text:
+                            self.adaptor.interface._redirected.write(redirected_text)
+                        self.adaptor._build_buttons(text, buttons_list, focused)
+                        self.submit = False
+                        self._submitted.clear()
+                        self.call_from_thread(self._refresh, timeout)
+                        self._submitted.wait()
+                        _send_msg(self.write_fd, self._result)
+                        if self._result[0] == TuiCommand.CANCEL:
+                            self._safe_exit()
+                            return
+
+                except Exception:
+                    _send_msg(self.write_fd, (TuiCommand.CANCEL,))
+
+        def _setup_form(self, form, title, submit_flag, redirected_text, raw_layout):
+            for t in flatten(form):
+                t._facet = self.adaptor.facet
+            self.adaptor.button_app = False
+            self.adaptor.facet._fetch_from_adaptor(form)
+            self.adaptor.facet._title = title
+            if self.adaptor.settings.mnemonic is not False:
+                self.adaptor._determine_mnemonic(form, self.adaptor.settings.mnemonic is True)
+            if redirected_text:
+                self.adaptor.interface._redirected.write(redirected_text)
+            self.adaptor.layout_elements.clear()
+            if raw_layout:
+                self.adaptor.facet._layout(raw_layout)
+            self.submit = submit_flag
+
+        def _refresh(self, timeout=None):
+            """Called from worker via call_from_thread; schedules async UI update."""
+            try:
+                asyncio.ensure_future(self._async_refresh(timeout))
+            except RuntimeError:
+                pass
+
+        async def _async_refresh(self, timeout=None):
+            self.adaptor.app = self
+            container = self.query_one(Container)
+            await container.remove_children()
+            self.widgets.clear()
+            self.focusable_.clear()
+
+            if self.adaptor.button_app:
+                c = ButtonContents(self.adaptor, self.adaptor.button_app)
+                await container.mount(c)
+                if timeout and c.to_focus:
+                    TextualTimeout(timeout=timeout, adaptor=self.adaptor, button=c.to_focus)
+            else:
+                c = FormContents(self.adaptor, self.widgets, self.focusable_)
+                await container.mount(c)
+
+            if self.adaptor.facet._title:
+                self.title = self.adaptor.facet._title
+
+        # ------------------------------------------------------------------ Actions
+
+        def action_confirm(self):
+            if self.adaptor.button_app:
+                try:
+                    val = self.adaptor._get_buttons_val()
+                    self._result = (TuiCommand.RESULT, val)
+                except Cancelled:
+                    self._result = (TuiCommand.CANCEL,)
+            elif self.adaptor.post_submit_action is not None:
+                pending = self.adaptor.post_submit_action
+                self.adaptor.post_submit_action = None
+                tags = list(flatten(self.adaptor.facet._form))
+                tag_pos = next(
+                    (i for i, t in enumerate(tags) if t._run_callable == pending), -1
+                )
+                self._result = (TuiCommand.CALLBACK, "button", tag_pos)
+            else:
+                ui_vals = [w.get_ui_value() for w in self.widgets if isinstance(w, TagWidget)]
+                self._result = (TuiCommand.RESULT, ui_vals)
+            self._submitted.set()
+
+        def action_exit_app(self):
+            self._result = (TuiCommand.CANCEL,)
+            self._submitted.set()
+
+    return _WebChildApp
+
+
+# ---------------------------------------------------------------------------
+# Main child loop (tty mode)
+# ---------------------------------------------------------------------------
+
+
 def run_child_main(read_fd: int, write_fd: int) -> None:
     """Entry point called by the subprocess via `python -c`.
 
@@ -225,4 +415,7 @@ def run_child_main(read_fd: int, write_fd: int) -> None:
     interface = _ChildInterface()
     adaptor = TextualAdaptor(interface, None)
 
-    run_child_loop(adaptor, read_fd, write_fd)
+    if os.environ.get("TEXTUAL_DRIVER"):
+        _make_web_child_app_class()(adaptor, read_fd, write_fd).run()
+    else:
+        run_child_loop(adaptor, read_fd, write_fd)

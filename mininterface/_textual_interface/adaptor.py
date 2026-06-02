@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from textual.widget import Widget
 from textual.widgets import Label, Rule
 
@@ -10,11 +10,12 @@ from .button_contents import ButtonAppType
 
 from .secret_input import SecretInputFactory
 
-from ..exceptions import Cancelled
+from ..exceptions import Cancelled, ValidationFail
+from .._lib.auxiliary import flatten
 from .._lib.form_dict import TagDict
 from .._mininterface.adaptor import BackendAdaptor
 from ..settings import TextualSettings
-from ..tag.tag import Tag, ValsType
+from ..tag.tag import Tag
 from ..tag.secret_tag import SecretTag
 from ..tag.internal import BoolWidget, CallbackButtonWidget, SubmitButtonWidget
 from .facet import TextualFacet
@@ -101,7 +102,7 @@ class TextualAdaptor(BackendAdaptor):
             return []
 
     def yes_no(self, text: str, focus_no=True, *, timeout: int = 0):
-        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)  # type: ignore[attr-defined]
+        return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)
 
     def _build_buttons(self, text, buttons, focused):
         self.button_app = (
@@ -118,8 +119,40 @@ class TextualAdaptor(BackendAdaptor):
                 return button.tag.val
         raise Cancelled
 
-    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        raise NotImplementedError
+    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
+        self._build_buttons(text, buttons, focused)
+        self.app = app = TextualApp(self, False, timeout=timeout)
+        if not app.run():
+            raise Cancelled
+        return self._get_buttons_val()
 
-    def _serialize_vals(self, app: TextualApp) -> ValsType:
-        return ((field.tag, field.get_ui_value()) for field in app.widgets if isinstance(field, TagWidget))
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        super(TextualAdaptor, self).run_dialog(form, title, submit)  # BackendAdaptor
+
+        while True:
+            effective_title = self.facet._title or title
+            self.app = app = TextualApp(self, submit)
+            if effective_title:
+                app.title = effective_title
+
+            confirmed = app.run()
+            self.layout_elements.clear()
+
+            if not confirmed:
+                raise Cancelled
+
+            if self.post_submit_action is not None:
+                pending = self.post_submit_action
+                self.post_submit_action = None
+                try:
+                    pending()
+                except ValidationFail as e:
+                    if msg := str(e):
+                        self.interface.alert(msg)
+                    continue
+                return form
+
+            ui_vals = [f.get_ui_value() for f in app.widgets if isinstance(f, TagWidget)]
+            if self._try_submit(zip(flatten(self.facet._form or {}), ui_vals)):
+                return form
+
