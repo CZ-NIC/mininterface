@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 
 class FormContents(Static):
 
-    def __init__(self, adaptor: "TextualAdaptor", widgets: "WidgetList", focusable_: "WidgetList"):
+    def __init__(self, adaptor: "TextualAdaptor", widgets: "WidgetList", focusable_: "WidgetList",
+                 show_footer: bool = True):
         super().__init__()
         self.app: "TextualApp"
         self.title = adaptor.facet._title  # NOTE where the title should be – rather here?
@@ -25,6 +26,8 @@ class FormContents(Static):
         """ A subset of self.widgets"""
         self.focused_i: int = 0
         self.adaptor = adaptor
+        self.show_footer = show_footer
+        """ False when the host app provides its own screen-docked Footer. """
 
     def compose(self) -> ComposeResult:
         # prepare widgets
@@ -45,7 +48,8 @@ class FormContents(Static):
         # start yielding widgets
         if self.title:
             yield Header()
-        yield Footer()
+        if self.show_footer:
+            yield Footer()
 
         with VerticalScroll():
             yield from self.adaptor.layout_elements

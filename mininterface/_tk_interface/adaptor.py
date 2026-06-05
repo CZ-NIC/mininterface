@@ -115,11 +115,11 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
             v = str(v)
         return Value(v, tag.description)
 
-    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """Let the user edit the form_dict values in a GUI window.
-        On abrupt window close, the program exits.
+    def _build_form(self, form: TagDict, title: str = "", submit: bool | str = True) -> None:
+        """Build the Tk widgets for the form (no mainloop).
+
+        Shared between the in-process run_dialog and the persistent subprocess child.
         """
-        super().run_dialog(form, title, submit)
         if title:
             self.facet.set_title(title)
 
@@ -144,7 +144,6 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
             # submit button styling
             # self.form.button.grid_configure(sticky="", pady=15)
             # self.form.button.config(width=15)
-        self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
 
         # focus the first element and run
         recursive_set_focus(self.form)
@@ -155,6 +154,13 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
         # status_label = Label(self.frame, textvariable=status_var, relief="sunken", anchor="w", padx=5)
         # status_label.pack(side="bottom", fill="x", pady=(20, 0))
 
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        """Let the user edit the form_dict values in a GUI window.
+        On abrupt window close, the program exits.
+        """
+        super().run_dialog(form, title, submit)
+        self._build_form(form, title, submit)
+        self.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
         return self.mainloop(lambda: self.validate(form, title, submit))
 
     def validate(self, form: TagDict, title: str, submit) -> TagDict:
@@ -165,7 +171,11 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
     def yes_no(self, text: str, focus_no=True, *, timeout: int = 0):
         return self.buttons(text, [("Yes", True), ("No", False)], int(focus_no) + 1, timeout=timeout)
 
-    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
+    def _build_buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
+        """Build the Tk widgets for a buttons dialog (no mainloop).
+
+        Shared between the in-process buttons() and the persistent subprocess child.
+        """
         label = Label(self.frame, text=text)
         label.pack(pady=10)
         b_focused = None
@@ -183,6 +193,8 @@ class TkAdaptor(Tk, RichUiAdaptor, BackendAdaptor):
                 raise ValueError("Don't know what to timeout")
             TkTimeout(timeout, self, b_focused)
 
+    def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
+        self._build_buttons(text, buttons, focused, timeout=timeout)
         return self.mainloop()
 
     def _bind_event(self, event, handler):

@@ -24,89 +24,19 @@ via call_from_thread / _submitted threading.Event — no app.exit between forms.
 A RichLog widget streams live print() output sent via TuiCommand.OUTPUT.
 """
 import asyncio
-import os
-import pickle
-import struct
 import threading
 from typing import TYPE_CHECKING
 
 from .tui_command import TuiCommand
+from .._lib.subprocess_child_base import read_msg as _read_msg, send_msg as _send_msg, register_hooks
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
-
-# Set once in run_child_main; read by _OnChangeProxy instances
-_CHILD_WRITE_FD: int | None = None
-_CHILD_READ_FD: int | None = None
-
-
-# ---------------------------------------------------------------------------
-# Low-level I/O
-# ---------------------------------------------------------------------------
-
-def _read_exactly(fd: int, n: int) -> bytes | None:
-    data = b""
-    while len(data) < n:
-        chunk = os.read(fd, n - len(data))
-        if not chunk:
-            return None
-        data += chunk
-    return data
-
-
-def _read_msg(fd: int):
-    header = _read_exactly(fd, 4)
-    if not header:
-        return None
-    (msg_length,) = struct.unpack("!I", header)
-    if msg_length == 0:
-        return None
-    payload = _read_exactly(fd, msg_length)
-    return pickle.loads(payload) if payload else None
-
-
-def _send_msg(fd: int, data) -> None:
-    serialized = pickle.dumps(data)
-    frame = struct.pack("!I", len(serialized)) + serialized
-    while frame:
-        n = os.write(fd, frame)
-        frame = frame[n:]
 
 
 # ---------------------------------------------------------------------------
 # Callback support
 # ---------------------------------------------------------------------------
-
-class _OnChangeProxy:
-    """Picklable proxy sent to child in place of tag.on_change.
-
-    When fired (synchronously in Textual's event loop) it does a brief
-    blocking exchange with the parent, which runs the real callback and
-    returns updated tag values.  Any OUTPUT messages that arrive while
-    waiting are routed to the RichLog and the loop continues.
-    """
-
-    def __init__(self, tag_pos: int):
-        self.tag_pos = tag_pos
-
-    def __call__(self, tag):
-        assert _CHILD_WRITE_FD is not None
-        assert _CHILD_READ_FD is not None
-        _send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "on_change", self.tag_pos, tag.val))
-        while True:
-            response = _read_msg(_CHILD_READ_FD)
-            if not response:
-                return
-            command, *args = response
-            if command == TuiCommand.FORM_UPDATE:
-                _apply_form_update(args[0], args[1] if len(args) > 1 else "", tag._facet.adaptor)
-                return
-            elif command == TuiCommand.OUTPUT:
-                # OUTPUT can arrive here if print() was called inside on_change callback
-                app = tag._facet.adaptor.app
-                if app is not None:
-                    app._append_output(args[0])
-
 
 def _apply_form_update(updates: list, title: str, adaptor: "TextualAdaptor") -> None:
     """Apply (pos, new_val) pairs to the child's tag copies and refresh widgets."""
@@ -148,7 +78,7 @@ def _make_persistent_child_app_class():
     """Return PersistentChildApp (deferred import to avoid loading Textual at module level)."""
     from textual.app import App
     from textual.containers import Container
-    from textual.widgets import RichLog
+    from textual.widgets import Footer, RichLog
 
     from .._lib.auxiliary import flatten
     from ..exceptions import Cancelled
@@ -181,8 +111,10 @@ def _make_persistent_child_app_class():
             self._result: tuple = (TuiCommand.CANCEL,)
 
         def compose(self):
-            yield RichLog(id="output-log", auto_scroll=True, markup=False, highlight=False)
+            # Form on top, output log below it, control bar docked at screen bottom.
             yield Container(id="form-container")
+            yield RichLog(id="output-log", auto_scroll=True, markup=False, highlight=False)
+            yield Footer()
 
         async def on_mount(self):
             self.run_worker(self._ipc_worker, thread=True, exclusive=True)
@@ -207,10 +139,6 @@ def _make_persistent_child_app_class():
                 pass
 
         def _ipc_worker(self):
-            global _CHILD_WRITE_FD, _CHILD_READ_FD
-            _CHILD_WRITE_FD = self.write_fd
-            _CHILD_READ_FD = self.read_fd
-
             while True:
                 msg = _read_msg(self.read_fd)
                 if msg is None:
@@ -229,7 +157,7 @@ def _make_persistent_child_app_class():
 
                 try:
                     if command == TuiCommand.FORM:
-                        form, title, submit_flag, redirected_text, raw_layout = args
+                        form, title, submit_flag, redirected_text, raw_layout, *_ = args
                         self._setup_form(form, title, submit_flag, raw_layout)
                         self._submitted.clear()
                         self.call_from_thread(self._refresh)
@@ -241,7 +169,7 @@ def _make_persistent_child_app_class():
                         self.call_from_thread(self._clear_form)
 
                     elif command == TuiCommand.BUTTONS:
-                        text, buttons_list, focused, timeout, redirected_text = args
+                        text, buttons_list, focused, timeout, redirected_text, *_ = args
                         self.adaptor._build_buttons(text, buttons_list, focused)
                         self.submit = False
                         self._submitted.clear()
@@ -296,12 +224,12 @@ def _make_persistent_child_app_class():
             self.focusable_.clear()
 
             if self.adaptor.button_app:
-                c = ButtonContents(self.adaptor, self.adaptor.button_app)
+                c = ButtonContents(self.adaptor, self.adaptor.button_app, show_footer=False)
                 await container.mount(c)
                 if timeout and c.to_focus:
                     TextualTimeout(timeout=timeout, adaptor=self.adaptor, button=c.to_focus)
             else:
-                c = FormContents(self.adaptor, self.widgets, self.focusable_)
+                c = FormContents(self.adaptor, self.widgets, self.focusable_, show_footer=False)
                 await container.mount(c)
 
             if self.adaptor.facet._title:
@@ -356,4 +284,11 @@ def run_child_main(read_fd: int, write_fd: int) -> None:
 
     interface = _ChildInterface()
     adaptor = TextualAdaptor(interface, None)
-    _make_persistent_child_app_class()(adaptor, read_fd, write_fd).run()
+    app = _make_persistent_child_app_class()(adaptor, read_fd, write_fd)
+
+    register_hooks(
+        read_fd, write_fd,
+        apply_form_update=lambda updates, title: _apply_form_update(updates, title, adaptor),
+        append_output=lambda text: app._append_output(text),
+    )
+    app.run()

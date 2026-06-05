@@ -19,7 +19,7 @@ ButtonAppType = bool | tuple[str, list[tuple[MySubmitButton, bool]]]
 class ButtonContents(Center):
     """A helper TextualApp, just for static dialogs, does not inherit from BackendAdaptor and thus has not Facet."""
 
-    def __init__(self, adaptor: "TextualAdaptor", buttons: ButtonAppType):
+    def __init__(self, adaptor: "TextualAdaptor", buttons: ButtonAppType, show_footer: bool = True):
         super().__init__()
         # this has to be a class and not an ID
         # as WebInterface would not create second button form
@@ -28,9 +28,12 @@ class ButtonContents(Center):
         self.adaptor = adaptor
         self.text, self._buttons = buttons
         self.to_focus: Optional[MySubmitButton] = None
+        self.show_footer = show_footer
+        """ False when the host app provides its own screen-docked Footer. """
 
     def compose(self) -> ComposeResult:
-        yield Footer()
+        if self.show_footer:
+            yield Footer()
         yield from self.adaptor.layout_elements
         yield (Label(self.text, id="question"))
         with Container(id="button-container"):

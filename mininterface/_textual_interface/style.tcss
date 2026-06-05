@@ -4,10 +4,21 @@ ImageViewer {
     height: 20;
 }
 
-#output-log {
+/* Subprocess child layout: dialog sized to its content on top, output log
+   filling the space below it (so output starts at the top when empty and
+   sits right under the dialog otherwise). */
+#form-container {
     height: auto;
+}
+
+#form-container VerticalScroll {
+    height: auto;
+    max-height: 100%;
+}
+
+#output-log {
+    height: 1fr;
     min-height: 0;
-    max-height: 10;
 }
 
 
