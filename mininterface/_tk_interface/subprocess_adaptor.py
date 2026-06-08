@@ -68,13 +68,6 @@ class TkSubprocessAdaptor(SubprocessAdaptorBase):
             raise InterfaceNotAvailable
         root.destroy()
 
-    def _get_redirected(self) -> str:
-        """Drain the parent's pending stdout buffer into the next dialog's header."""
-        try:
-            return self.interface._redirected.join()
-        except AttributeError:
-            return ""
-
     def widgetize(self, tag: Tag):
         # Widgetisation happens in the child; the parent never builds widgets.
         pass

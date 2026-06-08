@@ -16,6 +16,14 @@ ImageViewer {
     max-height: 100%;
 }
 
+/* Button dialogs (alert/confirm) – size to the buttons instead of filling, so
+   the output log keeps its room below. Scoped to #form-container so the
+   in-process app (no #form-container id) is unaffected. */
+#form-container #button-container {
+    height: auto;
+    max-height: 100%;
+}
+
 #output-log {
     height: 1fr;
     min-height: 0;

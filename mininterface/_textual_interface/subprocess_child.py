@@ -97,7 +97,9 @@ def _make_persistent_child_app_class():
         """
 
         CSS_PATH = "../_textual_interface/style.tcss"
-        BINDINGS = [("escape", "exit_app", "Cancel")]
+        BINDINGS = [
+            ("escape", "exit_app", "Cancel")
+        ]
 
         def __init__(self, adaptor, read_fd: int, write_fd: int):
             super().__init__()
@@ -122,7 +124,8 @@ def _make_persistent_child_app_class():
         # ------------------------------------------------------------------ output
 
         def _append_output(self, text: str) -> None:
-            """Append text to the RichLog (one log.write per line). Safe to call from main thread."""
+            """Append text to the RichLog. Auto-scroll keeps the latest output visible.
+            Safe to call from the main thread."""
             try:
                 log = self.query_one("#output-log", RichLog)
                 for line in text.splitlines() or [text]:
@@ -161,6 +164,10 @@ def _make_persistent_child_app_class():
                         self._setup_form(form, title, submit_flag, raw_layout)
                         self._submitted.clear()
                         self.call_from_thread(self._refresh)
+                        if redirected_text:
+                            # after_refresh: the RichLog must be laid out (sized) first,
+                            # otherwise a write during startup is stored but never painted.
+                            self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
                         self._submitted.wait()
                         _send_msg(self.write_fd, self._result)
                         if self._result[0] == TuiCommand.CANCEL:
@@ -174,6 +181,8 @@ def _make_persistent_child_app_class():
                         self.submit = False
                         self._submitted.clear()
                         self.call_from_thread(self._refresh, timeout)
+                        if redirected_text:
+                            self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
                         self._submitted.wait()
                         _send_msg(self.write_fd, self._result)
                         if self._result[0] == TuiCommand.CANCEL:

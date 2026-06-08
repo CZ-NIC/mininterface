@@ -198,8 +198,12 @@ class SubprocessAdaptorBase(BackendAdaptor):
     # ------------------------------------------------------------------
 
     def _get_redirected(self) -> str:
-        """Drain the parent stdout buffer. Override to change streaming behaviour."""
-        return ""
+        """Drain the parent's pending stdout buffer (e.g. text printed before the
+        first dialog) so it can be shown in the next dialog."""
+        try:
+            return self.interface._redirected.join()
+        except AttributeError:
+            return ""
 
     # ------------------------------------------------------------------
     # Callback handling

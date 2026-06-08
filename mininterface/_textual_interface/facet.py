@@ -47,11 +47,11 @@ class TextualFacet(Facet):
                 case Path():
                     size = naturalsize(el.stat().st_size)
                     mtime = datetime.fromtimestamp(el.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-                    append(Label(f"{el} / {size} / {mtime}"))
+                    append(Label(f"{el} / {size} / {mtime}", markup=False))
                 case str():
-                    append(Label(el))
+                    append(Label(el, markup=False))
                 case _:
-                    append(Label("Error in the layout: Unknown {el}"))
+                    append(Label("Error in the layout: Unknown {el}", markup=False))
 
     def submit(self, *args, **kwargs):
         super().submit(*args, **kwargs)

@@ -35,7 +35,7 @@ class ButtonContents(Center):
         if self.show_footer:
             yield Footer()
         yield from self.adaptor.layout_elements
-        yield (Label(self.text, id="question"))
+        yield (Label(self.text, id="question", markup=False))
         with Container(id="button-container"):
             for button, focused in self._buttons:
                 if focused:

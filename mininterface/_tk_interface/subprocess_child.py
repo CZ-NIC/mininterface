@@ -61,6 +61,9 @@ def _make_child_adaptor_class():
             self._button_mode = False
             self._always_shown = False
             self.protocol("WM_DELETE_WINDOW", self._on_close)
+            # Read-only output: disabled state blocks editing but still allows
+            # mouse selection + copy (Ctrl+C). Toggled to "normal" only for writes.
+            self.text_widget.configure(state="disabled")
             self.withdraw()  # stay hidden until the first form arrives
 
         # -------------------------------------------------------------- lifecycle
@@ -87,11 +90,13 @@ def _make_child_adaptor_class():
                     # side="bottom" keeps the output area below the form regardless
                     # of packing order (e.g. when history arrives before the form).
                     w.pack(side="bottom", expand=True, fill="both")
+                w.configure(state="normal")  # temporarily writable for the insert
                 w.insert(END, text)
                 w.see(END)
                 lines = int(w.index("end-1c").split(".")[0])
                 if lines > 1000:
                     w.delete(1.0, f"{lines - 1000}.0")
+                w.configure(state="disabled")  # back to read-only
                 self.update_idletasks()
             except Exception:
                 pass

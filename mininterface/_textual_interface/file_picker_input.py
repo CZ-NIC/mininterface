@@ -142,7 +142,7 @@ class FileBrowser(Vertical):
         nav_container = Horizontal(id="nav_buttons")
         yield nav_container
 
-        self._header = Static(f"📂 {self._start_path}", id="tree_header")
+        self._header = Static(f"📂 {self._start_path}", id="tree_header", markup=False)
         yield self._header
 
         self._tree = Tree("")
@@ -153,7 +153,7 @@ class FileBrowser(Vertical):
             self._tree.root.add(f"⚠️ Error: {str(e)}")
         yield self._tree
 
-        self._status = Static("", id="status_bar")
+        self._status = Static("", id="status_bar", markup=False)
         self._update_status()
         yield self._status
 

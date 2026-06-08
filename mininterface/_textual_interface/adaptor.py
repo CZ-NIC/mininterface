@@ -97,7 +97,7 @@ class TextualAdaptor(BackendAdaptor):
     def header(self, text: str):
         """Generates a section header"""
         if text:
-            return [Rule(), Label(f" === {text} ===")]
+            return [Rule(), Label(f" === {text} ===", markup=False)]
         else:
             return []
 

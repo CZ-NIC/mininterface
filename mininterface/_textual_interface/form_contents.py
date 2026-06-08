@@ -55,16 +55,16 @@ class FormContents(Static):
             yield from self.adaptor.layout_elements
             for i, fieldt in enumerate(self.widgets):
                 if isinstance(fieldt, Input):
-                    yield Label(fieldt.placeholder)
+                    yield Label(fieldt.placeholder, markup=False)
                 # NOTE MyRadioSet not shown now: add name in widgetize and display here
                 # NOTE: has this something to do with the PathTag?
                 elif hasattr(fieldt, "tag") and fieldt.tag.label and not isinstance(fieldt, Input):
-                    yield Label(fieldt.tag.label)
+                    yield Label(fieldt.tag.label, markup=False)
                 yield fieldt
                 if isinstance(fieldt, TagWidget) and (arb := fieldt._arbitrary):
                     yield arb
                 if isinstance(fieldt, TagWidget) and (desc := fieldt.tag.description):
-                    yield Label(desc)
+                    yield Label(desc, markup=False)
                 yield Label("")
         self.focusable_.clear()
         self.focusable_.extend(w for w in self.widgets if isinstance(w, (Input, TagWidget)))
