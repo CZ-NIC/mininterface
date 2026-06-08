@@ -27,5 +27,7 @@ jobs:
           # dev-dependencies from pyproject.toml
           pip install attrs
           pip install pydantic
+      - name: Install xvfb
+        run: sudo apt-get install -y xvfb
       - name: Run tests
-        run: python3 -m unittest discover -s tests -p "test_*.py"
+        run: xvfb-run -a python3 -m unittest discover -s tests -p "test_*.py"
