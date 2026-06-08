@@ -107,3 +107,41 @@ class _OnChangeProxy:
                 # OUTPUT can arrive here if print() was called inside the on_change callback.
                 if _append_output is not None:
                     _append_output(args[0])
+
+
+def _ipc_worker_loop(read_fd: int, write_fd: int, handlers: dict) -> None:
+    """Generic IPC worker loop for child processes.
+
+    Reads commands from parent, dispatches to handlers, sends results back.
+    Handlers are responsible for scheduling work on the UI thread and waiting
+    for user interaction (_submitted event).
+
+    Args:
+        read_fd: pipe fd to read commands from
+        write_fd: pipe fd to send results to
+        handlers: dict with keys 'OUTPUT', 'FORM', 'BUTTONS', 'on_eof'
+            Each handler is called with the parsed args from the message.
+    """
+    while True:
+        msg = read_msg(read_fd)
+        if msg is None:
+            handlers['on_eof']()
+            return
+
+        command, *args = msg
+
+        if command == TuiCommand.SHUTDOWN:
+            handlers['on_eof']()
+            return
+
+        if command == TuiCommand.OUTPUT:
+            handlers['OUTPUT'](args[0])
+            continue
+
+        try:
+            if command == TuiCommand.FORM:
+                handlers['FORM'](write_fd, *args)
+            elif command == TuiCommand.BUTTONS:
+                handlers['BUTTONS'](write_fd, *args)
+        except Exception:
+            send_msg(write_fd, (TuiCommand.CANCEL,))

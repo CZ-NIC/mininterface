@@ -179,9 +179,7 @@ def _make_child_adaptor_class():
                 self._button_mode = False
                 for t in flatten(form):
                     t._facet = self.facet
-                self.facet._fetch_from_adaptor(form)
-                if self.settings.mnemonic is not False:
-                    self._determine_mnemonic(form, self.settings.mnemonic is True)
+                self._setup_form_facet(form)
                 if redirected_text:
                     self._write_output(redirected_text)
                 self._build_form(form, title, submit_flag)
@@ -215,54 +213,41 @@ def _make_child_adaptor_class():
 
         # -------------------------------------------------------------- IPC worker (background thread)
 
+        def _handle_form(self, write_fd, form, title, submit_flag, redirected_text, raw_layout, *rest):
+            always_shown = rest[0] if rest else False
+            program_title = rest[1] if len(rest) > 1 else None
+            self._submitted.clear()
+            self.after(0, self._show_form, form, title, submit_flag,
+                       raw_layout, redirected_text, always_shown, program_title)
+            self._submitted.wait()
+            send_msg(write_fd, self._ipc_result)
+            if self._ipc_result[0] == TuiCommand.CANCEL:
+                self.after(0, self.destroy)
+                return
+            self.after(0, self._after_submit)
+
+        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text, *rest):
+            always_shown = rest[0] if rest else False
+            program_title = rest[1] if len(rest) > 1 else None
+            self._submitted.clear()
+            self.after(0, self._show_buttons, text, buttons_list,
+                       focused, timeout, redirected_text, always_shown, program_title)
+            self._submitted.wait()
+            send_msg(write_fd, self._ipc_result)
+            if self._ipc_result[0] == TuiCommand.CANCEL:
+                self.after(0, self.destroy)
+                return
+            self.after(0, self._after_submit)
+
         def _ipc_worker(self):
-            while True:
-                msg = read_msg(self.read_fd)
-                if msg is None:
-                    self.after(0, self.destroy)
-                    return
-
-                command, *args = msg
-
-                if command == TuiCommand.SHUTDOWN:
-                    self.after(0, self.destroy)
-                    return
-
-                if command == TuiCommand.OUTPUT:
-                    self.after(0, self._append_line, args[0])
-                    continue
-
-                try:
-                    if command == TuiCommand.FORM:
-                        form, title, submit_flag, redirected_text, raw_layout, *rest = args
-                        always_shown = rest[0] if rest else False
-                        program_title = rest[1] if len(rest) > 1 else None
-                        self._submitted.clear()
-                        self.after(0, self._show_form, form, title, submit_flag,
-                                   raw_layout, redirected_text, always_shown, program_title)
-                        self._submitted.wait()
-                        send_msg(self.write_fd, self._ipc_result)
-                        if self._ipc_result[0] == TuiCommand.CANCEL:
-                            self.after(0, self.destroy)
-                            return
-                        self.after(0, self._after_submit)
-
-                    elif command == TuiCommand.BUTTONS:
-                        text, buttons_list, focused, timeout, redirected_text, *rest = args
-                        always_shown = rest[0] if rest else False
-                        program_title = rest[1] if len(rest) > 1 else None
-                        self._submitted.clear()
-                        self.after(0, self._show_buttons, text, buttons_list,
-                                   focused, timeout, redirected_text, always_shown, program_title)
-                        self._submitted.wait()
-                        send_msg(self.write_fd, self._ipc_result)
-                        if self._ipc_result[0] == TuiCommand.CANCEL:
-                            self.after(0, self.destroy)
-                            return
-                        self.after(0, self._after_submit)
-
-                except Exception:
-                    send_msg(self.write_fd, (TuiCommand.CANCEL,))
+            from .._lib.subprocess_child_base import _ipc_worker_loop
+            handlers = {
+                'OUTPUT': lambda text: self.after(0, self._append_line, text),
+                'FORM': self._handle_form,
+                'BUTTONS': self._handle_buttons,
+                'on_eof': lambda: self.after(0, self.destroy),
+            }
+            _ipc_worker_loop(self.read_fd, self.write_fd, handlers)
 
     return _ChildTkAdaptor
 

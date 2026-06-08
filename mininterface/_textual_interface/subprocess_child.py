@@ -141,66 +141,51 @@ def _make_persistent_child_app_class():
             except RuntimeError:
                 pass
 
+        def _handle_form(self, write_fd, form, title, submit_flag, redirected_text, raw_layout, *_):
+            self._setup_form(form, title, submit_flag, raw_layout)
+            self._submitted.clear()
+            self.call_from_thread(self._refresh)
+            if redirected_text:
+                # after_refresh: the RichLog must be laid out (sized) first,
+                # otherwise a write during startup is stored but never painted.
+                self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            self._submitted.wait()
+            _send_msg(write_fd, self._result)
+            if self._result[0] == TuiCommand.CANCEL:
+                self._safe_exit()
+                return
+            self.call_from_thread(self._clear_form)
+
+        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text, *_):
+            self.adaptor._build_buttons(text, buttons_list, focused)
+            self.submit = False
+            self._submitted.clear()
+            self.call_from_thread(self._refresh, timeout)
+            if redirected_text:
+                self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            self._submitted.wait()
+            _send_msg(write_fd, self._result)
+            if self._result[0] == TuiCommand.CANCEL:
+                self._safe_exit()
+                return
+            self.call_from_thread(self._clear_form)
+
         def _ipc_worker(self):
-            while True:
-                msg = _read_msg(self.read_fd)
-                if msg is None:
-                    self._safe_exit()
-                    return
-
-                command, *args = msg
-
-                if command == TuiCommand.SHUTDOWN:
-                    self._safe_exit()
-                    return
-
-                if command == TuiCommand.OUTPUT:
-                    self.call_from_thread(self._append_output, args[0])
-                    continue
-
-                try:
-                    if command == TuiCommand.FORM:
-                        form, title, submit_flag, redirected_text, raw_layout, *_ = args
-                        self._setup_form(form, title, submit_flag, raw_layout)
-                        self._submitted.clear()
-                        self.call_from_thread(self._refresh)
-                        if redirected_text:
-                            # after_refresh: the RichLog must be laid out (sized) first,
-                            # otherwise a write during startup is stored but never painted.
-                            self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
-                        self._submitted.wait()
-                        _send_msg(self.write_fd, self._result)
-                        if self._result[0] == TuiCommand.CANCEL:
-                            self._safe_exit()
-                            return
-                        self.call_from_thread(self._clear_form)
-
-                    elif command == TuiCommand.BUTTONS:
-                        text, buttons_list, focused, timeout, redirected_text, *_ = args
-                        self.adaptor._build_buttons(text, buttons_list, focused)
-                        self.submit = False
-                        self._submitted.clear()
-                        self.call_from_thread(self._refresh, timeout)
-                        if redirected_text:
-                            self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
-                        self._submitted.wait()
-                        _send_msg(self.write_fd, self._result)
-                        if self._result[0] == TuiCommand.CANCEL:
-                            self._safe_exit()
-                            return
-                        self.call_from_thread(self._clear_form)
-
-                except Exception:
-                    _send_msg(self.write_fd, (TuiCommand.CANCEL,))
+            from .._lib.subprocess_child_base import _ipc_worker_loop
+            handlers = {
+                'OUTPUT': lambda text: self.call_from_thread(self._append_output, text),
+                'FORM': self._handle_form,
+                'BUTTONS': self._handle_buttons,
+                'on_eof': self._safe_exit,
+            }
+            _ipc_worker_loop(self.read_fd, self.write_fd, handlers)
 
         def _setup_form(self, form, title, submit_flag, raw_layout):
             for t in flatten(form):
                 t._facet = self.adaptor.facet
             self.adaptor.button_app = False
-            self.adaptor.facet._fetch_from_adaptor(form)
             self.adaptor.facet._title = title
-            if self.adaptor.settings.mnemonic is not False:
-                self.adaptor._determine_mnemonic(form, self.adaptor.settings.mnemonic is True)
+            self.adaptor._setup_form_facet(form)
             self.adaptor.layout_elements.clear()
             if raw_layout:
                 self.adaptor.facet._layout(raw_layout)

@@ -42,15 +42,19 @@ class BackendAdaptor(ABC):
         """Wrap Tag to a UI widget."""
         pass
 
-    @abstractmethod
-    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
-        """Let the user edit the dict values.
-
-        Setups the facet._fetch_from_adaptor.
-        """
+    def _setup_form_facet(self, form: TagDict) -> None:
+        """Setup form facet: fetch from adaptor, determine mnemonics."""
         self.facet._fetch_from_adaptor(form)
         if self.settings.mnemonic is not False:
             self._determine_mnemonic(form, self.settings.mnemonic is True)
+
+    @abstractmethod
+    def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> None:
+        """Setup form facet (base implementation).
+
+        Subclasses override this to implement the full dialog logic and return form.
+        """
+        self._setup_form_facet(form)
 
     def _determine_mnemonic(self, form: TagDict, also_nones=False):
         """also_nones – Also determine those tags when Tag.mnemonic=None."""
