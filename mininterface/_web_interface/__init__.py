@@ -24,7 +24,7 @@ import sys
 import time
 import webbrowser
 
-from .._textual_interface import TextualInterface
+from .._textual_interface.interface import TextualInterface
 from .._textual_interface.subprocess_adaptor import TextualSubprocessAdaptor
 
 _DEFAULT_PORT = 64646

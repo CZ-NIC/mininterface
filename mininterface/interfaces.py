@@ -41,9 +41,9 @@ def __getattr__(name):
 
         # real interfaces
         case "TkInterface":
-            return _load(name, ".._tk_interface", "TkInterface")
+            return _load(name, ".._tk_interface.interface", "TkInterface")
         case "TextualInterface":
-            return _load(name, ".._textual_interface", "TextualInterface")
+            return _load(name, ".._textual_interface.interface", "TextualInterface")
         case "TextInterface":
             return _load(name, ".._text_interface", "TextInterface")
         case "WebInterface":

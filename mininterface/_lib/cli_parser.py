@@ -16,10 +16,10 @@ from ..cli import Command
 from ..settings import CliSettings
 
 from ..exceptions import Cancelled
+from .auxiliary import flatten
 from .auxiliary import (
     get_or_create_parent_dict,
     remove_empty_dicts,
-    flatten,
 )
 from .dataclass_creation import (
     _unwrap_annotated,
@@ -63,23 +63,6 @@ except ImportError:
     from ..exceptions import DependencyRequired
 
     raise DependencyRequired("basic")
-
-
-def assure_args(args: Optional[Sequence[str]] = None):
-    if args is None:
-        # Set env to determine whether to use sys.argv.
-        # Why settings env? Prevent tyro using sys.argv if we are in an interactive shell like Jupyter,
-        # as sys.argv is non-related there.
-        try:
-            # Note wherease `"get_ipython" in globals()` returns True in Jupyter, it is still False
-            # in a script a Jupyter cell runs. Hence we must put here this lengthty statement.
-            global get_ipython
-            get_ipython()
-        except:
-            args = sys.argv[1:]  # Fetch from the CLI
-        else:
-            args = []
-    return args
 
 
 def _subcommands_default_appliable(kwargs, _crawling):

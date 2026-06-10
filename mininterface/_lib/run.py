@@ -12,18 +12,17 @@ from ..interfaces import get_interface
 from ..settings import CliSettings, MininterfaceSettings, UiSettings
 from .form_dict import EnvClass
 
-try:
-    from ..cli import Command, SubcommandPlaceholder
-    from .argparse_support import parser_to_dataclass
-    from .cli_flags import CliFlags as _CliFlags
-    from .cli_parser import assure_args, parse_cli
-    from .config_file import parse_config_file, ensure_settings_inheritance
-    from .dataclass_creation import choose_subcommand, to_kebab_case
-    from .start import Start
-except DependencyRequired as e:
-    assure_args, parse_cli, parse_config_file, ensure_settings_inheritance, parser_to_dataclass = (e,) * 5
-    Start, SubcommandPlaceholder = (e,) * 2
-    to_kebab_case, choose_subcommand, _CliFlags = (e,) * 3
+
+def _assure_args(args: Optional[Sequence[str]]) -> Sequence[str]:
+    """Return CLI args, substituting empty list when running inside Jupyter."""
+    if args is None:
+        try:
+            global get_ipython
+            get_ipython()
+            return []
+        except:
+            return sys.argv[1:]
+    return args
 
 
 def run(
@@ -241,14 +240,10 @@ def run(
     if not add_help:
         kwargs["add_help"] = False
 
-    # Assure args
-    if isinstance(assure_args, DependencyRequired) and not env_or_list:
-        # Basic dependencies missing, we have no CLI capacities
-        # Since the user needs no CLI, we return a bare interface.
-        return get_interface(interface, title)
-    args = assure_args(args)
+    # Assure args (stdlib only)
+    args = _assure_args(args)
 
-    # Prepare the config file
+    # Prepare the config file path (stdlib only)
     if cf := environ.get("MININTERFACE_CONFIG"):
         config_file = cf
     if add_config and "--config" in args:
@@ -271,47 +266,73 @@ def run(
             # when invoking raw python interpreter in CLI: PosixPath('.') has an empty name
             config_file = None
         else:
-            if cf.exists():
-                config_file = cf
+            config_file = cf if cf.exists() else None
+    _config_file: Path | None
     if isinstance(config_file, bool):
-        config_file = None
+        _config_file = None
     elif isinstance(config_file, str):
-        config_file = Path(config_file)
+        _config_file = Path(config_file)
+    else:
+        _config_file = config_file  # already Path | None at this point
 
-    # Determine title
+    # Determine title and interface (environ, stdlib)
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
     if not interface:
         interface = environ.get("MININTERFACE_INTERFACE")
     if environ.get("MININTERFACE_ENFORCED_WEB"):
         interface = "web"
 
-    # Hidden meta-commands in args
-    if environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
-        del environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
-        Start(title, interface).integrate(env_or_list or _Empty)
-        quit()
-
-    # Convert argparse
-    if isinstance(env_or_list, ArgumentParser):
-        env_or_list, add_version = parser_to_dataclass(env_or_list)
-
-    # Parse config file
-    kwargs, settings_conf = parse_config_file(env_or_list or _Empty, config_file, **kwargs)
-
-    # Ensure settings inheritance
+    # Normalize user-provided settings (no tyro needed)
     if isinstance(settings, CliSettings):
         settings = MininterfaceSettings(cli=settings)
     elif isinstance(settings, UiSettings):
         # Ex. `settings=GuiSettings(...)` -> `settings=MininterfaceSettings(gui=GuiSettings(...)`
         attr_name = settings.__class__.__name__.removesuffix("Settings").lower()
         settings = MininterfaceSettings(**{attr_name: settings})
-    if settings or settings_conf:
-        # previous settings are used to complement the 'mininterface' config file section
-        settings = ensure_settings_inheritance(settings, settings_conf or {})
+
+    # Load yaml settings early (yaml only, no tyro) so get_interface can be called sooner.
+    # The child subprocess will start while the parent loads tyro below.
+    raw_config = None
+    settings_conf = None
+    if _config_file:
+        from .config_file import load_settings_from_config, ensure_settings_inheritance
+        raw_config, settings_conf = load_settings_from_config(_config_file)
+        if settings or settings_conf:
+            settings = ensure_settings_inheritance(settings, settings_conf or {})
+
+    # Hidden meta-commands in args (rare; needs Start which needs tyro)
+    if environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
+        from .start import Start
+        del environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
+        Start(title, interface).integrate(env_or_list or _Empty)
+        quit()
+
+    # Convert argparse (rare)
+    if isinstance(env_or_list, ArgumentParser):
+        from .argparse_support import parser_to_dataclass
+        env_or_list, add_version = parser_to_dataclass(env_or_list)
+
+    # Choose an interface — spawns the child subprocess.
+    # Heavy deps (tyro etc.) load below while the child initialises in parallel.
+    m = get_interface(interface, title, settings)
+
+    # Load heavy CLI deps lazily
+    try:
+        from ..cli import SubcommandPlaceholder
+        from .cli_flags import CliFlags as _CliFlags
+        from .cli_parser import parse_cli
+        from .config_file import parse_config_file
+        from .dataclass_creation import choose_subcommand, to_kebab_case
+        from .start import Start  # noqa: F811 — may already be imported above
+    except DependencyRequired:
+        if env_or_list:
+            raise
+        return m
+
     cliset = settings.cli if settings else CliSettings()
 
-    # Choose an interface
-    m = get_interface(interface, title, settings)
+    # Parse config defaults (reuse pre-loaded yaml dict to avoid a second file read)
+    kwargs = parse_config_file(env_or_list or _Empty, raw_config, _config_file, **kwargs)
 
     # Resolve SubcommandPlaceholder
     if (
@@ -345,7 +366,8 @@ def run(
     return m
 
 
-def _ensure_command_run(m: "Miniterface"):
+def _ensure_command_run(m: "Mininterface"):
+    from ..cli import Command
     env = m.env
     if isinstance(env, Command):
         while True:

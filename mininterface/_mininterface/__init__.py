@@ -4,22 +4,19 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Literal, Optional, Type, TypeVar, overload
 
-from .._lib.form_dict import DataClass, EnvClass, FormDict, dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
+from .._lib.form_types import DataClass, EnvClass
 from ..exceptions import DependencyRequired
 from ..facet import Facet
 from ..settings import UiSettings
 from ..tag.select_tag import OptionsType, SelectTag
 from ..tag.tag import Tag, TagValue, ValidationCallback
-from ..tag.tag_factory import assure_tag
 from .adaptor import BackendAdaptor, MinAdaptor
 
-try:
-    from .._lib.cli_parser import parse_cli
-except DependencyRequired as e:
-    parse_cli = e
-
-if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
+if TYPE_CHECKING:
     from typing import Self
+    from .._lib.form_dict import FormDict
+else:
+    FormDict = dict  # runtime alias; real type under TYPE_CHECKING only
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +253,7 @@ class Mininterface(Generic[EnvClass]):
         # MININTERFACE_INTERFACE=min ./_debug.py 0<&-
         # Asking: Foo
         # Output:
+        from ..tag.tag_factory import assure_tag
         return assure_tag(annotation, validation)._make_default_value()
 
     def confirm(self, text: str, default: bool = True, *, timeout: int = 0) -> bool:
@@ -553,12 +551,17 @@ class Mininterface(Generic[EnvClass]):
         adaptor: BackendAdaptor,
         submit: str | bool = True,
     ) -> FormDict | DataClass | EnvClass:
+        from .._lib.form_dict import dataclass_to_tagdict, dict_to_tagdict, tagdict_resolve
         _form = self.env if form is None else form
         if isinstance(_form, dict):
             return tagdict_resolve(
                 adaptor.run_dialog(dict_to_tagdict(_form, self), title=title, submit=submit), extract_main=True
             )
         if isinstance(_form, type):  # form is a class, not an instance
+            try:
+                from .._lib.cli_parser import parse_cli
+            except DependencyRequired as e:
+                parse_cli = e
             _form, dialog_raised = parse_cli(_form, {}, self, args=[])
             if dialog_raised:  # form has already been raised due to dataclass validation, do not re-raise
                 return _form

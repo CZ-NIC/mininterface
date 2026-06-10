@@ -17,7 +17,8 @@ except ImportError:
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
 from ..validators import not_empty
-from .auxiliary import _get_origin, get_class_description, get_description
+from .auxiliary import _get_origin
+from .docstrings import get_class_description, get_description
 from .form_dict import DataClass, EnvClass, MissingTagValue
 
 # Pydantic is not a project dependency, that is just an optional integration

@@ -5,11 +5,7 @@ from functools import lru_cache
 from types import UnionType
 from typing import (
     Any,
-    Annotated,
-    Callable,
     Iterable,
-    Optional,
-    TypeVar,
     Union,
     Literal,
     get_args,
@@ -18,50 +14,10 @@ from typing import (
 )
 
 from annotated_types import Ge, Gt, Le, Len, Lt, MultipleOf
+from .dict_utils import T, KT, common_iterables, flatten
 
 logger = logging.getLogger(__name__)
 
-try:
-    import tyro
-    from tyro._docstrings import get_field_docstring as _tyro_get_field_docstring
-    from tyro._docstrings import get_callable_description as _tyro_get_callable_description
-
-    _tyro_docstrings_available = True
-except ImportError:
-    tyro = None
-    _tyro_docstrings_available = False
-    _tyro_get_callable_description = None
-
-try:
-    from humanize import naturalsize as naturalsize_
-except ImportError:
-    naturalsize_ = None
-
-T = TypeVar("T")
-KT = str
-common_iterables = list, tuple, set
-""" collections, and not a str """
-
-
-def flatten(d: dict[str, T | dict], include_keys: Optional[Callable[[str], list]] = None) -> Iterable[T]:
-    """Recursively traverse whole dict"""
-    for k, v in d.items():
-        if isinstance(v, dict):
-            if include_keys:
-                yield from include_keys(k)
-            yield from flatten(v)
-        else:
-            yield v
-
-
-# NOTE: Not used.
-def flatten_keys(d: dict[KT, T | dict]) -> Iterable[tuple[KT, T]]:
-    """Recursively traverse whole dict"""
-    for k, v in d.items():
-        if isinstance(v, dict):
-            yield from flatten_keys(v)
-        else:
-            yield k, v
 
 
 def guess_type(val: T) -> type[T]:
@@ -84,72 +40,6 @@ def get_terminal_size():
         return height, width
     except (OSError, ValueError):
         return 0, 0
-
-
-def get_class_description(obj) -> str:
-    if _tyro_get_callable_description:
-        return _tyro_get_callable_description(obj)
-    return ""
-
-@lru_cache
-def _get_descriptions_from_docstring(obj) -> dict[str, str]:
-    """Extract field descriptions for all fields of a class.
-
-    Uses tyro's internal helptext extraction (tyro._docstrings.get_field_docstring),
-    which supports the same sources and precedence as tyro's own CLI generation:
-      1. tyro.conf.arg(help=...)
-      2. PEP 727 Doc
-      3. Docstrings (attribute docstrings or class docstring params)
-      4. Comments (inline or preceding)
-
-    We used to rely on tyro.extras.get_parser(), but that was marked deprecated,
-    so we call tyro's internal API directly instead.
-    """
-    if not _tyro_docstrings_available:
-        return {}
-
-    result = {}
-
-    # Highest priority: tyro.conf.arg(help=...) in Annotated metadata.
-    try:
-        hints = get_type_hints(obj, include_extras=True)
-        ArgConfig = tyro.conf._confstruct._ArgConfig
-        for field_name, hint in hints.items():
-            if get_origin(hint) is Annotated:
-                for meta in hint.__metadata__:
-                    if isinstance(meta, ArgConfig) and meta.help:
-                        result[field_name] = meta.help
-    except Exception:
-        hints = {}
-
-    # Mid priority: docstrings and comments via tyro's own extraction.
-    for field_name in hints:
-        doc = _tyro_get_field_docstring(obj, field_name, ())
-        if doc:
-            result.setdefault(field_name, doc)
-
-    # Lowest priority: field.metadata["help"] from dynamically generated
-    # dataclasses (e.g. built from ArgumentParser via make_dataclass).
-    try:
-        for f in fields(obj):  # type: ignore
-            if help_text := f.metadata.get("help"):
-                result.setdefault(f.name, help_text)
-    except TypeError:
-        pass
-
-    return result
-
-
-def get_description(obj, param: str) -> str:
-    desc = _get_descriptions_from_docstring(obj).get(param, "")
-    if desc and desc.replace("-", "_") != param:
-        return desc
-
-    # We are missing mininterface[basic] requirement. Tyro is missing.
-    # Without tyro, we are not able to evaluate the class: m.form(Env),
-    # we can still evaluate its instance: m.form(Env()).
-    # However, without descriptions.
-    return ""
 
 
 def yield_annotations(dataclass):
@@ -349,9 +239,11 @@ def dict_diff(a: dict, b: dict) -> dict:
 
 def naturalsize(value: float | str, *args) -> str:
     """For a bare interface, humanize might not be installed."""
-    if naturalsize_:
-        return naturalsize_(value, *args)
-    return str(value)
+    try:
+        from humanize import naturalsize as _naturalsize
+        return _naturalsize(value, *args)
+    except ImportError:
+        return str(value)
 
 
 def validate_annotated_type(meta, value) -> bool:

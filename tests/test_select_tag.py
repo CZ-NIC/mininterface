@@ -1,8 +1,10 @@
+from mininterface import Mininterface
 from mininterface._lib.run import run
 from mininterface._lib.form_dict import dataclass_to_tagdict
 from mininterface.tag import SelectTag, Tag
+from mininterface.tag.alias import Options
 from mininterface.tag.tag_factory import tag_assure_type
-from configs import ColorEnum, ComplexSelectTag, ConstrainedEnv
+from configs import ColorEnum, ComplexSelectTag, ConstrainedEnv, OptionsEnv
 from shared import TestAbstract, runm
 
 
@@ -226,3 +228,47 @@ class TestSelectTag(TestAbstract):
 
         t.options = [Tag(1, label="A")]
         self.assertDictEqual({"A": 1}, t._build_options())
+
+    def test_options_alias(self):
+        # Options("one", "two") is an alias for SelectTag(options=("one", "two"))
+        t = Options("one", "two")
+        self.assertIsInstance(t, SelectTag)
+        self.assertEqual(("one", "two"), t.options)
+        t.update("two")
+        self.assertEqual("two", t.val)
+        t.update("three")
+        self.assertEqual("two", t.val)  # rejected
+
+        # Works identically to SelectTag(options=...) in a dataclass
+        m = run(OptionsEnv, interface=Mininterface)
+        d = dataclass_to_tagdict(m.env)[""]
+        self.assertIsInstance(d["foo"], SelectTag)
+        self.assertEqual(("one", "two"), d["foo"].options)
+        self.assertFalse(d["foo"].update("three"))
+        self.assertTrue(d["foo"].update("two"))
+
+    def test_enum_custom_payload(self):
+        # Enum with @property value override – documented in Supported-types.md
+        from enum import Enum
+
+        class Color(Enum):
+            RED = "#ff0000"
+            GREEN = "#00ff00"
+
+            def __init__(self, payload):
+                self.payload = payload
+
+            @property
+            def value(self):
+                return self.name.lower()
+
+        t = SelectTag(Color.RED, options=Color)
+        self.assertEqual(Color.RED, t.val)
+        self.assertEqual("red", t._get_ui_val())
+        self.assertEqual("#ff0000", t.val.payload)
+
+        opts = t._build_options()
+        self.assertIn("red", opts)
+        self.assertIn("green", opts)
+        self.assertEqual(Color.RED, opts["red"])
+        self.assertEqual(Color.GREEN, opts["green"])

@@ -33,7 +33,7 @@ from .widgets import (
 )
 
 if TYPE_CHECKING:
-    from . import TextualInterface
+    from .interface import TextualInterface
 
 
 class TextualAdaptor(BackendAdaptor):

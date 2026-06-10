@@ -6,12 +6,14 @@ from typing import TYPE_CHECKING, Callable, Optional
 from .._lib.auxiliary import flatten
 from ..exceptions import Cancelled, ValidationFail
 from ..facet import Facet
-from .._lib.form_dict import TagDict
 from ..settings import UiSettings
 from ..tag.tag import Tag, ValsType
 
 if TYPE_CHECKING:
     from . import Mininterface
+    from .._lib.form_dict import TagDict
+else:
+    TagDict = dict  # runtime alias; real type under TYPE_CHECKING only
 
 
 class BackendAdaptor(ABC):

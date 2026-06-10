@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 from warnings import warn
 
-
 from .._lib.redirectable import Redirectable
-
-
-from .._lib.form_dict import EnvClass, TagDict
+from .._lib.form_types import EnvClass
 
 if TYPE_CHECKING:
     from .._mininterface.adaptor import BackendAdaptor
     from typing import Self  # remove the line as of Python3.11 and make `"Self" -> Self`
+    from .._lib.form_dict import TagDict
 
 
 @dataclass

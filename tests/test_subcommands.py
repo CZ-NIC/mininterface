@@ -13,7 +13,7 @@ from shared import MISSING, TestAbstract, runm
 from tyro.conf import OmitSubcommandPrefixes, Positional
 
 from mininterface import Tag
-from mininterface._lib.auxiliary import get_description
+from mininterface._lib.docstrings import get_description
 from mininterface._lib.dataclass_creation import to_kebab_case
 from mininterface._lib.form_dict import MissingTagValue
 from mininterface.cli import Command, SubcommandPlaceholder

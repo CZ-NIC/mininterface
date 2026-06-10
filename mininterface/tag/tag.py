@@ -22,9 +22,9 @@ from warnings import warn
 from annotated_types import BaseMetadata, GroupedMetadata
 
 from .._lib.auxiliary import (
-    allows_none,
     common_iterables,
     flatten,
+    allows_none,
     guess_type,
     matches_annotation,
     serialize_structure,
@@ -45,20 +45,10 @@ else:
     # as Tag is not a frozen object, you cannot use it as an annotation)
     Facet = object
 
-# Pydantic is not a project dependency, that is just an optional integration
-try:  # Pydantic is not a dependency but integration
-    from pydantic import ValidationError as PydanticValidationError
-    from pydantic import create_model
-
-    pydantic = True
-except ImportError:
-    pydantic = False
-    PydanticValidationError = None
-    create_model = None
-try:  # Attrs is not a dependency but integration
-    import attr
-except ImportError:
-    attr = None
+# Pydantic and attr are optional integrations
+from importlib.util import find_spec as _find_spec
+pydantic = _find_spec("pydantic") is not None
+attr = _find_spec("attr") is not None  # True = available; used as guard before lazy import
 
 
 TD = TypeVar("TD")
@@ -428,8 +418,9 @@ class Tag(Generic[TagValue]):
                 self._pydantic_field: dict | None = getattr(self._src_class, "model_fields", {}).get(self._src_key)
             if attr:  # Attrs integration
                 try:
-                    self._attrs_field: dict | None = attr.fields_dict(self._src_class).get(self._src_key)
-                except attr.exceptions.NotAnAttrsClassError:
+                    import attr as _attr_mod
+                    self._attrs_field: dict | None = _attr_mod.fields_dict(self._src_class).get(self._src_key)
+                except Exception:
                     pass
         if not self.annotation and self.val is not None:
             if isinstance(self.val, Enum) or (isinstance(self.val, type) and issubclass(self.val, Enum)):
@@ -844,13 +835,15 @@ class Tag(Generic[TagValue]):
         # pydantic_check
         if self._pydantic_field:
             try:
+                from pydantic import ValidationError as PydanticValidationError, create_model
                 create_model("ValidationModel", check=(self.annotation, self._pydantic_field))(check=out_value)
             except PydanticValidationError as e:
                 raise ValueError(e.errors()[0]["msg"])
         # attrs check
         if self._attrs_field:
             try:
-                attr.make_class("ValidationModel", {"check": attr.ib(validator=self._attrs_field.validator)})(
+                import attr as _attr_mod
+                _attr_mod.make_class("ValidationModel", {"check": _attr_mod.ib(validator=self._attrs_field.validator)})(
                     check=out_value
                 )
             except ValueError as e:

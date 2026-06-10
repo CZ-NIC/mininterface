@@ -54,6 +54,13 @@ class TestInterface(TestAbstract):
 
             self.assertEqual("hello", m1.ask(""))
 
+    def test_alert(self):
+        m = run(interface=Mininterface)
+        with self.assertOutputs("Alert text Hello"):
+            m.alert("Hello")
+        with self.assertOutputs("Alert text"):
+            m.alert("")
+
     def test_ask_param(self):
         m0 = run(interface=Mininterface)
         self.assertEqual(datetime.now().date(), m0.ask("Test input", DatetimeTag(date=True)))

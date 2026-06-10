@@ -362,8 +362,7 @@ class TestRun(TestAbstract):
         )
 
         # why the for cycle? It is no change whether we put whole MininterfaceSettings or its param
-        ui_set = UiSettings(toggle_widget="f5")
-        for u in (MSOrig(ui=ui_set), ui_set):
+        for u in (MSOrig(ui=UiSettings(toggle_widget="f5")), UiSettings(toggle_widget="f5")):
             m = runm(settings=u, config_file=False)
             self.assertEqual(
                 """UiSettings(toggle_widget='f5', mnemonic=True, mnemonic_hidden=False)""", repr(m._adaptor.settings)

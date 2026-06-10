@@ -9,8 +9,10 @@ from dataclasses import fields, is_dataclass
 from types import FunctionType, MethodType, SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, Hashable, Optional, Type, TypeVar, Union, get_args, get_type_hints
 
+from .form_types import DataClass, EnvClass
 
-from .auxiliary import get_description
+
+from .docstrings import get_description
 from ..tag.tag import MissingTagValue, Tag, TagValue
 from ..tag.tag_factory import tag_assure_type, tag_factory
 
@@ -19,53 +21,35 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 
     from .. import Mininterface
 
-try:
-    import attr
-except ImportError:
-    attr = None
-try:
-    from pydantic import BaseModel
-except ImportError:
-    BaseModel = None
+# attr and pydantic are optional integrations — loaded only on first use so that
+# users relying purely on dataclasses never imports the lib.
+_attr = None
+
+def _get_attr():
+    global _attr
+    if _attr is None:
+        try:
+            import attr as _a
+            _attr = _a
+        except ImportError:
+            _attr = False
+    return _attr or None
+
+_BaseModel = None
+
+def _get_BaseModel():
+    global _BaseModel
+    if _BaseModel is None:
+        try:
+            from pydantic import BaseModel as _BM
+            _BaseModel = _BM
+        except ImportError:
+            _BaseModel = False
+    return _BaseModel or None
 
 
 logger = logging.getLogger(__name__)
 
-DataClass = TypeVar("DataClass")
-""" Any dataclass. Or a pydantic model or attrs. """
-EnvClass = TypeVar("EnvClass", bound=DataClass)
-""" Any dataclass. Its instance will be available through [Mininterface.env][mininterface.Mininterface.env] after CLI parsing. Its fields or whole class might be annotated with [tyro conf flags](https://brentyi.github.io/tyro/api/tyro/conf/).
-
-The following example turns down boolean flag conversion.
-
-```python
-from dataclasses import dataclass
-from mininterface import run
-from tyro.conf import FlagConversionOff
-
-@dataclass
-class Env:
-    my_bool: bool = False
-
-m = run(FlagConversionOff[Env])
-```
-
-```bash
-$ program.py --help
-# --my-bool {True,False}  (default: False)
-```
-
-Whereas by default, both flags are generated:
-
-```python
-m = run(Env)
-```
-
-```bash
-$ program.py --help
-# --my-bool, --no-my-bool (default: False)
-```
-"""
 FormDict = dict[Hashable, TypeVar("FormDictRecursiveValue", TagValue, Tag, "Self")]
 """ Nested dict that can have descriptions (through Tag) instead of plain values."""
 # Attention to programmers. Should we to change FormDict type, check these IDE suggestions are still the same.
@@ -192,14 +176,14 @@ def iterate_attributes(env: DataClass):
         # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
         for f in fields(env):
             yield f.name, getattr(env, f.name)
-    elif BaseModel and isinstance(env, BaseModel):
+    elif (_bm := _get_BaseModel()) and isinstance(env, _bm):
         for param, val in vars(env).items():
             yield param, val
         # NOTE private pydantic attributes might be printed to forms, because this makes test fail for nested models
         # for param, val in env.model_dump().items():
         #     yield param, val
-    elif attr and attr.has(env):
-        for f in attr.fields(env.__class__):
+    elif (_at := _get_attr()) and _at.has(env):
+        for f in _at.fields(env.__class__):
             yield f.name, getattr(env, f.name)
     else:  # might be a normal class; which is unsupported but mostly might work
         for param, val in vars(env).items():
@@ -212,14 +196,14 @@ def iterate_attributes_keys(env: DataClass):
         # Why using fields instead of vars(env)? There might be some helper parameters in the dataclasses that should not be form editable.
         for f in fields(env):
             yield f.name
-    elif BaseModel and isinstance(env, BaseModel):
+    elif (_bm := _get_BaseModel()) and isinstance(env, _bm):
         for param, val in vars(env).items():
             yield param
         # NOTE private pydantic attributes might be printed to forms, because this makes test fail for nested models
         # for param, val in env.model_dump().items():
         #     yield param, val
-    elif attr and attr.has(env):
-        for f in attr.fields(env.__class__):
+    elif (_at := _get_attr()) and _at.has(env):
+        for f in _at.fields(env.__class__):
             yield f.name
     else:  # might be a normal class; which is unsupported but mostly might work
         for param, val in vars(env).items():
