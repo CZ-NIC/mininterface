@@ -90,6 +90,9 @@ def _make_child_adaptor_class():
                     # side="bottom" keeps the output area below the form regardless
                     # of packing order (e.g. when history arrives before the form).
                     w.pack(side="bottom", expand=True, fill="both")
+                    # The text widget appearing for the first time changes the frame
+                    # dimensions — resize the window and reset scroll so the form stays visible.
+                    self.after(1, self._layout_new_dialog)
                 w.configure(state="normal")  # temporarily writable for the insert
                 w.insert(END, text)
                 w.see(END)
@@ -160,7 +163,10 @@ def _make_child_adaptor_class():
                 self.post_submit_action = None
                 tags = list(flatten(self.facet._form or {}))
                 tag_pos = next((i for i, t in enumerate(tags) if t._run_callable == pending), -1)
-                self._ipc_result = (TuiCommand.CALLBACK, "button", tag_pos)
+                # Send the current field values too: a button is a submit, so the
+                # parent validates the whole form before running the callable.
+                ui_vals = list(flatten(self.form.get()))
+                self._ipc_result = (TuiCommand.CALLBACK, "button", tag_pos, ui_vals)
             else:
                 # Collect the raw UI values; the parent validates and may resend the form.
                 ui_vals = list(flatten(self.form.get()))
@@ -186,7 +192,7 @@ def _make_child_adaptor_class():
                 if raw_layout:
                     self.facet._layout(raw_layout)
                 self.deiconify()
-                self.after(1, self._refresh_size)
+                self.after(1, self._layout_new_dialog)
             except Exception:
                 self._ipc_result = (TuiCommand.CANCEL,)
                 self._submitted.set()
@@ -202,10 +208,22 @@ def _make_child_adaptor_class():
                     self._write_output(redirected_text)
                 self._build_buttons(text, buttons_list, focused, timeout=timeout)
                 self.deiconify()
-                self.after(1, self._refresh_size)
+                self.after(1, self._layout_new_dialog)
             except Exception:
                 self._ipc_result = (TuiCommand.CANCEL,)
                 self._submitted.set()
+
+        def _layout_new_dialog(self):
+            """Resize window to content and reset scroll to top.
+
+            Called 1 ms after a new form/buttons dialog is shown.  The delay
+            lets Tk finish rendering widgets so winfo_width/height are accurate.
+            Resetting the scroll position is critical: Tk may have auto-scrolled
+            the canvas to a focused widget (e.g. the OK button at the bottom of
+            the previous form), leaving the canvas viewport offset — making the
+            new dialog appear empty/gray until the user maximises the window."""
+            self._refresh_size()
+            self.sf.scroll_to_top()
 
         def _after_submit(self):
             if not self._always_shown:

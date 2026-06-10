@@ -9,7 +9,7 @@ Run with:
 import os
 import unittest
 
-from mininterface.tag import Tag
+from mininterface.tag import Tag, SelectTag
 
 
 class TestTextual(unittest.IsolatedAsyncioTestCase):
@@ -89,6 +89,39 @@ class TestTextual(unittest.IsolatedAsyncioTestCase):
             values = [i.value for i in inputs]
             self.assertIn("Alice", values)
             self.assertIn("30", values)
+            app.exit()
+
+    async def test_bool_renders_checkbox(self):
+        """A bool field renders a Checkbox reflecting its value (not an Input)."""
+        from textual.widgets import Checkbox, Input
+        form = {"agree": Tag(True, label="agree")}
+        app = await self._open(form)
+        async with app.run_test(size=(60, 16)) as pilot:
+            await pilot.pause(0.3)
+            app._setup_form(self._safe_form, "T", True, [])
+            await app._async_refresh()
+            await pilot.pause(0.2)
+            boxes = list(app.query(Checkbox))
+            self.assertEqual(1, len(boxes))
+            self.assertTrue(boxes[0].value)
+            self.assertEqual(0, len(list(app.query(Input))))
+            app.exit()
+
+    async def test_select_renders_one_radio_per_option(self):
+        """A SelectTag with N options renders N radio buttons and keeps the value."""
+        from textual.widgets import RadioButton
+        form = {"choice": SelectTag("b", options=["a", "b", "c"], label="choice")}
+        app = await self._open(form)
+        async with app.run_test(size=(60, 16)) as pilot:
+            await pilot.pause(0.3)
+            app._setup_form(self._safe_form, "T", True, [])
+            await app._async_refresh()
+            await pilot.pause(0.2)
+            radios = list(app.query(RadioButton))
+            self.assertEqual(3, len(radios))
+            from mininterface._textual_interface.widgets import TagWidget
+            widget = next(w for w in app.widgets if isinstance(w, TagWidget))
+            self.assertEqual("b", widget.get_ui_value())
             app.exit()
 
     async def test_form_title_shown(self):

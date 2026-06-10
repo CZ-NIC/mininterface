@@ -58,13 +58,18 @@ class TkSubprocessAdaptor(SubprocessAdaptorBase):
     @staticmethod
     def _check_display():
         """Raises: InterfaceNotAvailable if no usable display is present."""
-        import tkinter
-
+        import sys
+        if sys.platform == "linux":
+            import os
+            if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+                from ..exceptions import InterfaceNotAvailable
+                raise InterfaceNotAvailable
+            return
+        import tkinter  # type: ignore[unreachable]
         try:
             root = tkinter.Tk()
         except tkinter.TclError:
             from ..exceptions import InterfaceNotAvailable
-
             raise InterfaceNotAvailable
         root.destroy()
 

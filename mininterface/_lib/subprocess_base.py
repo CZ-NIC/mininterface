@@ -5,12 +5,12 @@ The IPC protocol and pipe management are identical for all backends.
 """
 import atexit
 import copy
+import io
 import os
 import pickle
 import struct
 import subprocess
 import sys
-import warnings
 from typing import Any
 
 from .auxiliary import flatten
@@ -20,10 +20,43 @@ from ..exceptions import Cancelled
 from .._mininterface.adaptor import BackendAdaptor
 
 
-class _StrippedCallable:
-    """Picklable placeholder for a lambda/closure that cannot be serialised."""
-    def __call__(self, *_):
-        pass
+def _stripped_callback(*_):
+    """Placeholder button action sent to the child in place of a real callback.
+
+    Functions only make sense in the parent (that is where the user's program
+    and its context live), so they are never serialised.  This is a real
+    function (not a callable instance) so the child still recognises the tag as
+    a callable and renders a button; pressing it routes a CALLBACK back to the
+    parent, which runs the real callable on its own tag.
+    """
+    pass
+
+
+class _ChildSimUnpickler(pickle.Unpickler):
+    """Mimics the child's import environment.  The child is launched with
+    `python -c`, so its __main__ holds none of the parent script's globals;
+    anything pickled as a __main__ reference is unreachable there."""
+    def find_class(self, module, name):
+        if module == "__main__":
+            raise ValueError(f"__main__.{name}")
+        return super().find_class(module, name)
+
+
+def _child_can_rebuild(obj) -> bool:
+    """Whether the subprocess child could reconstruct obj from the pickle stream.
+
+    False for a lambda/closure (unpicklable) or anything defined in the parent's
+    __main__ (a custom class/enum the user wrote in their script).  Reconstruction
+    uses __new__/__setstate__, not __init__, so this has no user side effects."""
+    try:
+        data = pickle.dumps(obj)
+    except Exception:
+        return False
+    try:
+        _ChildSimUnpickler(io.BytesIO(data)).load()
+    except Exception:
+        return False
+    return True
 
 
 class SubprocessAdaptorBase(BackendAdaptor):
@@ -156,42 +189,118 @@ class SubprocessAdaptorBase(BackendAdaptor):
 
     @staticmethod
     def _safe_form(form: TagDict) -> TagDict:
-        """Return a copy of form safe to pickle.
+        """Return a copy of form safe to send to the child.
 
-        on_change callbacks are replaced with _OnChangeProxy so the child can
-        trigger them via the callback channel.  Other non-serialisable callables
-        (validator, button val) are replaced with stubs.
+        Functions belong to the parent only — they are never serialised:
+
+        * on_change → an _OnChangeProxy that round-trips to the parent,
+        * validator → dropped (the parent still validates its real tag on submit),
+        * a callable val (a button) → a _stripped_callback placeholder; the child
+          renders a button and the press routes back to the parent.
+
+        SelectTag options/values are represented purely by their string labels
+        (see _labelize_select), so the child never has to reconstruct the
+        user-defined classes (enums, dataclasses, …) those values are instances
+        of.  The parent keeps the real tags and maps labels back to real values.
         """
-        from .subprocess_child_base import _OnChangeProxy
+        from .subprocess_child_base import _OnChangeProxy, _ValidationProxy
+        from ..tag.select_tag import SelectTag
 
         form_copy = copy.deepcopy(form)
         for i, tag in enumerate(flatten(form_copy)):  # type: ignore[arg-type]
             if getattr(tag, "on_change", None) is not None:
                 tag.on_change = _OnChangeProxy(i)
 
-            val = getattr(tag, "validator", None)
-            if val is not None:
-                try:
-                    pickle.dumps(val)
-                except Exception:
-                    tag.validator = None
-                    warnings.warn(
-                        f"Tag '{tag.label}': validator callback cannot be serialised "
-                        "and will not fire in the subprocess.",
-                        stacklevel=4,
-                    )
+            # Replace every validator with a proxy that round-trips to the parent.
+            # This keeps live FocusOut/Tab validation working for __main__ validators
+            # too — the child never calls the real function, just asks the parent.
+            if getattr(tag, "validation", None) is not None:
+                tag.validation = _ValidationProxy(i)
 
-            if callable(getattr(tag, "val", None)):
-                try:
-                    pickle.dumps(tag.val)
-                except Exception:
-                    tag.val = _StrippedCallable()
-                    warnings.warn(
-                        f"Tag '{tag.label}': callable val cannot be serialised; "
-                        "button click will be a no-op in the subprocess.",
-                        stacklevel=4,
-                    )
+            if isinstance(tag, SelectTag):
+                SubprocessAdaptorBase._labelize_select(tag)
+            elif callable(getattr(tag, "val", None)):
+                # A button action: the child only needs to know it is callable.
+                # The original annotation is the function's own type (unpicklable
+                # and child-specific); clear it — val being a function is enough
+                # for the child to recognise a button.
+                tag.val = tag._original_val = _stripped_callback
+                tag.annotation = None
+            elif not _child_can_rebuild(tag.val):
+                # A custom-class value (e.g. a user object defined in __main__):
+                # the child only renders it as an editable string, and the
+                # parent's real tag rebuilds the object from that string on
+                # submit (Tag.update → annotation(ui_value)).  So send the
+                # string and drop the child-unreachable annotation.
+                tag.val = str(tag.val)
+                tag._original_val = str(tag._original_val) if tag._original_val is not None else None
+                tag._last_ui_val = None
+                if not _child_can_rebuild(tag.annotation):
+                    tag.annotation = None
         return form_copy
+
+    @staticmethod
+    def _value_to_label(tag, value):
+        """Map a SelectTag's real option value(s) to their string label(s)."""
+        options = tag._build_options()  # {label: real_value}
+        if tag.multiple:
+            seq = value if isinstance(value, (list, tuple, set)) else []
+            return [label for label, v in options.items() if v in seq]
+        return next((label for label, v in options.items() if v == value), None)
+
+    @staticmethod
+    def _labelize_select(tag) -> None:
+        """Rewrite a SelectTag so its options and value are plain string labels.
+
+        The label set is exactly what the UI shows.  This keeps the form fully
+        picklable even when the option values are user-defined objects (enum
+        members, dataclass instances, …).  The parent still holds the real tags,
+        so the label the child returns is mapped back to the real option value
+        (see _resolve_select_labels).
+        """
+        try:
+            options = tag._build_options()  # {label: real_value}
+        except Exception:
+            return
+        if not options:
+            return
+        # val and _original_val both hold the selected option value (an enum
+        # member, etc.); convert both to labels so no user class is left to
+        # serialise.  _last_ui_val is recomputed in the child, so just clear it.
+        tag.val = SubprocessAdaptorBase._value_to_label(tag, tag.val)
+        tag._original_val = SubprocessAdaptorBase._value_to_label(tag, tag._original_val)
+        tag._last_ui_val = None
+        tag.options = {label: label for label in options}
+
+    @staticmethod
+    def _resolve_select_labels(tags, ui_vals):
+        """Map labels the child returned for each SelectTag back to real values."""
+        from ..tag.select_tag import SelectTag
+        out = []
+        for tag, v in zip(tags, ui_vals):
+            out.append(tag._resolve_label(v) if isinstance(tag, SelectTag) else v)
+        return out
+
+    def _submit_pairs(self, tags, ui_vals):
+        """Build (tag, value) pairs to validate/apply on submit from the child's
+        raw ui_vals: resolve SelectTag labels and skip callable (button) tags,
+        whose real value lives in the parent and must not be overwritten by the
+        child's placeholder."""
+        ui_vals = self._resolve_select_labels(tags, ui_vals)
+        return [(tag, v) for tag, v in zip(tags, ui_vals) if not tag._is_a_callable()]
+
+    @staticmethod
+    def _labelize_updates(tags, updates):
+        """Convert (pos, real_value) FORM_UPDATE pairs to labels for SelectTags so
+        the child (which renders labels) can apply them."""
+        from ..tag.select_tag import SelectTag
+        out = []
+        for pos, val in updates:
+            tag = tags[pos] if 0 <= pos < len(tags) else None
+            if isinstance(tag, SelectTag):
+                val = SubprocessAdaptorBase._value_to_label(tag, val)
+            out.append((pos, val))
+        return out
 
     # ------------------------------------------------------------------
     # Redirected output
@@ -216,23 +325,42 @@ class SubprocessAdaptorBase(BackendAdaptor):
         tags = list(flatten(self.facet._form))  # type: ignore[arg-type]
         orig_vals = [t.val for t in tags]
 
+        if callback_type == "validate" and 0 <= tag_pos < len(tags):
+            tag = tags[tag_pos]
+            new_val = extra[0] if extra else tag.val
+            new_val = self._resolve_select_labels([tag], [new_val])[0]
+            tag.update(new_val)
+            # _validate() checks `passed is not True` — send True on success, error string on failure.
+            # Sending None on success would make `None is not True` raise a spurious ValidationFail.
+            result = True if tag._error_text is None else tag._error_text
+            self._send(TuiCommand.VALIDATE_RESULT, result)
+            return "continue"
+
         if callback_type == "on_change" and 0 <= tag_pos < len(tags):
             tag = tags[tag_pos]
-            tag.update(extra[0] if extra else None)
+            new = extra[0] if extra else None
+            tag.update(self._resolve_select_labels([tag], [new])[0])
             if tag.on_change:
                 tag.on_change(tag)
             updates = [(i, t.val) for i, t in enumerate(tags) if t.val != orig_vals[i]]
+            updates = self._labelize_updates(tags, updates)
             self._send(TuiCommand.FORM_UPDATE, updates, self.facet._title)
             return "continue"
 
         if callback_type == "button" and 0 <= tag_pos < len(tags):
+            # A button press is a submit too: validate the whole form first (so an
+            # empty/invalid field blocks it, exactly like the plain submit button),
+            # then run the button's callable.  _try_submit validates every field
+            # and only then calls submit_done(), which runs post_submit_action.
+            pairs = self._submit_pairs(tags, extra[0]) if extra else [(t, t.val) for t in tags]
+            self.post_submit_action = tags[tag_pos]._run_callable
             try:
-                tags[tag_pos]._run_callable()
+                ok = self._try_submit(pairs)
             except ValidationFail as e:
                 if msg := str(e):
                     self.interface.alert(msg)
-                return "retry"
-            return "done"
+                ok = False
+            return "done" if ok else "retry"
 
         return "continue"
 
@@ -262,7 +390,8 @@ class SubprocessAdaptorBase(BackendAdaptor):
 
                 if command == TuiCommand.RESULT:
                     ui_vals = args[0]  # type: ignore[index]
-                    if self._try_submit(zip(flatten(self.facet._form or {}), ui_vals)):  # type: ignore[arg-type]
+                    tags = list(flatten(self.facet._form or {}))
+                    if self._try_submit(self._submit_pairs(tags, ui_vals)):  # type: ignore[arg-type]
                         return form
                     break
                 elif command == TuiCommand.CANCEL:

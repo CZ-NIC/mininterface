@@ -75,8 +75,37 @@ def send_msg(fd: int, data) -> None:
 
 
 # ---------------------------------------------------------------------------
-# on_change callback proxy
+# Callback proxies (on_change and validation)
 # ---------------------------------------------------------------------------
+
+class _ValidationProxy:
+    """Picklable proxy sent to the child in place of tag.validation.
+
+    When the child calls tag.update() (e.g. on FocusOut/Tab), this proxy fires
+    instead of the real validator.  It does a brief blocking round-trip with the
+    parent, which runs the real validator and returns the result.  This way ALL
+    validators (including __main__-defined ones) work live in the child UI.
+    """
+
+    def __init__(self, tag_pos: int):
+        self.tag_pos = tag_pos
+
+    def __call__(self, tag):
+        assert _CHILD_WRITE_FD is not None
+        assert _CHILD_READ_FD is not None
+        send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "validate", self.tag_pos, tag.val))
+        while True:
+            response = read_msg(_CHILD_READ_FD)
+            if not response:
+                return True  # pipe closed — don't block the UI
+            command, *args = response
+            if command == TuiCommand.VALIDATE_RESULT:
+                # None → ok; str → error message (shown inline by tag.update)
+                return args[0]
+            elif command == TuiCommand.OUTPUT:
+                if _append_output is not None:
+                    _append_output(args[0])
+
 
 class _OnChangeProxy:
     """Picklable proxy sent to the child in place of tag.on_change.

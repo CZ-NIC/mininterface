@@ -3,9 +3,6 @@ import sys
 from tkinter import LEFT, Button, Frame, Label, StringVar, TclError, Text, Tk, Widget
 from typing import TYPE_CHECKING, Any, Callable
 
-from textual.widgets import Checkbox
-
-
 try:
     from tkscrollableframe import ScrolledFrame
     from tktooltip import ToolTip

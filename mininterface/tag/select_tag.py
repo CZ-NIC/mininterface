@@ -387,6 +387,17 @@ class SelectTag(Tag[TagValue]):
                 self.set_error_text(f"Must be one of {list(ch.keys())}")
                 return False
 
+    def _resolve_label(self, ui_value):
+        """Map a label (or list of labels) returned by a subprocess child back to
+        the real option value(s).  Used only across the IPC boundary, where the
+        child renders and returns labels because it cannot hold the real values.
+        """
+        ch = self._build_options()
+        if self.multiple:
+            seq = ui_value if isinstance(ui_value, (list, tuple, set)) else []
+            return [ch[v] if v in ch else v for v in seq]
+        return ch[ui_value] if ui_value in ch else ui_value
+
     def _validate(self, out_value):
         vals = self._build_options().values()
 

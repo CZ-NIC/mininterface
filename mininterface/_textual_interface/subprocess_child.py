@@ -245,7 +245,10 @@ def _make_persistent_child_app_class():
                 tag_pos = next(
                     (i for i, t in enumerate(tags) if t._run_callable == pending), -1
                 )
-                self._result = (TuiCommand.CALLBACK, "button", tag_pos)
+                # Send the current field values too: a button is a submit, so the
+                # parent validates the whole form before running the callable.
+                ui_vals = [w.get_ui_value() for w in self.widgets if isinstance(w, TagWidget)]
+                self._result = (TuiCommand.CALLBACK, "button", tag_pos, ui_vals)
             else:
                 ui_vals = [w.get_ui_value() for w in self.widgets if isinstance(w, TagWidget)]
                 self._result = (TuiCommand.RESULT, ui_vals)
