@@ -314,6 +314,15 @@ class SubprocessAdaptorBase(BackendAdaptor):
         except AttributeError:
             return ""
 
+    def _confirm_streamed(self) -> None:
+        """Tell the redirect buffer that everything streamed to the child so far is
+        about to be (re)rendered by the next dialog, so only the not-yet-shown tail
+        remains for __exit__ to replay to stdout."""
+        try:
+            self.interface._redirected.confirm_streamed()
+        except AttributeError:
+            pass
+
     # ------------------------------------------------------------------
     # Callback handling
     # ------------------------------------------------------------------
@@ -382,6 +391,9 @@ class SubprocessAdaptorBase(BackendAdaptor):
             effective_title = self.facet._title or title
             always_shown = getattr(self.interface, "_always_shown", False)
             program_title = getattr(self.interface, "title", None)
+            # This dialog re-renders the output area, so everything streamed so far
+            # is now shown — drop it from the not-yet-rendered tail.
+            self._confirm_streamed()
             self._send(TuiCommand.FORM, safe_form, effective_title, submit, redirected,
                        raw_layout, always_shown, program_title)
 
@@ -413,6 +425,7 @@ class SubprocessAdaptorBase(BackendAdaptor):
         self._record_output(redirected)
         always_shown = getattr(self.interface, "_always_shown", False)
         program_title = getattr(self.interface, "title", None)
+        self._confirm_streamed()
         self._send(TuiCommand.BUTTONS, text, buttons, focused, timeout, redirected,
                    always_shown, program_title)
         command, args = self._receive()
@@ -433,6 +446,19 @@ class SubprocessAdaptorBase(BackendAdaptor):
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
+
+    def _shutdown_ui(self):
+        """Tear down the child UI and wait for it to restore the terminal.
+
+        Parent and child share the same tty; after a form submit the child's
+        Textual/Tk app stays alive (alternate screen, raw mode, hidden cursor)
+        ready for the next dialog. On leaving the `with` block the parent is about
+        to write plain text (the swallowed-tail reprint, and whatever the script
+        prints after the block) to that tty — if the child still owns it the output
+        lands in the alternate screen and the terminal is left corrupted. So bring
+        the child fully down (SHUTDOWN + wait), which restores the terminal, before
+        any such write. Idempotent: a later atexit _destroy is a no-op."""
+        self._destroy()
 
     def _destroy(self):
         """Terminate the child subprocess and close pipe FDs."""

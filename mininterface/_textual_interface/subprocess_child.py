@@ -28,7 +28,7 @@ import threading
 from typing import TYPE_CHECKING
 
 from .tui_command import TuiCommand
-from .._lib.subprocess_child_base import read_msg as _read_msg, send_msg as _send_msg, register_hooks
+from .._lib.subprocess_child_base import read_msg as _read_msg, send_msg as _send_msg, register_hooks, set_proxies_active
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
@@ -137,11 +137,20 @@ def _make_persistent_child_app_class():
 
         def _safe_exit(self):
             try:
+                # call_from_thread works from the IPC worker thread. When invoked on
+                # the main thread (a proxy read loop that hit SHUTDOWN), it raises
+                # RuntimeError — exit directly there instead.
                 self.call_from_thread(self.exit)
             except RuntimeError:
-                pass
+                try:
+                    self.exit()
+                except Exception:
+                    pass
 
         def _handle_form(self, write_fd, form, title, submit_flag, redirected_text, raw_layout, *_):
+            # A new dialog always starts with live callbacks (a previous submit
+            # disabled them to dodge the submit-time round-trip race).
+            set_proxies_active(True)
             self._setup_form(form, title, submit_flag, raw_layout)
             self._submitted.clear()
             self.call_from_thread(self._refresh)
@@ -157,6 +166,7 @@ def _make_persistent_child_app_class():
             self.call_from_thread(self._clear_form)
 
         def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text, *_):
+            set_proxies_active(True)
             self.adaptor._build_buttons(text, buttons_list, focused)
             self.submit = False
             self._submitted.clear()
@@ -232,6 +242,11 @@ def _make_persistent_child_app_class():
         # ------------------------------------------------------------------ Actions
 
         def action_confirm(self):
+            # Submitting now. Pressing Enter can also fire on_blur → a validation /
+            # on_change proxy round-trip on this same (main) thread, which races the
+            # RESULT the worker is about to send and can wedge shutdown. Suppress
+            # proxies until the next dialog; the parent re-validates on submit anyway.
+            set_proxies_active(False)
             if self.adaptor.button_app:
                 try:
                     val = self.adaptor._get_buttons_val()
@@ -255,6 +270,9 @@ def _make_persistent_child_app_class():
             self._submitted.set()
 
         def action_exit_app(self):
+            # Cancelling also tears the form down (and may fire on_blur). Suppress
+            # proxies to avoid the same submit-time round-trip race as action_confirm.
+            set_proxies_active(False)
             self._result = (TuiCommand.CANCEL,)
             self._submitted.set()
 
@@ -287,5 +305,6 @@ def run_child_main(read_fd: int, write_fd: int) -> None:
         read_fd, write_fd,
         apply_form_update=lambda updates, title: _apply_form_update(updates, title, adaptor),
         append_output=lambda text: app._append_output(text),
+        shutdown=app._safe_exit,
     )
     app.run()

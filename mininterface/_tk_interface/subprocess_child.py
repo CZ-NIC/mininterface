@@ -300,6 +300,7 @@ def run_child_main(read_fd: int, write_fd: int) -> None:
         read_fd, write_fd,
         apply_form_update=adaptor._apply_form_update,
         append_output=adaptor._append_line,
+        shutdown=lambda: adaptor.after(0, adaptor.destroy),
     )
     adaptor.start_ipc()
     adaptor.run_persistent()

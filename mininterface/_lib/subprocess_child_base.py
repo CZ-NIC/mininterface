@@ -28,17 +28,45 @@ _apply_form_update: Optional[Callable[[list, str], None]] = None
 """ (updates, title) -> None — push parent's new tag values into the live widgets. """
 _append_output: Optional[Callable[[str], None]] = None
 """ (text) -> None — show a chunk of redirected print() output. """
+_shutdown: Optional[Callable[[], None]] = None
+""" () -> None — tear down the app and restore the terminal. Called when a proxy
+    round-trip is interrupted by a SHUTDOWN (the parent is exiting while the child's
+    main thread is parked in a proxy read loop). """
+_proxies_active: bool = True
+""" While False, on_change/validation proxies are no-ops (return immediately without
+    a parent round-trip). Set False once a form is being submitted: pressing Enter
+    can also trigger on_blur → trigger_change → a validate/on_change round-trip on the
+    main thread, which then races the RESULT the worker thread just sent. The parent,
+    seeing RESULT, moves on and may send SHUTDOWN — leaving the main thread parked in
+    the proxy read loop so app.exit() never runs and the terminal is left corrupted.
+    Suppressing proxies during submit avoids the race; the parent re-validates the
+    whole form on submit anyway. """
+
+
+def set_proxies_active(active: bool) -> None:
+    """Enable/disable on_change & validation proxy round-trips (see _proxies_active)."""
+    global _proxies_active
+    _proxies_active = active
 
 
 def register_hooks(read_fd: int, write_fd: int,
                    apply_form_update: Callable[[list, str], None],
-                   append_output: Callable[[str], None]) -> None:
+                   append_output: Callable[[str], None],
+                   shutdown: Optional[Callable[[], None]] = None) -> None:
     """Wire the child's FDs and backend-specific callbacks into this module."""
-    global _CHILD_WRITE_FD, _CHILD_READ_FD, _apply_form_update, _append_output
+    global _CHILD_WRITE_FD, _CHILD_READ_FD, _apply_form_update, _append_output, _shutdown
     _CHILD_READ_FD = read_fd
     _CHILD_WRITE_FD = write_fd
     _apply_form_update = apply_form_update
     _append_output = append_output
+    _shutdown = shutdown
+
+
+def _request_shutdown() -> None:
+    """Ask the backend to exit (restoring the terminal). Safe to call from the main
+    thread inside a proxy read loop. No-op if no shutdown hook was registered."""
+    if _shutdown is not None:
+        _shutdown()
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +119,8 @@ class _ValidationProxy:
         self.tag_pos = tag_pos
 
     def __call__(self, tag):
+        if not _proxies_active:
+            return True  # submit/shutdown in progress — parent re-validates on submit
         assert _CHILD_WRITE_FD is not None
         assert _CHILD_READ_FD is not None
         send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "validate", self.tag_pos, tag.val))
@@ -98,6 +128,12 @@ class _ValidationProxy:
             response = read_msg(_CHILD_READ_FD)
             if not response:
                 return True  # pipe closed — don't block the UI
+            if response[0] == TuiCommand.SHUTDOWN:
+                # Parent is tearing down (the form was already submitted/cancelled on
+                # another path). Re-dispatch to the app so it exits and restores the
+                # terminal, then unblock the main thread instead of parking here.
+                _request_shutdown()
+                return True
             command, *args = response
             if command == TuiCommand.VALIDATE_RESULT:
                 # None → ok; str → error message (shown inline by tag.update)
@@ -120,6 +156,8 @@ class _OnChangeProxy:
         self.tag_pos = tag_pos
 
     def __call__(self, tag):
+        if not _proxies_active:
+            return  # submit/shutdown in progress — skip the round-trip
         assert _CHILD_WRITE_FD is not None
         assert _CHILD_READ_FD is not None
         send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "on_change", self.tag_pos, tag.val))
@@ -128,6 +166,13 @@ class _OnChangeProxy:
             if not response:
                 return
             command, *args = response
+            if command == TuiCommand.SHUTDOWN:
+                # The parent is tearing down (e.g. the form was already submitted on
+                # another path and the parent moved on). Re-dispatch SHUTDOWN to the
+                # app so it exits and restores the terminal, then unblock. Without
+                # this the main thread stays parked here and app.exit() never runs.
+                _request_shutdown()
+                return
             if command == TuiCommand.FORM_UPDATE:
                 if _apply_form_update is not None:
                     _apply_form_update(args[0], args[1] if len(args) > 1 else "")

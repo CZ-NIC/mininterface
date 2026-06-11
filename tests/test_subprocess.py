@@ -327,5 +327,132 @@ class TestValidationProxy(unittest.TestCase):
         self.assertIsNotNone(error_text)
 
 
+class TestRedirectTail(unittest.TestCase):
+    """A print() streamed to a closing child (e.g. the last statement of a `with`
+    block) is never re-rendered by another dialog. On __exit__ that swallowed tail
+    must be replayed to the real stdout instead of being lost."""
+
+    def _redirectable(self, captured):
+        from mininterface._lib.redirectable import Redirectable
+
+        class _R(Redirectable):
+            pass
+
+        r = _R()
+        r._original_stdout = captured
+        return r
+
+    def test_tail_after_last_dialog_is_reprinted(self):
+        captured = io.StringIO()
+        sent = []
+        r = self._redirectable(captured)
+
+        with r:
+            red = r._redirected
+            red.output_callback = sent.append           # simulate IPC stream sink
+            print("shown-in-dialog")                     # child renders this
+            red.confirm_streamed()                       # next dialog confirms it
+            print("tail-A")                              # never re-rendered
+            print("tail-B", end="")                      # unterminated final line
+
+        # Confirmed-shown line is NOT reprinted; the swallowed tail (incl. the
+        # unterminated final line) IS reprinted to the real stdout.
+        self.assertEqual("tail-A\ntail-B\n", captured.getvalue())
+        self.assertEqual(["shown-in-dialog", "tail-A"], sent)
+
+    def test_no_tail_when_everything_confirmed(self):
+        captured = io.StringIO()
+        sent = []
+        r = self._redirectable(captured)
+
+        with r:
+            red = r._redirected
+            red.output_callback = sent.append
+            print("a")
+            red.confirm_streamed()
+
+        self.assertEqual("", captured.getvalue())
+
+    def test_pending_buffer_still_flushed(self):
+        """Text printed with no live child (output_callback unset) goes to
+        pending_buffer and is flushed on exit, as before."""
+        captured = io.StringIO()
+        r = self._redirectable(captured)
+
+        with r:
+            print("no-child-here")
+
+        self.assertEqual("no-child-here\n", captured.getvalue())
+
+
+class TestProxySubmitSuppression(unittest.TestCase):
+    """Pressing Enter to submit also fires on_blur → an on_change/validation proxy
+    round-trip on the main thread, which races the RESULT the worker just sent and
+    used to wedge a clean shutdown (leaving the terminal corrupted). Proxies are
+    suppressed during submit/cancel; the parent re-validates the whole form anyway."""
+
+    def setUp(self):
+        import mininterface._lib.subprocess_child_base as scb
+        self.scb = scb
+        self.addCleanup(scb.set_proxies_active, True)  # restore module global
+
+    def test_validation_proxy_noop_when_suppressed(self):
+        from mininterface._lib.subprocess_child_base import _ValidationProxy
+        self.scb.set_proxies_active(False)
+        # No fds wired: if the proxy tried a round-trip it would assert/raise.
+        # Suppressed, it must short-circuit to "valid" without touching the pipe.
+        self.assertIs(True, _ValidationProxy(0)(Tag(val="x")))
+
+    def test_on_change_proxy_noop_when_suppressed(self):
+        from mininterface._lib.subprocess_child_base import _OnChangeProxy
+        self.scb.set_proxies_active(False)
+        self.assertIsNone(_OnChangeProxy(0)(Tag(val="x")))
+
+    def test_proxies_reactivate(self):
+        self.scb.set_proxies_active(False)
+        self.assertFalse(self.scb._proxies_active)
+        self.scb.set_proxies_active(True)
+        self.assertTrue(self.scb._proxies_active)
+
+    def test_shutdown_in_proxy_loop_triggers_hook_and_unblocks(self):
+        """If a proxy round-trip is interrupted by SHUTDOWN (parent already moved on),
+        the proxy must call the shutdown hook and return instead of parking forever."""
+        from mininterface._lib.subprocess_child_base import _ValidationProxy, register_hooks, send_msg
+        from mininterface._lib.tui_command import TuiCommand
+        import os
+
+        called = []
+        # Wire a real pipe the proxy reads from; parent end writes a SHUTDOWN frame.
+        cmd_r, cmd_w = os.pipe()      # proxy reads responses from cmd_r
+        res_r, res_w = os.pipe()      # proxy writes the CALLBACK to res_w (drained, ignored)
+        self.addCleanup(lambda: [os.close(fd) for fd in (cmd_r, res_r) if _safe_open(fd)])
+
+        register_hooks(cmd_r, res_w,
+                       apply_form_update=lambda *a: None,
+                       append_output=lambda *a: None,
+                       shutdown=lambda: called.append("shutdown"))
+        self.addCleanup(register_hooks, -1, -1, lambda *a: None, lambda *a: None)
+
+        # Parent side: send a SHUTDOWN frame the proxy will read.
+        send_msg(cmd_w, (TuiCommand.SHUTDOWN,))
+        os.close(cmd_w)
+
+        result = _ValidationProxy(0)(Tag(val="x"))
+        os.close(res_w)
+        os.close(res_r)
+
+        self.assertIs(True, result)              # returns instead of blocking
+        self.assertEqual(["shutdown"], called)   # shutdown hook fired
+
+
+def _safe_open(fd):
+    import os
+    try:
+        os.fstat(fd)
+        return True
+    except OSError:
+        return False
+
+
 if __name__ == "__main__":
     unittest.main()
