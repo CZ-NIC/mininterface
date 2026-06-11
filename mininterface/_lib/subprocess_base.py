@@ -11,11 +11,11 @@ import pickle
 import struct
 import subprocess
 import sys
-from typing import Any
+from typing import Any, NoReturn
 
 from .auxiliary import flatten
 from .form_dict import TagDict
-from .tui_command import TuiCommand
+from .ipc_command import IpcCommand
 from ..exceptions import Cancelled
 from .._mininterface.adaptor import BackendAdaptor
 
@@ -72,6 +72,10 @@ class SubprocessAdaptorBase(BackendAdaptor):
         self._output_history: str = ""
         """ Full session stdout. Replayed to a freshly spawned child so its output
             area is restored after the window was closed and reopened. """
+        self._in_live_callback = False
+        """ True while a live on_change/validation callback runs in the parent.
+            The child's UI thread is parked in the proxy round-trip meanwhile, so
+            opening a nested dialog would deadlock — see _guard_reentrancy. """
         atexit.register(self._destroy)
 
     def _record_output(self, text: str) -> None:
@@ -82,6 +86,17 @@ class SubprocessAdaptorBase(BackendAdaptor):
         cap = 200_000
         if len(self._output_history) > cap:
             self._output_history = self._output_history[-cap:]
+
+    def _clear_output(self) -> None:
+        """Drop the streamed-output history and tell a live child to empty its
+        output widget. Parent-side hook for facet._clear() — in-process that just
+        cleared the redirect buffer, but here the child owns the on-screen output."""
+        self._output_history = ""
+        if self._process is not None and self._process.poll() is None and self._write_fd is not None:
+            try:
+                self._send(IpcCommand.CLEAR_OUTPUT)
+            except OSError:
+                pass
 
     # ------------------------------------------------------------------
     # Process management
@@ -112,13 +127,21 @@ class SubprocessAdaptorBase(BackendAdaptor):
         # would never be set.
         self._wire_output()
 
-        # A freshly spawned child has an empty output area. Replay the whole
-        # session output so text printed before a window close+reopen survives.
-        if spawned and self._output_history:
+        if spawned:
+            # The child adaptor is created with default settings; ship the real
+            # ones so settings-driven UI (mnemonic, combobox_since, …) matches
+            # what the user configured via run(..., settings=...).
             try:
-                self._send(TuiCommand.OUTPUT, self._output_history)
+                self._send(IpcCommand.SETTINGS, self.settings)
             except OSError:
                 pass
+            # A freshly spawned child has an empty output area. Replay the whole
+            # session output so text printed before a window close+reopen survives.
+            if self._output_history:
+                try:
+                    self._send(IpcCommand.OUTPUT, self._output_history)
+                except OSError:
+                    pass
 
     def _wire_output(self):
         try:
@@ -137,7 +160,7 @@ class SubprocessAdaptorBase(BackendAdaptor):
         self._record_output(text + "\n")
         if self._write_fd is not None:
             try:
-                self._send(TuiCommand.OUTPUT, text)
+                self._send(IpcCommand.OUTPUT, text)
             except OSError:
                 # Child is gone (broken pipe). The text is preserved in
                 # _output_history; stop streaming to the dead pipe so further
@@ -327,6 +350,19 @@ class SubprocessAdaptorBase(BackendAdaptor):
     # Callback handling
     # ------------------------------------------------------------------
 
+    def _guard_reentrancy(self) -> None:
+        """Refuse to open a dialog from inside an on_change/validation callback.
+
+        These run in the parent while the child is blocked mid round-trip (see
+        _OnChangeProxy/_ValidationProxy); sending it a nested FORM/BUTTONS would
+        hang. Fail fast with a clear, catchable error instead."""
+        if self._in_live_callback:
+            from ..exceptions import _DialogReentrancyError
+            raise _DialogReentrancyError(
+                "Cannot open a dialog from an on_change or validation callback. "
+                "Use a button callback for that instead."
+            )
+
     def _handle_callback(self, callback_type: str, tag_pos: int, *extra) -> str:
         """Process a CALLBACK message from the child. Returns 'continue', 'done', or 'retry'."""
         from ..exceptions import ValidationFail
@@ -338,22 +374,37 @@ class SubprocessAdaptorBase(BackendAdaptor):
             tag = tags[tag_pos]
             new_val = extra[0] if extra else tag.val
             new_val = self._resolve_select_labels([tag], [new_val])[0]
-            tag.update(new_val)
             # _validate() checks `passed is not True` — send True on success, error string on failure.
             # Sending None on success would make `None is not True` raise a spurious ValidationFail.
-            result = True if tag._error_text is None else tag._error_text
-            self._send(TuiCommand.VALIDATE_RESULT, result)
+            result = True
+            self._in_live_callback = True  # refuse nested dialogs (see _guard_reentrancy)
+            try:
+                tag.update(new_val)
+                result = True if tag._error_text is None else tag._error_text
+            finally:
+                self._in_live_callback = False
+                # Always answer the child's round-trip, even if the validator raised —
+                # otherwise its _ValidationProxy would block forever.
+                self._send(IpcCommand.VALIDATE_RESULT, result)
             return "continue"
 
         if callback_type == "on_change" and 0 <= tag_pos < len(tags):
             tag = tags[tag_pos]
             new = extra[0] if extra else None
             tag.update(self._resolve_select_labels([tag], [new])[0])
-            if tag.on_change:
-                tag.on_change(tag)
-            updates = [(i, t.val) for i, t in enumerate(tags) if t.val != orig_vals[i]]
-            updates = self._labelize_updates(tags, updates)
-            self._send(TuiCommand.FORM_UPDATE, updates, self.facet._title)
+            try:
+                if tag.on_change:
+                    self._in_live_callback = True  # refuse nested dialogs (see _guard_reentrancy)
+                    try:
+                        tag.on_change(tag)
+                    finally:
+                        self._in_live_callback = False
+            finally:
+                # Always answer the child's round-trip, even if on_change raised —
+                # otherwise its _OnChangeProxy would block forever.
+                updates = [(i, t.val) for i, t in enumerate(tags) if t.val != orig_vals[i]]
+                updates = self._labelize_updates(tags, updates)
+                self._send(IpcCommand.FORM_UPDATE, updates, self.facet._title)
             return "continue"
 
         if callback_type == "button" and 0 <= tag_pos < len(tags):
@@ -378,6 +429,7 @@ class SubprocessAdaptorBase(BackendAdaptor):
     # ------------------------------------------------------------------
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
+        self._guard_reentrancy()
         self._ensure_process()
         BackendAdaptor.run_dialog(self, form, title, submit)
 
@@ -394,22 +446,31 @@ class SubprocessAdaptorBase(BackendAdaptor):
             # This dialog re-renders the output area, so everything streamed so far
             # is now shown — drop it from the not-yet-rendered tail.
             self._confirm_streamed()
-            self._send(TuiCommand.FORM, safe_form, effective_title, submit, redirected,
+            self._send(IpcCommand.FORM, safe_form, effective_title, submit, redirected,
                        raw_layout, always_shown, program_title)
 
             while True:
                 command, args = self._receive()
 
-                if command == TuiCommand.RESULT:
+                if command == IpcCommand.RESULT:
                     ui_vals = args[0]  # type: ignore[index]
                     tags = list(flatten(self.facet._form or {}))
                     if self._try_submit(self._submit_pairs(tags, ui_vals)):  # type: ignore[arg-type]
                         return form
                     break
-                elif command == TuiCommand.CANCEL:
+                elif command == IpcCommand.CANCEL:
                     self._on_cancel()
                     raise Cancelled
-                elif command == TuiCommand.CALLBACK:
+                elif command == IpcCommand.QUIT:
+                    # The user closed the window — quit the whole program (like the
+                    # in-process GUI's WM_DELETE_WINDOW → sys.exit), not a
+                    # recoverable Cancelled that a retry loop would answer with a
+                    # freshly respawned window.
+                    self._on_cancel()
+                    sys.exit(0)
+                elif command == IpcCommand.ERROR:
+                    self._raise_child_error(args)
+                elif command == IpcCommand.CALLBACK:
                     result = self._handle_callback(*args)  # type: ignore[misc]
                     if result == "done":
                         return form
@@ -420,19 +481,44 @@ class SubprocessAdaptorBase(BackendAdaptor):
                     raise Cancelled
 
     def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
+        self._guard_reentrancy()
         self._ensure_process()
         redirected = self._get_redirected()
         self._record_output(redirected)
+        # A buttons dialog (confirm/alert/yes_no) can carry a facet._layout too —
+        # ship it just like run_dialog does, otherwise a layout set before
+        # confirm() would silently never appear.
+        raw_layout = list(self.facet._raw_layout)
+        self.facet._raw_layout.clear()
         always_shown = getattr(self.interface, "_always_shown", False)
         program_title = getattr(self.interface, "title", None)
         self._confirm_streamed()
-        self._send(TuiCommand.BUTTONS, text, buttons, focused, timeout, redirected,
-                   always_shown, program_title)
+        self._send(IpcCommand.BUTTONS, text, buttons, focused, timeout, redirected,
+                   raw_layout, always_shown, program_title)
         command, args = self._receive()
-        if command != TuiCommand.RESULT:
+        if command == IpcCommand.QUIT:
+            self._on_cancel()
+            sys.exit(0)
+        if command == IpcCommand.ERROR:
+            self._raise_child_error(args)
+        if command != IpcCommand.RESULT:
             self._on_cancel()
             raise Cancelled
         return args[0]
+
+    def _raise_child_error(self, args) -> NoReturn:
+        """The child hit an exception while building the dialog. Re-raise it here
+        so the program sees the original error (a missing layout file, a bad
+        widget value, …) instead of a misleading Cancelled. The child's traceback
+        travels along as the exception's __cause__."""
+        self._on_cancel()
+        exc = args[0] if args else None
+        tb = args[1] if len(args) > 1 else ""
+        cause = RuntimeError("the UI subprocess hit an error while building the dialog:\n"
+                             + (tb or "(no traceback)"))
+        if isinstance(exc, BaseException):
+            raise exc from cause
+        raise cause
 
     def _on_cancel(self):
         """Child is gone or cancelled. Clear output_callback so subsequent prints
@@ -468,7 +554,7 @@ class SubprocessAdaptorBase(BackendAdaptor):
             pass
         if self._process and self._process.poll() is None:
             try:
-                self._send(TuiCommand.SHUTDOWN)
+                self._send(IpcCommand.SHUTDOWN)
                 self._process.wait(timeout=2)
             except Exception:
                 self._process.kill()

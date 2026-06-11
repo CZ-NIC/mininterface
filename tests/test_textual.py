@@ -138,7 +138,7 @@ class TestTextual(unittest.IsolatedAsyncioTestCase):
 
     async def test_submit_sets_result(self):
         """Pressing Enter on a form sets _result to (RESULT, [ui_vals])."""
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         form = {"x": Tag(7, label="x")}
         app = await self._open(form)
         async with app.run_test(size=(60, 16)) as pilot:
@@ -149,11 +149,11 @@ class TestTextual(unittest.IsolatedAsyncioTestCase):
             app._submitted.clear()
             await pilot.press("enter")
             await pilot.pause(0.1)
-            self.assertEqual(TuiCommand.RESULT, app._result[0])
+            self.assertEqual(IpcCommand.RESULT, app._result[0])
 
     async def test_escape_sets_cancel(self):
         """Pressing Escape sets _result to (CANCEL,)."""
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         form = {"x": Tag(1, label="x")}
         app = await self._open(form)
         async with app.run_test(size=(60, 16)) as pilot:
@@ -164,11 +164,61 @@ class TestTextual(unittest.IsolatedAsyncioTestCase):
             app._submitted.clear()
             await pilot.press("escape")
             await pilot.pause(0.1)
-            self.assertEqual(TuiCommand.CANCEL, app._result[0])
+            self.assertEqual(IpcCommand.CANCEL, app._result[0])
+
+    async def test_escape_keeps_app_alive_for_next_dialog(self):
+        """A plain Escape cancel must NOT tear the persistent app down: after the
+        worker's CANCEL post-processing the app stays alive and a second form
+        renders. Regression for the cancel-then-reuse hang/exit."""
+        import threading
+        from mininterface._lib.subprocess_base import SubprocessAdaptorBase
+        from mininterface._lib.subprocess_child_base import read_msg
+        from mininterface._lib.ipc_command import IpcCommand
+        from mininterface._textual_interface.form_contents import FormContents
+
+        form = {"x": Tag(1, label="x")}
+        app = await self._open(form)
+        safe = self._safe_form
+        # A result pipe whose read end (res_r) we drain like the parent would.
+        res_r, res_w = os.pipe()
+        app.write_fd = res_w
+
+        async with app.run_test(size=(60, 16)) as pilot:
+            await pilot.pause(0.3)
+
+            # Run the real worker handler in a thread (mirrors _ipc_worker).
+            done = threading.Event()
+
+            def worker():
+                app._handle_form(res_w, safe, "T", True, "", [])
+                done.set()
+
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+            await pilot.pause(0.3)  # let the form render
+
+            await pilot.press("escape")
+            # Parent side drains the CANCEL the worker sends back.
+            msg = read_msg(res_r)
+            self.assertEqual(IpcCommand.CANCEL, msg[0])
+            await pilot.pause(0.2)
+            self.assertTrue(done.wait(2), "worker did not finish after cancel")
+
+            # The app must still be running — not exited by the cancel.
+            self.assertFalse(app._closing)
+            self.assertTrue(app.is_running, "app was torn down by a plain cancel")
+
+            # And a second form renders fine on the same live app.
+            app._setup_form(safe, "T2", True, [])
+            await app._async_refresh()
+            await pilot.pause(0.2)
+            self.assertTrue(list(app.query(FormContents)))
+
+        os.close(res_r)
 
     async def test_buttons_render_and_submit(self):
         """Button dialog renders two buttons; Enter confirms the focused one."""
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         from textual.widgets import Button
         app = await self._open()
         async with app.run_test(size=(60, 16)) as pilot:
@@ -182,7 +232,7 @@ class TestTextual(unittest.IsolatedAsyncioTestCase):
             app._submitted.clear()
             await pilot.press("enter")
             await pilot.pause(0.1)
-            self.assertEqual(TuiCommand.RESULT, app._result[0])
+            self.assertEqual(IpcCommand.RESULT, app._result[0])
             self.assertTrue(app._result[1])  # "Yes" = True was focused
 
 

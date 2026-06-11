@@ -22,6 +22,8 @@ class _SubprocessTkFacet(Facet):
     the child, where the real TkFacet renders them.
     """
 
+    adaptor: "TkSubprocessAdaptor"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._title = ""
@@ -32,6 +34,10 @@ class _SubprocessTkFacet(Facet):
 
     def _layout(self, elements):
         self._raw_layout.extend(elements)
+
+    def _clear(self):
+        super()._clear()
+        self.adaptor._clear_output()  # also empty the child's on-screen output
 
     # submit() is inherited from Facet — it only records post_submit_action,
     # which the IPC callback channel turns into a CALLBACK("button").

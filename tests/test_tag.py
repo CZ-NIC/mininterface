@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from typing import Annotated
 from mininterface import Mininterface, Tag
 from mininterface._lib.auxiliary import flatten
-from mininterface._lib.form_dict import MissingTagValue
-from mininterface._mininterface import BackendAdaptor, Facet, UiSettings, dataclass_to_tagdict
-from mininterface.facet import TagDict
+from mininterface._lib.form_dict import TagDict, dataclass_to_tagdict
+from mininterface._mininterface import BackendAdaptor, Facet, UiSettings
 from shared import TestAbstract, runm
 
 from pathlib import Path

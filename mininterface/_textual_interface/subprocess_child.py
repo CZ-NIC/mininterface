@@ -21,14 +21,15 @@ PersistentChildApp
 One app handles all forms for the entire session (tty and web modes).
 An IPC worker thread reads pipe commands and updates the Textual UI reactively
 via call_from_thread / _submitted threading.Event — no app.exit between forms.
-A RichLog widget streams live print() output sent via TuiCommand.OUTPUT.
+A RichLog widget streams live print() output sent via IpcCommand.OUTPUT.
 """
 import asyncio
 import threading
 from typing import TYPE_CHECKING
 
-from .tui_command import TuiCommand
-from .._lib.subprocess_child_base import read_msg as _read_msg, send_msg as _send_msg, register_hooks, set_proxies_active
+from .._lib.ipc_command import IpcCommand
+from .._lib.subprocess_child_base import (error_payload, read_msg as _read_msg,
+                                          send_msg as _send_msg, register_hooks, set_proxies_active)
 
 if TYPE_CHECKING:
     from .adaptor import TextualAdaptor
@@ -110,7 +111,11 @@ def _make_persistent_child_app_class():
             self.widgets = []
             self.focusable_ = []
             self._submitted = threading.Event()
-            self._result: tuple = (TuiCommand.CANCEL,)
+            self._result: tuple = (IpcCommand.CANCEL,)
+            self._closing = False
+            """ True once the session is genuinely ending (SHUTDOWN / EOF). A plain Esc
+                cancel does NOT set this: the form is cleared but the persistent app
+                stays alive for the next dialog, exactly like a submit. """
 
         def compose(self):
             # Form on top, output log below it, control bar docked at screen bottom.
@@ -133,6 +138,13 @@ def _make_persistent_child_app_class():
             except Exception:
                 pass
 
+        def _clear_output(self) -> None:
+            """Empty the output RichLog (parent's facet._clear). Main-thread safe."""
+            try:
+                self.query_one("#output-log", RichLog).clear()
+            except Exception:
+                pass
+
         # ------------------------------------------------------------------ IPC
 
         def _safe_exit(self):
@@ -147,43 +159,88 @@ def _make_persistent_child_app_class():
                 except Exception:
                     pass
 
+        def _refresh_failure(self, exc):
+            """Classify an exception raised while (re)building the dialog.
+
+            Signs the app is tearing down — a missing #form-container (NoMatches),
+            a stopped message pump, or call_from_thread's "App is not running" —
+            are benign shutdown races reported as a quiet CANCEL. Anything else is
+            a real build error shipped to the parent."""
+            from textual.css.query import NoMatches
+            if isinstance(exc, NoMatches) or not self.is_running:
+                return (IpcCommand.CANCEL,)
+            if isinstance(exc, RuntimeError) and "not running" in str(exc):
+                return (IpcCommand.CANCEL,)
+            return error_payload(exc)
+
         def _handle_form(self, write_fd, form, title, submit_flag, redirected_text, raw_layout, *_):
             # A new dialog always starts with live callbacks (a previous submit
             # disabled them to dodge the submit-time round-trip race).
             set_proxies_active(True)
-            self._setup_form(form, title, submit_flag, raw_layout)
             self._submitted.clear()
-            self.call_from_thread(self._refresh)
-            if redirected_text:
-                # after_refresh: the RichLog must be laid out (sized) first,
-                # otherwise a write during startup is stored but never painted.
-                self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            try:
+                self._setup_form(form, title, submit_flag, raw_layout)
+                self.call_from_thread(self._refresh)
+                if redirected_text:
+                    # after_refresh: the RichLog must be laid out (sized) first,
+                    # otherwise a write during startup is stored but never painted.
+                    self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            except Exception as exc:
+                self._result = self._refresh_failure(exc)
+                self._submitted.set()
             self._submitted.wait()
             _send_msg(write_fd, self._result)
-            if self._result[0] == TuiCommand.CANCEL:
+            if self._closing:
                 self._safe_exit()
                 return
-            self.call_from_thread(self._clear_form)
+            # A plain Esc cancel (or a submit) keeps the persistent app alive: clear
+            # the form and park for the next dialog. The parent raises Cancelled on its
+            # side but reuses this same live child for the next form/alert.
+            self._end_dialog()
 
-        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text, *_):
+        def _end_dialog(self):
+            """Finish a dialog without exiting the app. Clearing can race a real
+            teardown, so a stopped app here is ignored."""
+            try:
+                self.call_from_thread(self._clear_form)
+            except RuntimeError:
+                pass  # app already stopped (shutdown) — nothing to clear
+
+        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text,
+                            raw_layout=None, *_):
             set_proxies_active(True)
-            self.adaptor._build_buttons(text, buttons_list, focused)
-            self.submit = False
             self._submitted.clear()
-            self.call_from_thread(self._refresh, timeout)
-            if redirected_text:
-                self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            try:
+                # ButtonContents re-renders layout_elements; drop leftovers a crashed
+                # form build may have appended (e.g. a facet._layout that raised mid-way),
+                # then render the layout shipped with this dialog (confirm/alert can
+                # carry a facet._layout too).
+                self.adaptor.layout_elements.clear()
+                if raw_layout:
+                    self.adaptor.facet._layout(raw_layout)
+                self.adaptor._build_buttons(text, buttons_list, focused)
+                self.submit = False
+                self.call_from_thread(self._refresh, timeout)
+                if redirected_text:
+                    self.call_from_thread(self.call_after_refresh, self._append_output, redirected_text)
+            except Exception as exc:
+                self._result = self._refresh_failure(exc)
+                self._submitted.set()
             self._submitted.wait()
             _send_msg(write_fd, self._result)
-            if self._result[0] == TuiCommand.CANCEL:
+            if self._closing:
                 self._safe_exit()
                 return
-            self.call_from_thread(self._clear_form)
+            self._end_dialog()
 
         def _ipc_worker(self):
             from .._lib.subprocess_child_base import _ipc_worker_loop
             handlers = {
                 'OUTPUT': lambda text: self.call_from_thread(self._append_output, text),
+                'CLEAR_OUTPUT': lambda: self.call_from_thread(self._clear_output),
+                # The user's settings arrive before the first form; apply them to
+                # the adaptor (created with defaults) so widget building matches.
+                'SETTINGS': lambda settings: setattr(self.adaptor, 'settings', settings),
                 'FORM': self._handle_form,
                 'BUTTONS': self._handle_buttons,
                 'on_eof': self._safe_exit,
@@ -215,10 +272,24 @@ def _make_persistent_child_app_class():
             self.focusable_.clear()
 
         def _refresh(self, timeout=None):
+            """Schedule the UI refresh on the event loop (runs on the loop thread).
+
+            Deferred rather than awaited inline: querying #form-container straight
+            from the worker can race the app's compose/mount (the container is not
+            on the screen yet), which is common right after a (re)spawn. A
+            done-callback captures any failure so the worker never hangs and real
+            errors still reach the parent."""
+            task = asyncio.ensure_future(self._async_refresh(timeout))
+            task.add_done_callback(self._on_refresh_done)
+
+        def _on_refresh_done(self, task):
             try:
-                asyncio.ensure_future(self._async_refresh(timeout))
-            except RuntimeError:
+                task.result()
+            except asyncio.CancelledError:
                 pass
+            except Exception as exc:
+                self._result = self._refresh_failure(exc)
+                self._submitted.set()
 
         async def _async_refresh(self, timeout=None):
             self.adaptor.app = self
@@ -250,9 +321,9 @@ def _make_persistent_child_app_class():
             if self.adaptor.button_app:
                 try:
                     val = self.adaptor._get_buttons_val()
-                    self._result = (TuiCommand.RESULT, val)
+                    self._result = (IpcCommand.RESULT, val)
                 except Cancelled:
-                    self._result = (TuiCommand.CANCEL,)
+                    self._result = (IpcCommand.CANCEL,)
             elif self.adaptor.post_submit_action is not None:
                 pending = self.adaptor.post_submit_action
                 self.adaptor.post_submit_action = None
@@ -263,17 +334,17 @@ def _make_persistent_child_app_class():
                 # Send the current field values too: a button is a submit, so the
                 # parent validates the whole form before running the callable.
                 ui_vals = [w.get_ui_value() for w in self.widgets if isinstance(w, TagWidget)]
-                self._result = (TuiCommand.CALLBACK, "button", tag_pos, ui_vals)
+                self._result = (IpcCommand.CALLBACK, "button", tag_pos, ui_vals)
             else:
                 ui_vals = [w.get_ui_value() for w in self.widgets if isinstance(w, TagWidget)]
-                self._result = (TuiCommand.RESULT, ui_vals)
+                self._result = (IpcCommand.RESULT, ui_vals)
             self._submitted.set()
 
         def action_exit_app(self):
             # Cancelling also tears the form down (and may fire on_blur). Suppress
             # proxies to avoid the same submit-time round-trip race as action_confirm.
             set_proxies_active(False)
-            self._result = (TuiCommand.CANCEL,)
+            self._result = (IpcCommand.CANCEL,)
             self._submitted.set()
 
     return _PersistentChildApp

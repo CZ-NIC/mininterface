@@ -19,6 +19,20 @@ class ValidationFail(ValueError):
     pass
 
 
+class _DialogReentrancyError(RuntimeError):
+    """Raised when a dialog (`form`, `alert`, `confirm`, `ask`, …) is opened from
+    within an `on_change` or validation callback while using a subprocess
+    interface (GUI/TUI).
+
+    These callbacks run back in the parent process while the child UI is blocked
+    waiting for the round-trip answer, so they cannot also render a nested
+    dialog — opening one would hang. Move the dialog to a button callback
+    instead (those run when the form is not mid-edit and can open nested
+    dialogs)."""
+
+    pass
+
+
 class InterfaceNotAvailable(ImportError):
     """Interface failed to init, ex. display not available in GUI. Or an underlying dependency was uninstalled."""
 

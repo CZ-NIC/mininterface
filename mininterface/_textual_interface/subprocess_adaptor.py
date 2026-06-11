@@ -2,7 +2,7 @@
 from ..settings import TextualSettings
 from .adaptor import TextualAdaptor
 from .facet import TextualFacet
-from .tui_command import TuiCommand  # noqa: F401 — kept for callers that import it from here
+from .._lib.ipc_command import IpcCommand  # noqa: F401 — kept for callers that import it from here
 from .._lib.subprocess_base import SubprocessAdaptorBase
 
 _CHILD_CMD = (
@@ -14,12 +14,18 @@ _CHILD_CMD = (
 class _SubprocessFacet(TextualFacet):
     """Parent-side facet — stores raw LayoutElements instead of Textual widgets."""
 
+    adaptor: "TextualSubprocessAdaptor"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._raw_layout: list = []
 
     def _layout(self, elements):
         self._raw_layout.extend(elements)
+
+    def _clear(self):
+        super()._clear()
+        self.adaptor._clear_output()  # also empty the child's on-screen output
 
 
 class TextualSubprocessAdaptor(SubprocessAdaptorBase, TextualAdaptor):

@@ -32,8 +32,8 @@ import threading
 import tkinter
 
 from .._lib.auxiliary import flatten
-from .._lib.subprocess_child_base import read_msg, send_msg, register_hooks
-from .._lib.tui_command import TuiCommand
+from .._lib.subprocess_child_base import error_payload, read_msg, send_msg, register_hooks
+from .._lib.ipc_command import IpcCommand
 from ..exceptions import Cancelled
 
 
@@ -57,7 +57,11 @@ def _make_child_adaptor_class():
             self.read_fd = read_fd
             self.write_fd = write_fd
             self._submitted = threading.Event()
-            self._ipc_result: tuple = (TuiCommand.CANCEL,)
+            self._ipc_result: tuple = (IpcCommand.CANCEL,)
+            self._closing = False
+            """ True once the session is genuinely ending (window X / EOF / SHUTDOWN).
+                A plain Esc cancel does NOT set this: the form is cleared but the
+                persistent app stays alive for the next dialog, exactly like a submit. """
             self._button_mode = False
             self._always_shown = False
             self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -76,9 +80,15 @@ def _make_child_adaptor_class():
             tkinter.Tk.mainloop(self)
 
         def _on_close(self):
-            """X button: end the session. Parent will see EOF → Cancelled."""
-            self._ipc_result = (TuiCommand.CANCEL,)
-            self._submitted.set()  # unblock the worker if a form is currently active
+            """X button: the user wants to quit the whole program (unlike Esc,
+            which only cancels the current dialog) — matching the in-process GUI's
+            WM_DELETE_WINDOW → sys.exit. Sent directly (not via _submitted) so it
+            works whether or not a dialog is currently active."""
+            self._closing = True
+            try:
+                send_msg(self.write_fd, (IpcCommand.QUIT,))
+            except OSError:
+                pass
             self.destroy()
 
         # -------------------------------------------------------------- output
@@ -108,6 +118,16 @@ def _make_child_adaptor_class():
             """Hook target for streamed OUTPUT.
             Live-streamed lines arrive without trailing newline; bulk redirected_text has it."""
             self._write_output(line if line.endswith("\n") else line + "\n")
+
+        def _clear_output(self) -> None:
+            """Empty the output Text widget (parent's facet._clear)."""
+            try:
+                w = self.text_widget
+                w.configure(state="normal")
+                w.delete("1.0", END)
+                w.configure(state="disabled")
+            except Exception:
+                pass
 
         # -------------------------------------------------------------- form update
 
@@ -155,9 +175,9 @@ def _make_child_adaptor_class():
         def _ok(self, val=None):
             """Persistent-mode replacement for TkAdaptor._ok (no quit())."""
             if val is Cancelled:
-                self._ipc_result = (TuiCommand.CANCEL,)
+                self._ipc_result = (IpcCommand.CANCEL,)
             elif self._button_mode:
-                self._ipc_result = (TuiCommand.RESULT, val)
+                self._ipc_result = (IpcCommand.RESULT, val)
             elif self.post_submit_action is not None:
                 pending = self.post_submit_action
                 self.post_submit_action = None
@@ -166,11 +186,11 @@ def _make_child_adaptor_class():
                 # Send the current field values too: a button is a submit, so the
                 # parent validates the whole form before running the callable.
                 ui_vals = list(flatten(self.form.get()))
-                self._ipc_result = (TuiCommand.CALLBACK, "button", tag_pos, ui_vals)
+                self._ipc_result = (IpcCommand.CALLBACK, "button", tag_pos, ui_vals)
             else:
                 # Collect the raw UI values; the parent validates and may resend the form.
                 ui_vals = list(flatten(self.form.get()))
-                self._ipc_result = (TuiCommand.RESULT, ui_vals)
+                self._ipc_result = (IpcCommand.RESULT, ui_vals)
             self._clear_dialog()  # keep the persistent mainloop running
             self._submitted.set()
 
@@ -188,17 +208,19 @@ def _make_child_adaptor_class():
                 self._setup_form_facet(form)
                 if redirected_text:
                     self._write_output(redirected_text)
-                self._build_form(form, title, submit_flag)
+                # Layout first so it appears above the form, matching the
+                # in-process adaptor (the user's facet._layout packs before
+                # run_dialog builds the form).
                 if raw_layout:
                     self.facet._layout(raw_layout)
+                self._build_form(form, title, submit_flag)
                 self.deiconify()
                 self.after(1, self._layout_new_dialog)
-            except Exception:
-                self._ipc_result = (TuiCommand.CANCEL,)
-                self._submitted.set()
+            except Exception as exc:
+                self._dialog_failed(exc)
 
         def _show_buttons(self, text, buttons_list, focused, timeout, redirected_text,
-                          always_shown=False, program_title=None):
+                          raw_layout=None, always_shown=False, program_title=None):
             try:
                 self._always_shown = always_shown
                 if program_title:
@@ -206,12 +228,25 @@ def _make_child_adaptor_class():
                 self._button_mode = True
                 if redirected_text:
                     self._write_output(redirected_text)
+                # Layout first so it appears above the question + buttons.
+                if raw_layout:
+                    self.facet._layout(raw_layout)
                 self._build_buttons(text, buttons_list, focused, timeout=timeout)
                 self.deiconify()
                 self.after(1, self._layout_new_dialog)
+            except Exception as exc:
+                self._dialog_failed(exc)
+
+        def _dialog_failed(self, exc: BaseException) -> None:
+            """A dialog build crashed mid-way: remove whatever widgets it already
+            packed (the parent may catch the error and open another dialog in this
+            same live window), then unblock the worker with an ERROR result."""
+            try:
+                self._clear_dialog()
             except Exception:
-                self._ipc_result = (TuiCommand.CANCEL,)
-                self._submitted.set()
+                pass
+            self._ipc_result = error_payload(exc)
+            self._submitted.set()
 
         def _layout_new_dialog(self):
             """Resize window to content and reset scroll to top.
@@ -239,20 +274,24 @@ def _make_child_adaptor_class():
                        raw_layout, redirected_text, always_shown, program_title)
             self._submitted.wait()
             send_msg(write_fd, self._ipc_result)
-            if self._ipc_result[0] == TuiCommand.CANCEL:
+            if self._closing:
                 self.after(0, self.destroy)
                 return
+            # A plain Esc cancel (or a submit) keeps the persistent app alive: hide
+            # the window and park for the next dialog. The parent raises Cancelled on
+            # its side but reuses this same live child for the next form/alert.
             self.after(0, self._after_submit)
 
-        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text, *rest):
+        def _handle_buttons(self, write_fd, text, buttons_list, focused, timeout, redirected_text,
+                            raw_layout=None, *rest):
             always_shown = rest[0] if rest else False
             program_title = rest[1] if len(rest) > 1 else None
             self._submitted.clear()
             self.after(0, self._show_buttons, text, buttons_list,
-                       focused, timeout, redirected_text, always_shown, program_title)
+                       focused, timeout, redirected_text, raw_layout, always_shown, program_title)
             self._submitted.wait()
             send_msg(write_fd, self._ipc_result)
-            if self._ipc_result[0] == TuiCommand.CANCEL:
+            if self._closing:
                 self.after(0, self.destroy)
                 return
             self.after(0, self._after_submit)
@@ -261,6 +300,10 @@ def _make_child_adaptor_class():
             from .._lib.subprocess_child_base import _ipc_worker_loop
             handlers = {
                 'OUTPUT': lambda text: self.after(0, self._append_line, text),
+                'CLEAR_OUTPUT': lambda: self.after(0, self._clear_output),
+                # The user's settings arrive before the first form; apply them to
+                # this adaptor (created with defaults) so widget building matches.
+                'SETTINGS': lambda settings: setattr(self, 'settings', settings),
                 'FORM': self._handle_form,
                 'BUTTONS': self._handle_buttons,
                 'on_eof': lambda: self.after(0, self.destroy),

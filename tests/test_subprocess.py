@@ -16,6 +16,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 from enum import Enum
+from pathlib import Path
 
 from mininterface.tag import Tag, SelectTag
 from mininterface.validators import not_empty
@@ -280,7 +281,7 @@ class TestValidationProxy(unittest.TestCase):
 
     def test_valid_value_sends_true_result(self):
         """When validation passes, parent sends VALIDATE_RESULT(True)."""
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         import os, pickle, struct
 
         adaptor = self._adaptor()
@@ -299,12 +300,12 @@ class TestValidationProxy(unittest.TestCase):
         cmd, error_text = pickle.loads(raw[4:4 + length])
 
         self.assertEqual("continue", result)
-        self.assertEqual(TuiCommand.VALIDATE_RESULT, cmd)
+        self.assertEqual(IpcCommand.VALIDATE_RESULT, cmd)
         self.assertIs(True, error_text)
 
     def test_invalid_value_sends_error_text(self):
         """When validation fails, parent sends VALIDATE_RESULT(error_string)."""
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         import os, pickle, struct
 
         adaptor = self._adaptor()
@@ -323,7 +324,7 @@ class TestValidationProxy(unittest.TestCase):
         cmd, error_text = pickle.loads(raw[4:4 + length])
 
         self.assertEqual("continue", result)
-        self.assertEqual(TuiCommand.VALIDATE_RESULT, cmd)
+        self.assertEqual(IpcCommand.VALIDATE_RESULT, cmd)
         self.assertIsNotNone(error_text)
 
 
@@ -418,7 +419,7 @@ class TestProxySubmitSuppression(unittest.TestCase):
         """If a proxy round-trip is interrupted by SHUTDOWN (parent already moved on),
         the proxy must call the shutdown hook and return instead of parking forever."""
         from mininterface._lib.subprocess_child_base import _ValidationProxy, register_hooks, send_msg
-        from mininterface._lib.tui_command import TuiCommand
+        from mininterface._lib.ipc_command import IpcCommand
         import os
 
         called = []
@@ -434,7 +435,7 @@ class TestProxySubmitSuppression(unittest.TestCase):
         self.addCleanup(register_hooks, -1, -1, lambda *a: None, lambda *a: None)
 
         # Parent side: send a SHUTDOWN frame the proxy will read.
-        send_msg(cmd_w, (TuiCommand.SHUTDOWN,))
+        send_msg(cmd_w, (IpcCommand.SHUTDOWN,))
         os.close(cmd_w)
 
         result = _ValidationProxy(0)(Tag(val="x"))
@@ -452,6 +453,288 @@ def _safe_open(fd):
         return True
     except OSError:
         return False
+
+
+class _AdaptorHarness(unittest.TestCase):
+    """Parent-side adaptor wired to hand-made pipes instead of a spawned child."""
+
+    def _adaptor(self):
+        from mininterface._lib.redirectable import Redirectable
+        from mininterface._mininterface import Mininterface
+        from mininterface._textual_interface.subprocess_adaptor import TextualSubprocessAdaptor
+
+        class _CI(Redirectable, Mininterface):
+            _adaptor: TextualSubprocessAdaptor
+
+        adaptor = TextualSubprocessAdaptor(_CI(), None)
+        adaptor._ensure_process = lambda: None  # no child spawn; pipes are wired by hand
+        return adaptor
+
+    def _wire_child_reply(self, adaptor, *frames):
+        """Hand the adaptor pipes where the 'child' already replied with frames.
+        Returns the read end of the parent→child pipe (what the parent sent)."""
+        from mininterface._lib.subprocess_child_base import send_msg
+        import os
+        cmd_r, cmd_w = os.pipe()   # parent _send sink (drained by the OS buffer)
+        res_r, res_w = os.pipe()   # parent _receive source
+        for frame in frames:
+            send_msg(res_w, frame)
+        os.close(res_w)
+        adaptor._write_fd = cmd_w
+        adaptor._read_fd = res_r
+        self.addCleanup(lambda: [os.close(fd) for fd in (cmd_r, cmd_w, res_r) if _safe_open(fd)])
+        return cmd_r
+
+    def _parent_frames(self, adaptor, cmd_r):
+        """Close the parent's write end and parse every frame it sent."""
+        from mininterface._lib.subprocess_child_base import read_msg
+        import os
+        os.close(adaptor._write_fd)
+        adaptor._write_fd = None
+        frames = []
+        while (msg := read_msg(cmd_r)) is not None:
+            frames.append(msg)
+        return frames
+
+
+class TestChildErrorPropagation(_AdaptorHarness):
+    """A dialog build that crashes in the child (e.g. facet._layout on a missing
+    file) must surface in the parent as the ORIGINAL exception, not a misleading
+    Cancelled the program would mistake for Esc."""
+
+    @staticmethod
+    def _a_child_error():
+        """A real exception with a traceback, as the child would catch it."""
+        try:
+            Path("/nonexistent/dir/file").stat()
+        except OSError as exc:
+            return exc
+
+    def test_error_payload_carries_exception_and_traceback(self):
+        from mininterface._lib.subprocess_child_base import error_payload
+        from mininterface._lib.ipc_command import IpcCommand
+
+        cmd, exc, tb = error_payload(self._a_child_error())
+        self.assertEqual(IpcCommand.ERROR, cmd)
+        self.assertIsInstance(exc, FileNotFoundError)
+        self.assertIn("FileNotFoundError", tb)
+        pickle.dumps((cmd, exc, tb))  # the frame must survive the pipe
+
+    def test_error_payload_unpicklable_exception_falls_back_to_text(self):
+        from mininterface._lib.subprocess_child_base import error_payload
+        try:
+            raise ValueError(lambda: None)  # lambda arg → unpicklable exception
+        except ValueError as exc:
+            cmd, sent, tb = error_payload(exc)
+        self.assertIsNone(sent)
+        self.assertIn("ValueError", tb)
+
+    def test_worker_loop_ships_error_instead_of_cancel(self):
+        """An exception escaping a FORM handler reaches the parent as ERROR."""
+        from mininterface._lib.subprocess_child_base import _ipc_worker_loop, send_msg, read_msg
+        from mininterface._lib.ipc_command import IpcCommand
+        import os
+
+        cmd_r, cmd_w = os.pipe()
+        res_r, res_w = os.pipe()
+        self.addCleanup(lambda: [os.close(fd) for fd in (cmd_r, cmd_w, res_r, res_w) if _safe_open(fd)])
+
+        def failing_form(write_fd, *args):
+            Path("/nonexistent/dir/file").stat()
+
+        send_msg(cmd_w, (IpcCommand.FORM,))
+        os.close(cmd_w)  # EOF after the one command → loop exits via on_eof
+        _ipc_worker_loop(cmd_r, res_w, {
+            'FORM': failing_form, 'BUTTONS': None, 'OUTPUT': None, 'on_eof': lambda: None,
+        })
+
+        command, exc, tb = read_msg(res_r)
+        self.assertEqual(IpcCommand.ERROR, command)
+        self.assertIsInstance(exc, FileNotFoundError)
+        self.assertIn("FileNotFoundError", tb)
+
+    def test_run_dialog_reraises_original_exception(self):
+        from mininterface._lib.subprocess_child_base import error_payload
+
+        adaptor = self._adaptor()
+        self._wire_child_reply(adaptor, error_payload(self._a_child_error()))
+
+        with self.assertRaises(FileNotFoundError) as ctx:
+            adaptor.run_dialog({"f": Tag(val="x")})
+        # The child's traceback travels along as the cause.
+        self.assertIsInstance(ctx.exception.__cause__, RuntimeError)
+        self.assertIn("FileNotFoundError", str(ctx.exception.__cause__))
+
+    def test_buttons_reraises_original_exception(self):
+        from mininterface._lib.subprocess_child_base import error_payload
+
+        adaptor = self._adaptor()
+        self._wire_child_reply(adaptor, error_payload(self._a_child_error()))
+
+        with self.assertRaises(FileNotFoundError):
+            adaptor.buttons("Continue?", [("Yes", True), ("No", False)])
+
+    def test_unpicklable_error_raises_runtimeerror_with_traceback(self):
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        self._wire_child_reply(adaptor, (IpcCommand.ERROR, None, "Traceback ...\nValueError: boom"))
+
+        with self.assertRaises(RuntimeError) as ctx:
+            adaptor.run_dialog({"f": Tag(val="x")})
+        self.assertIn("ValueError: boom", str(ctx.exception))
+
+
+class TestQuitCommand(_AdaptorHarness):
+    """Closing the window (X) quits the whole program — like the in-process GUI's
+    WM_DELETE_WINDOW → sys.exit — instead of a recoverable Cancelled that a retry
+    loop would answer with a freshly respawned window."""
+
+    def test_run_dialog_quit_exits_program(self):
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        self._wire_child_reply(adaptor, (IpcCommand.QUIT,))
+
+        with self.assertRaises(SystemExit) as ctx:
+            adaptor.run_dialog({"f": Tag(val="x")})
+        self.assertEqual(0, ctx.exception.code)
+
+    def test_buttons_quit_exits_program(self):
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        self._wire_child_reply(adaptor, (IpcCommand.QUIT,))
+
+        with self.assertRaises(SystemExit) as ctx:
+            adaptor.buttons("Continue?", [("Yes", True)])
+        self.assertEqual(0, ctx.exception.code)
+
+
+class TestDialogReentrancy(_AdaptorHarness):
+    """A dialog opened from a live on_change/validation callback would deadlock
+    (the child UI thread is parked in the proxy round-trip) — refuse it fast."""
+
+    def test_dialog_from_on_change_is_refused(self):
+        from mininterface.exceptions import _DialogReentrancyError
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        cmd_r = self._wire_child_reply(adaptor)
+        caught = []
+
+        def opens_a_dialog(tag):
+            try:
+                adaptor.buttons("nested?", [("Ok", True)])
+            except _DialogReentrancyError as e:
+                caught.append(e)
+
+        field = Tag(val="x", on_change=opens_a_dialog)
+        adaptor.facet._form = {"f": field}
+        result = adaptor._handle_callback("on_change", 0, "y")
+
+        self.assertEqual("continue", result)
+        self.assertEqual(1, len(caught))
+        # The child's round-trip was still answered (else its proxy would hang).
+        frames = self._parent_frames(adaptor, cmd_r)
+        self.assertEqual(IpcCommand.FORM_UPDATE, frames[-1][0])
+
+    def test_on_change_exception_still_answers_the_child(self):
+        """Even a crashing on_change must not leave the child's proxy parked."""
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        cmd_r = self._wire_child_reply(adaptor)
+
+        def boom(tag):
+            raise ValueError("boom")
+
+        adaptor.facet._form = {"f": Tag(val="x", on_change=boom)}
+        with self.assertRaises(ValueError):
+            adaptor._handle_callback("on_change", 0, "y")
+
+        frames = self._parent_frames(adaptor, cmd_r)
+        self.assertEqual(IpcCommand.FORM_UPDATE, frames[-1][0])
+
+    def test_validator_exception_still_answers_the_child(self):
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        cmd_r = self._wire_child_reply(adaptor)
+
+        def boom(tag):
+            raise OSError("boom")
+
+        adaptor.facet._form = {"f": Tag(val="x", validation=boom)}
+        try:
+            adaptor._handle_callback("validate", 0, "y")
+        except OSError:
+            pass  # may or may not propagate depending on Tag.update; both are fine
+
+        frames = self._parent_frames(adaptor, cmd_r)
+        self.assertEqual(IpcCommand.VALIDATE_RESULT, frames[-1][0])
+
+    def test_guard_off_outside_callbacks(self):
+        adaptor = self._adaptor()
+        self.assertFalse(adaptor._in_live_callback)
+        adaptor._guard_reentrancy()  # must not raise
+
+
+class TestButtonsRawLayout(_AdaptorHarness):
+    """facet._layout set before confirm()/alert() ships with the BUTTONS message
+    instead of silently disappearing."""
+
+    def test_buttons_message_carries_raw_layout(self):
+        from mininterface._lib.ipc_command import IpcCommand
+
+        adaptor = self._adaptor()
+        cmd_r = self._wire_child_reply(adaptor, (IpcCommand.RESULT, True))
+
+        adaptor.facet._layout(["AHoj", Path("/tmp")])
+        result = adaptor.buttons("Continue?", [("Yes", True)], focused=1)
+
+        self.assertIs(True, result)
+        self.assertEqual([], adaptor.facet._raw_layout, "layout must be consumed")
+        frames = self._parent_frames(adaptor, cmd_r)
+        command, text, _buttons, _focused, _timeout, _redirected, raw_layout, *_ = frames[-1]
+        self.assertEqual(IpcCommand.BUTTONS, command)
+        self.assertEqual("Continue?", text)
+        self.assertEqual(["AHoj", Path("/tmp")], raw_layout)
+
+
+class TestWorkerLoopDispatch(_AdaptorHarness):
+    """The child worker loop routes the parent-only commands to their handlers."""
+
+    def _run_loop(self, *frames, handlers=None):
+        from mininterface._lib.subprocess_child_base import _ipc_worker_loop, send_msg
+        import os
+        cmd_r, cmd_w = os.pipe()
+        res_r, res_w = os.pipe()
+        self.addCleanup(lambda: [os.close(fd) for fd in (cmd_r, res_r, res_w) if _safe_open(fd)])
+        for frame in frames:
+            send_msg(cmd_w, frame)
+        os.close(cmd_w)  # EOF ends the loop via on_eof
+        _ipc_worker_loop(cmd_r, res_w, handlers)
+
+    def test_settings_reach_the_handler(self):
+        from mininterface._lib.ipc_command import IpcCommand
+        got = []
+        self._run_loop((IpcCommand.SETTINGS, {"combobox_since": 42}),
+                       handlers={'SETTINGS': got.append, 'on_eof': lambda: None})
+        self.assertEqual([{"combobox_since": 42}], got)
+
+    def test_clear_output_reaches_the_handler(self):
+        from mininterface._lib.ipc_command import IpcCommand
+        cleared = []
+        self._run_loop((IpcCommand.CLEAR_OUTPUT,),
+                       handlers={'CLEAR_OUTPUT': lambda: cleared.append(True), 'on_eof': lambda: None})
+        self.assertEqual([True], cleared)
+
+    def test_parent_clear_output_resets_history_without_child(self):
+        adaptor = self._adaptor()
+        adaptor._record_output("old text\n")
+        adaptor._clear_output()  # no child process — must not raise
+        self.assertEqual("", adaptor._output_history)
 
 
 if __name__ == "__main__":

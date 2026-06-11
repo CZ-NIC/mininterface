@@ -136,6 +136,31 @@ class TestGuiWidgets(unittest.TestCase):
         ad.update_idletasks()
         self.assertIn("hello from program", ad.text_widget.get("1.0", "end"))
 
+    def test_cancel_keeps_window_alive_for_next_dialog(self):
+        """A plain Esc cancel must NOT destroy the persistent window: the worker's
+        CANCEL post-processing leaves the root alive so the next dialog reuses it.
+        Regression for the cancel-then-reuse hang/exit.
+
+        The worker decides between destroy (session closing) and _after_submit
+        (keep alive) on `_closing`. A plain Esc → _ok(Cancelled) never sets
+        _closing, so the window survives; only _on_close (the X button) does."""
+        from mininterface._lib.ipc_command import IpcCommand
+        from mininterface.exceptions import Cancelled
+
+        ad = self._render({"x": Tag(1)})
+        self.assertFalse(ad._closing)
+
+        # Esc routes to _ok(Cancelled): cancel result, dialog cleared, NOT closing.
+        ad._ok(Cancelled)
+        self.assertEqual(IpcCommand.CANCEL, ad._ipc_result[0])
+        self.assertFalse(ad._closing, "a plain Esc cancel must not flag the session closing")
+        self.assertTrue(ad.winfo_exists(), "window must stay alive after a plain cancel")
+
+        # A second form renders fine on the same live adaptor (the reuse the
+        # parent relies on after catching Cancelled).
+        self._render({"y": Tag(2)})
+        self.assertEqual(1, len(self._of_class("TEntry")))
+
 
 @unittest.skipUnless(_has_display(), "No display available (run under xvfb-run -a)")
 class TestGuiSubprocess(unittest.TestCase):

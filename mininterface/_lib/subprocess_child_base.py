@@ -15,9 +15,10 @@ two operations are injected as hooks via :func:`register_hooks`.
 import os
 import pickle
 import struct
+import traceback
 from typing import Callable, Optional
 
-from .tui_command import TuiCommand
+from .ipc_command import IpcCommand
 
 # Set once by the backend child in run_child_main; read by _OnChangeProxy.
 _CHILD_WRITE_FD: int | None = None
@@ -102,6 +103,21 @@ def send_msg(fd: int, data) -> None:
         frame = frame[n:]
 
 
+def error_payload(exc: BaseException) -> tuple:
+    """Build an ERROR message for an exception that crashed a dialog build.
+
+    Ships the exception object itself when the parent can unpickle it (the child
+    runs only mininterface/stdlib code, so this is the common case) plus the
+    formatted child traceback; falls back to the traceback text alone for an
+    unpicklable exception."""
+    tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    try:
+        pickle.dumps(exc)
+    except Exception:
+        exc = None
+    return (IpcCommand.ERROR, exc, tb)
+
+
 # ---------------------------------------------------------------------------
 # Callback proxies (on_change and validation)
 # ---------------------------------------------------------------------------
@@ -123,22 +139,22 @@ class _ValidationProxy:
             return True  # submit/shutdown in progress — parent re-validates on submit
         assert _CHILD_WRITE_FD is not None
         assert _CHILD_READ_FD is not None
-        send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "validate", self.tag_pos, tag.val))
+        send_msg(_CHILD_WRITE_FD, (IpcCommand.CALLBACK, "validate", self.tag_pos, tag.val))
         while True:
             response = read_msg(_CHILD_READ_FD)
             if not response:
                 return True  # pipe closed — don't block the UI
-            if response[0] == TuiCommand.SHUTDOWN:
+            if response[0] == IpcCommand.SHUTDOWN:
                 # Parent is tearing down (the form was already submitted/cancelled on
                 # another path). Re-dispatch to the app so it exits and restores the
                 # terminal, then unblock the main thread instead of parking here.
                 _request_shutdown()
                 return True
             command, *args = response
-            if command == TuiCommand.VALIDATE_RESULT:
+            if command == IpcCommand.VALIDATE_RESULT:
                 # None → ok; str → error message (shown inline by tag.update)
                 return args[0]
-            elif command == TuiCommand.OUTPUT:
+            elif command == IpcCommand.OUTPUT:
                 if _append_output is not None:
                     _append_output(args[0])
 
@@ -160,24 +176,24 @@ class _OnChangeProxy:
             return  # submit/shutdown in progress — skip the round-trip
         assert _CHILD_WRITE_FD is not None
         assert _CHILD_READ_FD is not None
-        send_msg(_CHILD_WRITE_FD, (TuiCommand.CALLBACK, "on_change", self.tag_pos, tag.val))
+        send_msg(_CHILD_WRITE_FD, (IpcCommand.CALLBACK, "on_change", self.tag_pos, tag.val))
         while True:
             response = read_msg(_CHILD_READ_FD)
             if not response:
                 return
             command, *args = response
-            if command == TuiCommand.SHUTDOWN:
+            if command == IpcCommand.SHUTDOWN:
                 # The parent is tearing down (e.g. the form was already submitted on
                 # another path and the parent moved on). Re-dispatch SHUTDOWN to the
                 # app so it exits and restores the terminal, then unblock. Without
                 # this the main thread stays parked here and app.exit() never runs.
                 _request_shutdown()
                 return
-            if command == TuiCommand.FORM_UPDATE:
+            if command == IpcCommand.FORM_UPDATE:
                 if _apply_form_update is not None:
                     _apply_form_update(args[0], args[1] if len(args) > 1 else "")
                 return
-            elif command == TuiCommand.OUTPUT:
+            elif command == IpcCommand.OUTPUT:
                 # OUTPUT can arrive here if print() was called inside the on_change callback.
                 if _append_output is not None:
                     _append_output(args[0])
@@ -193,7 +209,8 @@ def _ipc_worker_loop(read_fd: int, write_fd: int, handlers: dict) -> None:
     Args:
         read_fd: pipe fd to read commands from
         write_fd: pipe fd to send results to
-        handlers: dict with keys 'OUTPUT', 'FORM', 'BUTTONS', 'on_eof'
+        handlers: dict with keys 'OUTPUT', 'CLEAR_OUTPUT', 'SETTINGS', 'FORM',
+            'BUTTONS', 'on_eof'.
             Each handler is called with the parsed args from the message.
     """
     while True:
@@ -204,18 +221,28 @@ def _ipc_worker_loop(read_fd: int, write_fd: int, handlers: dict) -> None:
 
         command, *args = msg
 
-        if command == TuiCommand.SHUTDOWN:
+        if command == IpcCommand.SHUTDOWN:
             handlers['on_eof']()
             return
 
-        if command == TuiCommand.OUTPUT:
+        if command == IpcCommand.OUTPUT:
             handlers['OUTPUT'](args[0])
             continue
 
+        if command == IpcCommand.CLEAR_OUTPUT:
+            handlers['CLEAR_OUTPUT']()
+            continue
+
+        if command == IpcCommand.SETTINGS:
+            handlers['SETTINGS'](args[0])
+            continue
+
         try:
-            if command == TuiCommand.FORM:
+            if command == IpcCommand.FORM:
                 handlers['FORM'](write_fd, *args)
-            elif command == TuiCommand.BUTTONS:
+            elif command == IpcCommand.BUTTONS:
                 handlers['BUTTONS'](write_fd, *args)
-        except Exception:
-            send_msg(write_fd, (TuiCommand.CANCEL,))
+        except Exception as exc:
+            # Ship the real error to the parent (which re-raises it) instead of
+            # degrading it to a CANCEL the parent would mistake for Esc.
+            send_msg(write_fd, error_payload(exc))

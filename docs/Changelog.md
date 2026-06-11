@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.3.0
+## 1.3.0 (2026-06-11)
 * feat: tkinter and textual in a separated processes
+* feat: robust exception propagation from child processes
 * enh (textual): prints in a box
 
 ## 1.2.2 (2026-05-15)

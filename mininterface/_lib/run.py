@@ -296,6 +296,7 @@ def run(
     settings_conf = None
     if _config_file:
         from .config_file import load_settings_from_config, ensure_settings_inheritance
+
         raw_config, settings_conf = load_settings_from_config(_config_file)
         if settings or settings_conf:
             settings = ensure_settings_inheritance(settings, settings_conf or {})
@@ -303,6 +304,7 @@ def run(
     # Hidden meta-commands in args (rare; needs Start which needs tyro)
     if environ.get("MININTERFACE_INTEGRATE_TO_SYSTEM"):
         from .start import Start
+
         del environ["MININTERFACE_INTEGRATE_TO_SYSTEM"]
         Start(title, interface).integrate(env_or_list or _Empty)
         quit()
@@ -310,6 +312,7 @@ def run(
     # Convert argparse (rare)
     if isinstance(env_or_list, ArgumentParser):
         from .argparse_support import parser_to_dataclass
+
         env_or_list, add_version = parser_to_dataclass(env_or_list)
 
     # Choose an interface — spawns the child subprocess.
@@ -319,14 +322,13 @@ def run(
     # Load heavy CLI deps lazily
     try:
         from ..cli import SubcommandPlaceholder
-        from .cli_flags import CliFlags as _CliFlags
+        from .cli_flags import CliFlags
         from .cli_parser import parse_cli
         from .config_file import parse_config_file
         from .dataclass_creation import choose_subcommand, to_kebab_case
-        from .start import Start  # noqa: F811 — may already be imported above
-    except DependencyRequired:
+    except DependencyRequired as e:
         if env_or_list:
-            raise
+            e.exit()
         return m
 
     cliset = settings.cli if settings else CliSettings()
@@ -346,7 +348,7 @@ def run(
         args[0] = to_kebab_case(choose_subcommand(env_or_list, m).__name__)
 
     # Parse CLI arguments, possibly merged from a config file.
-    cf = _CliFlags(add_verbose, add_version, add_version_package, add_quiet, add_config)
+    cf = CliFlags(add_verbose, add_version, add_version_package, add_quiet, add_config)
     if env_or_list:
         # A single Env object, or a list of such objects (with one is not/being selected via args)
         # Load configuration from CLI and a config file
@@ -368,6 +370,7 @@ def run(
 
 def _ensure_command_run(m: "Mininterface"):
     from ..cli import Command
+
     env = m.env
     if isinstance(env, Command):
         while True:
