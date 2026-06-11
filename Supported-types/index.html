@@ -652,93 +652,87 @@
 <h2 id="basic-usage">Basic usage</h2>
 <h3 id="usage-in-a-dataclass">Usage in a dataclass</h3>
 <p>Take a look how it works with the variables organized in a dataclass:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
-<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">    </span><span class="sd">""" A dummy number """</span>
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="n">my_boolean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">    </span><span class="sd">""" A dummy boolean """</span>
-<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="n">my_conditional_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w">    </span><span class="sd">""" A number that can be null if left empty """</span>
-<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a>    <span class="n">my_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp"</span><span class="p">)</span>
-<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span><span class="sd">""" A dummy path """</span>
-<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a>
-<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a>
-<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>  <span class="c1"># m.env contains an Env instance</span>
-<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>  <span class="c1"># Prompt a dialog; m.form() without parameter edits m.env</span>
-<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
-<a href="#__codelineno-0-22" id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="c1"># Env(my_number=1, my_boolean=True, my_path=PosixPath('/tmp'),</span>
-<a href="#__codelineno-0-23" id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="c1">#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from dataclasses import dataclass
+from pathlib import Path
+
+from mininterface import run
+
+
+@dataclass
+class Env:
+    my_number: int = 1
+    """ A dummy number """
+    my_boolean: bool = True
+    """ A dummy boolean """
+    my_conditional_number: int | None = None
+    """ A number that can be null if left empty """
+    my_path: Path = Path("/tmp")
+    """ A dummy path """
+
+
+m = run(Env)  # m.env contains an Env instance
+m.form()  # Prompt a dialog; m.form() without parameter edits m.env
+print(m.env)
+# Env(my_number=1, my_boolean=True, my_path=PosixPath('/tmp'),
+#  my_point=&lt;__main__.Point object at 0x7ecb5427fdd0&gt;)</code></pre>
 <p><img alt="GUI window" src="../asset/supported_types_1.avif" title="A prompted dialog"/></p>
 <h3 id="usage-in-a-dict">Usage in a dict</h3>
 <p>Variables organized in a dict:</p>
 <p>Along scalar types, there is (basic) support for common iterables or custom classes.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>
-<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
-<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="n">i</span>
-<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
-<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
-<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>
-<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a>
-<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"my_number"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>          <span class="s2">"my_list"</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
-<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a>          <span class="s2">"my_point"</span><span class="p">:</span> <span class="n">Point</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a>          <span class="p">}</span>
-<a href="#__codelineno-1-15" id="__codelineno-1-15" name="__codelineno-1-15"></a>
-<a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># Prompt a dialog</span>
-<a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># {'my_number': 2, 'my_list': [2, 3], 'my_point': &lt;__main__.Point object...&gt;}</span>
-<a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">"my_point"</span><span class="p">]</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>  <span class="c1"># 100</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from mininterface import run
+
+class Point:
+    def __init__(self, i: int):
+        self.i = i
+
+    def __str__(self):
+        return str(self.i)
+
+
+values = {"my_number": 1,
+          "my_list": [1, 2, 3],
+          "my_point": Point(10)
+          }
+
+m = run()
+m.form(values)  # Prompt a dialog
+print(values)  # {'my_number': 2, 'my_list': [2, 3], 'my_point': &lt;__main__.Point object...&gt;}
+print(values["my_point"].i)  # 100</code></pre>
 <p><img alt="GUI window" src="../asset/supported_types_2.avif" title="A prompted dialog after editation"/></p>
 <h2 id="examples">Examples</h2>
 <p>All the examples need some imports:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from dataclasses import dataclass, field
+from pathlib import Path
+from mininterface import run</code></pre>
 <h3 id="scalars">Scalars</h3>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>    <span class="n">my_file</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="w">    </span><span class="sd">""" This is my help text """</span>
-<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a>
-<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a>    <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a><span class="w">    </span><span class="sd">""" My checkbox """</span>
-<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>
-<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.1</span>
-<a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="w">    </span><span class="sd">""" Any scalar possible """</span>
-<a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a>
-<a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">@dataclass
+class Env:
+    my_file: str
+    """ This is my help text """
+
+    my_flag: bool = False
+    """ My checkbox """
+
+    my_number: float = 1.1
+    """ Any scalar possible """
+
+run(Env).form()</code></pre>
 <p><img alt="Scalars" src="../asset/scalars.avif"/></p>
 <h3 id="functions">Functions</h3>
 <p>Will appear as buttons.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">def</span> <span class="nf">my_callback</span><span class="p">():</span>
-<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"I'm here!"</span><span class="p">)</span>
-<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>
-<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a>    <span class="n">my_file</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">my_callback</span>
-<a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a>
-<a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">def my_callback():
+    print("I'm here!")
+
+@dataclass
+class Env:
+    my_file: Callable = my_callback
+
+run(Env).form()</code></pre>
 <p><img alt="Function" src="../asset/examples-function.avif"/></p>
 <p>Or use the <code>with</code> statement to redirect the stdout into the mininterface.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
-<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>    <span class="n">m</span><span class="o">.</span><span class="n">alert</span><span class="p">(</span><span class="s2">"The text 'I'm here' is displayed in the window."</span><span class="p">)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">with run(Env) as m:
+    m.form()
+    m.alert("The text 'I'm here' is displayed in the window.")</code></pre>
 <p><img alt="Function" src="../asset/examples-function-with.avif"/></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -749,125 +743,116 @@
 <p>See the <a class="autorefs autorefs-internal" href="../Helper-types/#mininterface.tag.select_tag.OptionsType">OptionsType</a> help for all the possibilities, here is just a quick hint:</p>
 <h4 id="enums">Enums</h4>
 <p>CLI shows keys, UI shows values. Static values. The program:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
-<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
-<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>
-<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Color</span>
-<a href="#__codelineno-6-8" id="__codelineno-6-8" name="__codelineno-6-8"></a>
-<a href="#__codelineno-6-9" id="__codelineno-6-9" name="__codelineno-6-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">class Color(Enum):
+    RED = "red"
+    GREEN = "green"
+
+@dataclass
+class Env:
+    val: Color
+
+m = run(Env)</code></pre>
 <p>CLI shows keys.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
-<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--val<span class="w"> </span><span class="o">{</span>RED,GREEN<span class="o">}</span>
-<a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a>
-<a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a>╭─<span class="w"> </span>options<span class="w"> </span>───────────────────────────────────────────────────────────────────────╮
-<a href="#__codelineno-7-5" id="__codelineno-7-5" name="__codelineno-7-5"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">              </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                         </span>│
-<a href="#__codelineno-7-6" id="__codelineno-7-6" name="__codelineno-7-6"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">           </span>verbosity<span class="w"> </span>level,<span class="w"> </span>can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>multiple<span class="w"> </span><span class="nb">times</span><span class="w"> </span>to<span class="w"> </span>increase<span class="w"> </span>│
-<a href="#__codelineno-7-7" id="__codelineno-7-7" name="__codelineno-7-7"></a>│<span class="w"> </span>--val<span class="w"> </span><span class="o">{</span>RED,GREEN<span class="o">}</span><span class="w">       </span><span class="o">(</span>required<span class="o">)</span><span class="w">                                              </span>│
-<a href="#__codelineno-7-8" id="__codelineno-7-8" name="__codelineno-7-8"></a>╰─────────────────────────────────────────────────────────────────────────────────╯
-</code></pre></div>
+<pre class="highlight"><code class="language-bash">$ ./program.py --help
+usage: program.py [-h] [-v] --val {RED,GREEN}
+
+╭─ options ───────────────────────────────────────────────────────────────────────╮
+│ -h, --help              show this help message and exit                         │
+│ -v, --verbose           verbosity level, can be used multiple times to increase │
+│ --val {RED,GREEN}       (required)                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯</code></pre>
 <p>(Note: You may mark it with <a href="https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.EnumChoicesFromValues">a special flag</a> to show the values in the CLI.)</p>
 <p>UI shows values:</p>
 <p><img alt="Enum vals" src="../asset/enum_vals.avif" title="UI shows enum values"/></p>
 <p>As both keys and values are displayed, should you need to bear an additional information, not displayed in CLI nor UI, you can tackle the Enum class.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="k">class</span> <span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"#ff0000"</span>
-<a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"#00ff00"</span>
-<a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a>
-<a href="#__codelineno-8-5" id="__codelineno-8-5" name="__codelineno-8-5"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
-<a href="#__codelineno-8-6" id="__codelineno-8-6" name="__codelineno-8-6"></a>        <span class="c1"># mark '#ff0000' as payload, rather than the `.value`</span>
-<a href="#__codelineno-8-7" id="__codelineno-8-7" name="__codelineno-8-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span>
-<a href="#__codelineno-8-8" id="__codelineno-8-8" name="__codelineno-8-8"></a>
-<a href="#__codelineno-8-9" id="__codelineno-8-9" name="__codelineno-8-9"></a>    <span class="nd">@property</span>
-<a href="#__codelineno-8-10" id="__codelineno-8-10" name="__codelineno-8-10"></a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># `.value` is seen from UI</span>
-<a href="#__codelineno-8-11" id="__codelineno-8-11" name="__codelineno-8-11"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-<a href="#__codelineno-8-12" id="__codelineno-8-12" name="__codelineno-8-12"></a>
-<a href="#__codelineno-8-13" id="__codelineno-8-13" name="__codelineno-8-13"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-8-14" id="__codelineno-8-14" name="__codelineno-8-14"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-8-15" id="__codelineno-8-15" name="__codelineno-8-15"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Color</span>
-<a href="#__codelineno-8-16" id="__codelineno-8-16" name="__codelineno-8-16"></a>
-<a href="#__codelineno-8-17" id="__codelineno-8-17" name="__codelineno-8-17"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-8-18" id="__codelineno-8-18" name="__codelineno-8-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>  <span class="c1"># ex. '#ff0000'</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">class Color(Enum):
+    RED = "#ff0000"
+    GREEN = "#00ff00"
+
+    def __init__(self, payload):
+        # mark '#ff0000' as payload, rather than the `.value`
+        self.payload = payload
+
+    @property
+    def value(self):  # `.value` is seen from UI
+        return self.name.lower()
+
+@dataclass
+class Env:
+    val: Color
+
+m = run(Env)
+print(m.env.val.payload)  # ex. '#ff0000'</code></pre>
 <h4 id="literal">Literal</h4>
 <p>Built-in <code>Literal</code> is supported. Allows you to do a one-liner.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>
-<a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-9-4" id="__codelineno-9-4" name="__codelineno-9-4"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-9-5" id="__codelineno-9-5" name="__codelineno-9-5"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">]</span>
-<a href="#__codelineno-9-6" id="__codelineno-9-6" name="__codelineno-9-6"></a>
-<a href="#__codelineno-9-7" id="__codelineno-9-7" name="__codelineno-9-7"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-9-8" id="__codelineno-9-8" name="__codelineno-9-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># ex. 'one'</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from typing import Literal
+
+@dataclass
+class Env:
+    val: Literal["one", "two"]
+
+m = run(Env)
+print(m.env.val)  # ex. 'one'</code></pre>
 <p>Should you need dynamic values, wrap it under <code>Annotated</code>:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Literal</span>
-<a href="#__codelineno-10-2" id="__codelineno-10-2" name="__codelineno-10-2"></a>
-<a href="#__codelineno-10-3" id="__codelineno-10-3" name="__codelineno-10-3"></a><span class="n">variable</span> <span class="o">=</span> <span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span>
-<a href="#__codelineno-10-4" id="__codelineno-10-4" name="__codelineno-10-4"></a>
-<a href="#__codelineno-10-5" id="__codelineno-10-5" name="__codelineno-10-5"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-10-6" id="__codelineno-10-6" name="__codelineno-10-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-10-7" id="__codelineno-10-7" name="__codelineno-10-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="n">variable</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">"one"</span>
-<a href="#__codelineno-10-8" id="__codelineno-10-8" name="__codelineno-10-8"></a>
-<a href="#__codelineno-10-9" id="__codelineno-10-9" name="__codelineno-10-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-10-10" id="__codelineno-10-10" name="__codelineno-10-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>  <span class="c1"># ex. 'one'</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from typing import Annotated, Literal
+
+variable = "one", "two"
+
+@dataclass
+class Env:
+    val: Annotated[str, Literal[variable]] = "one"
+
+m = run(Env)
+print(m.env.val)  # ex. 'one'</code></pre>
 <h4 id="selecttag"><a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">SelectTag</a></h4>
 <p>Advanced adjustments, multiple choice, dynamic values, etc.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-11-1" id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-11-2" id="__codelineno-11-2" name="__codelineno-11-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-11-3" id="__codelineno-11-3" name="__codelineno-11-3"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">SelectTag</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">],</span> <span class="n">multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
-<a href="#__codelineno-11-4" id="__codelineno-11-4" name="__codelineno-11-4"></a>
-<a href="#__codelineno-11-5" id="__codelineno-11-5" name="__codelineno-11-5"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">@dataclass
+class Env:
+    val: Annotated[list[str], SelectTag(options=["one", "two"], multiple=True)]
+
+run(Env)</code></pre>
 <p><img alt="SelectTag multiple" src="../asset/selecttag-multiple.avif"/></p>
 <h3 id="dataclass-subgroup">Dataclass (→ subgroup)</h3>
 <p>You can nest the classes to create a subgroup:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-12-1" id="__codelineno-12-1" name="__codelineno-12-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-12-2" id="__codelineno-12-2" name="__codelineno-12-2"></a><span class="k">class</span> <span class="nc">Message</span><span class="p">:</span>
-<a href="#__codelineno-12-3" id="__codelineno-12-3" name="__codelineno-12-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-12-4" id="__codelineno-12-4" name="__codelineno-12-4"></a>
-<a href="#__codelineno-12-5" id="__codelineno-12-5" name="__codelineno-12-5"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-12-6" id="__codelineno-12-6" name="__codelineno-12-6"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-12-7" id="__codelineno-12-7" name="__codelineno-12-7"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Message</span>
-<a href="#__codelineno-12-8" id="__codelineno-12-8" name="__codelineno-12-8"></a>
-<a href="#__codelineno-12-9" id="__codelineno-12-9" name="__codelineno-12-9"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">@dataclass
+class Message:
+    text: str
+
+@dataclass
+class Env:
+    val: Message
+
+run(Env)</code></pre>
 <p><img alt="Nested dataclass" src="../asset/nested-dataclass.avif"/></p>
 <p>In the config file, it behaves like a dict:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-13-1" id="__codelineno-13-1" name="__codelineno-13-1"></a><span class="nt">val</span><span class="p">:</span>
-<a href="#__codelineno-13-2" id="__codelineno-13-2" name="__codelineno-13-2"></a><span class="w">    </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">text from a config file</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-yaml">val:
+    text: text from a config file</code></pre>
 <h3 id="dataclasses-union-subcommand">Dataclasses union (→ subcommand)</h3>
 <p>You can union the classes to create subcommands:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-14-1" id="__codelineno-14-1" name="__codelineno-14-1"></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<a href="#__codelineno-14-2" id="__codelineno-14-2" name="__codelineno-14-2"></a>
-<a href="#__codelineno-14-3" id="__codelineno-14-3" name="__codelineno-14-3"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-14-4" id="__codelineno-14-4" name="__codelineno-14-4"></a><span class="k">class</span> <span class="nc">ConsolePlain</span><span class="p">:</span>
-<a href="#__codelineno-14-5" id="__codelineno-14-5" name="__codelineno-14-5"></a>    <span class="k">pass</span>
-<a href="#__codelineno-14-6" id="__codelineno-14-6" name="__codelineno-14-6"></a>
-<a href="#__codelineno-14-7" id="__codelineno-14-7" name="__codelineno-14-7"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-14-8" id="__codelineno-14-8" name="__codelineno-14-8"></a><span class="k">class</span> <span class="nc">ConsoleRich</span><span class="p">:</span>
-<a href="#__codelineno-14-9" id="__codelineno-14-9" name="__codelineno-14-9"></a>    <span class="n">color</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"red"</span><span class="p">,</span> <span class="s2">"green"</span><span class="p">]</span>
-<a href="#__codelineno-14-10" id="__codelineno-14-10" name="__codelineno-14-10"></a>
-<a href="#__codelineno-14-11" id="__codelineno-14-11" name="__codelineno-14-11"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-14-12" id="__codelineno-14-12" name="__codelineno-14-12"></a><span class="k">class</span> <span class="nc">Console</span><span class="p">:</span>
-<a href="#__codelineno-14-13" id="__codelineno-14-13" name="__codelineno-14-13"></a>    <span class="n">style</span><span class="p">:</span> <span class="n">ConsolePlain</span> <span class="o">|</span> <span class="n">ConsoleRich</span>
-<a href="#__codelineno-14-14" id="__codelineno-14-14" name="__codelineno-14-14"></a>    <span class="n">bot_id</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"id-one"</span><span class="p">,</span> <span class="s2">"id-two"</span><span class="p">]</span>
-<a href="#__codelineno-14-15" id="__codelineno-14-15" name="__codelineno-14-15"></a>
-<a href="#__codelineno-14-16" id="__codelineno-14-16" name="__codelineno-14-16"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-14-17" id="__codelineno-14-17" name="__codelineno-14-17"></a><span class="k">class</span> <span class="nc">Message</span><span class="p">:</span>
-<a href="#__codelineno-14-18" id="__codelineno-14-18" name="__codelineno-14-18"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-14-19" id="__codelineno-14-19" name="__codelineno-14-19"></a>
-<a href="#__codelineno-14-20" id="__codelineno-14-20" name="__codelineno-14-20"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-14-21" id="__codelineno-14-21" name="__codelineno-14-21"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-14-22" id="__codelineno-14-22" name="__codelineno-14-22"></a>    <span class="n">val</span><span class="p">:</span> <span class="n">Message</span> <span class="o">|</span> <span class="n">Console</span>
-<a href="#__codelineno-14-23" id="__codelineno-14-23" name="__codelineno-14-23"></a>
-<a href="#__codelineno-14-24" id="__codelineno-14-24" name="__codelineno-14-24"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from typing import Literal
+
+@dataclass
+class ConsolePlain:
+    pass
+
+@dataclass
+class ConsoleRich:
+    color: Literal["red", "green"]
+
+@dataclass
+class Console:
+    style: ConsolePlain | ConsoleRich
+    bot_id: Literal["id-one", "id-two"]
+
+@dataclass
+class Message:
+    text: str
+
+@dataclass
+class Env:
+    val: Message | Console
+
+m = run(Env)</code></pre>
 <p>First, we've chosen <code>Console</code>, then <code>Console rich</code>.</p>
 <p><img alt="Nested subcommands" src="../asset/nested-subcommands-1.avif"/>
 <img alt="Choosing Console rich" src="../asset/nested-subcommands-2.avif"/>
@@ -876,64 +861,55 @@
 <summary>Grouping</summary>
 <p>Note fields from outer <code>Console</code> and inner <code>ConsoleRich</code> are displayed together in step 3. Why? You might start at arbitrary position.</p>
 <p>Starting at step 1:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-15-1" id="__codelineno-15-1" name="__codelineno-15-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
-<a href="#__codelineno-15-2" id="__codelineno-15-2" name="__codelineno-15-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>message,console<span class="o">}</span>
-<a href="#__codelineno-15-3" id="__codelineno-15-3" name="__codelineno-15-3"></a>$<span class="w"> </span>./program.py
-</code></pre></div>
+<pre class="highlight"><code class="language-bash">$ ./program.py --help
+usage: program.py [-h] [-v] {message,console}
+$ ./program.py</code></pre>
 <p><img alt="Nested subcommands" src="../asset/nested-subcommands-1.avif"/></p>
 <p>Starting at step 2:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-16-1" id="__codelineno-16-1" name="__codelineno-16-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>console<span class="w"> </span>--help
-<a href="#__codelineno-16-2" id="__codelineno-16-2" name="__codelineno-16-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span>console<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--bot-id<span class="w"> </span><span class="o">{</span>id-one,id-two<span class="o">}</span><span class="w"> </span><span class="o">{</span>console-plain,console-rich<span class="o">}</span>
-<a href="#__codelineno-16-3" id="__codelineno-16-3" name="__codelineno-16-3"></a>$<span class="w"> </span>./program.py<span class="w"> </span>console
-</code></pre></div>
+<pre class="highlight"><code class="language-bash">$ ./program.py console --help
+usage: program.py console [-h] [-v] --bot-id {id-one,id-two} {console-plain,console-rich}
+$ ./program.py console</code></pre>
 <p><img alt="Choosing Console rich" src="../asset/nested-subcommands-2.avif"/></p>
 <p>That way, you may start anywhere from CLI, yet be sure all the missing fields, if possible, are grouped in a single form dialog.</p>
 </details>
 <details>
 <summary>Shorter CLI notation</summary>
 <p>This is how in looks in CLI:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-17-1" id="__codelineno-17-1" name="__codelineno-17-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
-<a href="#__codelineno-17-2" id="__codelineno-17-2" name="__codelineno-17-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>val:message,val:console<span class="o">}</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-bash">$ ./program.py --help
+usage: program.py [-h] [-v] {val:message,val:console}</code></pre>
 <p>Is that too long for you? Instead of plain <code>Env</code>, use the settings:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-18-1" id="__codelineno-18-1" name="__codelineno-18-1"></a><span class="kn">from</span> <span class="nn">mininterface.settings</span> <span class="kn">import</span> <span class="n">CliSettings</span>
-<a href="#__codelineno-18-2" id="__codelineno-18-2" name="__codelineno-18-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">CliSettings</span><span class="p">(</span><span class="n">omit_subcommand_prefixes</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from mininterface.settings import CliSettings
+m = run(Env, settings=CliSettings(omit_subcommand_prefixes=True))</code></pre>
 <p>In the background, it does the same thing as applying an annotation marker from the underlying CLI library <code>tyro</code>.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-19-1" id="__codelineno-19-1" name="__codelineno-19-1"></a><span class="kn">from</span> <span class="nn">tyro.conf</span> <span class="kn">import</span> <span class="n">OmitSubcommandPrefixes</span>
-<a href="#__codelineno-19-2" id="__codelineno-19-2" name="__codelineno-19-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">OmitSubcommandPrefixes</span><span class="p">[</span><span class="n">Env</span><span class="p">])</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from tyro.conf import OmitSubcommandPrefixes
+m = run(OmitSubcommandPrefixes[Env])</code></pre>
 <p>Take a look! Using that annotation will make the inscription shorter.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-20-1" id="__codelineno-20-1" name="__codelineno-20-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
-<a href="#__codelineno-20-2" id="__codelineno-20-2" name="__codelineno-20-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>message,console<span class="o">}</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-bash">$ ./program.py --help
+usage: program.py [-h] [-v] {message,console}</code></pre>
 </details>
 <p>In the config file, put a dict where subcommands are in the kebab case. Here, we define some config defaults for <code>ConsoleRich</code>, leaving <code>Message</code> and <code>ConsolePlain</code> without config defaults.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-21-1" id="__codelineno-21-1" name="__codelineno-21-1"></a><span class="nt">val</span><span class="p">:</span>
-<a href="#__codelineno-21-2" id="__codelineno-21-2" name="__codelineno-21-2"></a><span class="w">    </span><span class="nt">console</span><span class="p">:</span>
-<a href="#__codelineno-21-3" id="__codelineno-21-3" name="__codelineno-21-3"></a><span class="w">        </span><span class="nt">bot-id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id-two</span>
-<a href="#__codelineno-21-4" id="__codelineno-21-4" name="__codelineno-21-4"></a><span class="w">        </span><span class="nt">style</span><span class="p">:</span>
-<a href="#__codelineno-21-5" id="__codelineno-21-5" name="__codelineno-21-5"></a><span class="w">            </span><span class="nt">console-rich</span><span class="p">:</span>
-<a href="#__codelineno-21-6" id="__codelineno-21-6" name="__codelineno-21-6"></a><span class="w">                </span><span class="nt">color</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">green</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-yaml">val:
+    console:
+        bot-id: id-two
+        style:
+            console-rich:
+                color:  green</code></pre>
 <h3 id="well-known-objects">Well-known objects</h3>
 <p>We've added extra functions for known objects like <code>Path</code> or <code>datetime</code> (file exists check etc.), see <code>Tag</code> subclasses in Custom types section (<a class="autorefs autorefs-internal" href="../PathTag/#mininterface.tag.PathTag">PathTag</a>, <a class="autorefs autorefs-internal" href="../DatetimeTag/#mininterface.tag.DatetimeTag">DatetimeTag</a>, ...).</p>
 <h3 id="iterables">Iterables</h3>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-22-1" id="__codelineno-22-1" name="__codelineno-22-1"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-22-2" id="__codelineno-22-2" name="__codelineno-22-2"></a>
-<a href="#__codelineno-22-3" id="__codelineno-22-3" name="__codelineno-22-3"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-22-4" id="__codelineno-22-4" name="__codelineno-22-4"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-22-5" id="__codelineno-22-5" name="__codelineno-22-5"></a>    <span class="n">my_file</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-<a href="#__codelineno-22-6" id="__codelineno-22-6" name="__codelineno-22-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-<a href="#__codelineno-22-7" id="__codelineno-22-7" name="__codelineno-22-7"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from pathlib import Path
+
+@dataclass
+class Env:
+    my_file: list[int] = field(default_factory=lambda: [1, 2, 3])
+    my_paths: list[Path] = field(default_factory=lambda: [])
+run(Env).form()</code></pre>
 <h3 id="union-types">Union types</h3>
 <p>An enormously useful feature is to let the user not set a variable.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-23-1" id="__codelineno-23-1" name="__codelineno-23-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-23-2" id="__codelineno-23-2" name="__codelineno-23-2"></a><span class="k">class</span> <span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-23-3" id="__codelineno-23-3" name="__codelineno-23-3"></a>    <span class="n">my_var</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a href="#__codelineno-23-4" id="__codelineno-23-4" name="__codelineno-23-4"></a><span class="w">    </span><span class="sd">""" Left empty for None """</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">@dataclass
+class Env:
+    my_var: int | None = None
+    """ Left empty for None """</code></pre>
 <h3 id="additional">Additional</h3>
 <p>We've added some other useful custom types that can be imported mostly from <code>mininterface.tag</code>.</p>
 <ol>

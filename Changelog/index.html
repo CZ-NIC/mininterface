@@ -358,6 +358,13 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#130-2026-06-11">
+<span class="md-ellipsis">
+      1.3.0 (2026-06-11)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#122-2026-05-15">
 <span class="md-ellipsis">
       1.2.2 (2026-05-15)
@@ -522,6 +529,13 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#130-2026-06-11">
+<span class="md-ellipsis">
+      1.3.0 (2026-06-11)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#122-2026-05-15">
 <span class="md-ellipsis">
       1.2.2 (2026-05-15)
@@ -669,6 +683,12 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1 id="changelog">Changelog</h1>
+<h2 id="130-2026-06-11">1.3.0 (2026-06-11)</h2>
+<ul>
+<li>feat: tkinter and textual in a separated processes</li>
+<li>feat: robust exception propagation from child processes</li>
+<li>enh (textual): prints in a box</li>
+</ul>
 <h2 id="122-2026-05-15">1.2.2 (2026-05-15)</h2>
 <ul>
 <li>enh: config file union support</li>
@@ -682,7 +702,7 @@
 </ul>
 <h2 id="120-2025-10-17">1.2.0 (2025-10-17)</h2>
 <ul>
-<li>feat: <a class="autorefs autorefs-internal" href="../run/#mininterface.run"><code>run</code></a> add_config flag</li>
+<li>feat: [<code>run</code>][mininterface.run] add_config flag</li>
 <li>feat: <a href="../Supported-types/#dataclasses-union-subcommand">subcommands</a> allowed in the config file</li>
 </ul>
 <h2 id="114-2025-10-13">1.1.4 (2025-10-13)</h2>
@@ -713,9 +733,9 @@
 </ul>
 <h2 id="110-2025-09-12">1.1.0 (2025-09-12)</h2>
 <ul>
-<li>CHANGED – some <a class="autorefs autorefs-internal" href="../run/#mininterface.run"><code>run</code></a> arguments are no longer positional and can only be passed as keyword arguments</li>
+<li>CHANGED – some [<code>run</code>][mininterface.run] arguments are no longer positional and can only be passed as keyword arguments</li>
 <li>feat: interactive CLI (nested configuration missing fields dialogs)</li>
-<li>feat: <a class="autorefs autorefs-internal" href="../run/#mininterface.run"><code>run</code></a> add_version, add_version_package, add_quiet flags</li>
+<li>feat: [<code>run</code>][mininterface.run] add_version, add_version_package, add_quiet flags</li>
 <li>feat: add utility for generating unit tests</li>
 <li>feat: <a class="autorefs autorefs-internal" href="../Helper-types/#mininterface.tag.tag.ValidationCallback">annotated types</a> for collections</li>
 <li>feat: <a class="autorefs autorefs-internal" href="../Prepared-annotations/#mininterface.tag.flag.Blank"><code>Blank</code></a> flag marker default value</li>
@@ -734,7 +754,7 @@
 <h2 id="103-2025-06-18">1.0.3 (2025-06-18)</h2>
 <ul>
 <li>enh: Tk better file dialog</li>
-<li>feat: <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.mnemonic">Tag.mnemonic</a></li>
+<li>feat: [Tag.mnemonic][mininterface.Tag.mnemonic]</li>
 <li>feat: config file tuple annotation support</li>
 <li>fix (GUI): combobox Enter key submits form after selection</li>
 </ul>
@@ -749,15 +769,15 @@
 <h2 id="100-2025-05-08">1.0.0 (2025-05-08)</h2>
 <ul>
 <li>CHANGED – renamed: API is becoming stable but we have to rename several things.<ul>
-<li>.is_yes -&gt; <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.confirm">Mininterface.confirm</a></li>
+<li>.is_yes -&gt; [Mininterface.confirm][mininterface.Mininterface.confirm]</li>
 <li>.is_no -&gt; .confirm(..., False) (because .is_no was counterintuitive)</li>
-<li>.choice -&gt; <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select">Mininterface.select</a> (as HTML counterpart)</li>
+<li>.choice -&gt; [Mininterface.select][mininterface.Mininterface.select] (as HTML counterpart)</li>
 <li>EnumTag(choices=) -&gt; <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">SelectTag(options=)</a></li>
 <li>Choices alias -&gt; Options alias</li>
 <li>MininterfaceOptions -&gt; <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.MininterfaceSettings">MininterfaceSettings</a> (to not meddle with the SelectTag)</li>
 <li>mininterface.types.rich_tags -&gt; <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag">mininterface.tag.*</a></li>
 <li>Tag attribute order, swap <code>name</code> and <code>validation</code></li>
-<li>.ask_number -&gt; <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.ask">Mininterface.ask(..., int)</a></li>
+<li>.ask_number -&gt; [Mininterface.ask(..., int)][mininterface.Mininterface.ask]</li>
 <li>Mininterface.ask does not return None anymore but forces the type</li>
 <li>Tag.name -&gt; Tag.label</li>
 <li>removed <code>--integrate-to-system</code> in favour of <code>mininterface integrate</code></li>
@@ -779,7 +799,7 @@
 <li><a class="autorefs autorefs-internal" href="../SecretTag/#mininterface.tag.SecretTag">SecretTag</a></li>
 <li>PathTag UI in TextualInterface</li>
 <li>UI options available from the program</li>
-<li>Mininterface.choice <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select">tips</a> parameter</li>
+<li>Mininterface.choice [tips][mininterface.Mininterface.select] parameter</li>
 <li>better annotated fetching</li>
 </ul>
 <h2 id="075-2025-01-29">0.7.5 (2025-01-29)</h2>
@@ -803,7 +823,7 @@
 <h2 id="071-2024-11-27">0.7.1 (2024-11-27)</h2>
 <ul>
 <li>GUI scrollbars if window is bigger than the screen</li>
-<li><a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.__enter__">non-interactive</a> session support</li>
+<li>[non-interactive][mininterface.Mininterface.__enter__] session support</li>
 <li><a class="autorefs autorefs-internal" href="../DatetimeTag/#mininterface.tag.DatetimeTag">datetime</a> support</li>
 <li>nested generics support (a tuple in a list)</li>
 </ul>

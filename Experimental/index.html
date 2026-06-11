@@ -438,28 +438,27 @@
 <div class="doc doc-contents">
 <p>Create a button. When clicked, the form submits.
         If submission succeeds (validation checks pass), its value becomes True.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">mininterface</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Tag</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">mininterface.experimental</span> <span class="kn">import</span> <span class="n">SubmitButton</span>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>    <span class="s2">"File name"</span><span class="p">:</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">"/tmp"</span><span class="p">,</span> <span class="n">annotation</span><span class="o">=</span><span class="n">Path</span><span class="p">),</span>
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="s2">"Append text"</span><span class="p">:</span> <span class="p">{</span>
-<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>        <span class="s2">"My text"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
-<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a>        <span class="s2">"Append now"</span><span class="p">:</span> <span class="n">SubmitButton</span><span class="p">()</span>
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="p">},</span>
-<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>    <span class="s2">"Duplicate"</span><span class="p">:</span> <span class="p">{</span>
-<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>        <span class="s2">"Method"</span><span class="p">:</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">"twice"</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">"twice"</span><span class="p">,</span> <span class="s2">"thrice"</span><span class="p">]),</span>
-<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a>        <span class="s2">"Duplicate now"</span><span class="p">:</span> <span class="n">SubmitButton</span><span class="p">()</span>
-<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a>    <span class="p">}</span>
-<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="p">})</span>
-<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="c1"># Clicking on 'Append now' button</span>
-<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="c1"># {'File name': PosixPath('/tmp'),</span>
-<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="c1"># 'Append text': {'My text': '', 'Append now': True},</span>
-<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="c1"># 'Duplicate': {'Method': 'twice', 'Duplicate now': False}}</span>
-</code></pre></div>
+<pre class="highlight"><code class="language-python">from pathlib import Path
+from mininterface import run, Tag
+from mininterface.experimental import SubmitButton
+
+m = run()
+out = m.form({
+    "File name": Tag("/tmp", annotation=Path),
+    "Append text": {
+        "My text": "",
+        "Append now": SubmitButton()
+    },
+    "Duplicate": {
+        "Method": Tag("twice", options=["twice", "thrice"]),
+        "Duplicate now": SubmitButton()
+    }
+})
+# Clicking on 'Append now' button
+print(out)
+# {'File name': PosixPath('/tmp'),
+# 'Append text': {'My text': '', 'Append now': True},
+# 'Duplicate': {'Method': 'twice', 'Duplicate now': False}}</code></pre>
 <p><img alt="Submit button" src="../asset/submitButton.avif"/></p>
 </div>
 </div>
