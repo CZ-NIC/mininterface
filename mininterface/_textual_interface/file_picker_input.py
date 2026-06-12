@@ -1,3 +1,4 @@
+from ast import literal_eval
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -396,7 +397,7 @@ def FilePickerInputFactory(adaptor: "TextualAdaptor", tag: PathTag, **kwargs):
             if tag.multiple and tag._get_ui_val():
                 # Initialize selected paths from existing value
                 try:
-                    paths = eval(str(tag._get_ui_val()))
+                    paths = literal_eval(str(tag._get_ui_val()))
                     if isinstance(paths, list):
                         self.selected_paths = [Path(p) for p in paths]
                 except (ValueError, SyntaxError):
