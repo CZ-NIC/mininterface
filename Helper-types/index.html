@@ -687,7 +687,7 @@
 <h1>Helper types</h1>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.tag.ErrorMessage">
-<code class="highlight language-python">ErrorMessage = TypeVar('ErrorMessage')</code>
+<code class="highlight language-python"><span class="n">ErrorMessage</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'ErrorMessage'</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>A string, callback validation error message.</p>
@@ -695,15 +695,15 @@
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.tag.TagValue">
-<code class="highlight language-python">TagValue = TypeVar('TagValue', bound=Any)</code>
+<code class="highlight language-python"><span class="n">TagValue</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'TagValue'</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Any</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
-<p>Any value. It is being wrapped by a [Tag][mininterface.Tag].</p>
+<p>Any value. It is being wrapped by a <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag">Tag</a>.</p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.tag.UiValue">
-<code class="highlight language-python">UiValue = TagValue | str</code>
+<code class="highlight language-python"><span class="n">UiValue</span> <span class="o">=</span> <span class="n">TagValue</span> <span class="o">|</span> <span class="nb">str</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>Candidate for the TagValue. Produced by the UI. Might be of the same type as the target TagValue, or str
@@ -712,79 +712,86 @@
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.tag.ValidationCallback">
-<code class="highlight language-python">ValidationCallback = Callable[['Tag'], ValidationResult | tuple[ValidationResult, TagValue]] | BaseMetadata | GroupedMetadata</code>
+<code class="highlight language-python"><span class="n">ValidationCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">'Tag'</span><span class="p">],</span> <span class="n">ValidationResult</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ValidationResult</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]]</span> <span class="o">|</span> <span class="n">BaseMetadata</span> <span class="o">|</span> <span class="n">GroupedMetadata</span></code>
 </h3>
 <div class="doc doc-contents first">
-<p>Being used at [Tag.validation][mininterface.Tag.validation].</p>
+<p>Being used at <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.validation">Tag.validation</a>.</p>
 <p>Either use a custom callback function, a provided <a class="autorefs autorefs-internal" href="../Validation/#mininterface.validators">validator</a>, or an <a href="https://github.com/annotated-types/annotated-types?#documentation">annotated-types predicate</a>. (You can use multiple validation callbacks combined into an itarable.)</p>
 <p><a class="autorefs autorefs-internal" href="#mininterface.tag.tag.ValidationResult">ValidationResult</a> is a bool or the error message that implicitly means it has failed. Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).</p>
 <h4 id="mininterface.tag.tag.ValidationCallback--custom-function">Custom function</h4>
 <p>Handles the Tag.</p>
-<pre class="highlight"><code class="language-python">from mininterface.tag import Tag
-
-def my_validation(tag: Tag):
-    return tag.val &gt; 50
-
-m.form({"number", Tag("", validation=my_validation)})</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.tag</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_validation</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">&gt;</span> <span class="mi">50</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">my_validation</span><span class="p">)})</span>
+</code></pre></div>
 <h4 id="mininterface.tag.tag.ValidationCallback--provided-validators">Provided validators</h4>
 <p>Found in the <a class="autorefs autorefs-internal" href="../Validation/#mininterface.validators">mininterface.validators</a> module.</p>
-<pre class="highlight"><code class="language-python">from mininterface.validators import not_empty
-m.form({"number", Tag("", validation=not_empty)})
-# User cannot leave the field empty.</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">not_empty</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">not_empty</span><span class="p">)})</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="c1"># User cannot leave the field empty.</span>
+</code></pre></div>
 <p>You may use the validation in a type annotation.
-<pre class="highlight"><code class="language-python">from mininterface import Tag, Validation
-@dataclass
-class Env:
-    my_text: Annotated[str, Validation(not_empty)] = "will not be emtpy"
-
-    # which is an alias for:
-    # my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"</code></pre></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">Validation</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">my_text</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Validation</span><span class="p">(</span><span class="n">not_empty</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"will not be emtpy"</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a>    <span class="c1"># which is an alias for:</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>    <span class="c1"># my_text: Annotated[str, Tag(validation=not_empty)] = "will not be emtpy"</span>
+</code></pre></div></p>
 <h4 id="mininterface.tag.tag.ValidationCallback--annotated-types-predicate">annotated-types predicate.</h4>
 <p>The <a href="https://github.com/annotated-types/annotated-types?#documentation">annotated-types</a> are de-facto standard for types restraining.</p>
 <p>Currently, <code>Gt, Ge, Lt, Le, MultipleOf and Len</code> are supported.</p>
-<pre class="highlight"><code class="language-python">from dataclasses import dataclass
-from annotated_types import Ge
-from mininterface import run
-
-@dataclass
-class AnnotatedTypes:
-    age: Annotated[int, Ge(18)]
-
-run(AnnotatedTypes).env.age  # guaranteed to be &gt;= 18</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">annotated_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ge</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a>    <span class="n">age</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">)]</span>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="n">run</span><span class="p">(</span><span class="n">AnnotatedTypes</span><span class="p">)</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">age</span>  <span class="c1"># guaranteed to be &gt;= 18</span>
+</code></pre></div>
 <div class="admonition order">
 <p class="admonition-title">Order</p>
 <p>The annotated-types from the <code>Annotated</code> are prepended to the <code>Tag(validation=)</code> iterable.</p>
-<pre class="highlight"><code class="language-python">@dataclass
-class AnnotatedTypes:
-    age: Annotated[int, Ge(18), Tag(validation=custom)]
-
-# -&gt; age: Annotated[int, Tag(validation=[Ge(18), custom])]</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">age</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="n">validation</span><span class="o">=</span><span class="n">custom</span><span class="p">)]</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="c1"># -&gt; age: Annotated[int, Tag(validation=[Ge(18), custom])]</span>
+</code></pre></div>
 </div>
 <p>If the value is tuple or list, <code>Gt, Ge, Lt, Le</code> are applied to its elements.</p>
-<pre class="highlight"><code class="language-python">from dataclasses import dataclass
-from annotated_types import Ge
-from mininterface import run
-
-@dataclass
-class AnnotatedTypes:
-    ages: Annotated[list[int], Ge(18), Len(5)]
-
-run(AnnotatedTypes).env.ages  # guaranteed to be all &gt;= 18 and their count 5+</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">annotated_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ge</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">AnnotatedTypes</span><span class="p">:</span>
+<a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a>    <span class="n">ages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">18</span><span class="p">),</span> <span class="n">Len</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+<a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a>
+<a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="n">run</span><span class="p">(</span><span class="n">AnnotatedTypes</span><span class="p">)</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">ages</span>  <span class="c1"># guaranteed to be all &gt;= 18 and their count 5+</span>
+</code></pre></div>
 <p>Let's test this:</p>
-<pre class="highlight"><code class="language-bash">$ program.py --ages 18 18
-ages: Length 2 must be at least 5
-$ program.py --ages 18 18 17 18 100
-ages: Value 17 must be ≥ 18
-$ program.py --ages 18 18 500 18 100
-# passes</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>ages:<span class="w"> </span>Length<span class="w"> </span><span class="m">2</span><span class="w"> </span>must<span class="w"> </span>be<span class="w"> </span>at<span class="w"> </span>least<span class="w"> </span><span class="m">5</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">17</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">100</span>
+<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>ages:<span class="w"> </span>Value<span class="w"> </span><span class="m">17</span><span class="w"> </span>must<span class="w"> </span>be<span class="w"> </span>≥<span class="w"> </span><span class="m">18</span>
+<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a>$<span class="w"> </span>program.py<span class="w"> </span>--ages<span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">100</span>
+<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="c1"># passes</span>
+</code></pre></div>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.tag.ValidationResult">
-<code class="highlight language-python">ValidationResult = bool | ErrorMessage</code>
+<code class="highlight language-python"><span class="n">ValidationResult</span> <span class="o">=</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ErrorMessage</span></code>
 </h3>
 <div class="doc doc-contents first">
-<p>Being used at [Tag.validation][mininterface.Tag.validation].</p>
+<p>Being used at <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag.validation">Tag.validation</a>.</p>
 <p>A bool or the error message (that implicitly means the <a class="autorefs autorefs-internal" href="#mininterface.tag.tag.ValidationCallback">ValidationCallback</a> has failed) as shows the following table.
 Optionally, you may add a second argument to specify the tag value (to ex. recommend a better value).</p>
 <table>
@@ -810,60 +817,69 @@ Optionally, you may add a second argument to specify the tag value (to ex. recom
 </tbody>
 </table>
 <p>This example shows the str error message:</p>
-<pre class="highlight"><code class="language-python">def check(tag: Tag):
-    if tag.val &lt; 10:
-        return "The value must be at least 10"
-m.form({"number", Tag(12, validation=check)})</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>        <span class="k">return</span> <span class="s2">"The value must be at least 10"</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="n">check</span><span class="p">)})</span>
+</code></pre></div>
 <p>This example shows the value transformation. For <code>val=50+</code>, the validation fails.</p>
-<pre class="highlight"><code class="language-python">def check(tag: Tag):
-    return True, tag.val * 2
-m.form({"number", Tag(12, validation=(check, Lt(100)))})</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">):</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">val</span> <span class="o">*</span> <span class="mi">2</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"number"</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">validation</span><span class="o">=</span><span class="p">(</span><span class="n">check</span><span class="p">,</span> <span class="n">Lt</span><span class="p">(</span><span class="mi">100</span><span class="p">)))})</span>
+</code></pre></div>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.tag.select_tag.OptionsType">
-<code class="highlight language-python">OptionsType = list[TagValue] | tuple[TagValue, ...] | set[TagValue] | dict[RichOptionLabel, TagValue] | Iterable[Enum] | Type[Enum]</code>
+<code class="highlight language-python"><span class="n">OptionsType</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TagValue</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">RichOptionLabel</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span> <span class="o">|</span> <span class="n">Type</span><span class="p">[</span><span class="n">Enum</span><span class="p">]</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>You can denote the options in many ways.
 Either put options in an iterable or to a dict <code>{labels: value}</code>.
-Values might be Tags as well. Let's take a detailed look. We will use the [<code>run.select(OptionsType)</code>][mininterface.Mininterface.select] to illustrate the examples.</p>
+Values might be Tags as well. Let's take a detailed look. We will use the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select"><code>run.select(OptionsType)</code></a> to illustrate the examples.</p>
 <h5 id="mininterface.tag.select_tag.OptionsType--iterables-like-list">Iterables like list</h5>
 <p>Either put options in an iterable:</p>
-<pre class="highlight"><code class="language-python">from mininterface import run
-m = run()
-m.select([1, 2])</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</code></pre></div>
 <p><img alt="Options as a list" src="../asset/choices_list.avif"/></p>
 <h5 id="mininterface.tag.select_tag.OptionsType--dict-for-labels">Dict for labels</h5>
 <p>Or to a dict <code>{name: value}</code>. Then name are used as labels.</p>
-<pre class="highlight"><code class="language-python">m.select({"one": 1, "two": 2})  # returns 1</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">({</span><span class="s2">"one"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>  <span class="c1"># returns 1</span>
+</code></pre></div>
 <h5 id="mininterface.tag.select_tag.OptionsType--dict-with-tuples-for-table">Dict with tuples for table</h5>
 <p>If you use tuple as the keys, they will be joined into a table.</p>
-<pre class="highlight"><code class="language-python">m.select({("one", "two", "three"): 1, ("lorem", "ipsum", "dolor") : 2})</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">({(</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">,</span> <span class="s2">"three"</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">"lorem"</span><span class="p">,</span> <span class="s2">"ipsum"</span><span class="p">,</span> <span class="s2">"dolor"</span><span class="p">)</span> <span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+</code></pre></div>
 <p><img alt="Table like" src="../asset/choice_table_span.avif"/></p>
 <h5 id="mininterface.tag.select_tag.OptionsType--tags-for-labels">Tags for labels</h5>
-<p>Alternatively, you may specify the names in [<code>Tags</code>][mininterface.Tag].</p>
-<pre class="highlight"><code class="language-python">m.select([Tag(1, name="one"), Tag(2, name="two")])  # returns 1</code></pre>
+<p>Alternatively, you may specify the names in <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tags</code></a>.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">Tag</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"one"</span><span class="p">),</span> <span class="n">Tag</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"two"</span><span class="p">)])</span>  <span class="c1"># returns 1</span>
+</code></pre></div>
 <p><img alt="Options with labels" src="../asset/choices_labels.avif"/></p>
 <h5 id="mininterface.tag.select_tag.OptionsType--enums">Enums</h5>
 <p>Alternatively, you may use an Enum.</p>
-<pre class="highlight"><code class="language-python">class Color(Enum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-
-m.select(Color)</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">"blue"</span>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span>
+</code></pre></div>
 <p><img alt="Options from enum" src="../asset/choice_enum_type.avif"/></p>
 <p>Alternatively, you may use an Enum instance. (Which means the default value is already selected.)</p>
-<pre class="highlight"><code class="language-python">class Color(Enum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-
-m.select(Color.BLUE)</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="n">RED</span> <span class="o">=</span> <span class="s2">"red"</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>    <span class="n">GREEN</span> <span class="o">=</span> <span class="s2">"green"</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>    <span class="n">BLUE</span> <span class="o">=</span> <span class="s2">"blue"</span>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">)</span>
+</code></pre></div>
 <p><img alt="Options from enum" src="../asset/choice_enum_instance.avif"/></p>
 <p>Alternatively, you may use an Enum instances list.</p>
-<pre class="highlight"><code class="language-python">m.select([Color.GREEN, Color.BLUE])</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">Color</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">Color</span><span class="o">.</span><span class="n">BLUE</span><span class="p">])</span>
+</code></pre></div>
 <p><img alt="Options from enum list" src="../asset/choice_enum_list.avif"/></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -873,12 +889,12 @@ For the examples, see <a href="../Supported-types/#enums">Supported types / Enum
 <h5 id="mininterface.tag.select_tag.OptionsType--literal">Literal</h5>
 <p><code>typing.Literal</code> allows you to do a one-liner. Their values are seen from the CLI. See the <a href="../Supported-types/#literal">Supported types / Literal</a> examples.</p>
 <h5 id="mininterface.tag.select_tag.OptionsType--further-examples">Further examples</h5>
-<p>See [mininterface.select][mininterface.Mininterface.select] or <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag.options"><code>SelectTag.options</code></a> for further usage.</p>
+<p>See <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select">mininterface.select</a> or <a class="autorefs autorefs-internal" href="../SelectTag/#mininterface.tag.SelectTag.options"><code>SelectTag.options</code></a> for further usage.</p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface._lib.form_dict.DataClass">
-<code class="highlight language-python">DataClass = TypeVar('DataClass')</code>
+<code class="highlight language-python"><span class="n">DataClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'DataClass'</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>Any dataclass. Or a pydantic model or attrs.</p>
@@ -886,15 +902,15 @@ For the examples, see <a href="../Supported-types/#enums">Supported types / Enum
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface._lib.form_dict.EnvClass">
-<code class="highlight language-python">EnvClass = TypeVar('EnvClass', bound=DataClass)</code>
+<code class="highlight language-python"><span class="n">EnvClass</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'EnvClass'</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">DataClass</span><span class="p">)</span></code>
 </h3>
 <div class="doc doc-contents first">
-<p>Any dataclass. Its instance will be available through [Mininterface.env][mininterface.Mininterface.env] after CLI parsing.</p>
+<p>Any dataclass. Its instance will be available through <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">Mininterface.env</a> after CLI parsing.</p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface._lib.form_dict.FormDict">
-<code class="highlight language-python">FormDict = dict[Hashable, TypeVar('FormDictRecursiveValue', TagValue, Tag, 'Self')]</code>
+<code class="highlight language-python"><span class="n">FormDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">'FormDictRecursiveValue'</span><span class="p">,</span> <span class="n">TagValue</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="s1">'Self'</span><span class="p">)]</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>Nested dict that can have descriptions (through Tag) instead of plain values.</p>
@@ -902,7 +918,7 @@ For the examples, see <a href="../Supported-types/#enums">Supported types / Enum
 </div>
 <div class="doc doc-object doc-attribute">
 <h3 class="doc doc-heading" id="mininterface.interfaces.InterfaceType">
-<code class="highlight language-python">mininterface.interfaces.InterfaceType = Type[Mininterface] | InterfaceName | None</code>
+<code class="highlight language-python"><span class="n">mininterface</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">InterfaceType</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">Mininterface</span><span class="p">]</span> <span class="o">|</span> <span class="n">InterfaceName</span> <span class="o">|</span> <span class="kc">None</span></code>
 </h3>
 <div class="doc doc-contents first">
 <p>Either a class symbol or <a href="../Interfaces/#all-possible-interfaces">a shortcut string</a>.</p>

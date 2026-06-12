@@ -369,78 +369,81 @@
 <li>When using positional arguments before the subcommands, the order changes</li>
 </ul>
 <p>Argparse:</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-usage: program.py [-h] input_file {deploy,build} ...
-
-Test parser for dataclass generation.
-
-positional arguments:
-  input_file      Path to the input file.
-  {deploy,build}
-    deploy        Deploy something
-    build         Build something
-
-options:
-  -h, --help      show this help message and exit
-
-# Using the command `deploy`
-$ ./program.py ./file.txt deploy  --help
-usage: program.py input_file deploy [-h] [--port PORT]
-
-My thorough description.
-
-options:
-  -h, --help   show this help message and exit
-  --port PORT  SSH port.</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>input_file<span class="w"> </span><span class="o">{</span>deploy,build<span class="o">}</span><span class="w"> </span>...
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>Test<span class="w"> </span>parser<span class="w"> </span><span class="k">for</span><span class="w"> </span>dataclass<span class="w"> </span>generation.
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>positional<span class="w"> </span>arguments:
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">  </span>input_file<span class="w">      </span>Path<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>input<span class="w"> </span>file.
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">  </span><span class="o">{</span>deploy,build<span class="o">}</span>
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="w">    </span>deploy<span class="w">        </span>Deploy<span class="w"> </span>something
+<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">    </span>build<span class="w">         </span>Build<span class="w"> </span>something
+<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>
+<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>options:
+<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">      </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a>
+<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="c1"># Using the command `deploy`</span>
+<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a>$<span class="w"> </span>./program.py<span class="w"> </span>./file.txt<span class="w"> </span>deploy<span class="w">  </span>--help
+<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a>usage:<span class="w"> </span>program.py<span class="w"> </span>input_file<span class="w"> </span>deploy<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--port<span class="w"> </span>PORT<span class="o">]</span>
+<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a>
+<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a>My<span class="w"> </span>thorough<span class="w"> </span>description.
+<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a>
+<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a>options:
+<a href="#__codelineno-0-22" id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<a href="#__codelineno-0-23" id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="w">  </span>--port<span class="w"> </span>PORT<span class="w">  </span>SSH<span class="w"> </span>port.
+</code></pre></div>
 <p>Mininterface changes the order and produces a warning:</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-UserWarning: This CLI parser have a subcommand placed after positional arguments. The order of arguments changes, see --help.
-usage: program.py [-h] [-v] {deploy,build}
-
-Test parser for dataclass generation.
-
-╭─ options ─────────────────────────────────────────────────────────────╮
-│ -h, --help            show this help message and exit                 │
-│ -v, --verbose         Verbosity level. Can be used twice to increase. │
-╰───────────────────────────────────────────────────────────────────────╯
-╭─ subcommands ─────────────────────────────────────────────────────────╮
-│ {deploy,build}                                                        │
-│     deploy            Deploy something: My thorough description.      │
-│     build             Build something                                 │
-╰───────────────────────────────────────────────────────────────────────╯
-
-# Using the command `deploy`
-$ ./program.py deploy --help
-UserWarning: This CLI parser have a subcommand placed after positional arguments. The order of arguments changes, see --help.
-usage: program.py deploy [-h] [-v] [--port INT] STR
-
-Deploy something: My thorough description.
-
-╭─ positional arguments ───────────────────────────────────────────────╮
-│ STR                  Path to the input file. (required)              │
-╰──────────────────────────────────────────────────────────────────────╯
-╭─ options ────────────────────────────────────────────────────────────╮
-│ -h, --help           show this help message and exit                 │
-│ -v, --verbose        Verbosity level. Can be used twice to increase. │
-│ --port INT           SSH port. (default: 22)                         │
-╰──────────────────────────────────────────────────────────────────────╯</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>UserWarning:<span class="w"> </span>This<span class="w"> </span>CLI<span class="w"> </span>parser<span class="w"> </span>have<span class="w"> </span>a<span class="w"> </span>subcommand<span class="w"> </span>placed<span class="w"> </span>after<span class="w"> </span>positional<span class="w"> </span>arguments.<span class="w"> </span>The<span class="w"> </span>order<span class="w"> </span>of<span class="w"> </span>arguments<span class="w"> </span>changes,<span class="w"> </span>see<span class="w"> </span>--help.
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>deploy,build<span class="o">}</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>Test<span class="w"> </span>parser<span class="w"> </span><span class="k">for</span><span class="w"> </span>dataclass<span class="w"> </span>generation.
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>╭─<span class="w"> </span>options<span class="w"> </span>─────────────────────────────────────────────────────────────╮
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                 </span>│
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">         </span>Verbosity<span class="w"> </span>level.<span class="w"> </span>Can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>twice<span class="w"> </span>to<span class="w"> </span>increase.<span class="w"> </span>│
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a>╰───────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a>╭─<span class="w"> </span>subcommands<span class="w"> </span>─────────────────────────────────────────────────────────╮
+<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>│<span class="w"> </span><span class="o">{</span>deploy,build<span class="o">}</span><span class="w">                                                        </span>│
+<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a>│<span class="w">     </span>deploy<span class="w">            </span>Deploy<span class="w"> </span>something:<span class="w"> </span>My<span class="w"> </span>thorough<span class="w"> </span>description.<span class="w">      </span>│
+<a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a>│<span class="w">     </span>build<span class="w">             </span>Build<span class="w"> </span>something<span class="w">                                 </span>│
+<a href="#__codelineno-1-15" id="__codelineno-1-15" name="__codelineno-1-15"></a>╰───────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a>
+<a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="c1"># Using the command `deploy`</span>
+<a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a>$<span class="w"> </span>./program.py<span class="w"> </span>deploy<span class="w"> </span>--help
+<a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a>UserWarning:<span class="w"> </span>This<span class="w"> </span>CLI<span class="w"> </span>parser<span class="w"> </span>have<span class="w"> </span>a<span class="w"> </span>subcommand<span class="w"> </span>placed<span class="w"> </span>after<span class="w"> </span>positional<span class="w"> </span>arguments.<span class="w"> </span>The<span class="w"> </span>order<span class="w"> </span>of<span class="w"> </span>arguments<span class="w"> </span>changes,<span class="w"> </span>see<span class="w"> </span>--help.
+<a href="#__codelineno-1-20" id="__codelineno-1-20" name="__codelineno-1-20"></a>usage:<span class="w"> </span>program.py<span class="w"> </span>deploy<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--port<span class="w"> </span>INT<span class="o">]</span><span class="w"> </span>STR
+<a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a>
+<a href="#__codelineno-1-22" id="__codelineno-1-22" name="__codelineno-1-22"></a>Deploy<span class="w"> </span>something:<span class="w"> </span>My<span class="w"> </span>thorough<span class="w"> </span>description.
+<a href="#__codelineno-1-23" id="__codelineno-1-23" name="__codelineno-1-23"></a>
+<a href="#__codelineno-1-24" id="__codelineno-1-24" name="__codelineno-1-24"></a>╭─<span class="w"> </span>positional<span class="w"> </span>arguments<span class="w"> </span>───────────────────────────────────────────────╮
+<a href="#__codelineno-1-25" id="__codelineno-1-25" name="__codelineno-1-25"></a>│<span class="w"> </span>STR<span class="w">                  </span>Path<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>input<span class="w"> </span>file.<span class="w"> </span><span class="o">(</span>required<span class="o">)</span><span class="w">              </span>│
+<a href="#__codelineno-1-26" id="__codelineno-1-26" name="__codelineno-1-26"></a>╰──────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-1-27" id="__codelineno-1-27" name="__codelineno-1-27"></a>╭─<span class="w"> </span>options<span class="w"> </span>────────────────────────────────────────────────────────────╮
+<a href="#__codelineno-1-28" id="__codelineno-1-28" name="__codelineno-1-28"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">           </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                 </span>│
+<a href="#__codelineno-1-29" id="__codelineno-1-29" name="__codelineno-1-29"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">        </span>Verbosity<span class="w"> </span>level.<span class="w"> </span>Can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>twice<span class="w"> </span>to<span class="w"> </span>increase.<span class="w"> </span>│
+<a href="#__codelineno-1-30" id="__codelineno-1-30" name="__codelineno-1-30"></a>│<span class="w"> </span>--port<span class="w"> </span>INT<span class="w">           </span>SSH<span class="w"> </span>port.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">22</span><span class="o">)</span><span class="w">                         </span>│
+<a href="#__codelineno-1-31" id="__codelineno-1-31" name="__codelineno-1-31"></a>╰──────────────────────────────────────────────────────────────────────╯
+</code></pre></div>
 <p>The code</p>
-<pre class="highlight"><code class="language-python">from argparse import ArgumentParser
-from mininterface import run
-
-parser = ArgumentParser(description="Test parser for dataclass generation.")
-parser.add_argument("input_file", type=str, help="Path to the input file.")
-subs = parser.add_subparsers(dest="command", required=True)
-sub2 = subs.add_parser(
-    "deploy", help="Deploy something", description="My thorough description."
-)
-sub1 = subs.add_parser("build", help="Build something")
-sub2.add_argument("--port", type=int, default=22, help="SSH port.")
-
-if True:
-    env = parser.parse_args()
-else:
-    env = run(parser).env</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Test parser for dataclass generation."</span><span class="p">)</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"input_file"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Path to the input file."</span><span class="p">)</span>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="n">subs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="n">sub2</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="s2">"deploy"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Deploy something"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"My thorough description."</span>
+<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="p">)</span>
+<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="n">sub1</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Build something"</span><span class="p">)</span>
+<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="n">sub2</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--port"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"SSH port."</span><span class="p">)</span>
+<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a>
+<a href="#__codelineno-2-13" id="__codelineno-2-13" name="__codelineno-2-13"></a><span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
+<a href="#__codelineno-2-14" id="__codelineno-2-14" name="__codelineno-2-14"></a>    <span class="n">env</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+<a href="#__codelineno-2-15" id="__codelineno-2-15" name="__codelineno-2-15"></a><span class="k">else</span><span class="p">:</span>
+<a href="#__codelineno-2-16" id="__codelineno-2-16" name="__codelineno-2-16"></a>    <span class="n">env</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span><span class="o">.</span><span class="n">env</span>
+</code></pre></div>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>

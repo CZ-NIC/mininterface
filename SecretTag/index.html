@@ -473,20 +473,21 @@
 </h3>
 <div class="doc doc-contents first">
 <p>Contains a secret value that should be masked in the UI.</p>
-<pre class="highlight"><code class="language-python">from mininterface import run, Tag
-from mininterface.tag import SecretTag
-
-m = run()
-out = m.form({
-    "My password": SecretTag("TOKEN"),
-})
-print(out)
-# {'My password': 'TOKEN'}</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Tag</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.tag</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecretTag</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="n">out</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>    <span class="s2">"My password"</span><span class="p">:</span> <span class="n">SecretTag</span><span class="p">(</span><span class="s2">"TOKEN"</span><span class="p">),</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="p">})</span>
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="c1"># {'My password': 'TOKEN'}</span>
+</code></pre></div>
 <p><img alt="File picker" src="../asset/secret_tag.avif"/></p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.tag.SecretTag.show_toggle">
-<code class="highlight language-python">show_toggle: bool = True</code>
+<code class="highlight language-python"><span class="n">show_toggle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Toggle visibility button (eye icon)</p>
@@ -494,7 +495,7 @@ print(out)
 </div>
 <div class="doc doc-object doc-function">
 <h4 class="doc doc-heading" id="mininterface.tag.SecretTag.__hash__">
-<code class="highlight language-python">__hash__()</code>
+<code class="highlight language-python"><span class="fm">__hash__</span><span class="p">()</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Make SecretTag hashable for use with Annotated</p>
@@ -502,7 +503,7 @@ print(out)
 </div>
 <div class="doc doc-object doc-function">
 <h4 class="doc doc-heading" id="mininterface.tag.SecretTag.toggle_visibility">
-<code class="highlight language-python">toggle_visibility()</code>
+<code class="highlight language-python"><span class="n">toggle_visibility</span><span class="p">()</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Toggle the masked state</p>
@@ -510,7 +511,7 @@ print(out)
 </div>
 <div class="doc doc-object doc-function">
 <h4 class="doc doc-heading" id="mininterface.tag.SecretTag.__repr__">
-<code class="highlight language-python">__repr__()</code>
+<code class="highlight language-python"><span class="fm">__repr__</span><span class="p">()</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Ensure secrets are not accidentally exposed in logs/repr</p>

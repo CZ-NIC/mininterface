@@ -776,47 +776,53 @@
 <article class="md-content__inner md-typeset">
 <h1>Settings</h1>
 <h2 id="ui-settings">UI Settings</h2>
-<p>The UI behaviour might be modified via an settings object. This can be passed to the [run][mininterface.run] function or defined through a config file. Settings defined in the config file have bigger priority. Every interface has its own settings object.</p>
+<p>The UI behaviour might be modified via an settings object. This can be passed to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function or defined through a config file. Settings defined in the config file have bigger priority. Every interface has its own settings object.</p>
 <p>Passing the settings to the <code>run</code> method:</p>
-<pre class="highlight"><code class="language-python">from mininterface.settings import MininterfaceSettings
-
-opt = MininterfaceSettings()
-run(settings=opt)</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">MininterfaceSettings</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">opt</span> <span class="o">=</span> <span class="n">MininterfaceSettings</span><span class="p">()</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
+</code></pre></div>
 <p>Specifying only the <code>GuiSettings</code>:
-<pre class="highlight"><code class="language-python">from mininterface.settings import GuiSettings
-
-opt = GuiSettings(combobox_since=1)
-run(settings=opt)</code></pre></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">GuiSettings</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="n">opt</span> <span class="o">=</span> <span class="n">GuiSettings</span><span class="p">(</span><span class="n">combobox_since</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
+</code></pre></div></p>
 <p>Specifying the <code>GuiSettings</code> + turning off the mnemonic for all UIs (not only gui, but also text, ...):
-<pre class="highlight"><code class="language-python">from mininterface.settings import MininterfaceSettings, GuiSettings, UiSettings
-
-opt = MininterfaceSettings(
-    gui=GuiSettings(combobox_since=1),
-    ui=UiSettings(mnemonic=False)
-)
-run(settings=opt)</code></pre></p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">MininterfaceSettings</span><span class="p">,</span> <span class="n">GuiSettings</span><span class="p">,</span> <span class="n">UiSettings</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="n">opt</span> <span class="o">=</span> <span class="n">MininterfaceSettings</span><span class="p">(</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">gui</span><span class="o">=</span><span class="n">GuiSettings</span><span class="p">(</span><span class="n">combobox_since</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>    <span class="n">ui</span><span class="o">=</span><span class="n">UiSettings</span><span class="p">(</span><span class="n">mnemonic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="p">)</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
+</code></pre></div></p>
 <p>Specifying via dataclasses is very convenient as your ID suggests all the options available, including its hints.</p>
 <h3 id="config-file-special-section">Config file special section</h3>
 <p>In a YAML config file, use a special section 'mininterface' to set up the UI. For example, this stub will enforce your program to use the Tui interface.</p>
-<pre class="highlight"><code class="language-yaml">mininterface:
-    interface: tui</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">mininterface</span><span class="p">:</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">    </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tui</span>
+</code></pre></div>
 <h4 id="complete-example">Complete example</h4>
 <p>Source of <code>program.py</code>, we have one single attribute <code>foo</code>:</p>
-<pre class="highlight"><code class="language-python">from typing import Annotated
-from dataclasses import dataclass
-from mininterface import run, Options
-
-@dataclass
-class Env:
-    foo: Annotated["str", Options("one", "two")] = "one"
-
-m = run(Env)
-m.form()</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Options</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a>    <span class="n">foo</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">Options</span><span class="p">(</span><span class="s2">"one"</span><span class="p">,</span> <span class="s2">"two"</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"one"</span>
+<a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a>
+<a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+</code></pre></div>
 <p>Source of <code>program.yaml</code> will enforce the comboboxes:</p>
-<pre class="highlight"><code class="language-yaml">number: 5
-mininterface:
-    gui:
-        combobox_since: 1</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="nt">mininterface</span><span class="p">:</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="w">    </span><span class="nt">gui</span><span class="p">:</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="w">        </span><span class="nt">combobox_since</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
 <p>The difference when using such configuration file.</p>
 <p><img alt="Configuration not used" src="../asset/configuration-not-used.avif"/> <img alt="Configuration used" src="../asset/configuration-used.avif"/></p>
 <h3 id="inheritance">Inheritance</h3>
@@ -828,11 +834,12 @@ TextualSettings --&gt; TuiSettings
 TextSettings --&gt; TuiSettings
 </code></pre>
 <p>Ex. this config file sets the <code>UiSettings</code> item <a class="autorefs autorefs-internal" href="#mininterface.settings.UiSettings.mnemonic"><code>mnemonic</code></a> to <code>None</code> for <code>TuiSettings</code> and more specifically to <code>False</code> for <code>TextSettings</code>.</p>
-<pre class="highlight"><code class="language-yaml">mininterface:
-    tui:
-        mnemonic: null
-    text:
-        mnemonic: False</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="nt">mininterface</span><span class="p">:</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="w">    </span><span class="nt">tui</span><span class="p">:</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="w">        </span><span class="nt">mnemonic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a><span class="w">    </span><span class="nt">text</span><span class="p">:</span>
+<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="w">        </span><span class="nt">mnemonic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+</code></pre></div>
 <p>For the different interfaces, the value varies this way:</p>
 <table>
 <thead>
@@ -865,7 +872,7 @@ TextSettings --&gt; TuiSettings
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.MininterfaceSettings.interface">
-<code class="highlight language-python">interface: Optional[InterfaceName] = None</code>
+<code class="highlight language-python"><span class="n">interface</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InterfaceName</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Enforce an interface. By default, we choose automatically.</p>
@@ -882,7 +889,7 @@ TextSettings --&gt; TuiSettings
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.UiSettings.toggle_widget">
-<code class="highlight language-python">toggle_widget: str = 'f4'</code>
+<code class="highlight language-python"><span class="n">toggle_widget</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'f4'</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Shortcut to toggle widgets like secret fields, file picker, and datetime dialog.</p>
@@ -900,7 +907,7 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.UiSettings.mnemonic">
-<code class="highlight language-python">mnemonic: Optional[bool] = True</code>
+<code class="highlight language-python"><span class="n">mnemonic</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Allow users to access fields with the <code>Alt+char</code> shortcut.</p>
@@ -913,7 +920,7 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.UiSettings.mnemonic_hidden">
-<code class="highlight language-python">mnemonic_hidden: bool = False</code>
+<code class="highlight language-python"><span class="n">mnemonic_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>If True, the field label is not underlined to mark the mnemonic.</p>
@@ -930,7 +937,7 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.GuiSettings.combobox_since">
-<code class="highlight language-python">combobox_since: int = 10</code>
+<code class="highlight language-python"><span class="n">combobox_since</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>The threshold to switch from radio buttons to a combobox.</p>
@@ -943,7 +950,7 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.GuiSettings.radio_select_on_focus">
-<code class="highlight language-python">radio_select_on_focus: bool = False</code>
+<code class="highlight language-python"><span class="n">radio_select_on_focus</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Select the radio button on focus. Ex. when navigating by arrows.</p>
@@ -978,42 +985,46 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.TextSettings.mnemonic_over_number">
-<code class="highlight language-python">mnemonic_over_number: Optional[bool] = None</code>
+<code class="highlight language-python"><span class="n">mnemonic_over_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Even when mnemonic can be determined, use rather number as a shortcut.</p>
 <p>By default if <code>None</code>, determine those with <code>Tag(mnemonic=char|True)</code>:</p>
-<pre class="highlight"><code class="language-bash">&gt;     ok
-[1] foo1: ×
-[2] foo2: ×
-[g] foo3: ×</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>&gt;<span class="w">     </span>ok
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w"> </span>foo1:<span class="w"> </span>×
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="w"> </span>foo2:<span class="w"> </span>×
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="o">[</span>g<span class="o">]</span><span class="w"> </span>foo3:<span class="w"> </span>×
+</code></pre></div>
 <p>If <code>True</code>, determine also those having <code>Tag(mnemonic=None)</code>:</p>
-<pre class="highlight"><code class="language-bash">&gt;     ok
-[f] foo1: ×
-[o] foo2: ×
-[g] foo3: ×</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>&gt;<span class="w">     </span>ok
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="o">[</span>f<span class="o">]</span><span class="w"> </span>foo1:<span class="w"> </span>×
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="o">[</span>o<span class="o">]</span><span class="w"> </span>foo2:<span class="w"> </span>×
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="o">[</span>g<span class="o">]</span><span class="w"> </span>foo3:<span class="w"> </span>×
+</code></pre></div>
 <p>If <code>False</code>, we prefer numbers:</p>
-<pre class="highlight"><code class="language-bash">&gt;     ok
-[1] foo1: ×
-[2] foo2: ×
-[3] foo3: ×</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>&gt;<span class="w">     </span>ok
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w"> </span>foo1:<span class="w"> </span>×
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="w"> </span>foo2:<span class="w"> </span>×
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w"> </span>foo3:<span class="w"> </span>×
+</code></pre></div>
 <p>The original code:</p>
-<pre class="highlight"><code class="language-python">from dataclasses import dataclass
-from typing import Annotated
-from mininterface import Tag, run
-from mininterface.settings import MininterfaceSettings, TextSettings
-
-
-@dataclass
-class Env:
-    foo1: bool = False
-    foo2: bool = False
-    foo3: Annotated[bool, Tag(mnemonic="g")] = False
-
-
-m = run(Env, settings=MininterfaceSettings(text=TextSettings(mnemonic_over_number=True)))
-m.form()
-quit()</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">run</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">MininterfaceSettings</span><span class="p">,</span> <span class="n">TextSettings</span>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a>    <span class="n">foo1</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a>    <span class="n">foo2</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a>    <span class="n">foo3</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tag</span><span class="p">(</span><span class="n">mnemonic</span><span class="o">=</span><span class="s2">"g"</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a>
+<a href="#__codelineno-3-13" id="__codelineno-3-13" name="__codelineno-3-13"></a>
+<a href="#__codelineno-3-14" id="__codelineno-3-14" name="__codelineno-3-14"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">MininterfaceSettings</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">TextSettings</span><span class="p">(</span><span class="n">mnemonic_over_number</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+<a href="#__codelineno-3-15" id="__codelineno-3-15" name="__codelineno-3-15"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+<a href="#__codelineno-3-16" id="__codelineno-3-16" name="__codelineno-3-16"></a><span class="n">quit</span><span class="p">()</span>
+</code></pre></div>
 </div>
 </div>
 </div>
@@ -1027,102 +1038,110 @@ quit()</code></pre>
 <div class="doc doc-children">
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.CliSettings.omit_arg_prefixes">
-<code class="highlight language-python">omit_arg_prefixes: bool = False</code>
+<code class="highlight language-python"><span class="n">omit_arg_prefixes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Simplify argument names by removing parent field prefixes from flags.</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-# omit_arg_prefixes = False
-usage: program.py [-h] [-v] --arg.subarg.text STR
-# omit_arg_prefixes = True
-usage: program.py [-h] [-v] --text STR</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="c1"># omit_arg_prefixes = False</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--arg.subarg.text<span class="w"> </span>STR
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="c1"># omit_arg_prefixes = True</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span>--text<span class="w"> </span>STR
+</code></pre></div>
 <details class="code">
 <summary>Code</summary>
-<pre class="highlight"><code class="language-python">@dataclass
-class SubMessage:
-    text: str
-
-@dataclass
-class Message:
-    subarg: SubMessage
-
-@dataclass
-class Env:
-    arg: Message
-
-run(Env, settings=CliSettings(omit_arg_prefixes=True/False))</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SubMessage</span><span class="p">:</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Message</span><span class="p">:</span>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="n">subarg</span><span class="p">:</span> <span class="n">SubMessage</span>
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a>    <span class="n">arg</span><span class="p">:</span> <span class="n">Message</span>
+<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>
+<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">CliSettings</span><span class="p">(</span><span class="n">omit_arg_prefixes</span><span class="o">=</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
 </details>
 <p>See: <a href="">https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.OmitArgPrefixes</a></p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.CliSettings.omit_subcommand_prefixes">
-<code class="highlight language-python">omit_subcommand_prefixes: bool = False</code>
+<code class="highlight language-python"><span class="n">omit_subcommand_prefixes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Simplify subcommand names by removing parent field prefixes from subcommands.</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-# omit_subcommand_prefixes = False
-usage: program.py [-h] [-v] {subcommand:message,subcommand:console}
-# omit_subcommand_prefixes = True
-usage: program.py [-h] [-v] {message,console}</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="c1"># omit_subcommand_prefixes = False</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>subcommand:message,subcommand:console<span class="o">}</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="c1"># omit_subcommand_prefixes = True</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>message,console<span class="o">}</span>
+</code></pre></div>
 <details class="code">
 <summary>Code</summary>
-<pre class="highlight"><code class="language-python">@dataclass
-class SubMessage:
-    text: str
-
-@dataclass
-class Message:
-    subarg: SubMessage
-
-@dataclass
-class Env:
-    subcommand: Message | Console
-
-run(Env, settings=CliSettings(omit_subcommand_prefixes=True/False))</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SubMessage</span><span class="p">:</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Message</span><span class="p">:</span>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="n">subarg</span><span class="p">:</span> <span class="n">SubMessage</span>
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a>    <span class="n">subcommand</span><span class="p">:</span> <span class="n">Message</span> <span class="o">|</span> <span class="n">Console</span>
+<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>
+<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">CliSettings</span><span class="p">(</span><span class="n">omit_subcommand_prefixes</span><span class="o">=</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
 </details>
 <p>See: <a href="">https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.OmitSubcommandPrefixes</a></p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.CliSettings.disallow_none">
-<code class="highlight language-python">disallow_none: bool = False</code>
+<code class="highlight language-python"><span class="n">disallow_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Disallow passing None in via the command-line interface for union types containing None.</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-# disallow_none = False
-usage: program.py [-h] [-v] [--field {None}|INT]
-# disallow_none = True
-usage: program.py [-h] [-v] [--field INT]</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="c1"># disallow_none = False</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--field<span class="w"> </span><span class="o">{</span>None<span class="o">}</span><span class="p">|</span>INT<span class="o">]</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="c1"># disallow_none = True</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--field<span class="w"> </span>INT<span class="o">]</span>
+</code></pre></div>
 <details class="code">
 <summary>Code</summary>
-<pre class="highlight"><code class="language-python">@dataclass
-class Env:
-    field: int | None = None
-run(Env, settings=CliSettings(disallow_none=True/False))</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">field</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">CliSettings</span><span class="p">(</span><span class="n">disallow_none</span><span class="o">=</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
 </details>
 <p>See: <a href="">https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.DisallowNone</a></p>
 </div>
 </div>
 <div class="doc doc-object doc-attribute">
 <h4 class="doc doc-heading" id="mininterface.settings.CliSettings.flag_create_pairs_off">
-<code class="highlight language-python">flag_create_pairs_off: bool = False</code>
+<code class="highlight language-python"><span class="n">flag_create_pairs_off</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
 </h4>
 <div class="doc doc-contents">
 <p>Disable creation of matching flag pairs for boolean types.</p>
-<pre class="highlight"><code class="language-bash">$ ./program.py --help
-# flag_create_pairs_off = False
-usage: program.py [-h] [-v] [--foo | --no-foo]
-# flag_create_pairs_off = True
-usage: program.py [-h] [-v] [--foo]</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="c1"># flag_create_pairs_off = False</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--foo<span class="w"> </span><span class="p">|</span><span class="w"> </span>--no-foo<span class="o">]</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="c1"># flag_create_pairs_off = True</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--foo<span class="o">]</span>
+</code></pre></div>
 <details class="code">
 <summary>Code</summary>
-<pre class="highlight"><code class="language-python">@dataclass
-class Env:
-    foo: bool = False
-run(Env, settings=CliSettings(flag_create_pairs_off=True/False))</code></pre>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">foo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="n">CliSettings</span><span class="p">(</span><span class="n">flag_create_pairs_off</span><span class="o">=</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span><span class="p">))</span>
+</code></pre></div>
 </details>
 <p>See: <a href="">https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.FlagCreatePairsOff</a></p>
 </div>
