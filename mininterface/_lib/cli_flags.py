@@ -1,9 +1,8 @@
-from argparse import ArgumentParser
 import logging
 import sys
 from typing import Optional, Sequence
 
-from tyro.conf import FlagConversionOff
+from tyro.conf import FlagConversionOff, FlagCreatePairsOff, UseCounterAction
 
 from .form_dict import EnvClass
 
@@ -70,7 +69,6 @@ class CliFlags:
         self.field_list: list[FieldDefinition] = []
         """ List of FieldDefinitions corresponding to the arguments added via this helper"""
 
-        self.arguments_prepared: list[dict[str, Any]] = []
         self.setup_done = False
         """ Setup might be called multiple times – ex. parsing fails and we call tyro.cli in recursion. """
 
@@ -143,12 +141,21 @@ class CliFlags:
         default: Any = False,
         helptext: Optional[str] = None,
         metavar: Optional[str] = None,
-        version: Optional[str] = None,
     ) -> FieldDefinition:
         # Prepare FieldDefinition
         name = aliases[0]
         aliases_ = tuple((prefix * (1 if len(n) == 1 else 2) + n) for n in aliases) if aliases else None
         typ_ = bool if action in ("store_true", "store_false") else int if action == "count" else str
+
+        # Markers drive the lowering when the FieldDefinition is parsed by the native
+        # tyro backend (with the argparse backend, parsing is done by parser.add_argument
+        # and the FieldDefinition is used for the helptext only).
+        if action == "count":
+            markers = {UseCounterAction}
+        elif action in ("store_true", "store_false"):
+            markers = {FlagCreatePairsOff}
+        else:
+            markers = {FlagConversionOff}
 
         field = FieldDefinition(
             intern_name=name,
@@ -157,11 +164,11 @@ class CliFlags:
             type_stripped=typ_,
             default=default,
             helptext=helptext,
-            markers={FlagConversionOff},
+            markers=markers,
             custom_constructor=False,
             argconf=_ArgConfig(
                 name=aliases_[0],
-                metavar="",
+                metavar=metavar or "",
                 help=helptext,
                 help_behavior_hint="",
                 aliases=aliases_[1:] or None,
@@ -175,29 +182,16 @@ class CliFlags:
 
         self.field_list.append(field)
 
-        # prepare argparse
-        self.arguments_prepared.append(
-            {
-                "field": field,
-                "names": aliases_,
-                "kwargs": {
-                    "action": action,
-                    "default": default,
-                    "help": helptext,
-                    "metavar": metavar,
-                    "version": version,
-                },
-            }
-        )
-
         return field
 
-    def setup(self, parser: ArgumentParser):
+    def setup(self):
+        """Build the field_list; the fields are then injected into the ParserSpecification
+        in tyro_patches.tyro_parse_args."""
         if self.setup_done:
             # tyro.cli might be called multiple times if some missing required fields
             return
         self.setup_done = True
-        prefix = "-" if "-" in parser.prefix_chars else parser.prefix_chars[0]
+        prefix = "-"
         if self.add_verbose:
             self.add_typed_argument(
                 prefix,
@@ -209,11 +203,11 @@ class CliFlags:
             )
 
         if self.add_version:
+            # The flag itself is handled by a pre-scan in tyro_patches.tyro_parse_args,
+            # the field serves the helptext.
             self.add_typed_argument(
                 prefix,
                 "version",
-                action="version",
-                version=self.version,
                 default="",
                 helptext=f"show program's version number ({self.version}) and exit",
             )
@@ -228,7 +222,39 @@ class CliFlags:
                 prefix, "config", helptext=f"path to config file to fetch the defaults from", metavar="PATH"
             )
 
-    def apply_to_parser(self, parser):
-        for item in self.arguments_prepared:
-            kwargs = {k: v for k, v in item["kwargs"].items() if v is not None}
-            parser.add_argument(*item["names"], **kwargs)
+    def consume_output(self, out: dict):
+        """Pop our injected flags from the parsed output dict
+        (so that they do not reach the env dataclass construction) and apply them."""
+        if self.add_verbose and "verbose" in out:
+            verbose = out.pop("verbose") or 0
+            self.apply_verbosity(verbose)
+        if self.add_quiet and "quiet" in out:
+            if out.pop("quiet"):
+                self.apply_verbosity(-1, quiet=True)
+        if self.add_version:
+            out.pop("version", None)
+        if self.add_config:
+            out.pop("config", None)
+
+    def apply_verbosity(self, count: int, quiet=False):
+        """Set up the root logger according to the number of -v flags (or -q for count=-1)."""
+        root = logging.getLogger()
+        if quiet:
+            new_level = self.get_log_level(-1)
+            if not root.handlers:
+                logging.basicConfig(level=new_level, format="%(message)s", stream=self.orig_stream)
+            else:
+                root.setLevel(new_level)
+                for handler in root.handlers:
+                    if handler.level < new_level:  # edit just benevolent handlers
+                        handler.setLevel(new_level)
+            return
+        if not root.handlers:
+            level = self.get_log_level(count) if count > 0 else self.default_verbosity
+            logging.basicConfig(level=level, format="%(message)s", stream=self.orig_stream)
+        elif count > 0:
+            level = self.get_log_level(count)
+            root.setLevel(level)
+            for handler in root.handlers:
+                if handler.level > level:  # increase verbosity for strict handlers
+                    handler.setLevel(level)

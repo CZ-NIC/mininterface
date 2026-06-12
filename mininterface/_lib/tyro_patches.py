@@ -1,411 +1,173 @@
-"""Various mocking patches."""
+"""Mocking patches for the native tyro CLI parser backend (tyro >= 1.0).
 
-import logging
+mininterface needs to know which required fields/subcommands are missing from the CLI
+so that it can ask for them in a dialog instead of letting the program die with
+a parsing error. Tyro has no official hook for that, hence we monkeypatch three
+choke points:
+
+* _tyro_help_formatting.required_args_error – fires with the list of missing ArgWithContext
+* _tyro_help_formatting.error_and_exit – fires on "Missing subcommand" (we pick the
+  SubparsersSpecification from the caller frame)
+* TyroBackend.parse_args – lets us inject CliFlags arguments into the ParserSpecification
+  and harvest the subcommand passage (_crawling) from the backend's output dict
+
+NOTE A PR to tyro adding an official missing-fields hook would make
+the first two patches disappear.
+"""
+
+import sys
 from collections import deque
 from contextvars import ContextVar
-from gettext import gettext as _
-import sys
 
+from tyro import _arguments
+from tyro._backends import _tyro_help_formatting
+from tyro._backends._tyro_backend import TyroBackend
+from tyro._parsers import ArgWithContext, SubparsersSpecification
 
 from .cli_flags import CliFlags
 
-try:
-    # tyro >= 0.10
-    from tyro._backends._argparse import _get_action_name, SUPPRESS, ArgumentError
-    from tyro._backends._argparse import Action, _SubParsersAction, ArgumentParser
-    from tyro._backends._argparse_formatter import TyroArgumentParser
-except ImportError:
-    from tyro._argparse import _get_action_name, SUPPRESS, ArgumentError
-    from tyro._argparse import Action, _SubParsersAction, ArgumentParser
-    from tyro._argparse_formatter import TyroArgumentParser
-from tyro import _arguments
+failed_fields: ContextVar["list[ArgWithContext | SubparsersSpecification]"] = ContextVar(
+    "failed_fields", default=[]
+)
+""" Required fields/subcommands the last parse found missing from the CLI. """
+
+_crawling: ContextVar[deque] = ContextVar("_crawling", default=deque())
+""" The subcommand passage: (chosen_name, field_name) tuples in selection order. """
 
 
-failed_fields: ContextVar[list[Action]] = ContextVar("failed_fields", default=[])
-_orig_call = _SubParsersAction.__call__
-_crawling = ContextVar("_crawling", default=deque())
+def _harvest_crawl(output: dict, args) -> None:
+    """Reconstruct the subcommand passage from the backend's output dict.
 
-_orig_init = ArgumentParser.__init__
-
-
-# NOTE This function is too long to monkeypatch. I'd be great we do a PR to tyro
-# so that it refactors to a smaller method it would be easier to monkeypatch & maintain.
-#
-# The only line changed: failed_fields
-#
-def patched__parse_known_args(self, arg_strings, namespace):
-    # replace arg strings that are file references
-    if self.fromfile_prefix_chars is not None:
-        arg_strings = self._read_args_from_files(arg_strings)
-
-    # map all mutually exclusive arguments to the other arguments
-    # they can't occur with
-    action_conflicts = {}
-    for mutex_group in self._mutually_exclusive_groups:
-        group_actions = mutex_group._group_actions
-        for i, mutex_action in enumerate(mutex_group._group_actions):
-            conflicts = action_conflicts.setdefault(mutex_action, [])
-            conflicts.extend(group_actions[:i])
-            conflicts.extend(group_actions[i + 1 :])
-
-    # find all option indices, and determine the arg_string_pattern
-    # which has an 'O' if there is an option at an index,
-    # an 'A' if there is an argument, or a '-' if there is a '--'
-    option_string_indices = {}
-    arg_string_pattern_parts = []
-    arg_strings_iter = iter(arg_strings)
-    for i, arg_string in enumerate(arg_strings_iter):
-
-        # all args after -- are non-options
-        if arg_string == "--":
-            arg_string_pattern_parts.append("-")
-            for arg_string in arg_strings_iter:
-                arg_string_pattern_parts.append("A")
-
-        # otherwise, add the arg to the arg strings
-        # and note the index if it was an option
-        else:
-            option_tuple = self._parse_optional(arg_string)
-            if option_tuple is None:
-                pattern = "A"
-            else:
-                option_string_indices[i] = option_tuple
-                pattern = "O"
-            arg_string_pattern_parts.append(pattern)
-
-    # join the pieces together to form the pattern
-    arg_strings_pattern = "".join(arg_string_pattern_parts)
-
-    # converts arg strings to the appropriate and then takes the action
-    seen_actions = set()
-    seen_non_default_actions = set()
-
-    def take_action(action, argument_strings, option_string=None):
-        seen_actions.add(action)
-        argument_values = self._get_values(action, argument_strings)
-
-        # error if this argument is not allowed with other previously
-        # seen arguments, assuming that actions that use the default
-        # value don't really count as "present"
-        if argument_values is not action.default:
-            seen_non_default_actions.add(action)
-            for conflict_action in action_conflicts.get(action, []):
-                if conflict_action in seen_non_default_actions:
-                    msg = _("not allowed with argument %s")
-                    action_name = _get_action_name(conflict_action)
-                    raise ArgumentError(action, msg % action_name)
-
-        # take the action if we didn't receive a SUPPRESS value
-        # (e.g. from a default)
-        if argument_values is not SUPPRESS:
-            action(self, namespace, argument_values, option_string)
-
-    # function to convert arg_strings into an optional action
-    def consume_optional(start_index):
-
-        # get the optional identified at this index
-        option_tuple = option_string_indices[start_index]
-        action, option_string, sep, explicit_arg = option_tuple
-
-        # identify additional optionals in the same arg string
-        # (e.g. -xyz is the same as -x -y -z if no args are required)
-        match_argument = self._match_argument
-        action_tuples = []
-        while True:
-
-            # if we found no optional action, skip it
-            if action is None:
-                extras.append(arg_strings[start_index])
-                return start_index + 1
-
-            # if there is an explicit argument, try to match the
-            # optional's string arguments to only this
-            if explicit_arg is not None:
-                arg_count = match_argument(action, "A")
-
-                # if the action is a single-dash option and takes no
-                # arguments, try to parse more single-dash options out
-                # of the tail of the option string
-                chars = self.prefix_chars
-                if arg_count == 0 and option_string[1] not in chars and explicit_arg != "":
-                    if sep or explicit_arg[0] in chars:
-                        msg = _("ignored explicit argument %r")
-                        raise ArgumentError(action, msg % explicit_arg)
-                    action_tuples.append((action, [], option_string))
-                    char = option_string[0]
-                    option_string = char + explicit_arg[0]
-                    optionals_map = self._option_string_actions
-                    if option_string in optionals_map:
-                        action = optionals_map[option_string]
-                        explicit_arg = explicit_arg[1:]
-                        if not explicit_arg:
-                            sep = explicit_arg = None
-                        elif explicit_arg[0] == "=":
-                            sep = "="
-                            explicit_arg = explicit_arg[1:]
-                        else:
-                            sep = ""
-                    else:
-                        extras.append(char + explicit_arg)
-                        stop = start_index + 1
-                        break
-                # if the action expect exactly one argument, we've
-                # successfully matched the option; exit the loop
-                elif arg_count == 1:
-                    stop = start_index + 1
-                    args = [explicit_arg]
-                    action_tuples.append((action, args, option_string))
-                    break
-
-                # error if a double-dash option did not use the
-                # explicit argument
-                else:
-                    msg = _("ignored explicit argument %r")
-                    raise ArgumentError(action, msg % explicit_arg)
-
-            # if there is no explicit argument, try to match the
-            # optional's string arguments with the following strings
-            # if successful, exit the loop
-            else:
-                start = start_index + 1
-                selected_patterns = arg_strings_pattern[start:]
-                arg_count = match_argument(action, selected_patterns)
-                stop = start + arg_count
-                args = arg_strings[start:stop]
-                action_tuples.append((action, args, option_string))
-                break
-
-        # add the Optional to the list and return the index at which
-        # the Optional's string args stopped
-        assert action_tuples
-        for action, args, option_string in action_tuples:
-            take_action(action, args, option_string)
-        return stop
-
-    # the list of Positionals left to be parsed; this is modified
-    # by consume_positionals()
-    positionals = self._get_positional_actions()
-
-    # function to convert arg_strings into positional actions
-    def consume_positionals(start_index):
-        # match as many Positionals as possible
-        match_partial = self._match_arguments_partial
-        selected_pattern = arg_strings_pattern[start_index:]
-        arg_counts = match_partial(positionals, selected_pattern)
-
-        # slice off the appropriate arg strings for each Positional
-        # and add the Positional and its args to the list
-        for action, arg_count in zip(positionals, arg_counts):
-            args = arg_strings[start_index : start_index + arg_count]
-            start_index += arg_count
-            take_action(action, args)
-
-        # slice off the Positionals that we just parsed and return the
-        # index at which the Positionals' string args stopped
-        positionals[:] = positionals[len(arg_counts) :]
-        return start_index
-
-    # consume Positionals and Optionals alternately, until we have
-    # passed the last option string
-    extras = []
-    start_index = 0
-    if option_string_indices:
-        max_option_string_index = max(option_string_indices)
-    else:
-        max_option_string_index = -1
-    while start_index <= max_option_string_index:
-
-        # consume any Positionals preceding the next option
-        next_option_string_index = min([index for index in option_string_indices if index >= start_index])
-        if start_index != next_option_string_index:
-            positionals_end_index = consume_positionals(start_index)
-
-            # only try to parse the next optional if we didn't consume
-            # the option string during the positionals parsing
-            if positionals_end_index > start_index:
-                start_index = positionals_end_index
-                continue
-            else:
-                start_index = positionals_end_index
-
-        # if we consumed all the positionals we could and we're not
-        # at the index of an option string, there were extra arguments
-        if start_index not in option_string_indices:
-            strings = arg_strings[start_index:next_option_string_index]
-            extras.extend(strings)
-            start_index = next_option_string_index
-
-        # consume the next optional and any arguments for it
-        start_index = consume_optional(start_index)
-
-    # consume any positionals following the last Optional
-    stop_index = consume_positionals(start_index)
-
-    # if we didn't consume all the argument strings, there were extras
-    extras.extend(arg_strings[stop_index:])
-
-    # make sure all required actions were present and also convert
-    # action defaults which were not given as arguments
-    required_actions = []
-    for action in self._actions:
-        if action not in seen_actions:
-            if action.required:
-                failed_fields.get().append(action)  # WE ADDED THIS LINE
-                required_actions.append(_get_action_name(action))
-            else:
-                # Convert action default now instead of doing it before
-                # parsing arguments to avoid calling convert functions
-                # twice (which may fail) if the argument was given, but
-                # only if it was defined already in the namespace
-                if (
-                    action.default is not None
-                    and isinstance(action.default, str)
-                    and hasattr(namespace, action.dest)
-                    and action.default is getattr(namespace, action.dest)
-                ):
-                    setattr(namespace, action.dest, self._get_value(action, action.default))
-
-    if required_actions:
-        self.error(_("the following arguments are required: %s") % ", ".join(required_actions))
-
-    # make sure all required groups had one option present
-    for group in self._mutually_exclusive_groups:
-        if group.required:
-            for action in group._group_actions:
-                if action in seen_non_default_actions:
-                    break
-
-            # if no actions were used, report the error
-            else:
-                names = [_get_action_name(action) for action in group._group_actions if action.help is not SUPPRESS]
-                msg = _("one of the arguments %s is required")
-                self.error(msg % " ".join(names))
-
-    # return the updated namespace and the extra arguments
-    return namespace, extras
-
-
-def custom_error(self: TyroArgumentParser, message: str):
-    """Fetch missing required options in GUI.
-    On missing argument, tyro fail. We cannot determine which one was missing, except by intercepting
-    the error message function. Then, we reconstruct the missing options.
-    Thanks to this we will be able to invoke a UI dialog with the missing options only.
+    Subparser selections are stored under keys like `'_subcommands._nested (positional)': 'run'`,
+    in selection order. Default (not CLI-given) subcommands are filtered out
+    by requiring the chosen name to be present in args – mininterface counts
+    explicit selections only (ex. for the empty-CLI detection).
     """
-    if not message.startswith("the following arguments are required:"):
-        return super(TyroArgumentParser, self).error(message)
-
-    exc = SystemExit(2)
-    if sys.version_info >= (3, 11):
-        exc.add_note(message)
-    raise exc  # will be catched
-
-
-def custom_init(cf: CliFlags):
-    orig_init = TyroArgumentParser.__init__
-
-    def _(self: TyroArgumentParser, *args, **kwargs):
-        orig_init(self, *args, **kwargs)
-
-        cf.setup(self)
-        cf.apply_to_parser(self)
-
-    return _
+    crawl = _crawling.get()
+    crawl.clear()
+    for key, val in output.items():
+        if key.endswith(" (positional)") and isinstance(val, str):
+            field_name = key[: -len(" (positional)")].rsplit(".", 1)[-1]
+            if args is None or val in args:
+                crawl.append((val, field_name))
 
 
-def patched__format_help(cf: CliFlags):
-    orig = TyroArgumentParser.format_help
+def _harvest_crawl_from_frame() -> None:
+    """On parsing failure, the output dict lives in a frame of TyroBackend._parse_args_recursive."""
+    f = sys._getframe(2)
+    while f is not None and "output" not in f.f_locals:
+        f = f.f_back
+    if f is not None:
+        _harvest_crawl(f.f_locals["output"], f.f_locals.get("args"))
 
-    def _(self, *args, **kwargs):
-        parser_spec = self._parser_specification
 
-        for field in reversed(cf.field_list):
-            field_out = _arguments.ArgumentDefinition(
-                intern_prefix=field.intern_name,
-                extern_prefix=field.extern_name,
-                subcommand_prefix="",
-                field=field,
+def tyro_required_args_error(ask_for_missing: bool):
+    """Collect missing required arguments (ArgWithContext) into failed_fields,
+    then raise a bare SystemExit(2) with the message attached as a note.
+    The note is used when the raised dialog cannot help (ex. min interface)."""
+    orig = _tyro_help_formatting.required_args_error
+
+    def _(prog, required_args, unrecognized_args_and_progs, console_outputs, add_help):
+        failed_fields.get().extend(required_args)
+        _harvest_crawl_from_frame()
+        if not ask_for_missing:
+            return orig(
+                prog=prog,
+                required_args=required_args,
+                unrecognized_args_and_progs=unrecognized_args_and_progs,
+                console_outputs=console_outputs,
+                add_help=add_help,
             )
-
-            parser_spec.args.insert(0, field_out)
-
-        return orig(self, *args, **kwargs)
-
-    return _
-
-
-def custom_parse_known_args(cf: CliFlags):
-    orig = TyroArgumentParser.parse_known_args
-
-    def _(self: TyroArgumentParser, args=None, namespace=None):
-        namespace, args = orig(self, args, namespace)
-        # NOTE We may check that the Env does not have its own `verbose``
-        if cf.add_verbose and hasattr(namespace, "verbose"):
-            root = logging.getLogger()
-            if not root.handlers:
-                level = (
-                    cf.get_log_level(namespace.verbose)
-                    if namespace.verbose > 0
-                    else cf.default_verbosity
-                )
-                logging.basicConfig(
-                    level=level, format="%(message)s", stream=cf.orig_stream
-                )
-            elif namespace.verbose > 0:
-                level = cf.get_log_level(namespace.verbose)
-                root.setLevel(level)
-                for handler in root.handlers:
-                    if handler.level > level:  # increase verbosity for strict handlers
-                        handler.setLevel(level)
-            delattr(namespace, "verbose")
-
-        if cf.add_version and hasattr(namespace, "version"):
-            # This code is now not used, see `custom_init`
-            # if namespace.version:
-            #     print(namespace.version)
-            #     raise SystemExit(0)
-            delattr(namespace, "version")
-
-        # Note that we do not parse --config here as it is parsed at `run.py`, before CLI parsing.
-        # Since config file serves as default fo CLI parsing.
-        if cf.add_config and hasattr(namespace, "config"):
-            delattr(namespace, "config")
-
-        if cf.add_quiet and hasattr(namespace, "quiet"):
-            if namespace.quiet:
-                new_level = cf.get_log_level(-1)
-                root = logging.getLogger()
-                if not root.handlers:
-                    logging.basicConfig(level=new_level, format="%(message)s", stream=cf.orig_stream)
-                else:
-                    root.setLevel(new_level)
-                    for handler in root.handlers:
-                        if handler.level < new_level:  # edit just benevolent handlers
-                            handler.setLevel(new_level)
-            delattr(namespace, "quiet")
-        return namespace, args
+        message = "the following arguments are required: " + ", ".join(
+            a.arg.lowered.name_or_flags[-1] for a in required_args
+        )
+        exc = SystemExit(2)
+        if sys.version_info >= (3, 11):
+            exc.add_note(message)
+        raise exc
 
     return _
 
 
-def subparser_call(self, parser, namespace, values, option_string=None):
-    # '_subcommands._subcommandsNested (positional)' -> '_subcommandsNested'
-    field_name = self.dest.replace(" (positional)", "").rsplit(".", 1)[-1]
+def tyro_error_and_exit(ask_for_missing: bool):
+    """Catch the "Missing subcommand" error: collect the failed SubparsersSpecification
+    (found in the caller frame) so that a subcommand-chooser dialog can be raised."""
+    orig = _tyro_help_formatting.error_and_exit
 
-    _crawling.get().append((self, values[0], field_name))
-    _orig_call(self, parser, namespace, values, option_string)
-    # I cannot use, I don't know why  super(_SubParsersAction, self).__call__
+    def _(title, *contents, prog, console_outputs, add_help):
+        if ask_for_missing and title == "Missing subcommand":
+            f = sys._getframe(1)
+            spec = f.f_locals.get("subparser_spec")
+            if spec is not None:
+                failed_fields.get().append(spec)
+                _harvest_crawl(f.f_locals.get("output", {}), f.f_locals.get("args"))
+                message = "the following arguments are required: {" + ",".join(spec.parser_from_name) + "}"
+                exc = SystemExit(2)
+                if sys.version_info >= (3, 11):
+                    exc.add_note(message)
+                raise exc
+        return orig(title, *contents, prog=prog, console_outputs=console_outputs, add_help=add_help)
+
+    return _
 
 
-def argparse_init(kw) -> None:
-    """Restore ArgumentParser parameters that tyro considers useless
-    as we tend to have backwards compatibility with argparse
-    to facilitate usage.
+def _expand_abbrevs(parser_spec, args):
+    """argparse's allow_abbrev: expand an unambiguous flag prefix (--im → --important-number).
+    NOTE Only the root parser flags are taken into account; flags of (lazily evaluated)
+    subparsers are not expanded."""
+    flags = set()
+    for arg_ctx in parser_spec.get_args_including_children():
+        if not arg_ctx.arg.is_positional():
+            flags.update(arg_ctx.arg.lowered.name_or_flags)
+    out = []
+    args_iter = iter(args)
+    for token in args_iter:
+        if token == "--":  # end-of-options marker
+            out.append(token)
+            out.extend(args_iter)
+            break
+        if token.startswith("--") and len(token) > 2:
+            key, eq, val = token.partition("=")
+            if key not in flags:
+                matches = [f for f in flags if f.startswith(key)]
+                if len(matches) == 1:
+                    token = matches[0] + eq + val
+        out.append(token)
+    return out
+
+
+def tyro_parse_args(cf: "CliFlags | None", allow_abbrev=False):
+    """Wrap TyroBackend.parse_args:
+    * inject CliFlags arguments (--verbose, --quiet, ...) into the ParserSpecification
+    * handle --version early (like the argparse version action, before required-args checks)
+    * expand abbreviated flags when the argparse-compatible allow_abbrev is requested
+    * on success, harvest the subcommand passage and consume the CliFlags outputs
     """
+    orig = TyroBackend.parse_args
 
-    def _(self, *args, **kwargs):
-        _orig_init(self, *args, **kwargs)
-        for k, v in kw.items():
-            # Ex. self.allow_abbrev = True
-            setattr(self, k, v)
+    def _(self, parser_spec, args, prog, return_unknown_args, console_outputs, add_help, compact_help=False):
+        if cf:
+            cf.setup()
+            if cf.add_version and "--version" in args:
+                print(cf.version)
+                raise SystemExit(0)
+            for field in reversed(cf.field_list):
+                # intern_prefix must stay empty: lowered.dest = make_field_name([intern_prefix, intern_name])
+                parser_spec.args.insert(
+                    0,
+                    _arguments.ArgumentDefinition(
+                        intern_prefix="",
+                        extern_prefix="",
+                        subcommand_prefix="",
+                        field=field,
+                    ),
+                )
+        if allow_abbrev:
+            args = _expand_abbrevs(parser_spec, args)
+        out, unknown = orig(self, parser_spec, args, prog, return_unknown_args, console_outputs, add_help, compact_help)
+        _harvest_crawl(out, args)
+        if cf:
+            cf.consume_output(out)
+        return out, unknown
 
     return _

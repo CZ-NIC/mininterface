@@ -18,7 +18,10 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
+          paths: [., docs]
           options:
+            extensions:
+              - docs/_griffe_lazy_aliases.py:LazyAliasExtension
             docstring_style: google
             docstring_section_style: table
             show_source: false

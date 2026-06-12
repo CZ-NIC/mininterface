@@ -34,31 +34,24 @@ from .form_dict import EnvClass, TagDict, dataclass_to_tagdict, MissingTagValue,
 try:
     from .cli_flags import CliFlags
     from tyro import cli
-
-    try:  # tyro >= 0.10
-        from tyro import _experimental_options
-
-        _experimental_options["backend"] = "argparse"
-        from tyro._backends._argparse import _SubParsersAction, ArgumentParser
-        from tyro._backends._argparse_formatter import TyroArgumentParser
-    except ImportError:
-        from tyro._argparse import _SubParsersAction, ArgumentParser
-        from tyro._argparse_formatter import TyroArgumentParser
-    from tyro._parsers import ParserSpecification
+    from tyro import _experimental_options
+    from tyro._backends import _tyro_help_formatting
+    from tyro._backends._tyro_backend import TyroBackend
+    from tyro._parsers import ParserSpecification, SubparsersSpecification, ArgWithContext
 
     from tyro.conf import OmitArgPrefixes, OmitSubcommandPrefixes, DisallowNone, FlagCreatePairsOff
 
     from .tyro_patches import (
         _crawling,
-        custom_error,
-        custom_init,
-        custom_parse_known_args,
         failed_fields,
-        patched__parse_known_args,
-        patched__format_help,
-        subparser_call,
-        argparse_init,
+        tyro_required_args_error,
+        tyro_error_and_exit,
+        tyro_parse_args,
     )
+
+    # The native backend (tyro >= 1.0) is ~2-3× faster than the argparse one
+    # (HeavyNesting: 15 ms → 5 ms) and is the only one mininterface patches support.
+    _experimental_options["backend"] = "tyro"
 except ImportError:
     from ..exceptions import DependencyRequired
 
@@ -250,7 +243,7 @@ def parse_cli(
                     if sys.version_info < (3, 11):
                         raise
                     # Form did not work, cancelled or run through minadaptor.
-                    # We use the original tyro exception message, caught in tyro_patches.custom_error
+                    # We use the original tyro exception message, noted in tyro_patches.tyro_required_args_error
                     # instead of a validation error the minadaptor might produce.
                     # NOTE We might add minadaptor validation error. But it seems too similar to the better tyro's one.
                     # if str(e):
@@ -297,7 +290,7 @@ def _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_regis
     old_defs = kwargs.get("default", {})
     if old_defs:
         old_defs = asdict(old_defs)
-    passage = [cl_name for _, cl_name, _ in _crawling.get()]
+    passage = [cl_name for cl_name, _ in _crawling.get()]
 
     if len(env_classes) > 1:
         if len(passage):
@@ -322,42 +315,21 @@ def _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_regis
 
 
 def _apply_patches(cf: Optional[CliFlags], ask_for_missing, env_classes, kwargs):
-    patches = []
-
-    patches.append(patch.object(_SubParsersAction, "__call__", subparser_call))
-    patches.append(patch.object(TyroArgumentParser, "_parse_known_args", patched__parse_known_args))
-    kw = {
-        k: v for k, v in kwargs.items() if k != "default"
-    }  # NOTE I might separate kwargs['default'] and do not do this filtering
-    if kw:
-        patches.append(patch.object(ArgumentParser, "__init__", argparse_init(kw)))
-
-    if ask_for_missing:  # Get the missing flags from the parser
-        patches.append(patch.object(TyroArgumentParser, "error", custom_error))
-    if cf and cf.should_add(env_classes):
-        # Mock parser to add some flags
-        # Flags are added only if neither the env_class nor any of the subcommands have the same-name flag already
-        patches.extend(
-            (
-                patch.object(
-                    TyroArgumentParser,
-                    "__init__",
-                    custom_init(cf),
-                ),
-                patch.object(
-                    TyroArgumentParser,
-                    "format_help",
-                    patched__format_help(cf),
-                ),
-                patch.object(
-                    TyroArgumentParser,
-                    "parse_known_args",
-                    custom_parse_known_args(cf),
-                ),
-            )
-        )
-
-    return patches
+    """Patches for the native tyro backend. See tyro_patches for details.
+    CliFlags are added only if neither the env_class nor any of the subcommands
+    have the same-name flag already."""
+    return [
+        patch.object(_tyro_help_formatting, "required_args_error", tyro_required_args_error(ask_for_missing)),
+        patch.object(_tyro_help_formatting, "error_and_exit", tyro_error_and_exit(ask_for_missing)),
+        patch.object(
+            TyroBackend,
+            "parse_args",
+            tyro_parse_args(
+                cf if cf and cf.should_add(env_classes) else None,
+                allow_abbrev=kwargs.get("allow_abbrev", False),
+            ),
+        ),
+    ]
 
 
 def _dialog_missing(
@@ -375,7 +347,7 @@ def _dialog_missing(
 
     * kwargs["default"]. Struct (dataclass). The fields that must be filled are marked as MISSING_NONPROP.
         If marked directly with `tag._make_default_value()`, tyro would resolve CLI instantly with no further problem but we would never known which were missing CLI flags were missing.
-    * failed_fields – Argparse Actions. Parser needs them filled. (It might not tell us about all of them. There is a use-case when superparser is resolved after subparser. And if whole subparser command is missing, its fields are not there either.)
+    * failed_fields – ArgWithContext / SubparsersSpecification. Parser needs them filled. (It might not tell us about all of them. There is a use-case when superparser is resolved after subparser. And if whole subparser command is missing, its fields are not there either.)
     * req_fields – Tags. The same form as kwargs["default"]. Recursively all fields, needed to build up a dataclass for mininterface. The fields that must be filled are marked as MissingTagValue().
     * missing_req – Tags. Those req_fields which are missing from CLI. Merge of failed_fields and req_fields. (Subset of req_fields.)
         Their values are `tag._make_default_value()`.
@@ -408,7 +380,7 @@ def _dialog_missing(
             req_fields,
             m,
             subc=kwargs.get("subcommands_default"),
-            subc_passage=[cl_name for _, cl_name, _ in _crawling.get()],
+            subc_passage=[cl_name for cl_name, _ in _crawling.get()],
         )
 
     missing_req = _fetch_currently_failed(req_fields)
@@ -475,16 +447,24 @@ def _fetch_currently_failed(requireds) -> TagDict:
     who pose problem for tyro (through implanted failed_fields)."""
     missing_req = {}
     for field in failed_fields.get():
-        # ex: `_subcommands._nested_subcommands (positional)`
+        # Determine the dest-like dotted name, ex: `_subcommands._nested_subcommands (positional)`
+        if isinstance(field, SubparsersSpecification):
+            # a whole subcommand is missing
+            dest = field.intern_prefix
+        else:
+            # ArgWithContext, a required argument is missing
+            # (get_output_key gives lowered.dest, or the positional name)
+            dest = field.arg.get_output_key()
+
         fname = (
-            field.dest.replace(" (positional)", "")
+            dest.replace(" (positional)", "")
             .replace("-", "_")
             .replace("__tyro_dummy_inner__.", "")
             .replace("__tyro_dummy_inner__", "")
         )  # `_subcommands._nested_subcommands`
         fname_raw = fname.rsplit(".", 1)[-1]  # `_nested_subcommands`
 
-        if isinstance(field, _SubParsersAction):
+        if isinstance(field, SubparsersSpecification):
             # The function create_with_missing don't makes every encountered field a wrong field
             # (with the exception of the config fields, defined in the kwargs["default"] earlier).
             # The CLI options are unknown to it.

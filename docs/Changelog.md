@@ -1,9 +1,11 @@
 # Changelog
 
+## unreleased
+* deps (tyro): new (2× faster) backend for CLI parser
+
 ## 1.3.1 (2026-06-13)
 * fix: catch all tkinter import/startup failures as InterfaceNotAvailable
 * fix (security): replace eval() with ast.literal_eval in file picker
-
 
 ## 1.3.0 (2026-06-11)
 * feat: tkinter and textual in a separated processes

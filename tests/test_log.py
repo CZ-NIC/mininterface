@@ -68,7 +68,7 @@ class TestLog(TestAbstract):
 
         self.sys("-v")
         with (
-            self.assertStderr(contains="running-tests: error: unrecognized arguments: -v"),
+            self.assertStderr(contains="Unrecognized options: -v"),
             self.assertRaises(SystemExit),
         ):
             self.log(ConflictingEnv)

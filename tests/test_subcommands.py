@@ -544,12 +544,16 @@ class TestNested(TestAbstract):
         # but it's interpreted as a bot id.
         # NOTE It would be better if we could raise a bot id dialog instead of the error.
         with self.assertForms(), self.assertStderr(
-            contains="invalid choice: 'get' (choose from 'id-one', 'id-two')"
+            contains="invalid choice 'get'"
         ), self.assertRaises(SystemExit):
             runm([List, Run], args=["run", "message", "get"])
 
+    # NOTE The three tests below use the canonical CLI grammar: a parent positional
+    # (bot_id) comes *before* the subcommand, in the declaration order. The legacy
+    # tyro argparse backend accepted it (only) trailing after the subcommand args –
+    # a mis-parse fixed upstream in tyro #476.
     def test_full_args(self):
-        env = runm([List, Run], args=["run", "message", "get", "None", "id-one"]).env
+        env = runm([List, Run], args=["run", "id-one", "message", "get", "None"]).env
         self.assertEqual(
             f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg=None, foo='hello'))""",
             repr(env),
@@ -584,11 +588,11 @@ class TestNested(TestAbstract):
                 {"_subcommands": {"msg": None}},
             )
         ):
-            env = runm([List, Run], args=["run", "message", "get", "--foo", "my-foo", "id-one"]).env
+            env = runm([List, Run], args=["run", "id-one", "message", "get", "--foo", "my-foo"]).env
             self.assertIsNone(env._subcommands.msg)
 
     def test_full_args_including_optional(self):
-        env = runm([List, Run], args=["run", "message", "get", "my-message", "--foo", "foo-set", "id-one"]).env
+        env = runm([List, Run], args=["run", "id-one", "message", "get", "my-message", "--foo", "foo-set"]).env
         self.assertEqual(
             f"""Run(bot_id='id-one', _subcommands=Message(kind='get', msg='my-message', foo='foo-set'))""",
             repr(env),
