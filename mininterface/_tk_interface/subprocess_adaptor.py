@@ -71,15 +71,21 @@ class TkSubprocessAdaptor(SubprocessAdaptorBase):
             return
         try:
             import tkinter
-        except ModuleNotFoundError:
+        except ImportError:
+            # Catches both ModuleNotFoundError (python3-tk absent) and ImportError
+            # when _tkinter loads but its shared library is missing (e.g. libtk8.6.so
+            # on Alpine/musl) or the DLL fails to load on Windows.
             from ..exceptions import InterfaceNotAvailable
             raise InterfaceNotAvailable
         try:
             root = tkinter.Tk()
-        except tkinter.TclError:
+            root.destroy()
+        except Exception:
+            # TclError covers missing display / unreachable X server / init.tcl not
+            # found. RuntimeError covers a mismatched Tcl/Tk build. Catch all so any
+            # future Tk startup failure still produces a clean fallback.
             from ..exceptions import InterfaceNotAvailable
             raise InterfaceNotAvailable
-        root.destroy()
 
     def widgetize(self, tag: Tag):
         # Widgetisation happens in the child; the parent never builds widgets.
