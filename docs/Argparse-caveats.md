@@ -1,7 +1,9 @@
-Be aware that in contrast to the argparse:
+# Argparse caveats
 
-* When storing multiple `store_const` action to the same `dest`, order does not matter.
-* When using positional arguments before the subcommands, the order changes
+Be aware that, in contrast to argparse:
+
+* When storing multiple `store_const` actions to the same `dest`, the order does not matter.
+* When using positional arguments before the subcommands, the order changes.
 
 Argparse:
 

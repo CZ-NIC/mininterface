@@ -1,8 +1,8 @@
 # Examples
 
-A powerful [`m.form`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form) dialog method accepts either a dataclass or a dict. Take a look on both.
+The powerful [`m.form`](https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form) dialog method accepts either a dataclass or a dict. Take a look at both.
 
-## A complex dataclass.
+## A complex dataclass
 
 ```python
 from typing import Annotated
@@ -20,7 +20,7 @@ class Env:
   nested_config: NestedEnv
 
   mandatory_str: str
-  """ As there is no default value, you will be prompted automatically to fill up the field """
+  """ As there is no default value, you will be prompted automatically to fill in the field """
 
   my_number: int | None = None
   """ This is not just a dummy number, if left empty, it is None. """
@@ -48,13 +48,13 @@ As the attribute `mandatory_str` requires a value, a prompt appears automaticall
 
 ![Complex example missing field](asset/complex_example_missing_field.avif)
 
-Then, full form appears:
+Then, the full form appears:
 
 ![Complex example](asset/complex_example.avif)
 
 ## Form with paths
 
-We have a dict with some paths. Here is how it looks.
+We have a dict with some paths. This is how it looks.
 
 ```python
 from pathlib import Path

@@ -49,7 +49,7 @@ class Alert(Command):
 class Ask(Command):
     """Dialog: Prompt the user to input a value.
     By default, we input a str, by the second parameter, you can infer a type,
-    ex. `mininterface --ask 'My heading' int`
+    ex. `mininterface ask 'My heading' int`
     """
 
     text: Positional[str]

@@ -1,4 +1,4 @@
-We recommend to use the dataclass and validate with the `Annotated` keyword. We use a [Validation][mininterface.tag.alias.Validation] type here.
+We recommend using a dataclass and validating with the `Annotated` keyword. Here, we use the [Validation][mininterface.tag.alias.Validation] type.
 
 ```python
 from typing import Annotated
@@ -18,6 +18,6 @@ class Env:
     test: Annotated[str, Tag(validation=not_empty)] = "hello"
 ```
 
-Why we used it in an Annotated statement? To preserve the date type.
+Why did we use it inside an `Annotated` statement? To preserve the data type.
 
 ::: mininterface.validators

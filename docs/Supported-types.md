@@ -16,7 +16,7 @@ Various types are supported:
 
 ### Usage in a dataclass
 
-Take a look how it works with the variables organized in a dataclass:
+Take a look at how it works with variables organized in a dataclass:
 
 ```python
 from dataclasses import dataclass
@@ -51,7 +51,7 @@ print(m.env)
 
 Variables organized in a dict:
 
-Along scalar types, there is (basic) support for common iterables or custom classes.
+Besides scalar types, there is (basic) support for common iterables and custom classes.
 
 ```python
 from mininterface import run
@@ -75,7 +75,7 @@ print(values)  # {'my_number': 2, 'my_list': [2, 3], 'my_point': <__main__.Point
 print(values["my_point"].i)  # 100
 ```
 
-![GUI window](asset/supported_types_2.avif "A prompted dialog after editation")
+![GUI window](asset/supported_types_2.avif "A prompted dialog after editing")
 
 ## Examples
 
@@ -107,7 +107,7 @@ run(Env).form()
 
 ### Functions
 
-Will appear as buttons.
+Functions appear as buttons.
 
 ```python
 def my_callback():
@@ -133,17 +133,17 @@ with run(Env) as m:
 ![Function](asset/examples-function-with.avif)
 
 !!! Warning
-    When used in a form like this `m.form({'My callback': my_callback)`, the value is left intact. It still points to the function. This behaviour might reconsidered and changed. (It might make more sense to change it to the return value instead.)
+    When used in a form like this `m.form({'My callback': my_callback})`, the value is left intact. It still points to the function. This behaviour might be reconsidered and changed. (It might make more sense to change it to the return value instead.)
 
 ### Constraining
 
-To constraint a value, either pass an enum object, `typing.Literal`, or use handy additional type [SelectTag][mininterface.tag.SelectTag] that might speed you up a bit.
+To constrain a value, either pass an enum object or a `typing.Literal`, or use the handy additional type [SelectTag][mininterface.tag.SelectTag] that might speed you up a bit.
 
-See the [OptionsType][mininterface.tag.select_tag.OptionsType] help for all the possibilities, here is just a quick hint:
+See the [OptionsType][mininterface.tag.select_tag.OptionsType] help for all the possibilities; here is just a quick hint:
 
 #### Enums
 
-CLI shows keys, UI shows values. Static values. The program:
+The CLI shows keys, the UI shows values. The values are static. The program:
 
 ```python
 class Color(Enum):
@@ -157,7 +157,7 @@ class Env:
 m = run(Env)
 ```
 
-CLI shows keys.
+The CLI shows keys.
 
 ```bash
 $ ./program.py --help
@@ -172,11 +172,11 @@ usage: program.py [-h] [-v] --val {RED,GREEN}
 
 (Note: You may mark it with [a special flag](https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.EnumChoicesFromValues) to show the values in the CLI.)
 
-UI shows values:
+The UI shows values:
 
 ![Enum vals](asset/enum_vals.avif "UI shows enum values")
 
-As both keys and values are displayed, should you need to bear an additional information, not displayed in CLI nor UI, you can tackle the Enum class.
+As both keys and values are displayed, should you need to carry additional information, displayed neither in the CLI nor in the UI, you can tweak the Enum class.
 
 ```python
 class Color(Enum):
@@ -201,7 +201,7 @@ print(m.env.val.payload)  # ex. '#ff0000'
 
 #### Literal
 
-Built-in `Literal` is supported. Allows you to do a one-liner.
+The built-in `Literal` is supported and allows a one-liner.
 
 ```python
 from typing import Literal
@@ -214,7 +214,7 @@ m = run(Env)
 print(m.env.val)  # ex. 'one'
 ```
 
-Should you need dynamic values, wrap it under `Annotated`:
+Should you need dynamic values, wrap it in `Annotated`:
 
 ```python
 from typing import Annotated, Literal
@@ -306,7 +306,7 @@ First, we've chosen `Console`, then `Console rich`.
 ![Fields from both Console and ConsoleRich](asset/nested-subcommands-3.avif)
 
 ??? Grouping
-    Note fields from outer `Console` and inner `ConsoleRich` are displayed together in step 3. Why? You might start at arbitrary position.
+    Note that the fields from the outer `Console` and the inner `ConsoleRich` are displayed together in step 3. Why? You might start at an arbitrary position.
 
     Starting at step 1:
 
@@ -328,11 +328,11 @@ First, we've chosen `Console`, then `Console rich`.
 
     ![Choosing Console rich](asset/nested-subcommands-2.avif)
 
-    That way, you may start anywhere from CLI, yet be sure all the missing fields, if possible, are grouped in a single form dialog.
+    That way, you may start anywhere in the CLI and still be sure that all the missing fields are, if possible, grouped into a single form dialog.
 
 ??? "Shorter CLI notation"
 
-    This is how in looks in CLI:
+    This is how it looks in the CLI:
 
     ```bash
     $ ./program.py --help
@@ -353,14 +353,14 @@ First, we've chosen `Console`, then `Console rich`.
     m = run(OmitSubcommandPrefixes[Env])
     ```
 
-    Take a look! Using that annotation will make the inscription shorter.
+    Take a look! Using that annotation makes the usage line shorter.
 
     ```bash
     $ ./program.py --help
     usage: program.py [-h] [-v] {message,console}
     ```
 
-In the config file, put a dict where subcommands are in the kebab case. Here, we define some config defaults for `ConsoleRich`, leaving `Message` and `ConsolePlain` without config defaults.
+In the config file, put a dict with the subcommands in kebab-case. Here, we define some config defaults for `ConsoleRich`, leaving `Message` and `ConsolePlain` without config defaults.
 
 ```yaml
 val:
@@ -373,7 +373,7 @@ val:
 
 ### Well-known objects
 
-We've added extra functions for known objects like `Path` or `datetime` (file exists check etc.), see `Tag` subclasses in Custom types section ([PathTag][mininterface.tag.PathTag], [DatetimeTag][mininterface.tag.DatetimeTag], ...).
+We've added extra functionality for well-known objects like `Path` or `datetime` (file existence check etc.); see the `Tag` subclasses in the Custom types section ([PathTag][mininterface.tag.PathTag], [DatetimeTag][mininterface.tag.DatetimeTag], ...).
 
 ### Iterables
 
@@ -388,7 +388,7 @@ run(Env).form()
 ```
 ### Union types
 
-An enormously useful feature is to let the user not set a variable.
+An enormously useful feature: letting the user leave a variable unset.
 
 ```python
 @dataclass
@@ -402,5 +402,5 @@ class Env:
 We've added some other useful custom types that can be imported mostly from `mininterface.tag`.
 
 1. Tag subclasses – The descendants of the [`Tag`](Tag.md), the object for storing values. Normally, you don't need to use or know much about those but they can be helpful when you need to further specify the functionality, such as restricting a `Path` to directories only ([PathTag][mininterface.tag.PathTag]).
-2. [Tag aliases](Tag-aliases.md) – Userful shortcuts.
+2. [Tag aliases](Tag-aliases.md) – Useful shortcuts.
 3. [Prepared annotations](Prepared-annotations.md) – Useful types to be used for nifty CLI parsing.

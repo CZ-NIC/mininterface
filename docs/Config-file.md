@@ -1,12 +1,12 @@
 # Config file
 Any settings you see in the `--help` command can be modified via a YAML config file.
 
-By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the [run][mininterface.run] method `config_file` or `add_config` parameters or via `MININTERFACE_CONFIG` environment variable.
+By default, we try to find one in the current working dir whose name stem is the same as the program's, e.g. `program.py` will search for `program.yaml`. This behaviour can be changed via the [run][mininterface.run] parameters `config_file` or `add_config`, or via the `MININTERFACE_CONFIG` environment variable.
 
 !!! Tip
-    You do not have to re-define all the settings in the config file, you can choose a few.
+    You do not have to re-define all the settings in the config file; a few will do.
 
-## Search order by highest priority
+## Search order (highest priority first)
 
 *  will load `conf.yaml`: `$ program.py --config conf.yaml` with `run(add_config=True)`
 *  will load `conf.yaml`: `$ MININTERFACE_CONFIG=conf.yaml program.py`
@@ -69,7 +69,7 @@ m.env
 #  a7=[('j', 10.0), ('k', 11), ('l', 12)])
 ```
 
-The YAML file used. (Note the various YAML syntax and the automatic YAML-list to Python-tuple conversion.)
+The YAML file used. (Note the varied YAML syntax and the automatic YAML-list to Python-tuple conversion.)
 
 ```yaml
 {% include-markdown '../tests/complex.yaml' %}

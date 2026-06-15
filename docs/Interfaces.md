@@ -1,6 +1,6 @@
 ## All possible interfaces
 
-Apart from the default [`Mininterface`][mininterface.Mininterface], the base interface the others are fully compatible with, several interfaces exist at `mininterface.interfaces`.
+Apart from the default [`Mininterface`][mininterface.Mininterface] – the base interface all the others are fully compatible with – several interfaces exist in `mininterface.interfaces`.
 
 | shortcut | full name |
 | -- | -- |
@@ -12,7 +12,7 @@ Apart from the default [`Mininterface`][mininterface.Mininterface], the base int
 
 ### Ordering
 
-We try to obtain the best interface available. By preference, it is **gui** , then **> tui** (textual or at least **> text**), then the original non-interactive **> min** is used. The ensures the program to still work in cron jobs etc. (**Web** is never chosen automatically.)
+We try to obtain the best interface available. The preference is **gui**, then **tui** (textual, or at least **text**); finally, the original non-interactive **min** is used. This ensures the program still works in cron jobs etc. (**Web** is never chosen automatically.)
 
 ```mermaid
 graph LR
@@ -23,10 +23,10 @@ web
 ### Getting one
 
 Normally, you get an interface through [mininterface.run][]
-but if you do not wish to parse CLI and config file, you can invoke one directly through `from mininterface.interfaces import *`. You may as well use the [`get_interface`][mininterface.interfaces.get_interface] function to ensure the interface is available or invoke the program with [`MININTERFACE_INTERFACE`](#environment-variable-mininterface_interface) environment variable.
+but if you do not wish to parse the CLI and config file, you can invoke one directly through `from mininterface.interfaces import *`. You may as well use the [`get_interface`][mininterface.interfaces.get_interface] function to ensure the interface is available, or invoke the program with the [`MININTERFACE_INTERFACE`](#environment-variable-mininterface_interface) environment variable.
 
 !!! info
-    Performance boost: Only interfaces that are being used are loaded into memory for faster start.
+    Performance boost: Only the interfaces actually used are loaded into memory, for a faster start.
 
 ### Direct invocation
 
@@ -46,15 +46,15 @@ with TuiInterface("My program") as m:
 
 ### Environment variable `MININTERFACE_INTERFACE`
 
-From outside, you may override the default interface choice by the environment variable.
+From outside, you may override the default interface choice with the environment variable.
 
 `$ MININTERFACE_INTERFACE=web program.py`
 
 # `Mininterface`
 
-The base interface.
+The base interface. It is configured via [`UiSettings`][mininterface.settings.UiSettings].
 
-Not interactive, behaves as if the user confirmed everyting. It is being used in ex. cron scripts.
+Non-interactive; it behaves as if the user confirmed everything. Useful e.g. in cron scripts.
 
 ```bash
 $ MININTERFACE_INTERFACE=min ./program.py
@@ -85,7 +85,7 @@ Asking the form Env(my_flag=False, my_number=4)
         print(m.env.my_number)
     ```
 
-If not possible, the program ends with a warning.
+If that is not possible, the program ends with a warning.
 
 ```bash
 $ MININTERFACE_INTERFACE=gui ./program.py
@@ -115,7 +115,7 @@ the following arguments are required: --my-flag
 
 # `GuiInterface` or `TkInterface` or 'gui'
 
-A tkinter window. It inherits from [`GuiSettings`][mininterface.settings.GuiSettings].
+A tkinter window. It is configured via [`GuiSettings`][mininterface.settings.GuiSettings].
 
 ```bash
 $ MININTERFACE_INTERFACE=gui ./program.py
@@ -126,11 +126,11 @@ $ MININTERFACE_INTERFACE=gui ./program.py
 
 # `TuiInterface` or 'tui'
 
-An interactive terminal. Will try to get `TextualInterface` and `TextInterface` as a fallback.
+An interactive terminal. It tries to use `TextualInterface`, with `TextInterface` as a fallback. Configured via [`TuiSettings`][mininterface.settings.TuiSettings].
 
 ## `TextualInterface`
 
-If [textual](https://github.com/Textualize/textual) installed, rich and mouse clickable interface is used.
+If [textual](https://github.com/Textualize/textual) is installed, a rich, mouse-clickable interface is used. It is configured via [`TextualSettings`][mininterface.settings.TextualSettings].
 
 ```bash
 $ MININTERFACE_INTERFACE=tui ./program.py
@@ -140,7 +140,7 @@ $ MININTERFACE_INTERFACE=tui ./program.py
 
 ## `TextInterface`
 
-Plain text only interface with no dependency as a fallback. The non-interactive session becomes interactive if possible but there is no mouse support. Does not clear whole screen as TextualInterface if it suits better your program flow.
+A plain-text fallback interface with no dependencies. It is configured via [`TextSettings`][mininterface.settings.TextSettings]. A non-interactive session becomes interactive if possible, but there is no mouse support. Unlike TextualInterface, it does not clear the whole screen, should that suit your program flow better.
 
 ```bash
 $ MININTERFACE_INTERFACE=text ./program.py
@@ -149,7 +149,7 @@ $ MININTERFACE_INTERFACE=text ./program.py
 
 # `WebInterface` or 'web'
 
-Exposed to a web.
+Exposes the program to the web. It is configured via [`WebSettings`][mininterface.settings.WebSettings].
 
 You can expose any script to the web by invoking it through the bundled `mininterface` program.
 
@@ -158,7 +158,7 @@ You can expose any script to the web by invoking it through the bundled `mininte
 $ mininterface web ./program.py --port 9997
 ```
 
-But still, you have the possibility to invoke the web by preference in the `run` or `get_interface` method, direct invocation through importing `WebInterface` from `mininterface.interfaces`, or through the environment variable.
+Still, you can request the web interface by preference in the `run` or `get_interface` method, invoke it directly by importing `WebInterface` from `mininterface.interfaces`, or use the environment variable.
 
 ```bash
 $ MININTERFACE_INTERFACE=web ./program.py
@@ -171,7 +171,7 @@ Press Ctrl+C to quit
 
 
 !!! Caveat
-    Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!
+    Should you plan to use the WebInterface, we recommend making its invocation the first thing your program does. All the statements before it run multiple times!
 
     ```python
     hello = "world"  # This line would run for every browser client!
@@ -182,7 +182,3 @@ Press Ctrl+C to quit
 
 !!! Warning
     Still in beta. We appreciate help with testing etc.
-
-# `ReplInterface`
-
-A debug terminal. Invokes a breakpoint after every dialog.
