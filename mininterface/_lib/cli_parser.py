@@ -35,7 +35,6 @@ try:
     from .cli_flags import CliFlags
     from tyro import cli
     from tyro import _experimental_options
-    from tyro._backends import _tyro_help_formatting
     from tyro._backends._tyro_backend import TyroBackend
     from tyro._parsers import ParserSpecification, SubparsersSpecification, ArgWithContext
 
@@ -44,8 +43,7 @@ try:
     from .tyro_patches import (
         _crawling,
         failed_fields,
-        tyro_required_args_error,
-        tyro_error_and_exit,
+        missing_fields_hook,
         tyro_parse_args,
     )
 
@@ -243,7 +241,7 @@ def parse_cli(
                     if sys.version_info < (3, 11):
                         raise
                     # Form did not work, cancelled or run through minadaptor.
-                    # We use the original tyro exception message, noted in tyro_patches.tyro_required_args_error
+                    # We use the original tyro exception message, noted in tyro_patches.missing_fields_hook
                     # instead of a validation error the minadaptor might produce.
                     # NOTE We might add minadaptor validation error. But it seems too similar to the better tyro's one.
                     # if str(e):
@@ -315,12 +313,11 @@ def _try_with_subcommands(kwargs, m, args, type_form, env_classes, _custom_regis
 
 
 def _apply_patches(cf: Optional[CliFlags], ask_for_missing, env_classes, kwargs):
-    """Patches for the native tyro backend. See tyro_patches for details.
+    """Context managers for the native tyro backend. See tyro_patches for details.
     CliFlags are added only if neither the env_class nor any of the subcommands
     have the same-name flag already."""
     return [
-        patch.object(_tyro_help_formatting, "required_args_error", tyro_required_args_error(ask_for_missing)),
-        patch.object(_tyro_help_formatting, "error_and_exit", tyro_error_and_exit(ask_for_missing)),
+        missing_fields_hook(ask_for_missing),
         patch.object(
             TyroBackend,
             "parse_args",

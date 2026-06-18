@@ -1,18 +1,12 @@
-"""Mocking patches for the native tyro CLI parser backend (tyro >= 1.0).
+"""Patches/hooks for the native tyro CLI parser backend (tyro >= 1.0.14).
 
 mininterface needs to know which required fields/subcommands are missing from the CLI
 so that it can ask for them in a dialog instead of letting the program die with
-a parsing error. Tyro has no official hook for that, hence we monkeypatch three
-choke points:
-
-* _tyro_help_formatting.required_args_error – fires with the list of missing ArgWithContext
-* _tyro_help_formatting.error_and_exit – fires on "Missing subcommand" (we pick the
-  SubparsersSpecification from the caller frame)
-* TyroBackend.parse_args – lets us inject CliFlags arguments into the ParserSpecification
-  and harvest the subcommand passage (_crawling) from the backend's output dict
-
-NOTE A PR to tyro adding an official missing-fields hook would make
-the first two patches disappear.
+a parsing error. tyro exposes this through `tyro._errors.on_parse_error` (added in
+1.0.14 from our PR #478), so we register one hook there. The one remaining
+monkeypatch is `TyroBackend.parse_args`, which we wrap to inject CliFlags arguments
+(`--verbose`, ...) into the ParserSpecification and to harvest the subcommand passage
+(`_crawling`) from the backend output on success.
 """
 
 import sys
@@ -20,8 +14,8 @@ from collections import deque
 from contextvars import ContextVar
 
 from tyro import _arguments
-from tyro._backends import _tyro_help_formatting
 from tyro._backends._tyro_backend import TyroBackend
+from tyro._errors import MissingArgs, MissingSubcommand, on_parse_error
 from tyro._parsers import ArgWithContext, SubparsersSpecification
 
 from .cli_flags import CliFlags
@@ -35,13 +29,15 @@ _crawling: ContextVar[deque] = ContextVar("_crawling", default=deque())
 """ The subcommand passage: (chosen_name, field_name) tuples in selection order. """
 
 
-def _harvest_crawl(output: dict, args) -> None:
+def _harvest_crawl(output: dict, args=None) -> None:
     """Reconstruct the subcommand passage from the backend's output dict.
 
     Subparser selections are stored under keys like `'_subcommands._nested (positional)': 'run'`,
-    in selection order. Default (not CLI-given) subcommands are filtered out
-    by requiring the chosen name to be present in args – mininterface counts
-    explicit selections only (ex. for the empty-CLI detection).
+    in selection order. When `args` is given (the success path), default
+    (not CLI-given) subcommands are filtered out by requiring the chosen name to
+    be present in args – mininterface counts explicit selections only (ex. for
+    the empty-CLI detection). On the error path `args` is None: the partial output
+    holds only what was consumed from the CLI so far, so nothing needs filtering.
     """
     crawl = _crawling.get()
     crawl.clear()
@@ -52,63 +48,41 @@ def _harvest_crawl(output: dict, args) -> None:
                 crawl.append((val, field_name))
 
 
-def _harvest_crawl_from_frame() -> None:
-    """On parsing failure, the output dict lives in a frame of TyroBackend._parse_args_recursive."""
-    f = sys._getframe(2)
-    while f is not None and "output" not in f.f_locals:
-        f = f.f_back
-    if f is not None:
-        _harvest_crawl(f.f_locals["output"], f.f_locals.get("args"))
+def _raise_missing(message: str):
+    """Raise a bare SystemExit(2) with the tyro message kept as a note.
+    The note is used when the raised dialog cannot help (ex. the min interface)."""
+    exc = SystemExit(2)
+    if sys.version_info >= (3, 11):
+        exc.add_note(message)
+    raise exc
 
 
-def tyro_required_args_error(ask_for_missing: bool):
-    """Collect missing required arguments (ArgWithContext) into failed_fields,
-    then raise a bare SystemExit(2) with the message attached as a note.
-    The note is used when the raised dialog cannot help (ex. min interface)."""
-    orig = _tyro_help_formatting.required_args_error
+def missing_fields_hook(ask_for_missing: bool):
+    """Register a tyro parse-error hook that records the missing required
+    fields/subcommands (into failed_fields) and reconstructs the subcommand
+    passage (_crawling) from the event's partial parse state.
 
-    def _(prog, required_args, unrecognized_args_and_progs, console_outputs, add_help):
-        failed_fields.get().extend(required_args)
-        _harvest_crawl_from_frame()
-        if not ask_for_missing:
-            return orig(
-                prog=prog,
-                required_args=required_args,
-                unrecognized_args_and_progs=unrecognized_args_and_progs,
-                console_outputs=console_outputs,
-                add_help=add_help,
+    When ask_for_missing, we raise SystemExit(2) right away – caught by parse_cli
+    to raise the dialog. Otherwise we return None and let tyro render its standard
+    error. Returns the `on_parse_error` context manager to enter."""
+
+    def hook(event):
+        if isinstance(event, MissingArgs):
+            failed_fields.get().extend(event.missing_arguments)
+            _harvest_crawl(event.partial_output)
+            if ask_for_missing:
+                _raise_missing(
+                    "the following arguments are required: "
+                    + ", ".join(a.arg.lowered.name_or_flags[-1] for a in event.missing_arguments)
+                )
+        elif isinstance(event, MissingSubcommand) and ask_for_missing:
+            failed_fields.get().append(event.subcommand_spec)
+            _harvest_crawl(event.partial_output)
+            _raise_missing(
+                "the following arguments are required: {" + ",".join(event.subcommand_spec.parser_from_name) + "}"
             )
-        message = "the following arguments are required: " + ", ".join(
-            a.arg.lowered.name_or_flags[-1] for a in required_args
-        )
-        exc = SystemExit(2)
-        if sys.version_info >= (3, 11):
-            exc.add_note(message)
-        raise exc
 
-    return _
-
-
-def tyro_error_and_exit(ask_for_missing: bool):
-    """Catch the "Missing subcommand" error: collect the failed SubparsersSpecification
-    (found in the caller frame) so that a subcommand-chooser dialog can be raised."""
-    orig = _tyro_help_formatting.error_and_exit
-
-    def _(title, *contents, prog, console_outputs, add_help):
-        if ask_for_missing and title == "Missing subcommand":
-            f = sys._getframe(1)
-            spec = f.f_locals.get("subparser_spec")
-            if spec is not None:
-                failed_fields.get().append(spec)
-                _harvest_crawl(f.f_locals.get("output", {}), f.f_locals.get("args"))
-                message = "the following arguments are required: {" + ",".join(spec.parser_from_name) + "}"
-                exc = SystemExit(2)
-                if sys.version_info >= (3, 11):
-                    exc.add_note(message)
-                raise exc
-        return orig(title, *contents, prog=prog, console_outputs=console_outputs, add_help=add_help)
-
-    return _
+    return on_parse_error(hook)
 
 
 def _expand_abbrevs(parser_spec, args):
