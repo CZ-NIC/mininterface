@@ -4,6 +4,7 @@
 * feat: [`mininterface.dialogs`](Dialogs.md#without-run-the-dialogs-shortcut) — static `ask`/`confirm`/`select`/`alert`/`form` without `run()`
 * feat (text): windows support on TextInterface
 * deps (tyro): new (2× faster) backend for CLI parser
+* enh: set, frozenset better detection
 
 ## 1.3.1 (2026-06-13)
 * fix: catch all tkinter import/startup failures as InterfaceNotAvailable

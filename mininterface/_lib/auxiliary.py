@@ -119,71 +119,83 @@ def get_or_create_parent_dict(d: dict, fname: str, ignore_last=False) -> dict:
 
 
 def matches_annotation(value, annotation) -> bool:
-    """Check whether the value type corresponds to the annotation.
+    """Check whether the value corresponds to the annotation.
     Because built-in isinstance is not enough, it cannot determine parametrized generics.
     """
-    # union, including Optional and UnionType
-    if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
+    origin = _get_origin(annotation)
+
+    # Union – ex. `int | None`, `Optional[int]`, `Union[int, str]`.
+    # The value matches if it matches any of the union members.
+    if origin is Union or origin is UnionType:
         return any(matches_annotation(value, arg) for arg in get_args(annotation))
 
-    # generics, ex. list, tuple
-    origin = get_origin(annotation)
+    # Literal – ex. `Literal["a", "b"]`. The value has to be one of the listed members.
     if origin is Literal:
         return value in get_args(annotation)
+
+    # Parametrized generic – ex. `list[int]`, `set[str]`, `tuple[int, str]`, `dict[str, int]`.
     if origin:
+        # First the container itself has to match (ex. a `list[int]` value must be a list).
         if not isinstance(value, origin):
             return False
 
         subtypes = get_args(annotation)
-        if origin is list:
+        if not subtypes:
+            # Bare generic without parameters – ex. `typing.List` (origin set, no args).
+            # Nothing more to inspect, the isinstance check above is all we have.
+            return True
+
+        # Homogeneous one-item-type containers – ex. `list[int]`, `set[int]`, `frozenset[str]`.
+        # Every element must match the single subtype.
+        if origin in (list, set, frozenset):
             return all(matches_annotation(item, subtypes[0]) for item in value)
+        # Tuple – ex. fixed `tuple[int, str]` or variadic `tuple[int, ...]`.
         elif origin is tuple:
             if len(subtypes) == 2 and subtypes[1] is Ellipsis:  # ex. tuple[int, ...]
                 return all(matches_annotation(v, subtypes[0]) for v in value)
             if len(subtypes) != len(value):
                 return False
             return all(matches_annotation(v, t) for v, t in zip(value, subtypes))
+        # Mapping – ex. `dict[str, int]`. Both keys and values must match.
         elif origin is dict:
             key_type, value_type = subtypes
             return all(matches_annotation(k, key_type) and matches_annotation(v, value_type) for k, v in value.items())
+        # Any other parametrized generic we do not special-case – the isinstance(value, origin)
+        # check above is the best we can do, the subtypes stay unchecked.
         else:
             return True
 
-    # ex. annotation=int
+    # Plain, non-generic type – ex. `int`, `str`, `Path`.
     return isinstance(value, annotation)
 
 
 def subclass_matches_annotation(cls, annotation) -> bool:
     """
-    Check whether the type in the value corresponds to the annotation.
+    Check whether the *type* `cls` corresponds to the annotation.
+
+    Unlike `matches_annotation`, the input is a type, not a value. A bare type such as
+    `list` carries no element-type information, so element types of containers cannot be
+    inspected – only the container kind is compared.
     """
-    # Union (Optional and UnionType)
-    if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
+    origin = _get_origin(annotation)
+
+    # Union – ex. `Optional[list[int] | str]`. Asking e.g. whether `str` is a member.
+    if origin is Union or origin is UnionType:
         return any(subclass_matches_annotation(cls, arg) for arg in get_args(annotation))
 
-    # generics (list[int], tuple[int, str])
-    origin = get_origin(annotation)
-    if origin:
-        # origin match (ex. list, tuple)
-        if not issubclass(cls, origin):
-            return False
-
-        # subtype match (ex. `int` v `list[int]`)
-        subtypes = get_args(annotation)
-        if origin is list or origin is set:  # list and set have the single subtype
-            return all(subclass_matches_annotation(object, subtypes[0]))
-        elif origin is tuple:  # tuple has multiple subtypes
-            return all(subclass_matches_annotation(object, t) for t in subtypes)
-        elif origin is dict:
-            key_type, value_type = subtypes
-            return subclass_matches_annotation(object, key_type) and subclass_matches_annotation(object, value_type)
-        else:
-            return True
-
-    # simple types like scalars
     try:
-        return issubclass(cls, annotation)  # cls=tuple[int, str] raises an error since Python 3.13
+        # Parametrized generic – ex. `list[int]`, `tuple[int, str]`, `dict[str, int]`.
+        # We can only compare the container itself (is `cls` a list / tuple / dict?); the
+        # element types are unknowable from a bare `cls`, so a matching container suffices.
+        # ex. subclass_matches_annotation(list, list[int]) -> True
+        if origin:
+            return issubclass(cls, origin)
+
+        # Plain, non-generic type – ex. is `str` a subclass of `str`?
+        return issubclass(cls, annotation)
     except TypeError:
+        # `cls` is itself a parametrized generic (ex. `tuple[int, str]`), which is not a plain
+        # class – issubclass raises since Python 3.13. Treat that as "no match".
         return False
 
 
