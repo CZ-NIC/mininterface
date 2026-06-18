@@ -277,6 +277,8 @@ def run(
 
     # Determine title and interface (environ, stdlib)
     title = title or kwargs.get("prog") or Path(sys.argv[0]).name
+    # Resolve the interface preference here (interfaces.get_interface does the same for its
+    # standalone callers) because Start() below also needs the resolved value.
     if not interface:
         interface = environ.get("MININTERFACE_INTERFACE")
     if environ.get("MININTERFACE_ENFORCED_WEB"):

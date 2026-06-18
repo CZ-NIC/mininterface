@@ -1,5 +1,6 @@
 # Access to interfaces via this module assures lazy loading
 from importlib import import_module as _import_module
+from os import environ as _environ
 import sys
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -73,7 +74,7 @@ def _choose_settings(type_: Mininterface, settings: Optional[MininterfaceSetting
     return opt
 
 
-def _get_interface_type(interface: InterfaceType = None):
+def _get_interface_type(interface: InterfaceType | str = None):
     match interface:
         case "gui" | None:
             return __getattr__("GuiInterface")
@@ -110,22 +111,32 @@ def get_interface(
         title: Window title
         settings: [MininterfaceSettings][mininterface.settings.MininterfaceSettings] objects
         env: You can specify the .env attribute of the returned object.
+
+    Without an explicit `interface`, the preference is taken from the `MININTERFACE_INTERFACE`
+    environment variable, then from `settings.interface`.
     """
 
     def call(type_):
         opt = _choose_settings(type_, settings)
         return type_(title, opt, env)
 
-    interface = interface or (settings.interface if settings else None)
+    # Precedence: explicit arg > MININTERFACE_INTERFACE env > config settings (matches `run`).
+    # run() resolves this too (it needs the value for Start()) and passes it explicitly; this
+    # read is what lets standalone callers (dialogs, a direct get_interface()) honour the env var.
+    name = interface or _environ.get("MININTERFACE_INTERFACE") or (settings.interface if settings else None)
+    # MININTERFACE_ENFORCED_WEB is internal: set by the web backend when it re-runs the script,
+    # so the child renders web instead of re-launching the server.
+    if _environ.get("MININTERFACE_ENFORCED_WEB"):
+        name = "web"
 
     try:
-        if isinstance(interface, type) and issubclass(interface, Mininterface):
-            return call(interface)
-        return call(_get_interface_type(interface))
+        if isinstance(name, type) and issubclass(name, Mininterface):
+            return call(name)
+        return call(_get_interface_type(name))
     except InterfaceNotAvailable:
         pass
     try:  # try a default TUI
-        if interface not in ("text", "textual", "tui"):
+        if name not in ("text", "textual", "tui"):
             return call(_get_interface_type("tui"))
     except InterfaceNotAvailable:
         # Even though TUI is able to claim a non-interactive terminal,

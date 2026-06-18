@@ -6,6 +6,24 @@ See the full API reference in [`Mininterface`](Mininterface.md).
 
 ---
 
+## Without `run()` — the `dialogs` shortcut
+
+If you only need a dialog or two and do not parse the CLI nor a config file, import the functions straight from `mininterface.dialogs`. There is no `run()`, no `m` object to pass around:
+
+```python
+from mininterface.dialogs import ask, confirm, select, alert, form
+
+name = ask("What's your name?")
+if confirm("Continue?"):
+    alert(f"Hello {name}!")
+```
+
+All of them — `ask`, `confirm`, `select`, `alert`, `form` — mirror the [`Mininterface`](Mininterface.md) methods of the same name; the only difference is they share one lazily-created interface instead of a `run()` result. The best available backend is chosen automatically (GUI → TUI → text), overridable with the [`MININTERFACE_INTERFACE`](Interfaces.md#environment-variable-mininterface_interface) environment variable.
+
+Reach for [`run`](run.md) instead when you need the parsed `m.env`, the persistent `with` window, or full control over title and settings.
+
+---
+
 ## `m.form()` — edit a form
 
 ```python

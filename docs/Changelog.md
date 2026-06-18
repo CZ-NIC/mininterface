@@ -1,6 +1,7 @@
 # Changelog
 
 ## unreleased
+* feat: [`mininterface.dialogs`](Dialogs.md#without-run-the-dialogs-shortcut) — static `ask`/`confirm`/`select`/`alert`/`form` without `run()`
 * feat (text): windows support on TextInterface
 * deps (tyro): new (2× faster) backend for CLI parser
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass as _dataclass, field as _field
 from typing import Literal, Optional
 
 # We do not use InterfaceType as a type in run because we want the documentation to show full alias.
-InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["text"]
+InterfaceName = Literal["gui"] | Literal["tui"] | Literal["textual"] | Literal["text"] | Literal["web"] | Literal["min"]
 
 
 @_dataclass
