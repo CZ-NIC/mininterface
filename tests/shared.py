@@ -43,7 +43,6 @@ def mock_interactive_terminal(func):
     # mock the session could be made interactive
     @patch("sys.stdin.isatty", new=lambda: True)
     @patch("sys.stdout.isatty", new=lambda: True)
-    @patch.dict(sys.modules, {"ipdb": None})  # ipdb prevents vscode to finish test_ask_form
     def _(*args, **kwargs):
         return func(*args, **kwargs)
 

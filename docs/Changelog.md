@@ -1,6 +1,7 @@
 # Changelog
 
 ## unreleased
+* feat (text): windows support on TextInterface
 * deps (tyro): new (2× faster) backend for CLI parser
 
 ## 1.3.1 (2026-06-13)

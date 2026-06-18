@@ -228,6 +228,22 @@ class TextSettings(TuiSettings):
     ```
     """
 
+    plain_menu: bool = False
+    """ Use a plain numbered list read by `input()` instead of the interactive arrow-key menu.
+
+    The interactive menu (simple-term-menu) redraws the screen with escape sequences,
+    which does not work on Windows and plays badly with dumb terminals, logged sessions
+    or screen readers. The plain menu is also used automatically whenever the interactive
+    menu is not available.
+
+    ```bash
+    [0] ok
+    [1] foo1: ×
+    [2] foo2: ×
+    Choose (Enter = ok):
+    ```
+    """
+
 
 @_dataclass
 class WebSettings(TextualSettings):

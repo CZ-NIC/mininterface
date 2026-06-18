@@ -2,6 +2,7 @@ from mininterface import Mininterface
 from mininterface._lib.run import run
 from mininterface.exceptions import Cancelled
 from mininterface.interfaces import TextInterface
+from mininterface.settings import TextSettings
 from mininterface.tag import CallbackTag, DatetimeTag, SelectTag, Tag
 from mininterface.tag.datetime_tag import date
 from configs import (
@@ -69,10 +70,12 @@ class TestInterface(TestAbstract):
         self.assertEqual(datetime.now().date(), m0.ask("Test input", date))
 
     @mock_interactive_terminal
+    @patch("mininterface._text_interface.adaptor.TerminalMenu", None)
     def test_ask_form(self):
         m = TextInterface()
         dict1 = {"my label": Tag(True, "my description"), "nested": {"inner": "text"}}
-        with patch("builtins.input", side_effect=["v['nested']['inner'] = 'another'", "c"]):
+        # choose the nested submenu, edit its single field, then submit with Enter
+        with patch("builtins.input", side_effect=["2", "another", ""]):
             m.form(dict1)
 
         self.assertEqual(
@@ -81,13 +84,13 @@ class TestInterface(TestAbstract):
         )
 
         # Empty form invokes editing self.env, which is empty
-        with patch("builtins.input", side_effect=["c"]):
+        with patch("builtins.input", side_effect=[""]):
             self.assertEqual(SimpleNamespace(), m.form())
 
         # Empty form invokes editing self.env, which contains a dataclass
         m2 = run(SimpleEnv, interface=TextInterface, prog="My application")
         self.assertFalse(m2.env.test)
-        with patch("builtins.input", side_effect=["v.test = True", "c"]):
+        with patch("builtins.input", side_effect=["1", "y", ""]):
             self.assertEqual(m2.env, m2.form())
             self.assertTrue(m2.env.test)
 
@@ -97,6 +100,28 @@ class TestInterface(TestAbstract):
 
         # Form accepts a dataclass instance
         self.assertEqual(SimpleEnv(), m3.form(SimpleEnv()))
+
+    @mock_interactive_terminal
+    def test_plain_menu(self):
+        m = TextInterface(settings=TextSettings(plain_menu=True))
+
+        # two fields → a menu is shown; toggle the flag, then submit with Enter
+        with patch("builtins.input", side_effect=["1", "n", ""]):
+            out = m.form({"flag": True, "number": 2})
+        self.assertFalse(out["flag"])
+        self.assertEqual(2, out["number"])
+
+        # multiple select reads space-separated numbers
+        with patch("builtins.input", side_effect=["1 3"]):
+            out = m.form({"select": SelectTag(options=["a", "b", "c"], multiple=True)})
+        self.assertEqual(["a", "c"], out["select"])
+
+        # invalid input is asked again, EOF cancels
+        with patch("builtins.input", side_effect=["99", "2"]):
+            self.assertEqual("b", m.select(["a", "b", "c"]))
+        with patch("builtins.input", side_effect=EOFError):
+            with self.assertRaises(Cancelled):
+                m.select(["a", "b", "c"])
 
     def test_form_output(self):
         m = run(SimpleEnv, interface=Mininterface)

@@ -99,6 +99,14 @@ def tag_factory(
 
                                 new = copy(metadata)
                                 new.val = val if val is not None else new.val
+                                # A multiple SelectTag needs a list value. SelectTag.__post_init__
+                                # enforces this, but a scalar dataclass default (ex. `Annotated[str,
+                                # SelectTag(multiple=True)] = "two"`) is injected here, after it ran.
+                                # Wrap it so validation does not iterate the scalar (ex. a str's chars).
+                                if getattr(new, "multiple", False) and new.val is not None and not isinstance(
+                                    new.val, (list, tuple, set)
+                                ):
+                                    new.val = [new.val]
                                 new.description = description or new.description
                                 if new.annotation is None:
                                     # Annotated[ **origin** list[Path], Tag(...)]

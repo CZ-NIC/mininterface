@@ -1,5 +1,4 @@
 import sys
-from pprint import pprint
 from typing import TYPE_CHECKING, Iterable, Type, TypeVar
 
 
@@ -107,35 +106,10 @@ class TextInterface(AssureInteractiveTerminal, Mininterface):
     def form(
         self, form: DataClass | Type[DataClass] | FormDict | None = None, title: str = "", *, submit: str | bool = True
     ) -> FormDict | DataClass | EnvClass:
-        try:
-            with StdinTTYWrapper():
-                return self._form(form, title, self._adaptor, submit=submit)
-        except NotImplementedError:  # simple-term-menu raises this when vscode runs tests
-            # NOTE And it seems that the simple-term-menu is not available at Windows.
+        with StdinTTYWrapper():
             if not self.interactive:
                 return super().form(form=form, title=title, submit=submit)
-
-            # NOTE: This is minimal implementation that should rather go the ReplInterface.
-            # NOTE: Concerning Dataclass form.
-            # I might build some menu of changing dict through:
-            #   params_ = dataclass_to_dict(self.env, self.descriptions)
-            #   data = FormDict → dict self.window.run_dialog(params_)
-            #   dict_to_dataclass(self.env, params_)
-            # NOTE: Validators, nor type checks are not performed.
-            if form is None:
-                form = self.env
-            print("Access `v` (as var) and change values. Then (c)ontinue.")
-            pprint(form)
-            v = form
-            try:
-                import ipdb
-
-                ipdb.set_trace()
-            except ImportError:
-                import pdb
-
-                pdb.set_trace()
-            return form
+            return self._form(form, title, self._adaptor, submit=submit)
 
     def confirm(self, text: str, default: bool = True, *, timeout: int = 0):
         with StdinTTYWrapper():

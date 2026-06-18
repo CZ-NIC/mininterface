@@ -62,20 +62,20 @@ class NestedEnv:
 class Env:
     nested_config: NestedEnv
 
-    mandatory_str: str
-    """ As there is no default value, you will be prompted automatically to fill up the field """
-
-    my_number: int | None = None
-    """ This is not just a dummy number, if left empty, it is None. """
+    my_choice: Annotated[str, Options("one", "two", "three")]
+    """ Choose between values. As there is no default value, you will be prompted automatically to fill up the field. """
 
     my_string: str = "Hello"
     """ A dummy string """
+
+    my_number: int | None = None
+    """ This is not just a dummy number, if left empty, it is None. """
 
     my_flag: bool = False
     """ Checkbox test """
 
     my_validated: Annotated[str, Validation(not_empty)] = "hello"
-    """ A validated field """
+    """ A validated field – cannot be left empty. """
 
     my_complex: list[tuple[int, str]] = field(default_factory=lambda: [(1, "foo")])
     """ List of tuples. """
@@ -86,9 +86,6 @@ class Env:
     my_time: datetime = datetime.now()
     """ Nice date handling """
 
-    my_choice: Annotated[str, Options("one", "two", "three")] = "two"
-    """ Choose between values """
-
     my_multiple: Annotated[str, SelectTag(options=("one", "two", "three"), multiple=True)] = "two"
     """ Choose values """
 
@@ -97,7 +94,6 @@ def showcase(case: int):
     kw = {"args": []}
     if case == 1:
         m = run(Env, title="My program", **kw)
-        m.form()
         print("Output", m.env)
     elif case == 2:
         m = run([Subcommand1, Subcommand2, SubcommandPlaceholder], **kw)

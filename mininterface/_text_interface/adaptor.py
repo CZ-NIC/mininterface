@@ -1,13 +1,12 @@
+import re
 import warnings
 
 try:
-    # NOTE does not work in Win, we should find a replacement
+    # Does not work on Windows (needs termios), we fall back to a plain input() menu then.
     # https://github.com/IngoMeyer441/simple-term-menu/issues/5
     from simple_term_menu import TerminalMenu
 except ImportError:
-    from ..exceptions import InterfaceNotAvailable
-
-    raise InterfaceNotAvailable
+    TerminalMenu = None
 
 from .._lib.auxiliary import flatten
 from .._lib.form_dict import TagDict
@@ -19,6 +18,7 @@ from ..tag.internal import BoolWidget, CallbackButtonWidget, SubmitButtonWidget
 from ..tag.secret_tag import SecretTag
 from ..tag.select_tag import SelectTag
 from .facet import TextFacet
+from .timeout import input_timeout
 
 
 class Submit(StopIteration):
@@ -30,13 +30,16 @@ class TextAdaptor(BackendAdaptor):
     facet: TextFacet
     settings: TextSettings
 
+    _plain_menu_fallback = False
+    """ TerminalMenu is importable but refused to run (no real terminal); stick to the plain menu. """
+
     def widgetize(self, tag: Tag, only_label=False):
         """Represent Tag in a text form"""
 
         if not only_label:
             label = tag.label
             if v := self.widgetize(tag, only_label=True):
-                label += f" {v}"
+                label = f"{label} {v}" if label else str(v)
             if d := tag.description:
                 print(d)
 
@@ -89,10 +92,10 @@ class TextAdaptor(BackendAdaptor):
             case Tag() as tag:
                 s = f": {self.widgetize(tag, only_label=True) or '(empty)'}"
                 if d := tag.description:
-                    s = s + f" | {d}"
-                    # sanitize chars that TerminalMenu does not handle well
-                    return s.replace("|", "\\|").replace("\n", " ").replace("\r", " ")
-                return s
+                    s = f"{s} | {d}"
+                # newlines would break the single-line menu entry in either menu;
+                # the literal '|' is escaped for TerminalMenu later, in _choose_menu
+                return s.replace("\n", " ").replace("\r", " ")
             case dict() as d:
                 return f"... ({len(d)}×)"
 
@@ -100,6 +103,15 @@ class TextAdaptor(BackendAdaptor):
         if isinstance(val, Tag) and val._mnemonic:
             return f"[{val._mnemonic}] "
         return ""
+
+    def _has_error(self, val: Tag | dict) -> bool:
+        """Whether a field – or any field inside a nested submenu – failed the last submit."""
+        match val:
+            case Tag() as tag:
+                return tag._error_text is not None
+            case dict() as d:
+                return any(self._has_error(v) for v in d.values())
+        return False
 
     def run_dialog(self, form: TagDict, title: str = "", submit: bool | str = True) -> TagDict:
         """Let the user edit the form_dict values in a GUI window.
@@ -129,7 +141,10 @@ class TextAdaptor(BackendAdaptor):
                 key = next(iter(form))
             else:
                 index = self._choose(
-                    [f"{self._get_tag_mnemonic(val)}{key}{self._get_tag_val(val)}" for key, val in form.items()],
+                    [
+                        f"{self._get_tag_mnemonic(val)}{'* ' if self._has_error(val) else ''}{key}{self._get_tag_val(val)}"
+                        for key, val in form.items()
+                    ],
                     append_ok=True,
                 )
                 key = list(form)[index]
@@ -160,6 +175,62 @@ class TextAdaptor(BackendAdaptor):
         return form
 
     def _choose(self, items: list, title=None, append_ok=False, multiple: bool = False) -> int | tuple[int]:
+        if TerminalMenu is None or self._plain_menu_fallback or self.settings.plain_menu:
+            return self._choose_plain(items, title, append_ok, multiple)
+        try:
+            return self._choose_menu(items, title, append_ok, multiple)
+        except NotImplementedError:
+            # TerminalMenu needs a real terminal (fails under IDE test runners or piped stdin)
+            self._plain_menu_fallback = True
+            return self._choose_plain(items, title, append_ok, multiple)
+
+    def _choose_plain(self, items: list, title=None, append_ok=False, multiple: bool = False) -> int | tuple[int]:
+        """Numbered menu read through plain input(), for terminals TerminalMenu cannot serve (Windows)."""
+        keys: dict[str, int] = {}
+        lines = []
+        for i, item in enumerate(items):
+            if len(item) > 3 and item[0] == "[" and item[2] == "]":  # item already has a shortcut, ex. `[g] foo`
+                keys[item[1].lower()] = i
+                lines.append(item)
+            else:
+                lines.append(f"[{i + 1}] {item}")
+        for i in range(len(items)):  # positional numbers work even for items displaying a letter shortcut
+            keys[str(i + 1)] = i
+
+        print()  # blank line so consecutive menus do not visually clash
+        if title:
+            print(title)
+        if append_ok:
+            print("[0] ok")
+        if lines:
+            print("\n".join(lines))
+
+        if multiple:
+            prompt = "Choose (numbers separated by a space):"
+        elif append_ok:
+            prompt = "Choose (Enter = ok):"
+        else:
+            prompt = "Choose:"
+        while True:
+            try:
+                # input_timeout, not input() – it reads the raw fd like the rest of the dialog,
+                # whereas input() buffers ahead and would swallow input meant for the next prompt
+                ans = input_timeout(prompt).strip().lower()
+            except EOFError:
+                raise Cancelled
+            if append_ok and ans in ("", "0", "ok"):
+                raise Submit
+            if multiple:
+                tokens = re.split(r"[,\s]+", ans) if ans else []
+                if all(t in keys for t in tokens):
+                    return tuple(sorted({keys[t] for t in tokens}))
+            elif ans in keys:
+                return keys[ans]
+            print("Not understood, choose again.")
+
+    def _choose_menu(self, items: list, title=None, append_ok=False, multiple: bool = False) -> int | tuple[int]:
+        # TerminalMenu treats '|' as a preview-argument separator; escape so it renders literally
+        items = [item.replace("|", "\\|") for item in items]
         it = items
         kwargs = {}
         if not multiple:

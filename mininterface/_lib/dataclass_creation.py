@@ -16,7 +16,6 @@ except ImportError:
 
 from ..tag import Tag
 from ..tag.tag_factory import tag_factory
-from ..validators import not_empty
 from .auxiliary import _get_origin
 from .docstrings import get_class_description, get_description
 from .form_dict import DataClass, EnvClass, MissingTagValue
@@ -97,7 +96,6 @@ def _get_wrong_field(
         MissingTagValue(),
         desc,
         annotation,
-        validation=not_empty,
         _src_class=env_class,
         _src_key=field_name,
     )
