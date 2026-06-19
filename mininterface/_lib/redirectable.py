@@ -1,3 +1,4 @@
+import builtins
 import sys
 from typing import TYPE_CHECKING
 
@@ -69,11 +70,51 @@ class Redirectable:
     def __enter__(self) -> "Self":
         self._always_shown = True
         sys.stdout = self._redirected
+        # The subprocess child owns the tty for the whole `with` block, so reading
+        # it directly would fight the child for stdin (Textual hangs) or pop an
+        # invisible prompt into a stray window (Tk). Route the stdlib prompts
+        # through the same UI as the redirected stdout — a dialog, like m.ask().
+        self._original_input = builtins.input
+        builtins.input = self._redirected_input
+        # Patch getpass only if the program already imported it — never import it
+        # ourselves, so startup cost stays untouched when getpass is unused.
+        self._getpass = sys.modules.get("getpass")
+        if self._getpass is not None:
+            self._original_getpass = self._getpass.getpass
+            self._getpass.getpass = self._redirected_getpass  # type: ignore[attr-defined]
         return self
+
+    def _redirected_input(self, prompt="") -> str:
+        """input() replacement active inside the `with` block (see __enter__).
+
+        Mirrors the built-in: the prompt becomes the field label, a string is
+        returned, and a cancelled dialog raises EOFError (as input() does on EOF)."""
+        from ..exceptions import Cancelled
+        try:
+            return self.ask(str(prompt))  # type: ignore[attr-defined]
+        except Cancelled:
+            raise EOFError
+
+    def _redirected_getpass(self, prompt="Password: ", stream=None) -> str:
+        """getpass.getpass() replacement active inside the `with` block.
+
+        getpass reads /dev/tty directly (bypassing the stdout redirect), so route
+        it to a masked dialog instead. `stream` is accepted for signature
+        compatibility and ignored. A cancelled dialog raises EOFError, matching
+        getpass on EOF."""
+        from ..exceptions import Cancelled
+        from ..tag import SecretTag
+        try:
+            return self.ask(str(prompt), SecretTag)  # type: ignore[attr-defined]
+        except Cancelled:
+            raise EOFError
 
     def __exit__(self, *_):
         self._always_shown = False
         sys.stdout = self._original_stdout
+        builtins.input = self._original_input
+        if self._getpass is not None:
+            self._getpass.getpass = self._original_getpass  # type: ignore[attr-defined]
 
         # Parent and child share the tty. Bring the child UI fully down first so it
         # restores the terminal (leaves the alternate screen, raw mode, hidden

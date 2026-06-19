@@ -432,53 +432,56 @@ class SubprocessAdaptorBase(BackendAdaptor):
         self._guard_reentrancy()
         self._ensure_process()
         BackendAdaptor.run_dialog(self, form, title, submit)
+        always_shown = getattr(self.interface, "_always_shown", False)
 
-        while True:
-            redirected = self._get_redirected()
-            self._record_output(redirected)
-            raw_layout = list(self.facet._raw_layout)
-            self.facet._raw_layout.clear()
-
-            safe_form = self._safe_form(self.facet._form or {})
-            effective_title = self.facet._title or title
-            always_shown = getattr(self.interface, "_always_shown", False)
-            program_title = getattr(self.interface, "title", None)
-            # This dialog re-renders the output area, so everything streamed so far
-            # is now shown — drop it from the not-yet-rendered tail.
-            self._confirm_streamed()
-            self._send(IpcCommand.FORM, safe_form, effective_title, submit, redirected,
-                       raw_layout, always_shown, program_title)
-
+        try:
             while True:
-                command, args = self._receive()
+                redirected = self._get_redirected()
+                self._record_output(redirected)
+                raw_layout = list(self.facet._raw_layout)
+                self.facet._raw_layout.clear()
 
-                if command == IpcCommand.RESULT:
-                    ui_vals = args[0]  # type: ignore[index]
-                    tags = list(flatten(self.facet._form or {}))
-                    if self._try_submit(self._submit_pairs(tags, ui_vals)):  # type: ignore[arg-type]
-                        return form
-                    break
-                elif command == IpcCommand.CANCEL:
-                    self._on_cancel()
-                    raise Cancelled
-                elif command == IpcCommand.QUIT:
-                    # The user closed the window — quit the whole program (like the
-                    # in-process GUI's WM_DELETE_WINDOW → sys.exit), not a
-                    # recoverable Cancelled that a retry loop would answer with a
-                    # freshly respawned window.
-                    self._on_cancel()
-                    sys.exit(0)
-                elif command == IpcCommand.ERROR:
-                    self._raise_child_error(args)
-                elif command == IpcCommand.CALLBACK:
-                    result = self._handle_callback(*args)  # type: ignore[misc]
-                    if result == "done":
-                        return form
-                    elif result == "retry":
+                safe_form = self._safe_form(self.facet._form or {})
+                effective_title = self.facet._title or title
+                program_title = getattr(self.interface, "title", None)
+                # This dialog re-renders the output area, so everything streamed so far
+                # is now shown — drop it from the not-yet-rendered tail.
+                self._confirm_streamed()
+                self._send(IpcCommand.FORM, safe_form, effective_title, submit, redirected,
+                           raw_layout, always_shown, program_title)
+
+                while True:
+                    command, args = self._receive()
+
+                    if command == IpcCommand.RESULT:
+                        ui_vals = args[0]  # type: ignore[index]
+                        tags = list(flatten(self.facet._form or {}))
+                        if self._try_submit(self._submit_pairs(tags, ui_vals)):  # type: ignore[arg-type]
+                            return form
                         break
-                else:
-                    self._on_cancel()
-                    raise Cancelled
+                    elif command == IpcCommand.CANCEL:
+                        self._on_cancel()
+                        raise Cancelled
+                    elif command == IpcCommand.QUIT:
+                        # The user closed the window — quit the whole program (like the
+                        # in-process GUI's WM_DELETE_WINDOW → sys.exit), not a
+                        # recoverable Cancelled that a retry loop would answer with a
+                        # freshly respawned window.
+                        self._on_cancel()
+                        sys.exit(0)
+                    elif command == IpcCommand.ERROR:
+                        self._raise_child_error(args)
+                    elif command == IpcCommand.CALLBACK:
+                        result = self._handle_callback(*args)  # type: ignore[misc]
+                        if result == "done":
+                            return form
+                        elif result == "retry":
+                            break
+                    else:
+                        self._on_cancel()
+                        raise Cancelled
+        finally:
+            self._maybe_release_terminal(always_shown)
 
     def buttons(self, text: str, buttons: list[tuple[str, Any]], focused: int = 1, *, timeout: int = 0):
         self._guard_reentrancy()
@@ -496,15 +499,18 @@ class SubprocessAdaptorBase(BackendAdaptor):
         self._send(IpcCommand.BUTTONS, text, buttons, focused, timeout, redirected,
                    raw_layout, always_shown, program_title)
         command, args = self._receive()
-        if command == IpcCommand.QUIT:
-            self._on_cancel()
-            sys.exit(0)
-        if command == IpcCommand.ERROR:
-            self._raise_child_error(args)
-        if command != IpcCommand.RESULT:
-            self._on_cancel()
-            raise Cancelled
-        return args[0]
+        try:
+            if command == IpcCommand.QUIT:
+                self._on_cancel()
+                sys.exit(0)
+            if command == IpcCommand.ERROR:
+                self._raise_child_error(args)
+            if command != IpcCommand.RESULT:
+                self._on_cancel()
+                raise Cancelled
+            return args[0]
+        finally:
+            self._maybe_release_terminal(always_shown)
 
     def _raise_child_error(self, args) -> NoReturn:
         """The child hit an exception while building the dialog. Re-raise it here
@@ -528,6 +534,25 @@ class SubprocessAdaptorBase(BackendAdaptor):
             self.interface._redirected.output_callback = None
         except AttributeError:
             pass
+
+    def _release_terminal_after_dialog(self) -> bool:
+        """Whether to tear the child down after a non-persistent dialog (one shown
+        outside a `with` block) so the parent regains the terminal.
+
+        Default False: Tk runs in its own window (and just withdraws it between
+        dialogs) and the web backend talks over a socket, so neither holds the
+        parent's tty. Textual in tty mode owns the terminal — alternate screen and
+        stdin — for as long as it runs, so a following input()/print() in the
+        parent would collide with it; that backend overrides this to True."""
+        return False
+
+    def _maybe_release_terminal(self, always_shown: bool) -> None:
+        """Bring the child down after a dialog that was not part of a `with` block,
+        for backends that otherwise keep the terminal (see
+        _release_terminal_after_dialog). Inside `with` (always_shown) the child is
+        meant to persist, and input()/getpass are redirected into it instead."""
+        if not always_shown and self._release_terminal_after_dialog():
+            self._destroy()
 
     # ------------------------------------------------------------------
     # Lifecycle

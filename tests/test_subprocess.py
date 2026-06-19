@@ -486,11 +486,15 @@ class _AdaptorHarness(unittest.TestCase):
         return cmd_r
 
     def _parent_frames(self, adaptor, cmd_r):
-        """Close the parent's write end and parse every frame it sent."""
+        """Close the parent's write end and parse every frame it sent. A
+        non-persistent dialog tears the child down on return (closing the write
+        fd), so only close it here if it is still open — the frames it already
+        sent stay buffered in cmd_r either way."""
         from mininterface._lib.subprocess_child_base import read_msg
         import os
-        os.close(adaptor._write_fd)
-        adaptor._write_fd = None
+        if adaptor._write_fd is not None:
+            os.close(adaptor._write_fd)
+            adaptor._write_fd = None
         frames = []
         while (msg := read_msg(cmd_r)) is not None:
             frames.append(msg)
@@ -700,6 +704,48 @@ class TestButtonsRawLayout(_AdaptorHarness):
         self.assertEqual(IpcCommand.BUTTONS, command)
         self.assertEqual("Continue?", text)
         self.assertEqual(["AHoj", Path("/tmp")], raw_layout)
+
+
+class TestTerminalReleaseAfterDialog(_AdaptorHarness):
+    """Outside a `with` block the Textual child owns the tty (alternate screen +
+    stdin), so it must be torn down after each dialog or a following input()/
+    print() in the parent collides with it. Inside `with` (always_shown) it
+    persists, and the web backend (TEXTUAL_DRIVER) holds no local tty."""
+
+    def _spy_destroy(self, adaptor):
+        calls = []
+        adaptor._destroy = lambda: calls.append(1)
+        return calls
+
+    def _run_buttons(self, adaptor):
+        from mininterface._lib.ipc_command import IpcCommand
+        self._wire_child_reply(adaptor, (IpcCommand.RESULT, True))
+        adaptor.buttons("Continue?", [("Yes", True)])
+
+    def test_non_persistent_dialog_releases_terminal(self):
+        adaptor = self._adaptor()
+        calls = self._spy_destroy(adaptor)
+        self._run_buttons(adaptor)
+        self.assertEqual([1], calls, "a non-with Textual dialog must tear the child down")
+
+    def test_with_block_keeps_child_alive(self):
+        adaptor = self._adaptor()
+        adaptor.interface._always_shown = True
+        calls = self._spy_destroy(adaptor)
+        self._run_buttons(adaptor)
+        self.assertEqual([], calls, "inside `with` the child must persist")
+
+    def test_web_mode_keeps_child_alive(self):
+        import os
+        adaptor = self._adaptor()
+        calls = self._spy_destroy(adaptor)
+        old = os.environ.get("TEXTUAL_DRIVER")
+        os.environ["TEXTUAL_DRIVER"] = "textual.drivers.web_driver:WebDriver"
+        try:
+            self._run_buttons(adaptor)
+        finally:
+            os.environ.pop("TEXTUAL_DRIVER", None) if old is None else os.environ.__setitem__("TEXTUAL_DRIVER", old)
+        self.assertEqual([], calls, "web backend holds no local tty; child persists")
 
 
 class TestWorkerLoopDispatch(_AdaptorHarness):

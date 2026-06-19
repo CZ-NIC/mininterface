@@ -1,4 +1,6 @@
 """Parent-side adaptor for the persistent Textual subprocess."""
+import os
+
 from ..settings import TextualSettings
 from .adaptor import TextualAdaptor
 from .facet import TextualFacet
@@ -37,3 +39,11 @@ class TextualSubprocessAdaptor(SubprocessAdaptorBase, TextualAdaptor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def _release_terminal_after_dialog(self) -> bool:
+        # Textual owns the terminal (alternate screen + stdin) while it runs, so a
+        # dialog shown outside a `with` block must let the child go afterwards or a
+        # following input()/print() in the parent collides with it. Only in tty
+        # mode: the web backend (TEXTUAL_DRIVER set) talks over a socket and holds
+        # no local terminal, so it keeps the child persistent.
+        return not os.environ.get("TEXTUAL_DRIVER")

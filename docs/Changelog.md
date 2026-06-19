@@ -5,6 +5,7 @@
 * feat (text): windows support on TextInterface
 * deps (tyro): new (2× faster) backend for CLI parser
 * enh: set, frozenset better detection
+* enh: `input()` inside `with run() as m:` are routed through the UI (previously caused TUI hang / blank GUI window)
 
 ## 1.3.1 (2026-06-13)
 * fix: catch all tkinter import/startup failures as InterfaceNotAvailable
