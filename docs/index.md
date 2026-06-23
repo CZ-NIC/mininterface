@@ -1,8 +1,10 @@
-# Mininterface – access to GUI, TUI, web, CLI and config files
+# Mininterface — one dataclass becomes your CLI, your config file, and your GUI/TUI/web form
 [![Build Status](https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg?branch=main)](https://github.com/CZ-NIC/mininterface/actions)
 [![Downloads](https://static.pepy.tech/badge/mininterface)](https://pepy.tech/project/mininterface)
 
-Write the program core, do not bother with the input/output.
+Write the program core; let a single configuration dataclass be your command-line parser, your
+YAML config, **and** — for free — a GUI/TUI/web dialog. Headless-safe by default: the same file
+runs unattended in cron and pops a form when a human runs it.
 
 ![Hello world example: GUI window](asset/hello-gui.avif "A minimal use case – GUI")
 ![Hello world example: TUI fallback](asset/hello-tui.avif "A minimal use case – TUI fallback")
@@ -31,8 +33,14 @@ if __name__ == "__main__":
     print(m.env.my_number)
 ```
 
+> **You grow into the UI; you don't pay for it up front.** Start with a plain CLI tool. The day
+> you want a settings dialog, a subcommand picker, or a web form, you rewrite nothing — the same
+> dataclass that defined your `--flags` already defines the form. argparse/click hand you a
+> parser; mininterface hands you a parser that can *become* an interface the moment you need one.
+
 # Contents
 - [You got CLI](#you-got-cli)
+- [Two ways to call `run()`](#two-ways-to-call-run)
 - [You got config file management](#you-got-config-file-management)
 - [You got dialogs](#you-got-dialogs)
 - [Background](#background)
@@ -61,6 +69,40 @@ This calculates something.
 │ --my-number INT        This number is very important (default: 4)       │
 ╰─────────────────────────────────────────────────────────────────────────╯
 ```
+
+## Two ways to call `run()`
+
+**As config** — pass a dataclass; read the parsed values off `.env`:
+```python
+m = run(Config)
+print(m.env.my_number)
+```
+
+**As subcommands** — pass a *list* of `Command` subclasses. `run()` parses the CLI, selects the
+one subcommand, and calls its `.run()` for you; `.env` holds that chosen instance:
+```python
+from dataclasses import dataclass
+from mininterface import run
+from mininterface.cli import Command
+
+@dataclass
+class Build(Command):
+    target: str = "release"
+    def run(self):
+        print("building", self.target)
+
+@dataclass
+class Deploy(Command):
+    host: str
+    def run(self):
+        print("deploying to", self.host)
+
+run([Build, Deploy])        # ./app.py build --target debug  ->  Build.run()
+```
+
+Both modes are **headless-safe by default** (`ask_on_empty_cli=False`): a fully-defaulted
+invocation runs straight through with no prompt, so one file serves cron *and* an interactive
+user. Subcommands can share options by inheriting a common `Command` parent.
 
 ## You got config file management
 Loading a config file is a piece of cake. Alongside `program.py`, write some of its arguments into `program.yaml`. They are seamlessly taken as defaults.

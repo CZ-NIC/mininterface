@@ -1,11 +1,13 @@
 # Changelog
 
-## unreleased
+## 1.4.0 (2026-06-30)
 * feat: [`mininterface.dialogs`](Dialogs.md#without-run-the-dialogs-shortcut) — static `ask`/`confirm`/`select`/`alert`/`form` without `run()`
 * feat (text): windows support on TextInterface
 * deps (tyro): new (2× faster) backend for CLI parser
 * enh: set, frozenset better detection
 * enh: `input()` inside `with run() as m:` are routed through the UI (previously caused TUI hang / blank GUI window)
+* fix: `mininterface.cli` are now exposed (discoverable via `dir()`/IDE)
+* docs: clarified `Command` CLI behaviour (a defaulted subcommand runs headless/cron-safe), documented the instance lifecycle, Overview given examples
 
 ## 1.3.1 (2026-06-13)
 * fix: catch all tkinter import/startup failures as InterfaceNotAvailable

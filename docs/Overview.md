@@ -42,6 +42,40 @@ When the block exits, stdout is restored. Any output that was buffered but not y
 
 See [Dialog methods](Dialogs.md) for the full list of available dialogs.
 
+## Two ways to call `run()`
+
+**As config** — pass a dataclass; read the parsed values off [`m.env`][mininterface.Mininterface.env]:
+```python
+m = run(Config)
+print(m.env.my_number)
+```
+
+**As subcommands** — pass a *list* of [`Command`][mininterface.cli.Command] subclasses. `run()` parses the CLI, selects the
+one subcommand, and calls its `.run()` for you; `.env` holds that chosen instance:
+```python
+from dataclasses import dataclass
+from mininterface import run
+from mininterface.cli import Command
+
+@dataclass
+class Build(Command):
+    target: str = "release"
+    def run(self):
+        print("building", self.target)
+
+@dataclass
+class Deploy(Command):
+    host: str
+    def run(self):
+        print("deploying to", self.host)
+
+run([Build, Deploy])        # ./app.py build --target debug  ->  Build.run()
+```
+
+Both modes are **headless-safe by default** (`ask_on_empty_cli=False`): a fully-defaulted
+invocation runs straight through with no prompt, so one file serves cron *and* an interactive
+user. Subcommands can share options by inheriting a common `Command` parent.
+
 ## IDE suggestions
 
 The immediate benefit is the type suggestions provided by your IDE.

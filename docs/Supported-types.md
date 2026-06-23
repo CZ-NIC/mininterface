@@ -272,6 +272,10 @@ val:
 
 You can union the classes to create subcommands:
 
+> Use a plain dataclass `Union` to *group config/data* under subcommands (you read the chosen one
+> off `.env` and act on it yourself). Subclass [`Command`][mininterface.cli.Command] and implement `run()` when each subcommand
+> has *behavior* you want dispatched automatically.
+
 ```python
 from typing import Literal
 

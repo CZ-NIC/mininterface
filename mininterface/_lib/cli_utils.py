@@ -12,15 +12,27 @@ if TYPE_CHECKING:  # remove the line as of Python3.11 and make `"Self" -> Self`
 
 @dataclass
 class Command(ABC):
-    """The Command is automatically run while instantanied.
+    """The Command is automatically run when instantiated.
 
-    It adapts [`init`][mininterface.cli.Command.init] and [`run`][mininterface.cli.Command.init] methods.
+    It adapts the [`init`][mininterface.cli.Command.init] and [`run`][mininterface.cli.Command.run] methods.
     It receives attributes [`self.facet`][mininterface.facet.Facet] and [`self.interface`][mininterface.Mininterface].
 
     Put list of Commands to the [mininterface.run][mininterface.run] and divide your application into different sections.
     Alternative to argparse [subcommands](https://docs.python.org/3/library/argparse.html#sub-commands).
 
     Commands might inherit from the same parent to share the common attributes.
+
+    Use a plain dataclass `Union` to *group config/data* under subcommands (you read the chosen one
+    off `.env` and act on it yourself). Subclass `Command` and implement `run()` when each subcommand
+    has *behavior* you want dispatched automatically.
+
+    ## Instance lifecycle
+    1. __init__ / __post_init__ — may run more than once during CLI/form parsing. `self.facet` and
+       `self.interface` are NOT available yet. Keep construction cheap and side-effect-free.
+    2. The runtime injects `self.facet` and `self.interface`, then calls `init()` once — do real
+       setup here (you may use `self.facet`).
+    3. (interactive only) the form is shown.
+    4. `run()` is called automatically. Raise `ValidationFail` to re-show the form.
 
     # SubcommandPlaceholder class
 
@@ -29,11 +41,14 @@ class Command(ABC):
 
 
     ## The CLI behaviour:
-    * `./program.py` -> UI started with subcommand choice
-    * `./program.py subcommand --flag` -> special class `SubcommandPlaceholder` allows defining a common `--flag`
-        while still starting UI with subcommand choice
-    * `./program.py subcommand1 --flag` -> program run
-    * `./program.py subcommand1` -> fails to CLI for now
+    * `./program.py` -> no subcommand given: starts the UI to choose one
+    * `./program.py subcommand --flag` -> `SubcommandPlaceholder` lets you pass shared `--flag`s
+        and still choose the concrete subcommand in the UI
+    * `./program.py subcommand1 --flag` -> runs `subcommand1` directly
+    * `./program.py subcommand1` -> runs `subcommand1` directly. If all its fields are defaulted,
+        it runs headless with no prompt (cron-safe). If a *required* field is missing, then with
+        `ask_for_missing=True` (default) a form asks for it; non-interactively it exits like
+        argparse with "the following arguments are required: ...".
 
 
     # An example of Command usage

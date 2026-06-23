@@ -224,30 +224,47 @@ if not TYPE_CHECKING:
     globals().update({"Blank": _Blank("Blank")})
 
 
+def _find_blank_annotation():
+    """Walk the caller frames and return the raw (still-`Annotated`) type of the Blank field
+    currently being processed, identified by the Blank marker in its metadata. Returns None if
+    not found (then the blank value falls back to True)."""
+    import inspect
+
+    frame = inspect.currentframe()
+    try:
+        frame = frame.f_back  # skip this helper
+        depth = 0
+        while frame is not None and depth < 8:
+            for value in frame.f_locals.values():
+                # the annotation may sit directly in a local, or behind tyro's `arg.field.type`
+                for candidate in (value, getattr(getattr(value, "field", None), "type", None)):
+                    if Blank in getattr(candidate, "__metadata__", ()):
+                        return candidate
+            frame = frame.f_back
+            depth += 1
+    finally:
+        del frame
+    return None
+
+
 @_custom_registry.primitive_rule
 def _(
     type_info: PrimitiveTypeInfo,
 ) -> PrimitiveConstructorSpec | None:
     if Blank in type_info.markers:
+        # The blank value (used when the flag is given with no argument) defaults to True,
+        # unless the user attached a Literal, ex. `Annotated[Blank[int], Literal[3]]`.
+        # tyro's PrimitiveTypeInfo strips Annotated metadata (keeping only markers), so the
+        # Literal is recovered from the raw annotation still living on a caller's frame. We
+        # locate it by the Blank marker rather than by a fixed local-variable name, which
+        # tyro reshuffles between releases.
         default_val = True
-        import inspect
 
-        frame = inspect.currentframe()
-        try:
-            try:
-                annotation = frame.f_back.f_back.f_locals["type"]
-            except:
-                annotation = frame.f_back.f_back.f_locals["arg"].field.type
-        except:
-            # ex. `threads: Blank[int] | Literal["auto"] = "auto"
-            raise ValueError(
-                "Cannot determine the default blank value. Check the mininterface.tag.flag.Blank annotation or raise a project issue please."
-            )
-
-        type_, *metadata = get_args(annotation)
-        for m in metadata:
-            if _get_origin(m) is Literal:
-                default_val, *_ = get_args(m)
+        annotation = _find_blank_annotation()
+        if annotation is not None:
+            for m in get_args(annotation)[1:]:
+                if _get_origin(m) is Literal:
+                    default_val, *_ = get_args(m)
 
         type_ = type_info.type
         if type_info.type_origin is Union or type_info.type_origin is UnionType:

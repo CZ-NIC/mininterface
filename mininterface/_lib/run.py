@@ -67,7 +67,7 @@ def run(
             class Env:
                 number: int = 3
                 text: str = ""
-                m = run(Env, ask_on_empty=True)
+                m = run(Env, ask_on_empty_cli=True)
             ```
 
             ```bash
@@ -196,7 +196,13 @@ def run(
             You may write "gui" or "tui" literal or pass a specific Mininterface type,
             see the full [list](Interfaces.md) of possible interfaces.
             If not set, we look also for an environment variable [`MININTERFACE_INTERFACE`](Interfaces.md#environment-variable-mininterface_interface) and in the config file.
-        args: Parse arguments from a sequence instead of the command line.
+        args: Parse arguments from this sequence instead of `sys.argv[1:]`. Ideal for tests
+            and for embedding mininterface in a larger program — inject the CLI explicitly
+            rather than mutating `sys.argv`:
+            ```python
+            m = run(Env, args=["--my-number", "5"])
+            assert m.env.my_number == 5
+            ```
         settings: Default settings. These might be further modified by the 'mininterface' section in the config file. See the [Settings](Settings.md) section.
     Kwargs:
         The same as for [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html).
