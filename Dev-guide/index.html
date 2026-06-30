@@ -133,6 +133,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -147,15 +154,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -195,16 +202,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -265,15 +279,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -489,17 +503,17 @@
 <article class="md-content__inner md-typeset">
 <h1 id="dev-guide">Dev Guide</h1>
 <h2 id="new-features">New features</h2>
-<p>All pull requests are welcome. Let's make script creation a better experience together. Alongside code base change, modify:</p>
+<p>All pull requests are welcome. Let's make script creation a better experience together. Alongside the code base change, modify:</p>
 <ul>
-<li><a href="">CHANGELOG.md</a></li>
+<li><a href="../Changelog/">CHANGELOG.md</a></li>
 <li>increase version in pyproject.toml</li>
 </ul>
-<p>If adding a dependency, make sure to reflect that in pyproject.toml and in <a href="../#installation">README.md</a> install section.</p>
+<p>If adding a dependency, make sure to reflect that in pyproject.toml and in the <a href="../#installation">README.md</a> installation section.</p>
 <h2 id="interface-architecture">Interface architecture</h2>
 <p>Every interface has several uniform objects:</p>
 <ul>
-<li>Mininterface: front-end for the programmer. Easy to use and uniform methods.</li>
-<li>Adaptor: Connection point. Public attributes not meant to be used by the (end-user) programmer.</li>
+<li>Mininterface: front-end for the programmer. Easy-to-use, uniform methods.</li>
+<li>Adaptor: Connection point. Its public attributes are not meant to be used by the (end-user) programmer.</li>
 <li>App (optional): External library UI handler. (Like tkinter.)</li>
 <li>Facet: Layout definition.</li>
 </ul>
@@ -508,7 +522,7 @@ dataclass --&gt; Tags --&gt; Mininterface --&gt; Adaptor --&gt; App
 Adaptor --&gt; Facet
 Facet --&gt; Tags
 </code></pre>
-<p>Programmer uses a value -&gt; which is converted to Tag -&gt; which is converted to a widget by an interface Adaptor.</p>
+<p>The programmer uses a value, which is converted to a Tag, which the interface Adaptor converts into a widget.</p>
 <h2 id="adaptor">Adaptor</h2>
 <div class="doc doc-object doc-class">
 <h3 class="doc doc-heading" id="mininterface._mininterface.adaptor.BackendAdaptor">

@@ -6,7 +6,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <link href=".." rel="prev"/>
-<link href="../Supported-types/" rel="next"/>
+<link href="../Dialogs/" rel="next"/>
 <link href="../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
 <title>Overview - Mininterface</title>
@@ -153,6 +153,20 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#with-run-as-m-persistent-window">
+<span class="md-ellipsis">
+      with run() as m: — persistent window
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#two-ways-to-call-run">
+<span class="md-ellipsis">
+      Two ways to call run()
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#ide-suggestions">
 <span class="md-ellipsis">
       IDE suggestions
@@ -202,6 +216,13 @@
 </nav>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -216,15 +237,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -264,16 +285,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -334,15 +362,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -442,6 +470,20 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#with-run-as-m-persistent-window">
+<span class="md-ellipsis">
+      with run() as m: — persistent window
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#two-ways-to-call-run">
+<span class="md-ellipsis">
+      Two ways to call run()
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#ide-suggestions">
 <span class="md-ellipsis">
       IDE suggestions
@@ -495,7 +537,7 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1>Overview</h1>
-<p>Via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function you get access to the CLI, possibly enriched from the config file. Then, you receive all data as <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> object and dialog methods in a proper UI.</p>
+<p>Via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function you get access to the CLI, possibly enriched from the config file. Then, you receive all the data in the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> object, along with dialog methods in a proper UI.</p>
 <pre class="mermaid"><code>graph LR
     subgraph mininterface
         run --&gt; GUI
@@ -508,87 +550,130 @@
     program --&gt; run
 </code></pre>
 <h2 id="basic-usage">Basic usage</h2>
-<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, an argparse <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user with methods like <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.confirm"><code>m.confirm("Is that alright?")</code></a>.</p>
-<p>There are a lot of supported <a href="../Supported-types/">types</a> you can use, not only scalars and well-known objects (<code>Path</code>, <code>datetime</code>), but also functions, iterables (like <code>list[Path]</code>) and union types (like <code>int | None</code>). To do even more advanced things, stick the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its <a href="../Supported-types/#additional">subclasses</a>. Ex. for a validation only, use its <a class="autorefs autorefs-internal" href="../Tag-aliases/#mininterface.Validation"><code>Validation alias</code></a>.</p>
-<p>At last, use <a href="../Facet/"><code>Facet</code></a> to tackle the interface from the back-end (<code>m</code>) or the front-end (<code>Tag</code>) side.</p>
+<p>Use a common <a href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass">dataclass</a>, an argparse <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a>, a Pydantic <a href="https://brentyi.github.io/tyro/examples/04_additional/08_pydantic/">BaseModel</a> or an <a href="https://brentyi.github.io/tyro/examples/04_additional/09_attrs/">attrs</a> model to store the configuration. Wrap it in the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function that returns an interface <code>m</code>. Access the configuration via <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a> or use it to prompt the user with methods like <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.confirm"><code>m.confirm("Is that alright?")</code></a>.</p>
+<p>There are a lot of supported <a href="../Supported-types/">types</a> you can use, not only scalars and well-known objects (<code>Path</code>, <code>datetime</code>), but also functions, iterables (like <code>list[Path]</code>) and union types (like <code>int | None</code>). To do even more advanced things, attach the value to a powerful <a class="autorefs autorefs-internal" href="../Tag/#mininterface.Tag"><code>Tag</code></a> or its <a href="../Supported-types/#additional">subclasses</a>. E.g. for validation only, use its <a class="autorefs autorefs-internal" href="../Tag-aliases/#mininterface.Validation"><code>Validation alias</code></a>.</p>
+<p>Finally, use <a href="../Facet/"><code>Facet</code></a> to access the interface from the back-end (<code>m</code>) or the front-end (<code>Tag</code>) side.</p>
+<h2 id="with-run-as-m-persistent-window"><code>with run() as m:</code> — persistent window</h2>
+<p>Wrap your code in a <code>with</code> statement to keep the window open across multiple dialogs:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Your number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Is that alright?"</span><span class="p">):</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>        <span class="n">m</span><span class="o">.</span><span class="n">alert</span><span class="p">(</span><span class="s2">"Great!"</span><span class="p">)</span>
+</code></pre></div>
+<p>Three things happen inside the block:</p>
+<ul>
+<li>The window <strong>stays open</strong> — each <code>m.form()</code> / <code>m.confirm()</code> / … reuses the same window rather than creating a new one.</li>
+<li><strong><code>print()</code> is redirected</strong> into the UI instead of the terminal.</li>
+<li>A <strong>non-interactive TTY</strong> (e.g. a script launched from a desktop shortcut) becomes interactive where possible (TextInterface).</li>
+</ul>
+<p>When the block exits, stdout is restored. Any output that was buffered but not yet shown in the window is reprinted to the real terminal.</p>
+<p>See <a href="../Dialogs/">Dialog methods</a> for the full list of available dialogs.</p>
+<h2 id="two-ways-to-call-run">Two ways to call <code>run()</code></h2>
+<p><strong>As config</strong> — pass a dataclass; read the parsed values off <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a>:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Config</span><span class="p">)</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>As subcommands</strong> — pass a <em>list</em> of <a class="autorefs autorefs-internal" href="../Cli/#mininterface.cli.Command"><code>Command</code></a> subclasses. <code>run()</code> parses the CLI, selects the
+one subcommand, and calls its <code>.run()</code> for you; <code>.env</code> holds that chosen instance:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">Command</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Build</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"release"</span>
+<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">"building"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a>
+<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="k">class</span><span class="w"> </span><span class="nc">Deploy</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+<a href="#__codelineno-2-13" id="__codelineno-2-13" name="__codelineno-2-13"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-2-14" id="__codelineno-2-14" name="__codelineno-2-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a href="#__codelineno-2-15" id="__codelineno-2-15" name="__codelineno-2-15"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">"deploying to"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+<a href="#__codelineno-2-16" id="__codelineno-2-16" name="__codelineno-2-16"></a>
+<a href="#__codelineno-2-17" id="__codelineno-2-17" name="__codelineno-2-17"></a><span class="n">run</span><span class="p">([</span><span class="n">Build</span><span class="p">,</span> <span class="n">Deploy</span><span class="p">])</span>        <span class="c1"># ./app.py build --target debug  -&gt;  Build.run()</span>
+</code></pre></div></p>
+<p>Both modes are <strong>headless-safe by default</strong> (<code>ask_on_empty_cli=False</code>): a fully-defaulted
+invocation runs straight through with no prompt, so one file serves cron <em>and</em> an interactive
+user. Subcommands can share options by inheriting a common <code>Command</code> parent.</p>
 <h2 id="ide-suggestions">IDE suggestions</h2>
 <p>The immediate benefit is the type suggestions provided by your IDE.</p>
 <h3 id="dataclass-showcase">Dataclass showcase</h3>
-<p>Imagine following code:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">    </span><span class="sd">""" The user is forced to input Paths. """</span>
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>
-<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>
-<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">Dialog</span><span class="p">:</span>
-<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">    </span><span class="sd">""" A number """</span>
+<p>Imagine the following code:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a>    <span class="n">my_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a><span class="w">    </span><span class="sd">""" The user is forced to input Paths. """</span>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a>
+<a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">Dialog</span><span class="p">:</span>
+<a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a>    <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+<a href="#__codelineno-3-13" id="__codelineno-3-13" name="__codelineno-3-13"></a><span class="w">    </span><span class="sd">""" A number """</span>
 </code></pre></div>
 <p>Now, accessing the main <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">env</a> will trigger the hint.
 <img alt="Suggestion run" src="../asset/suggestion_run.avif"/></p>
-<p>Calling the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.form">form</a> with an empty parameter will trigger editing the main <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">env</a></p>
+<p>Calling <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.form">form</a> with an empty parameter will trigger editing the main <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.env">env</a>.</p>
 <p><img alt="Suggestion form" src="../asset/suggestion_form_env.avif"/></p>
-<p>Putting there a dict will return the dict too.</p>
+<p>Passing a dict will return the dict too.</p>
 <p><img alt="Suggestion form" src="../asset/suggestion_dict.avif"/></p>
-<p>Putting there a dataclass type causes it to be resolved.</p>
+<p>Passing a dataclass type causes it to be resolved.</p>
 <p><img alt="Suggestion dataclass type" src="../asset/suggestion_dataclass_type.avif"/></p>
-<p>Should you have a resolved dataclass instance, put it there.</p>
+<p>Should you have a resolved dataclass instance, pass it in.</p>
 <p><img alt="Suggestion dataclass instance" src="../asset/suggestion_dataclass_instance.avif"/></p>
 <p>As you see, its attributes are hinted alongside their description.</p>
 <p><img alt="Suggestion dataclass expanded" src="../asset/suggestion_dataclass_expanded.avif"/></p>
-<p>Should the dataclass cannot be easily investigated by the IDE (i.e. a required field), just annotate the output.</p>
+<p>Should the dataclass be hard for the IDE to investigate (e.g. due to a required field), just annotate the output.</p>
 <p><img alt="Suggestion annotation possible" src="../asset/suggestion_dataclass_annotated.avif"/></p>
 <h3 id="select-showcase">Select showcase</h3>
-<p>We push an intuitive type inference everywhere. Here is an example with the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select"><code>m.select</code></a> dialog.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>
-<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
-<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="c1"># x = m.select([1, 2, 3], default=2)  # -&gt; int</span>
-<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="c1"># x = m.select([1, 2, 3], multiple=True)  # -&gt; list[int]</span>
-<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="c1"># x = m.select([1, 2, 3], default=[2])  # -&gt; list[int]</span>
+<p>We aim for intuitive type inference everywhere. Here is an example with the <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface.select"><code>m.select</code></a> dialog.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">()</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="c1"># x = m.select([1, 2, 3], default=2)  # -&gt; int</span>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="c1"># x = m.select([1, 2, 3], multiple=True)  # -&gt; list[int]</span>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="c1"># x = m.select([1, 2, 3], default=[2])  # -&gt; list[int]</span>
 </code></pre></div>
 <p>By default, the inferred type is an <code>int</code>.</p>
 <p><img alt="Suggestion select" src="../asset/suggestion_select1.avif"/></p>
-<p>When you flag the selection as multiple or when you submit multiple default values...</p>
+<p>When you flag the selection as multiple, or when you submit multiple default values...</p>
 <p><img alt="Suggestion select" src="../asset/suggestion_select2.avif"/></p>
-<p>that means your IDE sees a <code>list</code> instead of a single value and you can automatically append to it etc.</p>
+<p>...your IDE sees a <code>list</code> instead of a single value, so you can directly append to it etc.</p>
 <p><img alt="Suggestion select" src="../asset/suggestion_select3.avif"/></p>
 <h2 id="nested-configuration">Nested configuration</h2>
 <p>You can easily nest the configuration. (See also <a href="https://brentyi.github.io/tyro/examples/02_nesting/01_nesting/">Tyro Hierarchical Configs</a>.)</p>
-<p>Just put another dataclass inside the config file:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">FurtherConfig</span><span class="p">:</span>
-<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
-<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
-<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>
-<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
-<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a>
-<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="o">...</span>
-<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
+<p>Just put another dataclass inside your main one:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">FurtherConfig</span><span class="p">:</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"example.org"</span>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a>    <span class="n">further</span><span class="p">:</span> <span class="n">FurtherConfig</span>
+<a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a>
+<a href="#__codelineno-5-10" id="__codelineno-5-10" name="__codelineno-5-10"></a><span class="o">...</span>
+<a href="#__codelineno-5-11" id="__codelineno-5-11" name="__codelineno-5-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
+<a href="#__codelineno-5-12" id="__codelineno-5-12" name="__codelineno-5-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">further</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>  <span class="c1"># example.org</span>
 </code></pre></div>
-<p>The attributes can by defaulted by CLI:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$./program.py --further.host example.net
+<p>The attributes can be set via the CLI:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>$./program.py --further.host example.net
 </code></pre></div>
-<p>And in a YAML config file. Note that you are not obliged to define all the attributes, a subset will do.
-(Ex. you do not need to specify <code>token</code> too.)</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nt">further</span><span class="p">:</span>
-<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
+<p>Or via a YAML config file. Note that you are not obliged to define all the attributes; a subset will do.
+(E.g. you do not need to specify <code>token</code>.)</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a><span class="nt">further</span><span class="p">:</span>
+<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.com</span>
 </code></pre></div>
 <h2 id="bash-completion">Bash completion</h2>
-<p>Run your program with a bundled <code>mininterface</code> executable to start a tutorial that will install bash completion.</p>
+<p>Run your program through the bundled <code>mininterface</code> executable to start a tutorial that installs bash completion.</p>
 <p><code>$ mininterface integrate ./program</code></p>
 <p><img alt="Bash completion" src="../asset/bash_completion_tutorial.avif"/></p>
 <h2 id="system-dialog-toolkit">System dialog toolkit</h2>
 <p>Mininterface can be used as a standalone dialog layer for sh scripts. See <code>mininterface --help</code>.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span><span class="k">select</span><span class="w"> </span>one<span class="w"> </span>two<span class="w">  </span><span class="c1"># outputs a chosen item</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span><span class="k">select</span><span class="w"> </span>one<span class="w"> </span>two<span class="w">  </span><span class="c1"># outputs a chosen item</span>
 </code></pre></div>
 <p><img alt="Select dialog" src="../asset/choices_labels.avif"/></p>
 </article>

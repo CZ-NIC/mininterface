@@ -134,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -148,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -196,16 +203,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -266,15 +280,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -299,9 +313,9 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#search-order-by-highest-priority">
+<a class="md-nav__link" href="#search-order-highest-priority-first">
 <span class="md-ellipsis">
-      Search order by highest priority
+      Search order (highest priority first)
     </span>
 </a>
 </li>
@@ -403,9 +417,9 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#search-order-by-highest-priority">
+<a class="md-nav__link" href="#search-order-highest-priority-first">
 <span class="md-ellipsis">
-      Search order by highest priority
+      Search order (highest priority first)
     </span>
 </a>
 </li>
@@ -432,12 +446,12 @@
 <article class="md-content__inner md-typeset">
 <h1 id="config-file">Config file</h1>
 <p>Any settings you see in the <code>--help</code> command can be modified via a YAML config file.</p>
-<p>By default, we try to find one in the current working dir, whose name stem is the same as the program's. Ex: program.py will search for program.yaml. This behaviour can be changed via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> method <code>config_file</code> or <code>add_config</code> parameters or via <code>MININTERFACE_CONFIG</code> environment variable.</p>
+<p>By default, we try to find one in the current working dir whose name stem is the same as the program's, e.g. <code>program.py</code> will search for <code>program.yaml</code>. This behaviour can be changed via the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> parameters <code>config_file</code> or <code>add_config</code>, or via the <code>MININTERFACE_CONFIG</code> environment variable.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>You do not have to re-define all the settings in the config file, you can choose a few.</p>
+<p>You do not have to re-define all the settings in the config file; a few will do.</p>
 </div>
-<h2 id="search-order-by-highest-priority">Search order by highest priority</h2>
+<h2 id="search-order-highest-priority-first">Search order (highest priority first)</h2>
 <ul>
 <li>will load <code>conf.yaml</code>: <code>$ program.py --config conf.yaml</code> with <code>run(add_config=True)</code></li>
 <li>will load <code>conf.yaml</code>: <code>$ MININTERFACE_CONFIG=conf.yaml program.py</code></li>
@@ -489,7 +503,7 @@
 <a href="#__codelineno-2-20" id="__codelineno-2-20" name="__codelineno-2-20"></a><span class="c1">#  a6=['i', 9],</span>
 <a href="#__codelineno-2-21" id="__codelineno-2-21" name="__codelineno-2-21"></a><span class="c1">#  a7=[('j', 10.0), ('k', 11), ('l', 12)])</span>
 </code></pre></div>
-<p>The YAML file used. (Note the various YAML syntax and the automatic YAML-list to Python-tuple conversion.)</p>
+<p>The YAML file used. (Note the varied YAML syntax and the automatic YAML-list to Python-tuple conversion.)</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">a1</span><span class="p">:</span>
 <a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">  </span><span class="nt">1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">a</span>
 <a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="nt">a2</span><span class="p">:</span>

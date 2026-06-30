@@ -134,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -148,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -196,16 +203,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -266,15 +280,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -453,8 +467,22 @@
     </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.TextSettings.plain_menu">
+<span class="md-ellipsis">
+      plain_menu
+    </span>
+</a>
+</li>
 </ul>
 </nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.WebSettings">
+<span class="md-ellipsis">
+      WebSettings
+    </span>
+</a>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.settings.CliSettings">
@@ -722,8 +750,22 @@
     </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.TextSettings.plain_menu">
+<span class="md-ellipsis">
+      plain_menu
+    </span>
+</a>
+</li>
 </ul>
 </nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.settings.WebSettings">
+<span class="md-ellipsis">
+      WebSettings
+    </span>
+</a>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.settings.CliSettings">
@@ -776,7 +818,7 @@
 <article class="md-content__inner md-typeset">
 <h1>Settings</h1>
 <h2 id="ui-settings">UI Settings</h2>
-<p>The UI behaviour might be modified via an settings object. This can be passed to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function or defined through a config file. Settings defined in the config file have bigger priority. Every interface has its own settings object.</p>
+<p>The UI behaviour can be modified via a settings object. It can be passed to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">run</a> function or defined through a config file. Settings defined in the config file take precedence. Every interface has its own settings object.</p>
 <p>Passing the settings to the <code>run</code> method:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">MininterfaceSettings</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>
@@ -798,14 +840,14 @@
 <a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="p">)</span>
 <a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="n">run</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">opt</span><span class="p">)</span>
 </code></pre></div></p>
-<p>Specifying via dataclasses is very convenient as your ID suggests all the options available, including its hints.</p>
+<p>Specifying the settings via dataclasses is very convenient, as your IDE suggests all the available options, including their hints.</p>
 <h3 id="config-file-special-section">Config file special section</h3>
-<p>In a YAML config file, use a special section 'mininterface' to set up the UI. For example, this stub will enforce your program to use the Tui interface.</p>
+<p>In a YAML config file, use the special section 'mininterface' to set up the UI. For example, this stub will force your program to use the TUI interface.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">mininterface</span><span class="p">:</span>
 <a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">    </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tui</span>
 </code></pre></div>
 <h4 id="complete-example">Complete example</h4>
-<p>Source of <code>program.py</code>, we have one single attribute <code>foo</code>:</p>
+<p>The source of <code>program.py</code> – we have a single attribute <code>foo</code>:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
 <a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">Options</span>
@@ -817,30 +859,31 @@
 <a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
 <a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
-<p>Source of <code>program.yaml</code> will enforce the comboboxes:</p>
+<p>The contents of <code>program.yaml</code> will enforce comboboxes:</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 <a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="nt">mininterface</span><span class="p">:</span>
 <a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="w">    </span><span class="nt">gui</span><span class="p">:</span>
 <a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="w">        </span><span class="nt">combobox_since</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 </code></pre></div>
-<p>The difference when using such configuration file.</p>
+<p>The difference when using such a configuration file:</p>
 <p><img alt="Configuration not used" src="../asset/configuration-not-used.avif"/> <img alt="Configuration used" src="../asset/configuration-used.avif"/></p>
 <h3 id="inheritance">Inheritance</h3>
-<p>The individual setting items are inherited, while the descendants have the higher priority. Ex. <code>TuiSettings</code> works as a default for <code>TextSettings</code> and <code>TextualSettings</code>.</p>
+<p>The individual settings items are inherited, with the descendants having higher priority. E.g. <code>TuiSettings</code> works as a default for <code>TextSettings</code> and <code>TextualSettings</code>.</p>
 <pre class="mermaid"><code>graph LR
 GuiSettings --&gt; UiSettings
 TuiSettings  --&gt; UiSettings
 TextualSettings --&gt; TuiSettings
 TextSettings --&gt; TuiSettings
+WebSettings --&gt; TextualSettings
 </code></pre>
-<p>Ex. this config file sets the <code>UiSettings</code> item <a class="autorefs autorefs-internal" href="#mininterface.settings.UiSettings.mnemonic"><code>mnemonic</code></a> to <code>None</code> for <code>TuiSettings</code> and more specifically to <code>False</code> for <code>TextSettings</code>.</p>
+<p>E.g. this config file sets the <code>UiSettings</code> item <a class="autorefs autorefs-internal" href="#mininterface.settings.UiSettings.mnemonic"><code>mnemonic</code></a> to <code>None</code> for <code>TuiSettings</code> and more specifically to <code>False</code> for <code>TextSettings</code>.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="nt">mininterface</span><span class="p">:</span>
 <a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="w">    </span><span class="nt">tui</span><span class="p">:</span>
 <a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="w">        </span><span class="nt">mnemonic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a><span class="w">    </span><span class="nt">text</span><span class="p">:</span>
 <a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="w">        </span><span class="nt">mnemonic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
 </code></pre></div>
-<p>For the different interfaces, the value varies this way:</p>
+<p>The value then varies across the interfaces this way:</p>
 <table>
 <thead>
 <tr>
@@ -1027,6 +1070,32 @@ for each interface (e.g., "<control-t>" for Tkinter).</control-t></p>
 </code></pre></div>
 </div>
 </div>
+<div class="doc doc-object doc-attribute">
+<h4 class="doc doc-heading" id="mininterface.settings.TextSettings.plain_menu">
+<code class="highlight language-python"><span class="n">plain_menu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></code>
+</h4>
+<div class="doc doc-contents">
+<p>Use a plain numbered list read by <code>input()</code> instead of the interactive arrow-key menu.</p>
+<p>The interactive menu (simple-term-menu) redraws the screen with escape sequences,
+which does not work on Windows and plays badly with dumb terminals, logged sessions
+or screen readers. The plain menu is also used automatically whenever the interactive
+menu is not available.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="o">[</span><span class="m">0</span><span class="o">]</span><span class="w"> </span>ok
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w"> </span>foo1:<span class="w"> </span>×
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="w"> </span>foo2:<span class="w"> </span>×
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>Choose<span class="w"> </span><span class="o">(</span><span class="nv">Enter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>ok<span class="o">)</span>:
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="doc doc-object doc-class">
+<h3 class="doc doc-heading" id="mininterface.settings.WebSettings">
+<code>WebSettings</code>
+</h3>
+<div class="doc doc-contents first">
+<div class="doc doc-children">
 </div>
 </div>
 </div>

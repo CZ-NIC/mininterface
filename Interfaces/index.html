@@ -134,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -148,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -196,16 +203,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -266,15 +280,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -408,13 +422,6 @@
 <a class="md-nav__link" href="#webinterface-or-web">
 <span class="md-ellipsis">
       WebInterface or 'web'
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#replinterface">
-<span class="md-ellipsis">
-      ReplInterface
     </span>
 </a>
 </li>
@@ -572,13 +579,6 @@
     </span>
 </a>
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#replinterface">
-<span class="md-ellipsis">
-      ReplInterface
-    </span>
-</a>
-</li>
 </ul>
 </nav>
 </div>
@@ -587,7 +587,7 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h2 id="all-possible-interfaces">All possible interfaces</h2>
-<p>Apart from the default <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface"><code>Mininterface</code></a>, the base interface the others are fully compatible with, several interfaces exist at <code>mininterface.interfaces</code>.</p>
+<p>Apart from the default <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface"><code>Mininterface</code></a> – the base interface all the others are fully compatible with – several interfaces exist in <code>mininterface.interfaces</code>.</p>
 <table>
 <thead>
 <tr>
@@ -619,17 +619,17 @@
 </tbody>
 </table>
 <h3 id="ordering">Ordering</h3>
-<p>We try to obtain the best interface available. By preference, it is <strong>gui</strong> , then <strong>&gt; tui</strong> (textual or at least <strong>&gt; text</strong>), then the original non-interactive <strong>&gt; min</strong> is used. The ensures the program to still work in cron jobs etc. (<strong>Web</strong> is never chosen automatically.)</p>
+<p>We try to obtain the best interface available. The preference is <strong>gui</strong>, then <strong>tui</strong> (textual, or at least <strong>text</strong>); finally, the original non-interactive <strong>min</strong> is used. This ensures the program still works in cron jobs etc. (<strong>Web</strong> is never chosen automatically.)</p>
 <pre class="mermaid"><code>graph LR
 gui --&gt; tk{ tk } --&gt; tui --&gt; textual{ textual } --&gt; text{ text } --&gt; min
 web
 </code></pre>
 <h3 id="getting-one">Getting one</h3>
 <p>Normally, you get an interface through <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a>
-but if you do not wish to parse CLI and config file, you can invoke one directly through <code>from mininterface.interfaces import *</code>. You may as well use the <a class="autorefs autorefs-internal" href="#mininterface.interfaces.get_interface"><code>get_interface</code></a> function to ensure the interface is available or invoke the program with <a href="#environment-variable-mininterface_interface"><code>MININTERFACE_INTERFACE</code></a> environment variable.</p>
+but if you do not wish to parse the CLI and config file, you can invoke one directly through <code>from mininterface.interfaces import *</code>. You may as well use the <a class="autorefs autorefs-internal" href="#mininterface.interfaces.get_interface"><code>get_interface</code></a> function to ensure the interface is available, or invoke the program with the <a href="#environment-variable-mininterface_interface"><code>MININTERFACE_INTERFACE</code></a> environment variable.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
-<p>Performance boost: Only interfaces that are being used are loaded into memory for faster start.</p>
+<p>Performance boost: Only the interfaces actually used are loaded into memory, for a faster start.</p>
 </div>
 <h3 id="direct-invocation">Direct invocation</h3>
 <p>How to invoke a specific interface directly?</p>
@@ -718,13 +718,15 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 </tr>
 </tbody>
 </table>
+<p>Without an explicit <code>interface</code>, the preference is taken from the <code>MININTERFACE_INTERFACE</code>
+environment variable, then from <code>settings.interface</code>.</p>
 </div>
 </div><h3 id="environment-variable-mininterface_interface">Environment variable <code>MININTERFACE_INTERFACE</code></h3>
-<p>From outside, you may override the default interface choice by the environment variable.</p>
+<p>From outside, you may override the default interface choice with the environment variable.</p>
 <p><code>$ MININTERFACE_INTERFACE=web program.py</code></p>
 <h1 id="mininterface"><code>Mininterface</code></h1>
-<p>The base interface.</p>
-<p>Not interactive, behaves as if the user confirmed everyting. It is being used in ex. cron scripts.</p>
+<p>The base interface. It is configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.UiSettings"><code>UiSettings</code></a>.</p>
+<p>Non-interactive; it behaves as if the user confirmed everything. Useful e.g. in cron scripts.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>min<span class="w"> </span>./program.py
 <a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>Asking<span class="w"> </span>the<span class="w"> </span>form<span class="w"> </span>Env<span class="o">(</span><span class="nv">my_flag</span><span class="o">=</span>False,<span class="w"> </span><span class="nv">my_number</span><span class="o">=</span><span class="m">4</span><span class="o">)</span>
 <a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="m">4</span>
@@ -752,7 +754,7 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <a href="#__codelineno-2-19" id="__codelineno-2-19" name="__codelineno-2-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
 </code></pre></div>
 </details>
-<p>If not possible, the program ends with a warning.</p>
+<p>If that is not possible, the program ends with a warning.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>gui<span class="w"> </span>./program.py
 <a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>Asking<span class="w"> </span>the<span class="w"> </span>form<span class="w"> </span>Env<span class="o">(</span><span class="nv">my_flag</span><span class="o">=</span>MISSING,<span class="w"> </span><span class="nv">my_number</span><span class="o">=</span><span class="m">4</span><span class="o">)</span>
 <a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>the<span class="w"> </span>following<span class="w"> </span>arguments<span class="w"> </span>are<span class="w"> </span>required:<span class="w"> </span>--my-flag
@@ -778,28 +780,28 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 </code></pre></div>
 </details>
 <h1 id="guiinterface-or-tkinterface-or-gui"><code>GuiInterface</code> or <code>TkInterface</code> or 'gui'</h1>
-<p>A tkinter window. It inherits from <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.GuiSettings"><code>GuiSettings</code></a>.</p>
+<p>A tkinter window. It is configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.GuiSettings"><code>GuiSettings</code></a>.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>gui<span class="w"> </span>./program.py
 </code></pre></div>
 <p><img alt="Hello world example: GUI window" src="../asset/hello-gui.avif" title="A minimal use case – GUI"/></p>
 <h1 id="tuiinterface-or-tui"><code>TuiInterface</code> or 'tui'</h1>
-<p>An interactive terminal. Will try to get <code>TextualInterface</code> and <code>TextInterface</code> as a fallback.</p>
+<p>An interactive terminal. It tries to use <code>TextualInterface</code>, with <code>TextInterface</code> as a fallback. Configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.TuiSettings"><code>TuiSettings</code></a>.</p>
 <h2 id="textualinterface"><code>TextualInterface</code></h2>
-<p>If <a href="https://github.com/Textualize/textual">textual</a> installed, rich and mouse clickable interface is used.</p>
+<p>If <a href="https://github.com/Textualize/textual">textual</a> is installed, a rich, mouse-clickable interface is used. It is configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.TextualSettings"><code>TextualSettings</code></a>.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>tui<span class="w"> </span>./program.py
 </code></pre></div>
 <p><img alt="Hello world example: TUI fallback" src="../asset/hello-tui.avif" title="A minimal use case – TUI fallback"/></p>
 <h2 id="textinterface"><code>TextInterface</code></h2>
-<p>Plain text only interface with no dependency as a fallback. The non-interactive session becomes interactive if possible but there is no mouse support. Does not clear whole screen as TextualInterface if it suits better your program flow.</p>
+<p>A plain-text fallback interface with no dependencies. It is configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.TextSettings"><code>TextSettings</code></a>. A non-interactive session becomes interactive if possible, but there is no mouse support. Unlike TextualInterface, it does not clear the whole screen, should that suit your program flow better.</p>
 <p><div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>text<span class="w"> </span>./program.py
 </code></pre></div>
 <img alt="Hello world example: text fallback" src="../asset/hello-text.avif" title="A minimal use case – text fallback"/></p>
 <h1 id="webinterface-or-web"><code>WebInterface</code> or 'web'</h1>
-<p>Exposed to a web.</p>
+<p>Exposes the program to the web. It is configured via <a class="autorefs autorefs-internal" href="../Settings/#mininterface.settings.WebSettings"><code>WebSettings</code></a>.</p>
 <p>You can expose any script to the web by invoking it through the bundled <code>mininterface</code> program.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>web<span class="w"> </span>./program.py<span class="w"> </span>--port<span class="w"> </span><span class="m">9997</span>
 </code></pre></div>
-<p>But still, you have the possibility to invoke the web by preference in the <code>run</code> or <code>get_interface</code> method, direct invocation through importing <code>WebInterface</code> from <code>mininterface.interfaces</code>, or through the environment variable.</p>
+<p>Still, you can request the web interface by preference in the <code>run</code> or <code>get_interface</code> method, invoke it directly by importing <code>WebInterface</code> from <code>mininterface.interfaces</code>, or use the environment variable.</p>
 <p><div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>web<span class="w"> </span>./program.py
 <a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>Serving<span class="w"> </span><span class="s1">'./program.py'</span><span class="w"> </span>on<span class="w"> </span>http://localhost:64646
 <a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a>
@@ -808,7 +810,7 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <img alt="Hello world example: web" src="../asset/hello-web.avif" title="A minimal use case – web"/></p>
 <div class="admonition caveat">
 <p class="admonition-title">Caveat</p>
-<p>Should you plan to use the WebInterface, we recommend invoking it be the first thing your program do. All the statements before invoking it run multiple times!</p>
+<p>Should you plan to use the WebInterface, we recommend making its invocation the first thing your program does. All the statements before it run multiple times!</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="n">hello</span> <span class="o">=</span> <span class="s2">"world"</span>  <span class="c1"># This line would run for every browser client!</span>
 <a href="#__codelineno-10-2" id="__codelineno-10-2" name="__codelineno-10-2"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="s2">"web"</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
 <a href="#__codelineno-10-3" id="__codelineno-10-3" name="__codelineno-10-3"></a>    <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span><span class="s2">"one"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
@@ -819,8 +821,6 @@ but if you do not wish to parse CLI and config file, you can invoke one directly
 <p class="admonition-title">Warning</p>
 <p>Still in beta. We appreciate help with testing etc.</p>
 </div>
-<h1 id="replinterface"><code>ReplInterface</code></h1>
-<p>A debug terminal. Invokes a breakpoint after every dialog.</p>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>

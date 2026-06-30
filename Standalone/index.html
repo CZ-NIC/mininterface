@@ -22,6 +22,9 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
+<a class="md-skip" href="#dialog-commands">
+          Skip to content
+        </a>
 </div>
 <div data-md-component="announce">
 </div>
@@ -131,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -145,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -193,16 +203,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -263,15 +280,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -306,11 +323,46 @@
 </li>
 <li class="md-nav__item md-nav__item--active">
 <input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    Standalone
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
 <a class="md-nav__link md-nav__link--active" href="./">
 <span class="md-ellipsis">
     Standalone
   </span>
 </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dialog-commands">
+<span class="md-ellipsis">
+      Dialog commands
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#other-commands">
+<span class="md-ellipsis">
+      Other commands
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#showcase">
+<span class="md-ellipsis">
+      Showcase
+    </span>
+</a>
+</li>
+</ul>
+</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="../Helper-types/">
@@ -359,6 +411,33 @@
 <div class="md-sidebar__scrollwrap">
 <div class="md-sidebar__inner">
 <nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dialog-commands">
+<span class="md-ellipsis">
+      Dialog commands
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#other-commands">
+<span class="md-ellipsis">
+      Other commands
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#showcase">
+<span class="md-ellipsis">
+      Showcase
+    </span>
+</a>
+</li>
+</ul>
 </nav>
 </div>
 </div>
@@ -366,27 +445,60 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1>Standalone</h1>
-<p>When invoked directly, it creates simple GUI dialogs.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>mininterface<span class="w">  </span>--help
-<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>usage:<span class="w"> </span>Mininterface<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<p>When invoked directly, the bundled <code>mininterface</code> program creates simple GUI/TUI dialogs.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>--help
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>usage:<span class="w"> </span>Mininterface<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">{</span>alert,ask,confirm,select,integrate,showcase,web<span class="o">}</span>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
-<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>Simple<span class="w"> </span>GUI<span class="w"> </span>dialog.<span class="w"> </span>Outputs<span class="w"> </span>the<span class="w"> </span>value<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>entered.
-<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
-<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>╭─<span class="w"> </span>options<span class="w"> </span>─────────────────────────────────────────────────────────────────────────────────╮
-<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">              </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                                   </span>│
-<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>│<span class="w"> </span>--alert<span class="w"> </span>STR<span class="w">             </span>Display<span class="w"> </span>the<span class="w"> </span>OK<span class="w"> </span>dialog<span class="w"> </span>with<span class="w"> </span>text.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">''</span><span class="o">)</span><span class="w">                    </span>│
-<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>│<span class="w"> </span>--ask<span class="w"> </span>STR<span class="w">               </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span>input<span class="w"> </span>a<span class="w"> </span>text.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">''</span><span class="o">)</span><span class="w">                    </span>│
-<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a>│<span class="w"> </span>--ask-number<span class="w"> </span>STR<span class="w">        </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span>input<span class="w"> </span>a<span class="w"> </span>number.<span class="w"> </span>Empty<span class="w"> </span><span class="nv">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">''</span><span class="o">)</span><span class="w"> </span>│
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>│<span class="w"> </span>--is-yes<span class="w"> </span>STR<span class="w">            </span>Display<span class="w"> </span>confirm<span class="w"> </span>box,<span class="w"> </span>focusing<span class="w"> </span>yes.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">''</span><span class="o">)</span><span class="w">                  </span>│
-<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>│<span class="w"> </span>--is-no<span class="w"> </span>STR<span class="w">             </span>Display<span class="w"> </span>confirm<span class="w"> </span>box,<span class="w"> </span>focusing<span class="w"> </span>no.<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="s1">''</span><span class="o">)</span><span class="w">                   </span>│
-<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>╰───────────────────────────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>Simple<span class="w"> </span>GUI/TUI<span class="w"> </span>dialog<span class="w"> </span>toolkit.<span class="w"> </span>Contains:
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>*<span class="w"> </span>dialog<span class="w"> </span>commands<span class="w"> </span>to<span class="w"> </span>output<span class="w"> </span>the<span class="w"> </span>value<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>entered
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>*<span class="w"> </span>commands<span class="w"> </span>to<span class="w"> </span>operate<span class="w"> </span>and<span class="w"> </span><span class="nb">test</span><span class="w"> </span>programs<span class="w"> </span>using<span class="w"> </span>mininterface<span class="w"> </span>as<span class="w"> </span>a<span class="w"> </span>Python<span class="w"> </span>library
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w"> </span>options
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="w"> </span>-----------------------------------------------------------------------
+<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">     </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">  </span>verbosity<span class="w"> </span>level,<span class="w"> </span>can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>multiple<span class="w"> </span><span class="nb">times</span><span class="w"> </span>to<span class="w"> </span>increase
+<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>
+<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w"> </span>subcommands
+<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w"> </span>-----------------------------------------------------------------------
+<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="w">  </span><span class="o">(</span>required<span class="o">)</span>
+<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span>•<span class="w"> </span>alert<span class="w">      </span>Dialog:<span class="w"> </span>Display<span class="w"> </span>the<span class="w"> </span>OK<span class="w"> </span>dialog<span class="w"> </span>with<span class="w"> </span>text.
+<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="w">    </span>•<span class="w"> </span>ask<span class="w">        </span>Dialog:<span class="w"> </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span>input<span class="w"> </span>a<span class="w"> </span>value.
+<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="w">    </span>•<span class="w"> </span>confirm<span class="w">    </span>Dialog:<span class="w"> </span>Display<span class="w"> </span>confirm<span class="w"> </span>box.<span class="w"> </span>Returns<span class="w"> </span><span class="m">0</span><span class="w"> </span>/<span class="w"> </span><span class="m">1</span>.
+<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="w">    </span>•<span class="w"> </span><span class="k">select</span><span class="w">     </span>Dialog:<span class="w"> </span>Prompt<span class="w"> </span>the<span class="w"> </span>user<span class="w"> </span>to<span class="w"> </span><span class="k">select</span>.
+<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">    </span>•<span class="w"> </span>integrate<span class="w">  </span>Integrate<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>system.<span class="w"> </span>Generates<span class="w"> </span>bash<span class="w"> </span>completion.
+<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="w">    </span>•<span class="w"> </span>showcase<span class="w">   </span>Prints<span class="w"> </span>various<span class="w"> </span>forms<span class="w"> </span>to<span class="w"> </span>show<span class="w"> </span>what<span class="err">'</span>s<span class="w"> </span>possible.
+<a href="#__codelineno-0-22" id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="w">    </span>•<span class="w"> </span>web<span class="w">        </span>Expose<span class="w"> </span>a<span class="w"> </span>program<span class="w"> </span>using<span class="w"> </span>mininterface<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>web.
 </code></pre></div>
-<p>You can fetch a value to i.e. a bash script.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>mininterface<span class="w">  </span>--ask-number<span class="w"> </span><span class="s2">"What's your age?"</span><span class="w">  </span><span class="c1"># GUI or TUI window invoked</span>
+<p>You can fetch a value into e.g. a bash script.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>ask<span class="w"> </span><span class="s2">"What's your age?"</span><span class="w"> </span>int<span class="w">  </span><span class="c1"># GUI or TUI window invoked</span>
 <a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="m">18</span>
 </code></pre></div>
 <p><img alt="Standalone number" src="../asset/standalone_number.avif"/>
 <img alt="Standalone number in terminal" src="../asset/standalone_number_textual.avif"/></p>
+<h2 id="dialog-commands">Dialog commands</h2>
+<p><strong><code>ask</code></strong> prompts the user for a value. The default type is <code>str</code>; the second positional argument imposes a type: <code>int</code>, <code>float</code>, <code>Path</code>, <code>date</code>, <code>datetime</code>, <code>time</code>, <code>file</code> (an existing file) or <code>dir</code> (an existing directory).</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>ask<span class="w"> </span><span class="s2">"Give me a folder"</span><span class="w"> </span>dir
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>/tmp
+</code></pre></div>
+<p><strong><code>confirm</code></strong> displays a yes/no box and prints <code>1</code> or <code>0</code>. The second positional argument sets the focused button (<code>yes</code> or <code>no</code>).</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>confirm<span class="w"> </span><span class="s2">"Continue?"</span><span class="w"> </span>no
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="m">1</span>
+</code></pre></div>
+<p><strong><code>select</code></strong> outputs the chosen item.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span><span class="k">select</span><span class="w"> </span>one<span class="w"> </span>two
+</code></pre></div>
+<p><img alt="Select dialog" src="../asset/choices_labels.avif"/></p>
+<h2 id="other-commands">Other commands</h2>
+<ul>
+<li><code>mininterface integrate ./program</code> – install <a href="../Overview/#bash-completion">bash completion</a> for a program using mininterface</li>
+<li><code>mininterface web ./program.py</code> – expose a program <a href="../Interfaces/#webinterface-or-web">to the web</a></li>
+<li><code>mininterface showcase [1|2]</code> – display example forms to preview what's possible; see <a href="#showcase">Showcase</a></li>
+</ul>
+<h2 id="showcase">Showcase</h2>
+<p>The <code>showcase</code> command prints various forms to let you explore what mininterface looks like before writing any code. Choose the interface with the environment variable.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span>mininterface<span class="w"> </span>showcase<span class="w">          </span><span class="c1"># showcase 1: a complex form with many field types</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>$<span class="w"> </span><span class="nv">MININTERFACE_INTERFACE</span><span class="o">=</span>tui<span class="w"> </span>mininterface<span class="w"> </span>showcase<span class="w"> </span><span class="m">2</span><span class="w">  </span><span class="c1"># showcase 2: subcommand selection</span>
+</code></pre></div>
 </article>
 </div>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>

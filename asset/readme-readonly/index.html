@@ -7,7 +7,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
-<title>Mininterface – access to GUI, TUI, web, CLI and config files - Mininterface</title>
+<title>Mininterface — one dataclass becomes your CLI, your config file, and your GUI/TUI/web form - Mininterface</title>
 <link href="../../assets/stylesheets/main.35f28582.min.css" rel="stylesheet"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
@@ -20,7 +20,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#mininterface-access-to-gui-tui-web-cli-and-config-files">
+<a class="md-skip" href="#mininterface-one-dataclass-becomes-your-cli-your-config-file-and-your-guituiweb-form">
           Skip to content
         </a>
 </div>
@@ -44,7 +44,7 @@
 <div class="md-header__topic" data-md-component="header-topic">
 <span class="md-ellipsis">
             
-              Mininterface – access to GUI, TUI, web, CLI and config files
+              Mininterface — one dataclass becomes your CLI, your config file, and your GUI/TUI/web form
             
           </span>
 </div>
@@ -132,6 +132,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -146,15 +153,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -194,16 +201,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -264,15 +278,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -365,13 +379,15 @@
 </div>
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
-<h1 id="mininterface-access-to-gui-tui-web-cli-and-config-files">Mininterface – access to GUI, TUI, web, CLI and config files</h1>
+<h1 id="mininterface-one-dataclass-becomes-your-cli-your-config-file-and-your-guituiweb-form">Mininterface — one dataclass becomes your CLI, your config file, and your GUI/TUI/web form</h1>
 <p><a href="https://github.com/CZ-NIC/mininterface/actions"><img alt="Build Status" src="https://github.com/CZ-NIC/mininterface/actions/workflows/run-unittest.yml/badge.svg?branch=main"/></a>
 <a href="https://pepy.tech/project/mininterface"><img alt="Downloads" src="https://static.pepy.tech/badge/mininterface"/></a></p>
-<p>Write the program core, do not bother with the input/output.</p>
+<p>Write the program core; let a single configuration dataclass be your command-line parser, your
+YAML config, <strong>and</strong> — for free — a GUI/TUI/web dialog. Headless-safe by default: the same file
+runs unattended in cron and pops a form when a human runs it.</p>
 <p><img alt="Hello world example: GUI window" src="asset/hello-gui.avif" title="A minimal use case – GUI"/>
 <img alt="Hello world example: TUI fallback" src="asset/hello-tui.avif" title="A minimal use case – TUI fallback"/></p>
-<p>Check out the code, which is surprisingly short, that displays such a window or its textual fallback.</p>
+<p>Check out the surprisingly short code that displays such a window – or its textual fallback.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
 <a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>
@@ -392,9 +408,16 @@
 <a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a>    <span class="c1"># along with the hint text 'This number is very important'.</span>
 <a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
 </code></pre></div>
+<blockquote>
+<p><strong>You grow into the UI; you don't pay for it up front.</strong> Start with a plain CLI tool. The day
+you want a settings dialog, a subcommand picker, or a web form, you rewrite nothing — the same
+dataclass that defined your <code>--flags</code> already defines the form. argparse/click hand you a
+parser; mininterface hands you a parser that can <em>become</em> an interface the moment you need one.</p>
+</blockquote>
 <h1 id="contents">Contents</h1>
 <ul>
 <li><a href="#you-got-cli">You got CLI</a></li>
+<li><a href="#two-ways-to-call-run">Two ways to call <code>run()</code></a></li>
 <li><a href="#you-got-config-file-management">You got config file management</a></li>
 <li><a href="#you-got-dialogs">You got dialogs</a></li>
 <li><a href="#background">Background</a></li>
@@ -408,7 +431,7 @@
 </li>
 </ul>
 <h2 id="you-got-cli">You got CLI</h2>
-<p>It was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI/web, you receive powerful YAML-configurable CLI parsing.</p>
+<p>That was all the code you need. No lengthy blocks of code imposed by an external dependency. Besides the GUI/TUI/web, you receive powerful YAML-configurable CLI parsing.</p>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
 <a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-v<span class="o">]</span><span class="w"> </span><span class="o">[</span>--my-flag<span class="w"> </span><span class="p">|</span><span class="w"> </span>--no-my-flag<span class="o">]</span><span class="w"> </span><span class="o">[</span>--my-number<span class="w"> </span>INT<span class="o">]</span>
 <a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>
@@ -422,37 +445,65 @@
 <a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a>│<span class="w"> </span>--my-number<span class="w"> </span>INT<span class="w">        </span>This<span class="w"> </span>number<span class="w"> </span>is<span class="w"> </span>very<span class="w"> </span>important<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4</span><span class="o">)</span><span class="w">       </span>│
 <a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>╰─────────────────────────────────────────────────────────────────────────╯
 </code></pre></div>
+<h2 id="two-ways-to-call-run">Two ways to call <code>run()</code></h2>
+<p><strong>As config</strong> — pass a dataclass; read the parsed values off <code>.env</code>:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Config</span><span class="p">)</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>As subcommands</strong> — pass a <em>list</em> of <code>Command</code> subclasses. <code>run()</code> parses the CLI, selects the
+one subcommand, and calls its <code>.run()</code> for you; <code>.env</code> holds that chosen instance:
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">Command</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Build</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a>    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"release"</span>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">"building"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+<a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a>
+<a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="k">class</span><span class="w"> </span><span class="nc">Deploy</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+<a href="#__codelineno-3-13" id="__codelineno-3-13" name="__codelineno-3-13"></a>    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span>
+<a href="#__codelineno-3-14" id="__codelineno-3-14" name="__codelineno-3-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a href="#__codelineno-3-15" id="__codelineno-3-15" name="__codelineno-3-15"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">"deploying to"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+<a href="#__codelineno-3-16" id="__codelineno-3-16" name="__codelineno-3-16"></a>
+<a href="#__codelineno-3-17" id="__codelineno-3-17" name="__codelineno-3-17"></a><span class="n">run</span><span class="p">([</span><span class="n">Build</span><span class="p">,</span> <span class="n">Deploy</span><span class="p">])</span>        <span class="c1"># ./app.py build --target debug  -&gt;  Build.run()</span>
+</code></pre></div></p>
+<p>Both modes are <strong>headless-safe by default</strong> (<code>ask_on_empty_cli=False</code>): a fully-defaulted
+invocation runs straight through with no prompt, so one file serves cron <em>and</em> an interactive
+user. Subcommands can share options by inheriting a common <code>Command</code> parent.</p>
 <h2 id="you-got-config-file-management">You got config file management</h2>
-<p>Loading config file is a piece of cake. Alongside <code>program.py</code>, write some of its arguments to <code>program.yaml</code>. They are seamlessly taken as defaults.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="nt">my_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">555</span>
+<p>Loading a config file is a piece of cake. Alongside <code>program.py</code>, write some of its arguments into <code>program.yaml</code>. They are seamlessly taken as defaults.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="nt">my_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">555</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
-<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>...
-<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>│<span class="w"> </span>--my-number<span class="w"> </span>INT<span class="w">        </span>This<span class="w"> </span>number<span class="w"> </span>is<span class="w"> </span>very<span class="w"> </span>important<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">555</span><span class="o">)</span><span class="w">     </span>│
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>$<span class="w"> </span>program.py<span class="w"> </span>--help
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>...
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>│<span class="w"> </span>--my-number<span class="w"> </span>INT<span class="w">        </span>This<span class="w"> </span>number<span class="w"> </span>is<span class="w"> </span>very<span class="w"> </span>important<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">555</span><span class="o">)</span><span class="w">     </span>│
 </code></pre></div>
 <h2 id="you-got-dialogs">You got dialogs</h2>
-<p>Check out several useful methods to handle user dialogs. Here we bound the interface to a <code>with</code> statement that redirects stdout directly to the window.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Your important number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">boolean</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Is that alright?"</span><span class="p">)</span>
+<p>Check out several useful methods for handling user dialogs. Here we bind the interface to a <code>with</code> statement that redirects stdout directly to the window.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Your important number is </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_number</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="n">boolean</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Is that alright?"</span><span class="p">)</span>
 </code></pre></div>
 <p><img alt="Small window with the text 'Your important number'" src="asset/hello-with-statement.webp" title="With statement to redirect the output"/>
 <img alt="The same in terminal'" src="asset/hello-with-statement-tui.avif" title="With statement in TUI fallback"/></p>
 <h1 id="background">Background</h1>
 <p>Wrapper between various libraries that provide a user interface.</p>
-<p>It allows you to focus on writing the program's core logic without worrying about input/output. It generates CLI arguments, parses config file, and shows a UI. Depending on the endpoint, the dialogs automatically use either a GUI, a mouse-clickable TUI, a lightweight terminal text interface, or be available via HTTP — all while maintaining exactly the same functionality.</p>
-<p>Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You do not deserve to add hundred of lines of the code just to define some editable fields. <em>Mininterface</em> is here to help.</p>
-<p>The config variables needed by your program are kept in cozy dataclasses. Write less! The syntax of <a href="https://github.com/brentyi/tyro">tyro</a> does not require any overhead (as its <code>argparse</code> alternatives do). You just annotate a class attribute, append a simple docstring and get a fully functional application:</p>
+<p>It allows you to focus on writing the program's core logic without worrying about input/output. It generates CLI arguments, parses the config file, and shows a UI. Depending on the environment, the dialogs automatically use either a GUI, a mouse-clickable TUI, a lightweight terminal text interface, or become available via HTTP — all while maintaining exactly the same functionality.</p>
+<p>Writing a small and useful program might be a task that takes fifteen minutes. Adding a CLI to specify the parameters is not so much overhead. But building a simple GUI around it? HOURS! Hours spent on researching GUI libraries, wondering why the Python desktop app ecosystem lags so far behind the web world. All you need is a few input fields validated through a clickable window... You should not have to add hundreds of lines of code just to define a few editable fields. <em>Mininterface</em> is here to help.</p>
+<p>The config variables needed by your program are kept in cozy dataclasses. Write less! The <a href="https://github.com/brentyi/tyro">tyro</a> syntax requires no overhead (unlike its <code>argparse</code> alternatives). You just annotate a class attribute, append a simple docstring, and get a fully functional application:</p>
 <ul>
 <li>Call it as <code>program.py --help</code> to display full help.</li>
-<li>Use any flag in CLI: <code>program.py --my-flag</code>  causes <code>env.my_flag</code> be set to <code>True</code>.</li>
+<li>Use any flag in CLI: <code>program.py --my-flag</code>  causes <code>env.my_flag</code> to be set to <code>True</code>.</li>
 <li>The main benefit: Launch it without parameters as <code>program.py</code> to get a fully working window with all the flags ready to be edited.</li>
-<li>Running on a remote machine? Automatic regression to the text interface.</li>
-<li>Or access your program via <a href="http://127.0.0.1:8000/Interfaces/#webinterface-or-web">web browser</a>.</li>
+<li>Running on a remote machine? It automatically falls back to the text interface.</li>
+<li>Or access your program via <a href="Interfaces.md#webinterface-or-web">web browser</a>.</li>
 </ul>
 <h1 id="installation">Installation</h1>
 <p>Install with a single command from <a href="https://pypi.org/project/mininterface/">PyPi</a>.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"mininterface[all]&lt;2"</span><span class="w">  </span><span class="c1"># GPLv3 and compatible</span>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"mininterface[all]&lt;2"</span><span class="w">  </span><span class="c1"># GPLv3 and compatible</span>
 </code></pre></div>
 <h2 id="bundles">Bundles</h2>
 <p>There are various bundles. We mark the least permissive licence in the bundle.</p>
@@ -488,13 +539,13 @@
 <td>mininterface[img]</td>
 <td>40 MB</td>
 <td>LGPL</td>
-<td>images</td>
+<td>image support (GUI and TUI)</td>
 </tr>
 <tr>
 <td>mininterface[tui]</td>
 <td>40 MB</td>
 <td>LGPL</td>
-<td>images</td>
+<td>TUI with image support</td>
 </tr>
 <tr>
 <td>mininterface[gui]</td>
@@ -516,7 +567,7 @@
 </tr>
 </tbody>
 </table>
-<p>Apart from the minimal bundle (which lacks CLI and dataclass support), they have the same functionality, differring only in the user experience.</p>
+<p>Apart from the minimal bundle (which lacks CLI and dataclass support), they have the same functionality, differing only in the user experience.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>For automated testing (e.g., in CI environments), the <code>mininterface[basic]</code> bundle is sufficient.</p>
@@ -535,50 +586,50 @@
 <h2 id="hello-world">Hello world</h2>
 <p>Take a look at the following example.</p>
 <ol>
-<li>We define any Env class.</li>
+<li>We define an Env class.</li>
 <li>Then, we initialize mininterface with <a href="https://cz-nic.github.io/mininterface/run/"><code>run(Env)</code></a> – the missing fields will be prompted for</li>
 <li>Then, we use various dialog methods, like <a href="https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.confirm"><code>confirm</code></a>, <a href="https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.select"><code>select</code></a> or <a href="https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.form"><code>form</code></a>.</li>
 </ol>
-<p>Below, you find the screenshots how the program looks in various environments (<a href="Interfaces.md#guiinterface-or-tkinterface-or-gui">graphic</a> interface, <a href="Interfaces.md#webinterface-or-web">web</a> interface...).</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>
-<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="nd">@dataclass</span>
-<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
-<a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a>  <span class="n">my_file</span><span class="p">:</span> <span class="n">Path</span>  <span class="c1"># This is my help text</span>
-<a href="#__codelineno-6-8" id="__codelineno-6-8" name="__codelineno-6-8"></a>  <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a href="#__codelineno-6-9" id="__codelineno-6-9" name="__codelineno-6-9"></a>  <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
-<a href="#__codelineno-6-10" id="__codelineno-6-10" name="__codelineno-6-10"></a>
-<a href="#__codelineno-6-11" id="__codelineno-6-11" name="__codelineno-6-11"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-<a href="#__codelineno-6-12" id="__codelineno-6-12" name="__codelineno-6-12"></a>    <span class="c1"># Here, the user will be prompted</span>
-<a href="#__codelineno-6-13" id="__codelineno-6-13" name="__codelineno-6-13"></a>    <span class="c1"># for missing parameters (`my_file`) automatically</span>
-<a href="#__codelineno-6-14" id="__codelineno-6-14" name="__codelineno-6-14"></a>    <span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
-<a href="#__codelineno-6-15" id="__codelineno-6-15" name="__codelineno-6-15"></a>
-<a href="#__codelineno-6-16" id="__codelineno-6-16" name="__codelineno-6-16"></a>      <span class="c1"># You can lean on the typing</span>
-<a href="#__codelineno-6-17" id="__codelineno-6-17" name="__codelineno-6-17"></a>      <span class="c1"># Ex. directly read from the file object:</span>
-<a href="#__codelineno-6-18" id="__codelineno-6-18" name="__codelineno-6-18"></a>      <span class="nb">print</span><span class="p">(</span><span class="s2">"The file contents:"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-<a href="#__codelineno-6-19" id="__codelineno-6-19" name="__codelineno-6-19"></a>
-<a href="#__codelineno-6-20" id="__codelineno-6-20" name="__codelineno-6-20"></a>      <span class="c1"># You can use various dialog methods,</span>
-<a href="#__codelineno-6-21" id="__codelineno-6-21" name="__codelineno-6-21"></a>      <span class="c1"># like `confirm` for bool</span>
-<a href="#__codelineno-6-22" id="__codelineno-6-22" name="__codelineno-6-22"></a>      <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Do you want to continue?"</span><span class="p">):</span>
-<a href="#__codelineno-6-23" id="__codelineno-6-23" name="__codelineno-6-23"></a>
-<a href="#__codelineno-6-24" id="__codelineno-6-24" name="__codelineno-6-24"></a>        <span class="c1"># or `select` for choosing a value</span>
-<a href="#__codelineno-6-25" id="__codelineno-6-25" name="__codelineno-6-25"></a>        <span class="n">fruit</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">((</span><span class="s2">"apple"</span><span class="p">,</span> <span class="s2">"banana"</span><span class="p">,</span> <span class="s2">"sirup"</span><span class="p">),</span> <span class="s2">"Choose a fruit"</span><span class="p">)</span>
-<a href="#__codelineno-6-26" id="__codelineno-6-26" name="__codelineno-6-26"></a>
-<a href="#__codelineno-6-27" id="__codelineno-6-27" name="__codelineno-6-27"></a>        <span class="k">if</span> <span class="n">fruit</span> <span class="o">==</span> <span class="s2">"apple"</span><span class="p">:</span>
-<a href="#__codelineno-6-28" id="__codelineno-6-28" name="__codelineno-6-28"></a>          <span class="c1"># or `form` for an arbitrary values</span>
-<a href="#__codelineno-6-29" id="__codelineno-6-29" name="__codelineno-6-29"></a>          <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
-<a href="#__codelineno-6-30" id="__codelineno-6-30" name="__codelineno-6-30"></a>            <span class="s2">"How many"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-<a href="#__codelineno-6-31" id="__codelineno-6-31" name="__codelineno-6-31"></a>            <span class="s2">"Choose another file"</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_file</span>
-<a href="#__codelineno-6-32" id="__codelineno-6-32" name="__codelineno-6-32"></a>          <span class="p">})</span>
+<p>Below, you can find screenshots of how the program looks in various environments (<a href="Interfaces.md#guiinterface-or-tkinterface-or-gui">graphic</a> interface, <a href="Interfaces.md#webinterface-or-web">web</a> interface...).</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a>
+<a href="#__codelineno-8-5" id="__codelineno-8-5" name="__codelineno-8-5"></a><span class="nd">@dataclass</span>
+<a href="#__codelineno-8-6" id="__codelineno-8-6" name="__codelineno-8-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">Env</span><span class="p">:</span>
+<a href="#__codelineno-8-7" id="__codelineno-8-7" name="__codelineno-8-7"></a>  <span class="n">my_file</span><span class="p">:</span> <span class="n">Path</span>  <span class="c1"># This is my help text</span>
+<a href="#__codelineno-8-8" id="__codelineno-8-8" name="__codelineno-8-8"></a>  <span class="n">my_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#__codelineno-8-9" id="__codelineno-8-9" name="__codelineno-8-9"></a>  <span class="n">my_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<a href="#__codelineno-8-10" id="__codelineno-8-10" name="__codelineno-8-10"></a>
+<a href="#__codelineno-8-11" id="__codelineno-8-11" name="__codelineno-8-11"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+<a href="#__codelineno-8-12" id="__codelineno-8-12" name="__codelineno-8-12"></a>    <span class="c1"># Here, the user will be prompted</span>
+<a href="#__codelineno-8-13" id="__codelineno-8-13" name="__codelineno-8-13"></a>    <span class="c1"># for missing parameters (`my_file`) automatically</span>
+<a href="#__codelineno-8-14" id="__codelineno-8-14" name="__codelineno-8-14"></a>    <span class="k">with</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+<a href="#__codelineno-8-15" id="__codelineno-8-15" name="__codelineno-8-15"></a>
+<a href="#__codelineno-8-16" id="__codelineno-8-16" name="__codelineno-8-16"></a>      <span class="c1"># You can lean on the typing</span>
+<a href="#__codelineno-8-17" id="__codelineno-8-17" name="__codelineno-8-17"></a>      <span class="c1"># Ex. directly read from the file object:</span>
+<a href="#__codelineno-8-18" id="__codelineno-8-18" name="__codelineno-8-18"></a>      <span class="nb">print</span><span class="p">(</span><span class="s2">"The file contents:"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<a href="#__codelineno-8-19" id="__codelineno-8-19" name="__codelineno-8-19"></a>
+<a href="#__codelineno-8-20" id="__codelineno-8-20" name="__codelineno-8-20"></a>      <span class="c1"># You can use various dialog methods,</span>
+<a href="#__codelineno-8-21" id="__codelineno-8-21" name="__codelineno-8-21"></a>      <span class="c1"># like `confirm` for bool</span>
+<a href="#__codelineno-8-22" id="__codelineno-8-22" name="__codelineno-8-22"></a>      <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">"Do you want to continue?"</span><span class="p">):</span>
+<a href="#__codelineno-8-23" id="__codelineno-8-23" name="__codelineno-8-23"></a>
+<a href="#__codelineno-8-24" id="__codelineno-8-24" name="__codelineno-8-24"></a>        <span class="c1"># or `select` for choosing a value</span>
+<a href="#__codelineno-8-25" id="__codelineno-8-25" name="__codelineno-8-25"></a>        <span class="n">fruit</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">select</span><span class="p">((</span><span class="s2">"apple"</span><span class="p">,</span> <span class="s2">"banana"</span><span class="p">,</span> <span class="s2">"sirup"</span><span class="p">),</span> <span class="s2">"Choose a fruit"</span><span class="p">)</span>
+<a href="#__codelineno-8-26" id="__codelineno-8-26" name="__codelineno-8-26"></a>
+<a href="#__codelineno-8-27" id="__codelineno-8-27" name="__codelineno-8-27"></a>        <span class="k">if</span> <span class="n">fruit</span> <span class="o">==</span> <span class="s2">"apple"</span><span class="p">:</span>
+<a href="#__codelineno-8-28" id="__codelineno-8-28" name="__codelineno-8-28"></a>          <span class="c1"># or `form` for arbitrary values</span>
+<a href="#__codelineno-8-29" id="__codelineno-8-29" name="__codelineno-8-29"></a>          <span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">({</span>
+<a href="#__codelineno-8-30" id="__codelineno-8-30" name="__codelineno-8-30"></a>            <span class="s2">"How many"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<a href="#__codelineno-8-31" id="__codelineno-8-31" name="__codelineno-8-31"></a>            <span class="s2">"Choose another file"</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">my_file</span>
+<a href="#__codelineno-8-32" id="__codelineno-8-32" name="__codelineno-8-32"></a>          <span class="p">})</span>
 </code></pre></div>
 <p>Launch with <code>./program.py</code>:</p>
 <p><img alt="Tutorial" src="asset/tutorial_tk1.avif"/>
 <img alt="Tutorial" src="asset/tutorial_tk2.avif"/>
 <img alt="Tutorial" src="asset/tutorial_tk3.avif"/>
 <img alt="Tutorial" src="asset/tutorial_tk4.avif"/></p>
-<p>Or at the remote machine <code>MININTERFACE_INTERFACE=tui ./program.py</code>:</p>
+<p>Or on a remote machine <code>MININTERFACE_INTERFACE=tui ./program.py</code>:</p>
 <p><img alt="Tutorial" src="asset/tutorial_textual1.avif"/>
 <img alt="Tutorial" src="asset/tutorial_textual2.avif"/>
 <img alt="Tutorial" src="asset/tutorial_textual3.avif"/>
@@ -587,75 +638,75 @@
 <p><img alt="Tutorial" src="asset/tutorial_text.avif"/></p>
 <p>Or via web browser <code>MININTERFACE_INTERFACE=web ./program.py</code>:</p>
 <p><img alt="Tutorial" src="asset/tutorial_web.avif"/></p>
-<p>You can always set Env via CLI or a config file:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
-<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-<a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a>
-<a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a>╭─<span class="w"> </span>options<span class="w"> </span>──────────────────────────────────────────────────────────────╮
-<a href="#__codelineno-7-5" id="__codelineno-7-5" name="__codelineno-7-5"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">             </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                 </span>│
-<a href="#__codelineno-7-6" id="__codelineno-7-6" name="__codelineno-7-6"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">          </span>Verbosity<span class="w"> </span>level.<span class="w"> </span>Can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>twice<span class="w"> </span>to<span class="w"> </span>increase.<span class="w"> </span>│
-<a href="#__codelineno-7-7" id="__codelineno-7-7" name="__codelineno-7-7"></a>│<span class="w"> </span>--my-file<span class="w"> </span>PATH<span class="w">         </span>This<span class="w"> </span>is<span class="w"> </span>my<span class="w"> </span><span class="nb">help</span><span class="w"> </span>text<span class="w"> </span><span class="o">(</span>required<span class="o">)</span><span class="w">                 </span>│
-<a href="#__codelineno-7-8" id="__codelineno-7-8" name="__codelineno-7-8"></a>│<span class="w"> </span>--my-flag,<span class="w"> </span>--no-my-flag<span class="w">                                                </span>│
-<a href="#__codelineno-7-9" id="__codelineno-7-9" name="__codelineno-7-9"></a>│<span class="w">                        </span><span class="o">(</span>default:<span class="w"> </span>False<span class="o">)</span><span class="w">                                </span>│
-<a href="#__codelineno-7-10" id="__codelineno-7-10" name="__codelineno-7-10"></a>│<span class="w"> </span>--my-number<span class="w"> </span>INT<span class="w">        </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4</span><span class="o">)</span><span class="w">                                    </span>│
-<a href="#__codelineno-7-11" id="__codelineno-7-11" name="__codelineno-7-11"></a>╰────────────────────────────────────────────────────────────────────────╯
+<p>You can always set the Env via the CLI or a config file:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a>$<span class="w"> </span>./program.py<span class="w"> </span>--help
+<a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>usage:<span class="w"> </span>program.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a>
+<a href="#__codelineno-9-4" id="__codelineno-9-4" name="__codelineno-9-4"></a>╭─<span class="w"> </span>options<span class="w"> </span>──────────────────────────────────────────────────────────────╮
+<a href="#__codelineno-9-5" id="__codelineno-9-5" name="__codelineno-9-5"></a>│<span class="w"> </span>-h,<span class="w"> </span>--help<span class="w">             </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span><span class="w">                 </span>│
+<a href="#__codelineno-9-6" id="__codelineno-9-6" name="__codelineno-9-6"></a>│<span class="w"> </span>-v,<span class="w"> </span>--verbose<span class="w">          </span>Verbosity<span class="w"> </span>level.<span class="w"> </span>Can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>twice<span class="w"> </span>to<span class="w"> </span>increase.<span class="w"> </span>│
+<a href="#__codelineno-9-7" id="__codelineno-9-7" name="__codelineno-9-7"></a>│<span class="w"> </span>--my-file<span class="w"> </span>PATH<span class="w">         </span>This<span class="w"> </span>is<span class="w"> </span>my<span class="w"> </span><span class="nb">help</span><span class="w"> </span>text<span class="w"> </span><span class="o">(</span>required<span class="o">)</span><span class="w">                 </span>│
+<a href="#__codelineno-9-8" id="__codelineno-9-8" name="__codelineno-9-8"></a>│<span class="w"> </span>--my-flag,<span class="w"> </span>--no-my-flag<span class="w">                                                </span>│
+<a href="#__codelineno-9-9" id="__codelineno-9-9" name="__codelineno-9-9"></a>│<span class="w">                        </span><span class="o">(</span>default:<span class="w"> </span>False<span class="o">)</span><span class="w">                                </span>│
+<a href="#__codelineno-9-10" id="__codelineno-9-10" name="__codelineno-9-10"></a>│<span class="w"> </span>--my-number<span class="w"> </span>INT<span class="w">        </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4</span><span class="o">)</span><span class="w">                                    </span>│
+<a href="#__codelineno-9-11" id="__codelineno-9-11" name="__codelineno-9-11"></a>╰────────────────────────────────────────────────────────────────────────╯
 </code></pre></div>
 <h2 id="goodbye-argparse-world">Goodbye argparse world</h2>
-<p>You want to try out the Mininterface with your current <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a>?</p>
-<p>You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you immediate benefit. Just wrap it inside the <a href="https://cz-nic.github.io/mininterface/run/"><code>run</code></a> method.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="ch">#!/usr/bin/env python3</span>
-<a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
-<a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
-<a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a href="#__codelineno-8-5" id="__codelineno-8-5" name="__codelineno-8-5"></a>
-<a href="#__codelineno-8-6" id="__codelineno-8-6" name="__codelineno-8-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
-<a href="#__codelineno-8-7" id="__codelineno-8-7" name="__codelineno-8-7"></a>
-<a href="#__codelineno-8-8" id="__codelineno-8-8" name="__codelineno-8-8"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
-<a href="#__codelineno-8-9" id="__codelineno-8-9" name="__codelineno-8-9"></a><span class="n">subparsers</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="#__codelineno-8-10" id="__codelineno-8-10" name="__codelineno-8-10"></a><span class="n">sub1</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Build something."</span><span class="p">)</span>
-<a href="#__codelineno-8-11" id="__codelineno-8-11" name="__codelineno-8-11"></a><span class="n">sub1</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--optimize"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Enable optimizations."</span><span class="p">)</span>
-<a href="#__codelineno-8-12" id="__codelineno-8-12" name="__codelineno-8-12"></a><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"input_file"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Path to the input file."</span><span class="p">)</span>
-<a href="#__codelineno-8-13" id="__codelineno-8-13" name="__codelineno-8-13"></a><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--time"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Given time"</span><span class="p">)</span>
-<a href="#__codelineno-8-14" id="__codelineno-8-14" name="__codelineno-8-14"></a>
-<a href="#__codelineno-8-15" id="__codelineno-8-15" name="__codelineno-8-15"></a><span class="c1"># Old version</span>
-<a href="#__codelineno-8-16" id="__codelineno-8-16" name="__codelineno-8-16"></a><span class="c1"># env = parser.parse_args()</span>
-<a href="#__codelineno-8-17" id="__codelineno-8-17" name="__codelineno-8-17"></a><span class="c1"># env.input_file  # a Path object</span>
-<a href="#__codelineno-8-18" id="__codelineno-8-18" name="__codelineno-8-18"></a>
-<a href="#__codelineno-8-19" id="__codelineno-8-19" name="__codelineno-8-19"></a><span class="c1"># New version</span>
-<a href="#__codelineno-8-20" id="__codelineno-8-20" name="__codelineno-8-20"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
-<a href="#__codelineno-8-21" id="__codelineno-8-21" name="__codelineno-8-21"></a><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">input_file</span>  <span class="c1"># a Path object</span>
-<a href="#__codelineno-8-22" id="__codelineno-8-22" name="__codelineno-8-22"></a>
-<a href="#__codelineno-8-23" id="__codelineno-8-23" name="__codelineno-8-23"></a><span class="c1"># Live edit of the fields</span>
-<a href="#__codelineno-8-24" id="__codelineno-8-24" name="__codelineno-8-24"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+<p>Do you want to try out Mininterface with your current <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a>?</p>
+<p>You're using positional arguments, subparsers, types in the ArgumentParser... Mininterface will give you an immediate benefit. Just wrap it in the <a href="https://cz-nic.github.io/mininterface/run/"><code>run</code></a> method.</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a href="#__codelineno-10-2" id="__codelineno-10-2" name="__codelineno-10-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span>
+<a href="#__codelineno-10-3" id="__codelineno-10-3" name="__codelineno-10-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<a href="#__codelineno-10-4" id="__codelineno-10-4" name="__codelineno-10-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a href="#__codelineno-10-5" id="__codelineno-10-5" name="__codelineno-10-5"></a>
+<a href="#__codelineno-10-6" id="__codelineno-10-6" name="__codelineno-10-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mininterface</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<a href="#__codelineno-10-7" id="__codelineno-10-7" name="__codelineno-10-7"></a>
+<a href="#__codelineno-10-8" id="__codelineno-10-8" name="__codelineno-10-8"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
+<a href="#__codelineno-10-9" id="__codelineno-10-9" name="__codelineno-10-9"></a><span class="n">subparsers</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="#__codelineno-10-10" id="__codelineno-10-10" name="__codelineno-10-10"></a><span class="n">sub1</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Build something."</span><span class="p">)</span>
+<a href="#__codelineno-10-11" id="__codelineno-10-11" name="__codelineno-10-11"></a><span class="n">sub1</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--optimize"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Enable optimizations."</span><span class="p">)</span>
+<a href="#__codelineno-10-12" id="__codelineno-10-12" name="__codelineno-10-12"></a><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"input_file"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Path to the input file."</span><span class="p">)</span>
+<a href="#__codelineno-10-13" id="__codelineno-10-13" name="__codelineno-10-13"></a><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--time"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Given time"</span><span class="p">)</span>
+<a href="#__codelineno-10-14" id="__codelineno-10-14" name="__codelineno-10-14"></a>
+<a href="#__codelineno-10-15" id="__codelineno-10-15" name="__codelineno-10-15"></a><span class="c1"># Old version</span>
+<a href="#__codelineno-10-16" id="__codelineno-10-16" name="__codelineno-10-16"></a><span class="c1"># env = parser.parse_args()</span>
+<a href="#__codelineno-10-17" id="__codelineno-10-17" name="__codelineno-10-17"></a><span class="c1"># env.input_file  # a Path object</span>
+<a href="#__codelineno-10-18" id="__codelineno-10-18" name="__codelineno-10-18"></a>
+<a href="#__codelineno-10-19" id="__codelineno-10-19" name="__codelineno-10-19"></a><span class="c1"># New version</span>
+<a href="#__codelineno-10-20" id="__codelineno-10-20" name="__codelineno-10-20"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+<a href="#__codelineno-10-21" id="__codelineno-10-21" name="__codelineno-10-21"></a><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">input_file</span>  <span class="c1"># a Path object</span>
+<a href="#__codelineno-10-22" id="__codelineno-10-22" name="__codelineno-10-22"></a>
+<a href="#__codelineno-10-23" id="__codelineno-10-23" name="__codelineno-10-23"></a><span class="c1"># Live edit of the fields</span>
+<a href="#__codelineno-10-24" id="__codelineno-10-24" name="__codelineno-10-24"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
 <p>Now, the help text looks much better. Try it in the terminal to see the colours.</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-9-1" id="__codelineno-9-1" name="__codelineno-9-1"></a>$ ./program.py --help
-<a href="#__codelineno-9-2" id="__codelineno-9-2" name="__codelineno-9-2"></a>usage: program.py [-h] [OPTIONS] PATH
-<a href="#__codelineno-9-3" id="__codelineno-9-3" name="__codelineno-9-3"></a>
-<a href="#__codelineno-9-4" id="__codelineno-9-4" name="__codelineno-9-4"></a>╭─ positional arguments ──────────────────────────────────────────────────╮
-<a href="#__codelineno-9-5" id="__codelineno-9-5" name="__codelineno-9-5"></a>│ PATH                    Path to the input file. (required)              │
-<a href="#__codelineno-9-6" id="__codelineno-9-6" name="__codelineno-9-6"></a>╰─────────────────────────────────────────────────────────────────────────╯
-<a href="#__codelineno-9-7" id="__codelineno-9-7" name="__codelineno-9-7"></a>╭─ options ───────────────────────────────────────────────────────────────╮
-<a href="#__codelineno-9-8" id="__codelineno-9-8" name="__codelineno-9-8"></a>│ -h, --help              show this help message and exit                 │
-<a href="#__codelineno-9-9" id="__codelineno-9-9" name="__codelineno-9-9"></a>│ -v, --verbose           Verbosity level. Can be used twice to increase. │
-<a href="#__codelineno-9-10" id="__codelineno-9-10" name="__codelineno-9-10"></a>│ --time HH:MM[:SS[…]]    Given time (default: 00:00:00)                  │
-<a href="#__codelineno-9-11" id="__codelineno-9-11" name="__codelineno-9-11"></a>╰─────────────────────────────────────────────────────────────────────────╯
-<a href="#__codelineno-9-12" id="__codelineno-9-12" name="__codelineno-9-12"></a>╭─ build options ─────────────────────────────────────────────────────────╮
-<a href="#__codelineno-9-13" id="__codelineno-9-13" name="__codelineno-9-13"></a>│ --build.optimize, --build.no-optimize                                   │
-<a href="#__codelineno-9-14" id="__codelineno-9-14" name="__codelineno-9-14"></a>│                         Enable optimizations. (default: False)          │
-<a href="#__codelineno-9-15" id="__codelineno-9-15" name="__codelineno-9-15"></a>╰─────────────────────────────────────────────────────────────────────────╯
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-11-1" id="__codelineno-11-1" name="__codelineno-11-1"></a>$ ./program.py --help
+<a href="#__codelineno-11-2" id="__codelineno-11-2" name="__codelineno-11-2"></a>usage: program.py [-h] [OPTIONS] PATH
+<a href="#__codelineno-11-3" id="__codelineno-11-3" name="__codelineno-11-3"></a>
+<a href="#__codelineno-11-4" id="__codelineno-11-4" name="__codelineno-11-4"></a>╭─ positional arguments ──────────────────────────────────────────────────╮
+<a href="#__codelineno-11-5" id="__codelineno-11-5" name="__codelineno-11-5"></a>│ PATH                    Path to the input file. (required)              │
+<a href="#__codelineno-11-6" id="__codelineno-11-6" name="__codelineno-11-6"></a>╰─────────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-11-7" id="__codelineno-11-7" name="__codelineno-11-7"></a>╭─ options ───────────────────────────────────────────────────────────────╮
+<a href="#__codelineno-11-8" id="__codelineno-11-8" name="__codelineno-11-8"></a>│ -h, --help              show this help message and exit                 │
+<a href="#__codelineno-11-9" id="__codelineno-11-9" name="__codelineno-11-9"></a>│ -v, --verbose           Verbosity level. Can be used twice to increase. │
+<a href="#__codelineno-11-10" id="__codelineno-11-10" name="__codelineno-11-10"></a>│ --time HH:MM[:SS[…]]    Given time (default: 00:00:00)                  │
+<a href="#__codelineno-11-11" id="__codelineno-11-11" name="__codelineno-11-11"></a>╰─────────────────────────────────────────────────────────────────────────╯
+<a href="#__codelineno-11-12" id="__codelineno-11-12" name="__codelineno-11-12"></a>╭─ build options ─────────────────────────────────────────────────────────╮
+<a href="#__codelineno-11-13" id="__codelineno-11-13" name="__codelineno-11-13"></a>│ --build.optimize, --build.no-optimize                                   │
+<a href="#__codelineno-11-14" id="__codelineno-11-14" name="__codelineno-11-14"></a>│                         Enable optimizations. (default: False)          │
+<a href="#__codelineno-11-15" id="__codelineno-11-15" name="__codelineno-11-15"></a>╰─────────────────────────────────────────────────────────────────────────╯
 </code></pre></div>
-<p>And what happens when you launch the program? First, <em>Mininterface</em> asks you to provide the missing required arguments. Note the button to raise a file picker dialog.</p>
+<p>And what happens when you launch the program? First, <em>Mininterface</em> asks you to provide the missing required arguments. Note the button that opens a file picker dialog.</p>
 <p><img alt="Positional fields" src="asset/argparse_required.avif"/></p>
 <p>Then, a <code>.form()</code> call will create a dialog with all the fields.</p>
 <p><img alt="Whole form" src="asset/argparse_form.avif"/></p>
-<p>You will access the arguments through <a href="https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a></p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-10-1" id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>  <span class="c1"># -&gt; 14:21</span>
+<p>You then access the arguments through <a href="https://cz-nic.github.io/mininterface/Mininterface/#mininterface.Mininterface.env"><code>m.env</code></a>:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-12-1" id="__codelineno-12-1" name="__codelineno-12-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>  <span class="c1"># -&gt; 14:21</span>
 </code></pre></div>
-<p>If you're sure enough to start using <em>Mininterface</em>, convert the argparse into a dataclass. Then, the IDE will auto-complete the hints as you type.</p>
+<p>Once you decide to adopt <em>Mininterface</em>, convert the argparse definition into a dataclass. Then, the IDE will auto-complete the hints as you type.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>The argparse support is considered mostly for your evaluation as there are some <a href="Argparse-caveats.md"><code>differences</code></a> for advanced argparse CLI interfaces.</p>
+<p>The argparse support is meant mostly for evaluation, as there are some <a href="Argparse-caveats.md">differences</a> for advanced argparse CLI interfaces.</p>
 </div>
 </article>
 </div>

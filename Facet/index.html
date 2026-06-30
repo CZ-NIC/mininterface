@@ -134,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -148,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -243,16 +250,23 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -313,15 +327,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -495,9 +509,9 @@ Read <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.M
 </div><h2 id="layout">Layout</h2>
 <div class="admonition experimental">
 <p class="admonition-title">Experimental</p>
-<p>Share your thoughs about how the layout method should work!</p>
+<p>Share your thoughts about how the layout method should work!</p>
 </div>
-<p>Should you need represent more information, Facet has a hidden method <code>_layout</code> that you may call with a list of <code>LayoutElements</code>:</p>
+<p>Should you need to represent more information, Facet has a hidden method <code>_layout</code> that you may call with a list of <code>LayoutElements</code>:</p>
 <ul>
 <li><code>str</code></li>
 <li><code>pathlib.Path</code></li>
@@ -513,11 +527,11 @@ Read <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.M
 <a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="n">my_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Hello"</span>
 <a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>
 <a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="n">m</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">Env</span><span class="p">)</span>
-<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="c1"># Image object has currently single 'src' attribute</span>
+<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="c1"># The Image object currently has a single 'src' attribute</span>
 <a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="n">m</span><span class="o">.</span><span class="n">facet</span><span class="o">.</span><span class="n">_layout</span><span class="p">([</span><span class="s2">"My text"</span><span class="p">,</span> <span class="n">Image</span><span class="p">(</span><span class="s2">"dog1.jpg"</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"dog1.jpg"</span><span class="p">)])</span>
 <a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="n">m</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
 </code></pre></div>
-<p>As you see, the program displays "My text", then the image and than the path info.
+<p>As you see, the program displays "My text", then the image, and then the path info.
 <img alt="Layout GUI" src="../asset/layout-gui.avif"/></p>
 <p>Even in the TUI, the images are visible. (And mouse-zoomable.)
 <img alt="Layout TUI" src="../asset/layout-tui.avif"/></p>

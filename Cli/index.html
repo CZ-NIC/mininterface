@@ -6,7 +6,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <link href="../Facet/" rel="prev"/>
-<link href="../CallbackTag/" rel="next"/>
+<link href="../Argparse-caveats/" rel="next"/>
 <link href="../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.5.34" name="generator"/>
 <title>Cli - Mininterface</title>
@@ -134,6 +134,13 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../Dialogs/">
+<span class="md-ellipsis">
+    Dialog methods
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../Supported-types/">
 <span class="md-ellipsis">
     Supported types
@@ -148,15 +155,15 @@
 </a>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
 <span class="md-ellipsis">
     API
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="true" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<nav aria-expanded="true" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
             API
           </label>
@@ -232,6 +239,13 @@
 <nav aria-label="Command" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.cli.Command--instance-lifecycle">
+<span class="md-ellipsis">
+      Instance lifecycle
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.cli.Command--subcommandplaceholder-class">
 <span class="md-ellipsis">
       SubcommandPlaceholder class
@@ -297,16 +311,23 @@
 </ul>
 </nav>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../Argparse-caveats/">
+<span class="md-ellipsis">
+    Argparse caveats
+  </span>
+</a>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
 <span class="md-ellipsis">
     Custom types
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_5_6_label" class="md-nav" data-md-level="2">
-<label class="md-nav__title" for="__nav_5_6">
+<nav aria-expanded="false" aria-labelledby="__nav_6_7_label" class="md-nav" data-md-level="2">
+<label class="md-nav__title" for="__nav_6_7">
 <span class="md-nav__icon md-icon"></span>
             Custom types
           </label>
@@ -367,15 +388,15 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
 <span class="md-ellipsis">
     Extras
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
             Extras
           </label>
@@ -491,6 +512,13 @@
 <nav aria-label="Command" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#mininterface.cli.Command--instance-lifecycle">
+<span class="md-ellipsis">
+      Instance lifecycle
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#mininterface.cli.Command--subcommandplaceholder-class">
 <span class="md-ellipsis">
       SubcommandPlaceholder class
@@ -561,6 +589,7 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1>Cli</h1>
+<p>The <code>run()</code> function accepts an <a href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser"><code>ArgumentParser</code></a> directly, so you can migrate an existing argparse-based program with minimal effort. Be aware of a few <a href="../Argparse-caveats/">caveats</a> for advanced CLI patterns.</p>
 <div class="doc doc-object doc-module">
 <h3 class="doc doc-heading" id="mininterface.cli">
 <code>mininterface.cli</code>
@@ -606,22 +635,37 @@ https://brentyi.github.io/tyro/api/tyro/conf/#tyro.conf.Positional</p>
 <code>Command</code>
 </h4>
 <div class="doc doc-contents">
-<p>The Command is automatically run while instantanied.</p>
-<p>It adapts <a class="autorefs autorefs-internal" href="#mininterface.cli.Command.init"><code>init</code></a> and <a class="autorefs autorefs-internal" href="#mininterface.cli.Command.init"><code>run</code></a> methods.
+<p>The Command is automatically run when instantiated.</p>
+<p>It adapts the <a class="autorefs autorefs-internal" href="#mininterface.cli.Command.init"><code>init</code></a> and <a class="autorefs autorefs-internal" href="#mininterface.cli.Command.run"><code>run</code></a> methods.
 It receives attributes <a class="autorefs autorefs-internal" href="../Facet/#mininterface.facet.Facet"><code>self.facet</code></a> and <a class="autorefs autorefs-internal" href="../Mininterface/#mininterface.Mininterface"><code>self.interface</code></a>.</p>
 <p>Put list of Commands to the <a class="autorefs autorefs-internal" href="../run/#mininterface.run">mininterface.run</a> and divide your application into different sections.
 Alternative to argparse <a href="https://docs.python.org/3/library/argparse.html#sub-commands">subcommands</a>.</p>
 <p>Commands might inherit from the same parent to share the common attributes.</p>
+<p>Use a plain dataclass <code>Union</code> to <em>group config/data</em> under subcommands (you read the chosen one
+off <code>.env</code> and act on it yourself). Subclass <code>Command</code> and implement <code>run()</code> when each subcommand
+has <em>behavior</em> you want dispatched automatically.</p>
+<h6 id="mininterface.cli.Command--instance-lifecycle">Instance lifecycle</h6>
+<ol>
+<li><strong>init</strong> / <strong>post_init</strong> — may run more than once during CLI/form parsing. <code>self.facet</code> and
+   <code>self.interface</code> are NOT available yet. Keep construction cheap and side-effect-free.</li>
+<li>The runtime injects <code>self.facet</code> and <code>self.interface</code>, then calls <code>init()</code> once — do real
+   setup here (you may use <code>self.facet</code>).</li>
+<li>(interactive only) the form is shown.</li>
+<li><code>run()</code> is called automatically. Raise <code>ValidationFail</code> to re-show the form.</li>
+</ol>
 <h5 id="mininterface.cli.Command--subcommandplaceholder-class">SubcommandPlaceholder class</h5>
 <p>The special class <code>SubcommandPlaceholder</code> let the user to choose the subcommands via UI,
 while still benefiting from the default CLI arguments.</p>
 <h6 id="mininterface.cli.Command--the-cli-behaviour">The CLI behaviour:</h6>
 <ul>
-<li><code>./program.py</code> -&gt; UI started with subcommand choice</li>
-<li><code>./program.py subcommand --flag</code> -&gt; special class <code>SubcommandPlaceholder</code> allows defining a common <code>--flag</code>
-    while still starting UI with subcommand choice</li>
-<li><code>./program.py subcommand1 --flag</code> -&gt; program run</li>
-<li><code>./program.py subcommand1</code> -&gt; fails to CLI for now</li>
+<li><code>./program.py</code> -&gt; no subcommand given: starts the UI to choose one</li>
+<li><code>./program.py subcommand --flag</code> -&gt; <code>SubcommandPlaceholder</code> lets you pass shared <code>--flag</code>s
+    and still choose the concrete subcommand in the UI</li>
+<li><code>./program.py subcommand1 --flag</code> -&gt; runs <code>subcommand1</code> directly</li>
+<li><code>./program.py subcommand1</code> -&gt; runs <code>subcommand1</code> directly. If all its fields are defaulted,
+    it runs headless with no prompt (cron-safe). If a <em>required</em> field is missing, then with
+    <code>ask_for_missing=True</code> (default) a form asks for it; non-interactively it exits like
+    argparse with "the following arguments are required: ...".</li>
 </ul>
 <h5 id="mininterface.cli.Command--an-example-of-command-usage">An example of Command usage</h5>
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
