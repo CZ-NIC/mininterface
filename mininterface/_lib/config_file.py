@@ -14,7 +14,10 @@ def load_settings_from_config(config_file: Path) -> tuple[dict, dict | None]:
     """Load yaml config without tyro. Returns (raw_cli_dict, mininterface_settings_dict).
     raw_cli_dict has the 'mininterface' key already removed."""
     import yaml
-    raw = yaml.safe_load(config_file.read_text()) or {}
+    try:
+        raw = yaml.safe_load(config_file.read_text()) or {}
+    except yaml.YAMLError as e:
+        raise ValueError(f"Cannot parse config file {config_file}: {e}") from e
     return raw, raw.pop("mininterface", None)
 
 
