@@ -271,6 +271,18 @@ class TestRun(TestAbstract):
                 r(model)
                 self.assertIn("Unknown fields in the configuration file", str(w[0].message))
 
+    def test_config_invalid_yaml(self):
+        """A config file with malformed YAML raises a clean ValueError,
+        not a raw yaml traceback."""
+        with NamedTemporaryFile(delete=False, mode="w", suffix=".yaml") as tmp:
+            tmp.write("foo: [unclosed\n  bad indent: : :\n")
+            tmp_path = tmp.name
+        try:
+            with self.assertRaisesRegex(ValueError, "Cannot parse config file"):
+                run(SimpleEnv, config_file=tmp_path, interface=Mininterface)
+        finally:
+            os.unlink(tmp_path)
+
     def test_add_config(self):
         for add_config, config_file, expected, args, env_vars in [
             (True, True, 4, [], {}),
