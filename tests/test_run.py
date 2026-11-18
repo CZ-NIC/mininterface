@@ -278,8 +278,12 @@ class TestRun(TestAbstract):
             tmp.write("foo: [unclosed\n  bad indent: : :\n")
             tmp_path = tmp.name
         try:
-            with self.assertRaisesRegex(ValueError, "Cannot parse config file"):
+            with self.assertRaisesRegex(ValueError, "Cannot parse config file") as cm:
                 run(SimpleEnv, config_file=tmp_path, interface=Mininterface)
+            msg = str(cm.exception)
+            self.assertIn(f'in "{tmp_path}", line', msg)
+            self.assertNotIn("<unicode string>", msg)
+            self.assertIn("^", msg)  # the snippet pointing at the error is kept
         finally:
             os.unlink(tmp_path)
 

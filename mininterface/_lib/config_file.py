@@ -17,6 +17,10 @@ def load_settings_from_config(config_file: Path) -> tuple[dict, dict | None]:
     try:
         raw = yaml.safe_load(config_file.read_text()) or {}
     except yaml.YAMLError as e:
+        # the marks say "<unicode string>"; name the file instead, keeping the snippet with the caret
+        for mark in (getattr(e, "context_mark", None), getattr(e, "problem_mark", None)):
+            if mark:
+                mark.name = str(config_file)
         raise ValueError(f"Cannot parse config file {config_file}: {e}") from e
     return raw, raw.pop("mininterface", None)
 
