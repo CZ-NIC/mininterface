@@ -282,6 +282,10 @@ def _(
         def instance_from_str(args):
             if not args:
                 return default_val
+            if len(args) > 1:
+                raise ValueError(
+                    "Expected at most one value for this flag; put positional arguments before it."
+                )
             val = args[0]
             # NOTE bool is now always in types
             if bool in types:

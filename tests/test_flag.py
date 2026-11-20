@@ -1,9 +1,11 @@
 from dataclasses import asdict, dataclass
 from typing import Annotated, Literal
 
-from mininterface.tag import Tag
-from mininterface.tag.flag import Blank
 from shared import MISSING, TestAbstract, runm
+from tyro.conf import Positional
+
+from mininterface.tag import Tag
+from mininterface.tag.flag import Blank, BlankTrue
 
 
 @dataclass
@@ -15,7 +17,65 @@ class Env:
     t5: Blank[int | Literal["foo"]] = None
 
 
+@dataclass
+class PositionalEnv:
+    pos: Positional[str | None] = None
+    d: Blank[str] = None
+    o: Blank[int] = None
+
+
+@dataclass
+class BooleanEnv:
+    pos: Positional[str | None] = None
+    enabled: BlankTrue = None
+
+
 class TestFlag(TestAbstract):
+    def test_blank_flag_rejects_excess_values(self):
+        for args in (
+            ["--d", "False", "x"],
+            ["--d", "start", "x"],
+            ["--o", "3", "x"],
+            ["--d=start", "x"],
+        ):
+            with self.subTest(args=args):
+                with (
+                    self.assertStderr(
+                        contains="positional arguments before", strip_white=True
+                    ),
+                    self.assertRaises(SystemExit) as caught,
+                ):
+                    runm(PositionalEnv, args=args)
+                self.assertEqual(caught.exception.code, 2)
+
+    def test_blank_flag_keeps_unambiguous_positionals(self):
+        for args, expected_d, expected_o in (
+            (["x", "--d", "False"], False, None),
+            (["x", "--d", "start"], "start", None),
+            (["x", "--d", "two words"], "two words", None),
+            (["x", "--o", "3"], None, 3),
+            (["x", "--o", "-3"], None, -3),
+            (["--d", "start", "--", "x"], "start", None),
+            (["--d", "", "--", "x"], "", None),
+            (["--d", "--", "x"], True, None),
+            (["x", "--d"], True, None),
+        ):
+            with self.subTest(args=args):
+                env = runm(PositionalEnv, args=args).env
+                self.assertEqual(env.pos, "x")
+                self.assertEqual(env.d, expected_d)
+                self.assertEqual(env.o, expected_o)
+
+    def test_blank_true_still_rejects_excess_values(self):
+        with (
+            self.assertStderr(contains="Unrecognised value", strip_white=True),
+            self.assertRaises(SystemExit),
+        ):
+            runm(BooleanEnv, args=["--enabled", "False", "x"])
+        env = runm(BooleanEnv, args=["x", "--enabled", "False"]).env
+        self.assertEqual(env.pos, "x")
+        self.assertIs(env.enabled, False)
+
     def test_flag(self):
         with self.assertForms(
             (
